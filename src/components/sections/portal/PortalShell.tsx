@@ -12,7 +12,7 @@ import {
   ShieldCheck,
   Wallet,
 } from "lucide-react";
-import { useAuth } from "@/components/providers/AuthProvider";
+import { isAdminUser, useAuth } from "@/components/providers/AuthProvider";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { cn } from "@/lib/utils";
 
@@ -45,7 +45,7 @@ export function PortalShell({
     );
   }
 
-  if (!user) {
+  if (!user || !user.sessionVerified) {
     return (
       <section className="relative flex min-h-[100svh] items-center overflow-hidden bg-obsidian pt-24">
         <div className="blueprint-grid pointer-events-none absolute inset-0 opacity-40" />
@@ -73,7 +73,7 @@ export function PortalShell({
     );
   }
 
-  const isAdmin = user.role === "admin" || user.email === "demo@alattar.sa";
+  const isAdmin = isAdminUser(user);
 
   return (
     <>
@@ -103,8 +103,7 @@ export function PortalShell({
               <button
                 type="button"
                 onClick={() => {
-                  signOut();
-                  router.push("/");
+                  void signOut().finally(() => router.push("/"));
                 }}
                 className="inline-flex h-10 items-center gap-2 border border-white/15 px-4 text-[0.58rem] font-semibold uppercase tracking-[0.14em] text-ivory/55 transition-colors hover:border-gold/50 hover:text-gold"
               >

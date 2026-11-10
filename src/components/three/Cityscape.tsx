@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useMemo, useRef } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { Edges } from "@react-three/drei";
 
@@ -110,7 +110,6 @@ function Windows() {
     <instancedMesh
       ref={ref}
       args={[undefined, undefined, windows.length]}
-      frustumCulled={false}
     >
       <boxGeometry args={[0.14, 0.2, 0.035]} />
       <meshBasicMaterial toneMapped={false} transparent opacity={0.9} />
@@ -228,6 +227,16 @@ function SiteDetails() {
       }),
     [],
   );
+
+  // R3F disposes geometries it owns, but materials created outside JSX and
+  // passed via props must be disposed explicitly or they leak per mount.
+  useEffect(() => {
+    return () => {
+      concrete.dispose();
+      rebar.dispose();
+      safety.dispose();
+    };
+  }, [concrete, rebar, safety]);
 
   return (
     <group position={[0, GROUND_Y, 0]}>

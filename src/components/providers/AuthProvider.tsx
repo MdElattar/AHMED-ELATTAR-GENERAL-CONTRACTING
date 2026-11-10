@@ -9,6 +9,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { isEmail } from "@/lib/security/validation";
 
 export type PortalUser = {
   name: string;
@@ -16,13 +17,16 @@ export type PortalUser = {
   company: string;
   accountId: string;
   phone?: string;
-  role?: "client" | "admin";
+  role: "client" | "admin";
+  sessionVerified: boolean;
 };
+
+type ProfilePatch = Partial<Pick<PortalUser, "name" | "company" | "phone">>;
 
 type AuthContextValue = {
   user: PortalUser | null;
   ready: boolean;
-  signIn: (email: string, password: string) => Promise<PortalUser>;
+  signIn: (email: string, password: string, remember?: boolean) => Promise<PortalUser>;
   signUp: (input: {
     name: string;
     email: string;
@@ -30,33 +34,77 @@ type AuthContextValue = {
     phone: string;
     password: string;
   }) => Promise<PortalUser>;
-  signOut: () => void;
-  updateProfile: (patch: Partial<Pick<PortalUser, "name" | "email" | "company" | "phone">>) => void;
+  signOut: () => Promise<void>;
+  updateProfile: (patch: ProfilePatch) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 const STORAGE_KEY = "alattar-portal-user";
 
-const DEMO_USER: PortalUser = {
-  name: "Mohammed Alabdullah",
-  email: "demo@alattar.sa",
-  company: "Riyadh Development Holding",
-  accountId: "ALT-2048",
-  phone: "+966 55 214 8890",
-  role: "admin",
-};
-
-function wait(ms: number) {
-  return new Promise((resolve) => window.setTimeout(resolve, ms));
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function titleFromEmail(email: string) {
-  const handle = email.split("@")[0] ?? "Client";
-  return handle
-    .split(/[._-]/)
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
+function parseUser(value: unknown, verified: boolean): PortalUser | null {
+  if (!isRecord(value)) return null;
+
+  const name = typeof value.name === "string" ? value.name.trim().slice(0, 120) : "";
+  const email =
+    typeof value.email === "string" ? value.email.trim().toLowerCase().slice(0, 254) : "";
+  const company =
+    typeof value.company === "string" ? value.company.trim().slice(0, 160) : "";
+  const accountId =
+    typeof value.accountId === "string" ? value.accountId.trim().slice(0, 32) : "";
+  const phone = typeof value.phone === "string" ? value.phone.trim().slice(0, 40) : "";
+
+  if (!name || !isEmail(email) || !company || !accountId) return null;
+
+  return {
+    name,
+    email,
+    company,
+    accountId,
+    ...(phone ? { phone } : {}),
+    // A cached object is never allowed to grant admin. Only a signed,
+    // server-verified session can set this to true.
+    role: verified && value.role === "admin" ? "admin" : "client",
+    sessionVerified: verified,
+  };
+}
+
+function readCachedUser() {
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    return parseUser(JSON.parse(raw), false);
+  } catch {
+    return null;
+  }
+}
+
+function writeCachedUser(user: PortalUser | null) {
+  try {
+    if (user) {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+    } else {
+      window.localStorage.removeItem(STORAGE_KEY);
+    }
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
+async function responseJson(response: Response) {
+  try {
+    const value: unknown = await response.json();
+    return isRecord(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+export function isAdminUser(user: PortalUser | null) {
+  return Boolean(user?.role === "admin" && user.sessionVerified);
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -64,53 +112,66 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        // Hydration-safe: localStorage is only readable after mount.
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setUser(JSON.parse(stored) as PortalUser);
-      }
-    } catch {
-      // Ignore malformed or unavailable storage.
-    } finally {
-      setReady(true);
+    let cancelled = false;
+    const cached = readCachedUser();
+
+    if (cached) {
+      // Hydration-safe: localStorage is only read after mount.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setUser(cached);
     }
+
+    const loadSession = async () => {
+      try {
+        const response = await fetch("/api/auth/session", {
+          cache: "no-store",
+          credentials: "same-origin",
+        });
+        const data = await responseJson(response);
+
+        if (cancelled) return;
+
+        const verified = parseUser(data?.user, true);
+        if (verified) {
+          setUser(verified);
+          writeCachedUser(verified);
+        } else {
+          setUser(null);
+          writeCachedUser(null);
+        }
+      } catch {
+        // Keep a cached display-only user when the network is unavailable.
+        // The proxy still protects /portal and /admin on the server.
+      } finally {
+        if (!cancelled) setReady(true);
+      }
+    };
+
+    void loadSession();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const persist = useCallback((next: PortalUser | null) => {
     setUser(next);
-    try {
-      if (next) {
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-      } else {
-        window.localStorage.removeItem(STORAGE_KEY);
-      }
-    } catch {
-      // Ignore storage failures.
-    }
+    writeCachedUser(next);
   }, []);
 
   const signIn = useCallback(
-    async (email: string, password: string) => {
-      await wait(850);
-      const normalized = email.trim().toLowerCase();
-      const demoEmail =
-        normalized === DEMO_USER.email || normalized === "demo@ahmedelattar.sa";
-      if (demoEmail && password === "demo1234") {
-        persist(DEMO_USER);
-        return DEMO_USER;
-      }
-      if (password.length < 8) {
-        throw new Error("invalid");
-      }
-      const next: PortalUser = {
-        name: titleFromEmail(normalized),
-        email: normalized,
-        company: "Ahmed Elattar Client",
-        accountId: `ALT-${Math.floor(1000 + Math.random() * 8999)}`,
-        role: "client",
-      };
+    async (email: string, password: string, remember = true) => {
+      const response = await fetch("/api/auth/sign-in", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, remember }),
+      });
+      const data = await responseJson(response);
+      const next = parseUser(data?.user, true);
+
+      if (!response.ok || !next) throw new Error("invalid");
+
       persist(next);
       return next;
     },
@@ -125,37 +186,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       phone: string;
       password: string;
     }) => {
-      await wait(1000);
-      const next: PortalUser = {
-        name: input.name,
-        email: input.email.trim().toLowerCase(),
-        company: input.company,
-        accountId: `ALT-${Math.floor(1000 + Math.random() * 8999)}`,
-        phone: input.phone,
-        role: "client",
-      };
+      const response = await fetch("/api/auth/sign-up", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(input),
+      });
+      const data = await responseJson(response);
+      const next = parseUser(data?.user, true);
+
+      if (!response.ok || !next) throw new Error("invalid");
+
       persist(next);
       return next;
     },
     [persist],
   );
 
-  const signOut = useCallback(() => persist(null), [persist]);
+  const signOut = useCallback(async () => {
+    try {
+      await fetch("/api/auth/sign-out", {
+        method: "POST",
+        credentials: "same-origin",
+      });
+    } catch {
+      // Local state is cleared even if the network request fails.
+    } finally {
+      persist(null);
+    }
+  }, [persist]);
 
   const updateProfile = useCallback(
-    (patch: Partial<Pick<PortalUser, "name" | "email" | "company" | "phone">>) => {
-      setUser((current) => {
-        if (!current) return current;
-        const next = { ...current, ...patch };
-        try {
-          window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-        } catch {
-          // Ignore storage failures.
-        }
-        return next;
+    async (patch: ProfilePatch) => {
+      const response = await fetch("/api/auth/profile", {
+        method: "PATCH",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patch),
       });
+      const data = await responseJson(response);
+      const next = parseUser(data?.user, true);
+
+      if (!response.ok || !next) throw new Error("profile");
+
+      persist(next);
     },
-    [],
+    [persist],
   );
 
   const value = useMemo<AuthContextValue>(

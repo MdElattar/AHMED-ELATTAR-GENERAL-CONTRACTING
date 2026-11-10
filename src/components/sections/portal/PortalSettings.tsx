@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   ArrowUpRight,
@@ -12,7 +12,7 @@ import {
   ShieldCheck,
   UserRound,
 } from "lucide-react";
-import { useAuth } from "@/components/providers/AuthProvider";
+import { isAdminUser, useAuth } from "@/components/providers/AuthProvider";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { PortalShell } from "@/components/sections/portal/PortalShell";
 import { Field, TextInput } from "@/components/ui/Field";
@@ -30,7 +30,10 @@ const copy = {
     phone: "رقم الهاتف",
     accountId: "رقم الحساب",
     save: "حفظ التغييرات",
+    saving: "جارٍ الحفظ...",
     saved: "تم حفظ التغييرات.",
+    saveError: "تعذر حفظ التغييرات. حاول مرة أخرى.",
+    emailLocked: "لا يمكن تغيير البريد الإلكتروني من هنا. تواصل مع مدير حسابك.",
     preferences: "تفضيلات التواصل",
     emailUpdates: "تحديثات المشروع بالبريد",
     smsUpdates: "تنبيهات عاجلة عبر SMS",
@@ -60,7 +63,10 @@ const copy = {
     phone: "Phone number",
     accountId: "Account ID",
     save: "Save changes",
+    saving: "Saving...",
     saved: "Changes saved.",
+    saveError: "Could not save changes. Please try again.",
+    emailLocked: "Email cannot be changed here. Contact your account manager.",
     preferences: "Communication preferences",
     emailUpdates: "Project updates by email",
     smsUpdates: "Urgent SMS alerts",
@@ -93,6 +99,10 @@ export function PortalSettings() {
   const [company, setCompany] = useState(user?.company ?? "");
   const [phone, setPhone] = useState(user?.phone ?? "");
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const savedTimer = useRef<number | null>(null);
+  const passwordTimer = useRef<number | null>(null);
   const [emailUpdates, setEmailUpdates] = useState(true);
   const [smsUpdates, setSmsUpdates] = useState(false);
   const [weeklyReport, setWeeklyReport] = useState(true);
@@ -121,19 +131,49 @@ export function PortalSettings() {
   }, []);
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  const saveProfile = (event: React.FormEvent) => {
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    if (!user) return;
+    setName(user.name);
+    setEmail(user.email);
+    setCompany(user.company);
+    setPhone(user.phone ?? "");
+  }, [user]);
+  /* eslint-enable react-hooks/set-state-in-effect */
+
+  useEffect(() => {
+    return () => {
+      if (savedTimer.current) window.clearTimeout(savedTimer.current);
+      if (passwordTimer.current) window.clearTimeout(passwordTimer.current);
+    };
+  }, []);
+
+  const saveProfile = async (event: React.FormEvent) => {
     event.preventDefault();
-    updateProfile({ name, email, company, phone });
+    setSaving(true);
+    setSaveError("");
+
     try {
-      window.localStorage.setItem(
-        PREFERENCES_KEY,
-        JSON.stringify({ emailUpdates, smsUpdates, weeklyReport }),
-      );
+      await updateProfile({ name, company, phone });
+      try {
+        window.localStorage.setItem(
+          PREFERENCES_KEY,
+          JSON.stringify({ emailUpdates, smsUpdates, weeklyReport }),
+        );
+      } catch {
+        // Ignore storage failures.
+      }
+      setSaved(true);
+      if (savedTimer.current) window.clearTimeout(savedTimer.current);
+      savedTimer.current = window.setTimeout(() => {
+        setSaved(false);
+        savedTimer.current = null;
+      }, 2600);
     } catch {
-      // Ignore storage failures.
+      setSaveError(c.saveError);
+    } finally {
+      setSaving(false);
     }
-    setSaved(true);
-    window.setTimeout(() => setSaved(false), 2600);
   };
 
   const updatePassword = (event: React.FormEvent) => {
@@ -152,10 +192,14 @@ export function PortalSettings() {
     setNewPassword("");
     setConfirmPassword("");
     setPasswordMessage(c.passwordUpdated);
-    window.setTimeout(() => setPasswordMessage(""), 3200);
+    if (passwordTimer.current) window.clearTimeout(passwordTimer.current);
+    passwordTimer.current = window.setTimeout(() => {
+      setPasswordMessage("");
+      passwordTimer.current = null;
+    }, 3200);
   };
 
-  const isAdmin = user?.role === "admin" || user?.email === "demo@alattar.sa";
+  const isAdmin = isAdminUser(user);
 
   return (
     <PortalShell title={c.title} description={c.description}>
@@ -188,7 +232,10 @@ export function PortalSettings() {
                   tone="light"
                   type="email"
                   value={email}
-                  onChange={(event) => setEmail(event.target.value)}
+                  readOnly
+                  aria-readonly="true"
+                  title={c.emailLocked}
+                  className="cursor-not-allowed bg-ink/[0.03] text-ink/55"
                   required
                 />
               </Field>
@@ -211,13 +258,20 @@ export function PortalSettings() {
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-ink/10 p-4">
-              <span className="text-[0.58rem] text-ink/35">{c.demoNotice}</span>
+              <span
+                role={saveError ? "alert" : "status"}
+                aria-live="polite"
+                className={cn("text-[0.58rem]", saveError ? "text-[#a3543f]" : "text-ink/35")}
+              >
+                {saveError || c.demoNotice}
+              </span>
               <button
                 type="submit"
-                className="inline-flex h-10 items-center gap-2 bg-gold-dark px-5 text-[0.6rem] font-semibold uppercase tracking-[0.14em] text-ivory transition-colors hover:bg-gold"
+                disabled={saving}
+                className="inline-flex h-10 items-center gap-2 bg-gold-dark px-5 text-[0.6rem] font-semibold uppercase tracking-[0.14em] text-ivory transition-colors hover:bg-gold disabled:cursor-wait disabled:opacity-70"
               >
                 {saved ? <Check className="h-3.5 w-3.5" /> : <Save className="h-3.5 w-3.5" />}
-                {saved ? c.saved : c.save}
+                {saving ? c.saving : saved ? c.saved : c.save}
               </button>
             </div>
           </form>

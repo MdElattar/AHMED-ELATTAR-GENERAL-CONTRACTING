@@ -5,6 +5,7 @@ import * as THREE from "three";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { ContactShadows, Environment, Lightformer, Sparkles } from "@react-three/drei";
 import { useCanvasVisibility } from "@/components/three/useCanvasVisibility";
+import { SCENE_DPR, SCENE_GL, SCENE_PERFORMANCE } from "@/components/three/config";
 import { smoothstep } from "@/lib/utils";
 
 function FleetRig({ progressRef }: { progressRef: MutableRefObject<number> }) {
@@ -176,6 +177,9 @@ function FleetCamera({ progressRef }: { progressRef: MutableRefObject<number> })
   const { camera } = useThree();
   const target = useRef(new THREE.Vector3(0, -1.2, 0));
   const desired = useRef(new THREE.Vector3());
+  // Reused every frame: allocating vectors inside useFrame would churn the
+  // garbage collector at 60fps and cause visible frame spikes.
+  const look = useRef(new THREE.Vector3());
 
   useFrame((_, delta) => {
     const p = THREE.MathUtils.clamp(progressRef.current, 0, 1);
@@ -188,8 +192,8 @@ function FleetCamera({ progressRef }: { progressRef: MutableRefObject<number> })
     );
     const damp = 1 - Math.exp(-delta * 2);
     camera.position.lerp(desired.current, damp);
-    const look = new THREE.Vector3(0, -1.1 + smoothstep(0, 1, p) * 0.35, -0.6);
-    target.current.lerp(look, damp);
+    look.current.set(0, -1.1 + smoothstep(0, 1, p) * 0.35, -0.6);
+    target.current.lerp(look.current, damp);
     camera.lookAt(target.current);
   });
 
@@ -212,9 +216,10 @@ export default function FleetScene({
     <div ref={hostRef} className="!absolute inset-0">
       <Canvas
         shadows
-        dpr={[1, 1.55]}
+        dpr={SCENE_DPR.fleet}
+        performance={SCENE_PERFORMANCE}
         frameloop={visible ? (reduced ? "demand" : "always") : "never"}
-        gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+        gl={SCENE_GL}
         camera={{ position: [10, 4.8, 15], fov: 35, near: 0.1, far: 90 }}
         className="!absolute inset-0"
       >

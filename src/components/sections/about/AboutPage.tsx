@@ -243,7 +243,10 @@ export function AboutPage() {
         </div>
       </section>
 
-      <section className="grain relative overflow-hidden bg-ivory text-ink">
+      <section
+        id="certifications"
+        className="grain relative scroll-mt-24 overflow-hidden bg-ivory text-ink"
+      >
         <div className="pointer-events-none absolute inset-0 opacity-[0.35] [background-image:linear-gradient(rgba(10,11,14,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(10,11,14,0.035)_1px,transparent_1px)] [background-size:90px_90px]" />
         <div className="container-lux section-pad relative">
           <div className="flex flex-col justify-between gap-8 lg:flex-row lg:items-end">

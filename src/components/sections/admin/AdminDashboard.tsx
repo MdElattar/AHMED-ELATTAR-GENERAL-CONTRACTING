@@ -26,7 +26,7 @@ import {
   TrendingUp,
   Wallet,
 } from "lucide-react";
-import { useAuth } from "@/components/providers/AuthProvider";
+import { isAdminUser, useAuth } from "@/components/providers/AuthProvider";
 import { useI18n } from "@/components/providers/I18nProvider";
 import {
   useWorkspace,
@@ -297,7 +297,7 @@ export function AdminDashboard() {
     );
   }
 
-  const isAdmin = user?.role === "admin" || user?.email === "demo@alattar.sa";
+  const isAdmin = isAdminUser(user);
 
   if (!user || !isAdmin) {
     return (

@@ -21,7 +21,7 @@ const companyLinks = [
 const socialLinks = [
   {
     label: "LinkedIn",
-    href: "#",
+    href: "https://www.linkedin.com/company/ahmed-elattar-general-contracting",
     icon: (
       <>
         <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6Z" />
@@ -32,7 +32,7 @@ const socialLinks = [
   },
   {
     label: "Instagram",
-    href: "#",
+    href: "https://www.instagram.com/ahmedelattar",
     icon: (
       <>
         <rect width="20" height="20" x="2" y="2" rx="5" />
@@ -43,7 +43,7 @@ const socialLinks = [
   },
   {
     label: "YouTube",
-    href: "#",
+    href: "https://www.youtube.com/@ahmedelattar",
     icon: (
       <>
         <path d="M2.5 17a24.1 24.1 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.6 49.6 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.1 24.1 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.6 49.6 0 0 1-16.2 0A2 2 0 0 1 2.5 17" />
@@ -65,6 +65,8 @@ export function Footer() {
   const { scrollTo } = useSmoothScroll();
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
+  const [subscribing, setSubscribing] = useState(false);
+  const [subscribeError, setSubscribeError] = useState("");
 
   return (
     <footer className="relative overflow-hidden border-t border-white/10 bg-ink">
@@ -83,11 +85,41 @@ export function Footer() {
             </p>
             <form
               className="mt-8 flex max-w-md items-end gap-3"
-              onSubmit={(event) => {
+              onSubmit={async (event) => {
                 event.preventDefault();
-                if (!email.trim()) return;
-                setSubscribed(true);
-                setEmail("");
+                const normalized = email.trim().toLowerCase();
+                setSubscribeError("");
+                setSubscribed(false);
+
+                if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(normalized)) {
+                  setSubscribeError(
+                    locale === "ar"
+                      ? "يرجى إدخال بريد إلكتروني صحيح."
+                      : "Please enter a valid email address.",
+                  );
+                  return;
+                }
+
+                setSubscribing(true);
+                try {
+                  const response = await fetch("/api/newsletter", {
+                    method: "POST",
+                    credentials: "same-origin",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email: normalized }),
+                  });
+                  if (!response.ok) throw new Error("subscribe_failed");
+                  setSubscribed(true);
+                  setEmail("");
+                } catch {
+                  setSubscribeError(
+                    locale === "ar"
+                      ? "تعذر الاشتراك حالياً. حاول مرة أخرى."
+                      : "Could not subscribe right now. Please try again.",
+                  );
+                } finally {
+                  setSubscribing(false);
+                }
               }}
             >
               <label className="flex-1">
@@ -103,7 +135,8 @@ export function Footer() {
               </label>
               <button
                 type="submit"
-                className="flex h-12 shrink-0 items-center gap-2 bg-gold px-5 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-obsidian transition-colors hover:bg-gold-light"
+                disabled={subscribing}
+                className="flex h-12 shrink-0 items-center gap-2 bg-gold px-5 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-obsidian transition-colors hover:bg-gold-light disabled:cursor-wait disabled:opacity-70"
               >
                 {t.footer.subscribe}
                 <ArrowUpRight className={cn("h-3.5 w-3.5", isRTL && "-scale-x-100")} />
@@ -111,6 +144,11 @@ export function Footer() {
             </form>
             {subscribed ? (
               <p className="mt-3 text-xs text-gold">{t.footer.subscribed}</p>
+            ) : null}
+            {subscribeError ? (
+              <p className="mt-3 text-xs text-[#d98b72]" role="alert">
+                {subscribeError}
+              </p>
             ) : null}
           </div>
 
@@ -173,6 +211,8 @@ export function Footer() {
                   <a
                     key={label}
                     href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     aria-label={label}
                     className="flex h-9 w-9 items-center justify-center border border-white/12 text-ivory/45 transition-colors hover:border-gold/50 hover:text-gold"
                   >
@@ -215,10 +255,10 @@ export function Footer() {
             <Logo />
             <div className="flex flex-wrap items-center gap-5 text-[0.65rem] text-ivory/35">
               <span>{t.footer.license}</span>
-              <Link href="#" className="hover:text-gold">
+              <Link href="/privacy" className="hover:text-gold">
                 {t.footer.privacy}
               </Link>
-              <Link href="#" className="hover:text-gold">
+              <Link href="/terms" className="hover:text-gold">
                 {t.footer.terms}
               </Link>
               <button
@@ -232,7 +272,7 @@ export function Footer() {
             </div>
           </div>
           <div className="flex flex-col items-start justify-between gap-4 text-[0.62rem] text-ivory/25 sm:flex-row sm:items-center">
-            <span>
+            <span suppressHydrationWarning>
               © {CURRENT_YEAR} Ahmed Elattar General Contracting Co. {t.footer.rights}
             </span>
             <a

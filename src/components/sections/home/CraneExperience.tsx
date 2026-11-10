@@ -1,64 +1,29 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useRef, useState } from "react";
 import { MoveDown } from "lucide-react";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { useSmoothScroll } from "@/components/providers/SmoothScroll";
 import { ScrollCraneCanvas } from "@/components/three/CanvasLoader";
+import { usePinnedScroll } from "@/lib/scroll/usePinnedScroll";
 import { cn } from "@/lib/utils";
 
 export function CraneExperience() {
   const sectionRef = useRef<HTMLElement | null>(null);
   const progressRef = useRef(0);
   const fillRef = useRef<HTMLDivElement | null>(null);
-  const triggerRef = useRef<ScrollTrigger | null>(null);
-  const activeRef = useRef(0);
   const [active, setActive] = useState(0);
   const { t } = useI18n();
   const { scrollTo } = useSmoothScroll();
 
-  useEffect(() => {
-    gsap.registerPlugin(ScrollTrigger);
-    const section = sectionRef.current;
-    if (!section) return;
-
-    const context = gsap.context(() => {
-      const trigger = ScrollTrigger.create({
-        trigger: section,
-        start: "top top",
-        end: "+=520%",
-        pin: true,
-        pinSpacing: true,
-        anticipatePin: 1,
-        invalidateOnRefresh: true,
-        onUpdate: (self) => {
-          progressRef.current = self.progress;
-          if (fillRef.current) {
-            fillRef.current.style.width = `${self.progress * 100}%`;
-          }
-          const next = Math.min(
-            t.crane.steps.length - 1,
-            Math.floor(self.progress * t.crane.steps.length),
-          );
-          if (next !== activeRef.current) {
-            activeRef.current = next;
-            setActive(next);
-          }
-        },
-      });
-      triggerRef.current = trigger;
-    }, section);
-
-    const timer = window.setTimeout(() => ScrollTrigger.refresh(), 400);
-
-    return () => {
-      window.clearTimeout(timer);
-      triggerRef.current = null;
-      context.revert();
-    };
-  }, [t.crane.steps.length]);
+  const triggerRef = usePinnedScroll({
+    sectionRef,
+    progressRef,
+    fillRef,
+    stepCount: t.crane.steps.length,
+    end: "+=520%",
+    onActive: setActive,
+  });
 
   const jumpTo = (index: number) => {
     const trigger = triggerRef.current;

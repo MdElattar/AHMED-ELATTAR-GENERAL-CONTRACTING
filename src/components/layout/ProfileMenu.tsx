@@ -13,7 +13,7 @@ import {
   UserRound,
   Wallet,
 } from "lucide-react";
-import { useAuth } from "@/components/providers/AuthProvider";
+import { isAdminUser, useAuth } from "@/components/providers/AuthProvider";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { cn } from "@/lib/utils";
 
@@ -60,7 +60,7 @@ export function ProfileMenu({ tone = "dark", compact = false, onNavigate }: Prof
     { href: "/portal/projects", label: t.nav.portalProjects, icon: FolderKanban },
     { href: "/portal/financials", label: t.nav.financials, icon: Wallet },
     { href: "/portal/settings", label: t.nav.settings, icon: Settings },
-    ...(user?.role === "admin" || user?.email === "demo@alattar.sa"
+    ...(isAdminUser(user)
       ? [{ href: "/admin", label: t.nav.admin, icon: ShieldCheck }]
       : []),
   ];

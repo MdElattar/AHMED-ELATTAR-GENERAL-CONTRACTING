@@ -16,7 +16,7 @@ import {
   Settings,
   Wallet,
 } from "lucide-react";
-import { useAuth } from "@/components/providers/AuthProvider";
+import { isAdminUser, useAuth } from "@/components/providers/AuthProvider";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { Reveal } from "@/components/ui/Reveal";
 import { portalProjects } from "@/data/portal";
@@ -163,7 +163,7 @@ export function PortalDashboard() {
               <Settings className="h-3.5 w-3.5" />
               {t.nav.settings}
             </Link>
-            {user.role === "admin" || user.email === "demo@alattar.sa" ? (
+            {isAdminUser(user) ? (
               <Link
                 href="/admin"
                 className="inline-flex h-9 items-center gap-2 border border-gold/30 px-3.5 text-[0.56rem] font-semibold uppercase tracking-[0.12em] text-gold transition-colors hover:bg-gold hover:text-obsidian"

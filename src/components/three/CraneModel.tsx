@@ -19,6 +19,14 @@ type CraneModelProps = {
 
 const UP = new THREE.Vector3(0, 1, 0);
 
+// Frame-loop scratch objects. Sharing them is safe because `useFrame` callbacks
+// run sequentially on the main thread, and reusing them keeps the render loop
+// allocation-free (no GC pauses mid-animation).
+const cableStart = new THREE.Vector3();
+const cableEnd = new THREE.Vector3();
+const cableDirection = new THREE.Vector3();
+const cableNormal = new THREE.Vector3();
+
 function makeStrut(
   x1: number,
   y1: number,
@@ -156,11 +164,13 @@ function StrutMesh({
     const mesh = ref.current;
     if (!mesh) return;
     const dummy = new THREE.Object3D();
+    const direction = new THREE.Vector3();
+    const normal = new THREE.Vector3();
     struts.forEach((strut, index) => {
-      const direction = new THREE.Vector3().subVectors(strut.end, strut.start);
+      direction.subVectors(strut.end, strut.start);
       const length = direction.length();
       dummy.position.copy(strut.start).add(strut.end).multiplyScalar(0.5);
-      dummy.quaternion.setFromUnitVectors(UP, direction.clone().normalize());
+      dummy.quaternion.setFromUnitVectors(UP, normal.copy(direction).normalize());
       dummy.scale.set(strut.thickness, length, strut.thickness);
       dummy.updateMatrix();
       mesh.setMatrixAt(index, dummy.matrix);
@@ -184,16 +194,32 @@ function StrutMesh({
 
 function stretchCable(
   mesh: THREE.Mesh | null,
-  start: THREE.Vector3,
-  end: THREE.Vector3,
+  startX: number,
+  startY: number,
+  startZ: number,
+  endX: number,
+  endY: number,
+  endZ: number,
 ) {
   if (!mesh) return;
-  const direction = new THREE.Vector3().subVectors(end, start);
-  const length = direction.length();
-  mesh.position.copy(start).add(end).multiplyScalar(0.5);
+  cableStart.set(startX, startY, startZ);
+  cableEnd.set(endX, endY, endZ);
+  cableDirection.subVectors(cableEnd, cableStart);
+  const length = cableDirection.length();
+  mesh.position.copy(cableStart).add(cableEnd).multiplyScalar(0.5);
   mesh.scale.set(1, length, 1);
-  mesh.quaternion.setFromUnitVectors(UP, direction.clone().normalize());
+  mesh.quaternion.setFromUnitVectors(
+    UP,
+    cableNormal.copy(cableDirection).normalize(),
+  );
 }
+
+// Static geometry is built once per module instead of once per mounted scene.
+const TOWER = buildTower();
+const JIB = buildJib();
+const COUNTER_JIB = buildCounterJib();
+const APEX = buildApex();
+const STAYS = buildStays();
 
 export function CraneModel({ mode = "hero", progressRef }: CraneModelProps) {
   const rootRef = useRef<THREE.Group | null>(null);
@@ -204,11 +230,11 @@ export function CraneModel({ mode = "hero", progressRef }: CraneModelProps) {
   const cableRef = useRef<THREE.Mesh | null>(null);
   const lightRef = useRef<THREE.MeshBasicMaterial | null>(null);
 
-  const tower = useMemo(() => buildTower(), []);
-  const jib = useMemo(() => buildJib(), []);
-  const counterJib = useMemo(() => buildCounterJib(), []);
-  const apex = useMemo(() => buildApex(), []);
-  const stays = useMemo(() => buildStays(), []);
+  const tower = TOWER;
+  const jib = JIB;
+  const counterJib = COUNTER_JIB;
+  const apex = APEX;
+  const stays = STAYS;
 
   const brushed = useMemo(() => {
     if (typeof document === "undefined") return null;
@@ -386,11 +412,7 @@ export function CraneModel({ mode = "hero", progressRef }: CraneModelProps) {
       hookRef.current.rotation.y = Math.sin(elapsed * 0.7) * 0.04;
     }
 
-    stretchCable(
-      cableRef.current,
-      new THREE.Vector3(trolleyX, 10.17, 0),
-      new THREE.Vector3(trolleyX, hookY + 0.55, 0),
-    );
+    stretchCable(cableRef.current, trolleyX, 10.17, 0, trolleyX, hookY + 0.55, 0);
 
     if (lightRef.current) {
       lightRef.current.opacity = 0.45 + Math.sin(elapsed * 2.4) * 0.35;

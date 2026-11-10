@@ -3,14 +3,17 @@
 import {
   createContext,
   useContext,
-  useEffect,
   useMemo,
   useRef,
   type ReactNode,
 } from "react";
-import Lenis from "lenis";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import dynamic from "next/dynamic";
+import type Lenis from "lenis";
+
+const SmoothScrollEngine = dynamic(
+  () => import("./SmoothScrollEngine").then((module) => module.SmoothScrollEngine),
+  { ssr: false },
+);
 
 type SmoothScrollContextValue = {
   scrollTo: (target: string | number | HTMLElement, offset?: number) => void;
@@ -22,67 +25,45 @@ const SmoothScrollContext = createContext<SmoothScrollContextValue | null>(null)
 
 export function SmoothScrollProvider({ children }: { children: ReactNode }) {
   const lenisRef = useRef<Lenis | null>(null);
-
-  useEffect(() => {
-    gsap.registerPlugin(ScrollTrigger);
-
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-    if (reducedMotion) {
-      lenisRef.current = null;
-      return;
-    }
-
-    const lenis = new Lenis({
-      lerp: 0.085,
-      smoothWheel: true,
-      wheelMultiplier: 1,
-      touchMultiplier: 1.35,
-      anchors: { offset: -96 },
-    });
-    lenisRef.current = lenis;
-
-    lenis.on("scroll", ScrollTrigger.update);
-
-    const raf = (time: number) => {
-      lenis.raf(time * 1000);
-    };
-    gsap.ticker.add(raf);
-    gsap.ticker.lagSmoothing(0);
-
-    const refresh = () => ScrollTrigger.refresh();
-    if (document.fonts?.ready) {
-      document.fonts.ready.then(refresh).catch(() => undefined);
-    }
-    const refreshTimer = window.setTimeout(refresh, 700);
-
-    return () => {
-      window.clearTimeout(refreshTimer);
-      gsap.ticker.remove(raf);
-      lenis.off("scroll", ScrollTrigger.update);
-      lenis.destroy();
-      lenisRef.current = null;
-    };
-  }, []);
+  const lockedRef = useRef(false);
 
   const value = useMemo<SmoothScrollContextValue>(
     () => ({
       scrollTo: (target, offset = 0) => {
+        if (typeof window === "undefined") return;
+
         if (lenisRef.current) {
           lenisRef.current.scrollTo(target, { offset, duration: 1.35 });
           return;
         }
+
         if (typeof target === "number") {
           window.scrollTo({ top: target, behavior: "smooth" });
           return;
         }
-        const element = typeof target === "string" ? document.querySelector(target) : target;
+
+        let element: Element | null = null;
+
+        if (typeof target === "string") {
+          try {
+            element = document.querySelector(target);
+          } catch {
+            element = null;
+          }
+        } else {
+          element = target;
+        }
+
         if (element instanceof HTMLElement) {
           const top = element.getBoundingClientRect().top + window.scrollY + offset;
           window.scrollTo({ top, behavior: "smooth" });
         }
       },
       stop: () => {
+        if (typeof document === "undefined") return;
+
+        lockedRef.current = true;
+
         if (lenisRef.current) {
           lenisRef.current.stop();
         } else {
@@ -90,8 +71,13 @@ export function SmoothScrollProvider({ children }: { children: ReactNode }) {
         }
       },
       start: () => {
+        if (typeof document === "undefined") return;
+
+        lockedRef.current = false;
+
         if (lenisRef.current) {
           lenisRef.current.start();
+          document.documentElement.style.overflow = "";
         } else {
           document.documentElement.style.overflow = "";
         }
@@ -101,7 +87,10 @@ export function SmoothScrollProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <SmoothScrollContext.Provider value={value}>{children}</SmoothScrollContext.Provider>
+    <SmoothScrollContext.Provider value={value}>
+      <SmoothScrollEngine lenisRef={lenisRef} lockedRef={lockedRef} />
+      {children}
+    </SmoothScrollContext.Provider>
   );
 }
 

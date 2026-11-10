@@ -6,6 +6,7 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { ContactShadows, Edges, Environment, Lightformer, Sparkles } from "@react-three/drei";
 import { CraneModel } from "@/components/three/CraneModel";
 import { Cityscape } from "@/components/three/Cityscape";
+import { SCENE_DPR, SCENE_GL, SCENE_PERFORMANCE } from "@/components/three/config";
 import { useCanvasVisibility } from "@/components/three/useCanvasVisibility";
 
 function Rig({ reduced }: { reduced: boolean }) {
@@ -103,13 +104,10 @@ export default function HeroScene() {
     <div ref={hostRef} className="!absolute inset-0">
       <Canvas
         shadows
-        dpr={[1, 1.7]}
+        dpr={SCENE_DPR.hero}
+        performance={SCENE_PERFORMANCE}
         frameloop={visible ? (reduced ? "demand" : "always") : "never"}
-        gl={{
-          antialias: true,
-          alpha: true,
-          powerPreference: "high-performance",
-        }}
+        gl={SCENE_GL}
         camera={{ position: [16, 6.6, 21], fov: 34, near: 0.1, far: 90 }}
         className="!absolute inset-0"
       >

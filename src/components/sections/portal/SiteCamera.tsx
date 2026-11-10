@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Camera, Radio, Signal } from "lucide-react";
 import { ProjectArt } from "@/components/ui/ProjectArt";
 import type { ArtVariant } from "@/data/projects";
@@ -42,20 +42,22 @@ export function SiteCamera({
   const [cam, setCam] = useState(0);
   const [now, setNow] = useState<string>("");
 
+  const formatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(locale === "ar" ? "ar-SA" : "en-GB", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      }),
+    [locale],
+  );
+
   useEffect(() => {
-    const tick = () => {
-      setNow(
-        new Intl.DateTimeFormat(locale === "ar" ? "ar-SA" : "en-GB", {
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-        }).format(new Date()),
-      );
-    };
+    const tick = () => setNow(formatter.format(new Date()));
     tick();
     const timer = window.setInterval(tick, 1000);
     return () => window.clearInterval(timer);
-  }, [locale]);
+  }, [formatter]);
 
   const cams = [
     { label: `${c.cam} 01`, art },

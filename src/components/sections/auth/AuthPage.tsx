@@ -8,6 +8,7 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { Field, TextInput } from "@/components/ui/Field";
 import { Logo } from "@/components/ui/Logo";
+import { isSafeInternalPath } from "@/lib/security/validation";
 import { cn } from "@/lib/utils";
 
 type AuthMode = "sign-in" | "sign-up";
@@ -15,6 +16,14 @@ type AuthMode = "sign-in" | "sign-up";
 type AuthPageProps = {
   mode: AuthMode;
 };
+
+function nextPath() {
+  if (typeof window === "undefined") return "/portal";
+  const requested = new URLSearchParams(window.location.search).get("next");
+  return typeof requested === "string" && isSafeInternalPath(requested)
+    ? requested
+    : "/portal";
+}
 
 export function AuthPage({ mode }: AuthPageProps) {
   const { t, isRTL } = useI18n();
@@ -36,7 +45,7 @@ export function AuthPage({ mode }: AuthPageProps) {
   const isSignIn = mode === "sign-in";
 
   useEffect(() => {
-    if (ready && user) router.replace("/portal");
+    if (ready && user?.sessionVerified) router.replace(nextPath());
   }, [ready, user, router]);
 
   const submit = async (event: FormEvent) => {
@@ -69,11 +78,11 @@ export function AuthPage({ mode }: AuthPageProps) {
     setLoading(true);
     try {
       if (isSignIn) {
-        await signIn(email, password);
+        await signIn(email, password, remember);
       } else {
         await signUp({ name, email, company, phone, password });
       }
-      router.push("/portal");
+      router.push(nextPath());
     } catch {
       setError(t.auth.invalid);
     } finally {
@@ -87,8 +96,8 @@ export function AuthPage({ mode }: AuthPageProps) {
     setError("");
     setLoading(true);
     try {
-      await signIn("demo@alattar.sa", "demo1234");
-      router.push("/portal");
+      await signIn("demo@alattar.sa", "demo1234", true);
+      router.push(nextPath());
     } catch {
       setError(t.auth.invalid);
     } finally {

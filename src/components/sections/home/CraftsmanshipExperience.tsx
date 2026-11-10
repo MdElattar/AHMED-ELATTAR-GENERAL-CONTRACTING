@@ -1,11 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { MoveDown } from "lucide-react";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { useSmoothScroll } from "@/components/providers/SmoothScroll";
+import { usePinnedScroll } from "@/lib/scroll/usePinnedScroll";
 import { cn } from "@/lib/utils";
 
 const copy = {
@@ -129,50 +128,29 @@ export function CraftsmanshipExperience() {
   const smoothRef = useRef(0);
   const visibleRef = useRef(true);
   const fillRef = useRef<HTMLDivElement | null>(null);
-  const triggerRef = useRef<ScrollTrigger | null>(null);
   const activeRef = useRef(0);
+  const stepCountRef = useRef(0);
   const [active, setActive] = useState(0);
   const { locale } = useI18n();
   const { scrollTo } = useSmoothScroll();
   const c = copy[locale];
 
   useEffect(() => {
-    gsap.registerPlugin(ScrollTrigger);
-    const section = sectionRef.current;
-    if (!section) return;
+    activeRef.current = active;
+  }, [active]);
 
-    const context = gsap.context(() => {
-      const trigger = ScrollTrigger.create({
-        trigger: section,
-        start: "top top",
-        end: "+=340%",
-        pin: true,
-        pinSpacing: true,
-        anticipatePin: 1,
-        invalidateOnRefresh: true,
-        onUpdate: (self) => {
-          progressRef.current = self.progress;
-          if (fillRef.current) fillRef.current.style.width = `${self.progress * 100}%`;
-          const next = Math.min(
-            c.steps.length - 1,
-            Math.floor(self.progress * c.steps.length),
-          );
-          if (next !== activeRef.current) {
-            activeRef.current = next;
-            setActive(next);
-          }
-        },
-      });
-      triggerRef.current = trigger;
-    }, section);
-
-    const timer = window.setTimeout(() => ScrollTrigger.refresh(), 400);
-    return () => {
-      window.clearTimeout(timer);
-      triggerRef.current = null;
-      context.revert();
-    };
+  useEffect(() => {
+    stepCountRef.current = c.steps.length;
   }, [c.steps.length]);
+
+  const triggerRef = usePinnedScroll({
+    sectionRef,
+    progressRef,
+    fillRef,
+    stepCount: c.steps.length,
+    end: "+=340%",
+    onActive: setActive,
+  });
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -194,17 +172,24 @@ export function CraftsmanshipExperience() {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
 
-    const observer = new ResizeObserver(resize);
-    observer.observe(canvas);
+    const resizeObserver =
+      typeof ResizeObserver !== "undefined" ? new ResizeObserver(resize) : null;
+    resizeObserver?.observe(canvas);
+    window.addEventListener("resize", resize);
     resize();
 
-    const visibility = new IntersectionObserver(
-      ([entry]) => {
-        visibleRef.current = entry.isIntersecting;
-      },
-      { rootMargin: "120px" },
-    );
-    visibility.observe(canvas);
+    const visibility =
+      typeof IntersectionObserver !== "undefined"
+        ? new IntersectionObserver(
+            ([entry]) => {
+              visibleRef.current = entry.isIntersecting;
+              if (entry.isIntersecting) start();
+              else stop();
+            },
+            { rootMargin: "120px" },
+          )
+        : null;
+    visibility?.observe(canvas);
 
     const project = (x: number, y: number, z: number): Point => {
       const scale = Math.min(width, height) * 0.17;
@@ -231,7 +216,7 @@ export function CraftsmanshipExperience() {
     };
 
     const draw = () => {
-      frame = requestAnimationFrame(draw);
+      frame = 0;
       if (!visibleRef.current || width === 0 || height === 0) return;
       smoothRef.current += (progressRef.current - smoothRef.current) * 0.08;
       const p = smoothRef.current;
@@ -384,7 +369,8 @@ export function CraftsmanshipExperience() {
       }
 
       // Joint highlights on active phase
-      const activeProgress = (active + 0.5) / c.steps.length;
+      const activeProgress =
+        (activeRef.current + 0.5) / Math.max(1, stepCountRef.current);
       const highlight = 1 - Math.min(1, Math.abs(p - activeProgress) * 5);
       if (highlight > 0) {
         columns.slice(0, 4).forEach(([x, z]) => {
@@ -424,15 +410,30 @@ export function CraftsmanshipExperience() {
       scan.addColorStop(1, "rgba(201,164,92,0)");
       ctx.fillStyle = scan;
       ctx.fillRect(0, scanY - 40, width, 80);
+
+      frame = requestAnimationFrame(draw);
     };
 
-    frame = requestAnimationFrame(draw);
-    return () => {
+    function start() {
+      if (frame || !visibleRef.current) return;
+      frame = requestAnimationFrame(draw);
+    }
+
+    function stop() {
+      if (!frame) return;
       cancelAnimationFrame(frame);
-      observer.disconnect();
-      visibility.disconnect();
+      frame = 0;
+    }
+
+    start();
+
+    return () => {
+      stop();
+      resizeObserver?.disconnect();
+      window.removeEventListener("resize", resize);
+      visibility?.disconnect();
     };
-  }, [active, c.steps.length]);
+  }, []);
 
   const jumpTo = (index: number) => {
     const trigger = triggerRef.current;

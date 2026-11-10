@@ -13,7 +13,11 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const project = getProject(slug);
-  if (!project) return {};
+  if (!project) {
+    // Unknown slugs may still resolve from the client-side admin workspace,
+    // so keep the soft fallback but never let crawlers index it.
+    return { robots: { index: false, follow: false } };
+  }
 
   return {
     title: `${project.title.ar} | مشاريع أحمد العطار`,

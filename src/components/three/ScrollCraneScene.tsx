@@ -6,6 +6,7 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { ContactShadows, Environment, Lightformer, Sparkles } from "@react-three/drei";
 import { CraneModel } from "@/components/three/CraneModel";
 import { Cityscape } from "@/components/three/Cityscape";
+import { SCENE_DPR, SCENE_GL, SCENE_PERFORMANCE } from "@/components/three/config";
 import { useCanvasVisibility } from "@/components/three/useCanvasVisibility";
 import { smoothstep } from "@/lib/utils";
 
@@ -182,9 +183,10 @@ export default function ScrollCraneScene({
     <div ref={hostRef} className="!absolute inset-0">
       <Canvas
         shadows
-        dpr={[1, 1.6]}
+        dpr={SCENE_DPR.crane}
+        performance={SCENE_PERFORMANCE}
         frameloop={visible ? (reduced ? "demand" : "always") : "never"}
-        gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+        gl={SCENE_GL}
         camera={{ position: [15, 6.4, 20], fov: 34, near: 0.1, far: 90 }}
         className="!absolute inset-0"
       >

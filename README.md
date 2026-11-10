@@ -26,6 +26,13 @@ npm run lint
 npx tsc --noEmit
 ```
 
+## Environment
+
+Copy `.env.example` to `.env.local`. `AUTH_SECRET` is required in production
+(32+ characters); generate one with `openssl rand -base64 48`. Development falls
+back to a local-only secret, and production refuses to sign sessions without a
+valid value.
+
 ## Routes
 
 - `/` — hero, manifesto, fleet, featured projects, process, crane experience, testimonials, CTA
@@ -34,11 +41,23 @@ npx tsc --noEmit
 - `/services` — four service lines with anchored sections
 - `/about` — founder story, values, safety, timeline, certifications
 - `/contact` — three-step bidding form with validation and file upload
-- `/sign-in`, `/sign-up` — demo authentication
+- `/sign-in`, `/sign-up` — authentication against the signed-session API
 - `/auth` — compatibility redirect to `/sign-in`
-- `/forgot-password`, `/reset-password` — password recovery demo flow
+- `/forgot-password`, `/reset-password` — password recovery flow
 - `/portal` — auth-gated client dashboard (projects, milestones, documents, invoices, updates)
+- `/portal/projects`, `/portal/financials`, `/portal/settings` — portal sub-views
+- `/admin` — admin-only workspace (server-gated by `src/proxy.ts`)
+- `/privacy`, `/terms` — legal pages
 - `/sitemap.xml`, `/robots.txt` — generated metadata routes
+
+### API route handlers
+
+- `POST /api/auth/sign-in`, `POST /api/auth/sign-up`, `POST /api/auth/sign-out`
+- `GET /api/auth/session`, `PATCH /api/auth/profile`
+- `POST /api/contact`, `POST /api/newsletter`
+
+Every mutating handler validates the payload and rejects cross-origin requests
+before it reads or writes anything.
 
 ## Project structure
 
@@ -47,12 +66,13 @@ src/
 ├── app/                 # routes, metadata, global styles
 ├── components/
 │   ├── layout/          # navbar, footer, preloader, scroll progress
-│   ├── providers/       # i18n, auth, smooth scroll
+│   ├── providers/       # i18n, auth, workspace, smooth scroll
 │   ├── sections/        # home, projects, services, about, contact, portal, auth
+│   ├── system/          # shared route loading skeletons and error boundaries
 │   ├── three/           # procedural crane model and R3F scenes
 │   └── ui/              # buttons, fields, modal, counters, bespoke SVG art
 ├── data/                # projects, services, fleet, testimonials, portal demo data
-└── lib/                 # bilingual dictionary and utilities
+└── lib/                 # dictionary, utils, session signing, security helpers
 ```
 
 ## Language
@@ -65,12 +85,30 @@ stored locale before first paint. All copy lives in `src/lib/dictionary.ts`.
 
 ## Demo behaviour
 
-There is no backend. Authentication, the client portal, and the bid form are
-client-side demos persisted in `localStorage` / `sessionStorage`:
+Authentication is served by route handlers under `src/app/api/auth/*` and backed
+by an HMAC-SHA256 signed, `httpOnly`, `sameSite=strict` session cookie
+(`alattar_session`). Credentials are validated server-side; the browser never
+holds the signing key. There is still no database — accounts, projects, and
+invoices are seeded demo data — so treat this as a reference implementation,
+not a production identity provider.
 
-- `alattar-portal-user` — demo session
+- Set `AUTH_SECRET` (32+ characters) in production; the server refuses to sign
+  sessions without it.
+- `src/proxy.ts` gates `/portal` and `/admin` before any page renders, and
+  `AuthProvider` re-verifies the session against `/api/auth/session` on mount.
+- Only a server-verified session can grant the `admin` role; a cached
+  `localStorage` copy is display-only and is downgraded to `client`.
+
+Client storage keys:
+
+- `alattar-portal-user` — display cache of the verified session (never trusted)
+- `ahmed-elattar-workspace-v1` — client-side portal/admin workspace state
+- `ahmed-elattar-portal-preferences` — portal UI preferences
 - `alattar-locale` — language preference
 - `alattar-intro-seen` — skips the intro on repeat visits within a session
+
+The contact, newsletter, sign-in, sign-up, profile, and sign-out handlers all
+validate input and same-origin requests before touching state.
 
 ## Design notes
 

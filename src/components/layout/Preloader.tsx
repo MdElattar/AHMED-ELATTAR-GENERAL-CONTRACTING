@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { dictionary } from "@/lib/dictionary";
 import { Logo } from "@/components/ui/Logo";
@@ -14,6 +14,7 @@ export function Preloader() {
   const { t, ready } = useI18n();
   const [phase, setPhase] = useState<Phase>("loading");
   const [progress, setProgress] = useState(0);
+  const exitTimer = useRef<number | null>(null);
 
   useEffect(() => {
     if (!ready) return;
@@ -34,7 +35,9 @@ export function Preloader() {
     }
 
     const start = performance.now();
-    const duration = 1500;
+    // Keep the intro under a second so it never becomes the LCP element's
+    // blocker. It is pure decoration, not a data loader.
+    const duration = 850;
 
     // Interval rather than rAF so the intro still completes when the tab is
     // backgrounded and requestAnimationFrame is paused by the browser.
@@ -49,15 +52,21 @@ export function Preloader() {
       } catch {
         // Ignore storage failures.
       }
-      window.setTimeout(() => setPhase("leaving"), 220);
+      exitTimer.current = window.setTimeout(() => setPhase("leaving"), 120);
     }, 60);
 
-    return () => window.clearInterval(timer);
+    return () => {
+      window.clearInterval(timer);
+      if (exitTimer.current) {
+        window.clearTimeout(exitTimer.current);
+        exitTimer.current = null;
+      }
+    };
   }, [ready]);
 
   useEffect(() => {
     if (phase !== "leaving") return;
-    const timer = window.setTimeout(() => setPhase("gone"), 900);
+    const timer = window.setTimeout(() => setPhase("gone"), 700);
     return () => window.clearTimeout(timer);
   }, [phase]);
 
@@ -66,8 +75,8 @@ export function Preloader() {
   return (
     <div
       className={cn(
-        "fixed inset-0 z-[200] flex flex-col items-center justify-center bg-obsidian transition-transform duration-[850ms] ease-[cubic-bezier(0.76,0,0.24,1)]",
-        phase === "leaving" && "-translate-y-full",
+        "fixed inset-0 z-[200] flex flex-col items-center justify-center bg-obsidian transition-transform duration-[700ms] ease-[cubic-bezier(0.76,0,0.24,1)]",
+        phase === "leaving" && "pointer-events-none -translate-y-full",
       )}
       aria-hidden="true"
     >

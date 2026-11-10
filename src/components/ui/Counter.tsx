@@ -37,6 +37,7 @@ export function Counter({
 
     let frame = 0;
     let startTime = 0;
+    started.current = false;
 
     const tick = (now: number) => {
       if (!startTime) startTime = now;

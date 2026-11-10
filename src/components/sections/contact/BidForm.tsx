@@ -13,6 +13,7 @@ import {
 import { useI18n } from "@/components/providers/I18nProvider";
 import { Field, Select, Textarea, TextInput } from "@/components/ui/Field";
 import { services } from "@/data/services";
+import { isPlainObject } from "@/lib/security/validation";
 import { cn } from "@/lib/utils";
 
 type FormState = {
@@ -50,7 +51,7 @@ function formatBytes(bytes: number) {
 }
 
 export function BidForm() {
-  const { t, l, isRTL } = useI18n();
+  const { t, l, isRTL, locale } = useI18n();
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<FormState>(initialForm);
   const [files, setFiles] = useState<File[]>([]);
@@ -58,6 +59,7 @@ export function BidForm() {
   const [consent, setConsent] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
   const [reference, setReference] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const successRef = useRef<HTMLDivElement | null>(null);
@@ -152,15 +154,48 @@ export function BidForm() {
     addFiles(event.dataTransfer.files);
   };
 
-  const submit = () => {
+  const submit = async () => {
     if (!validateStep(2)) return;
+
     setSubmitting(true);
-    window.setTimeout(() => {
-      const code = `ALT-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 8999)}`;
+    setSubmitError("");
+
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...form,
+          consent,
+          files: files.map((file) => ({
+            name: file.name,
+            size: file.size,
+            type: file.type,
+          })),
+        }),
+      });
+
+      const data: unknown = await response.json().catch(() => null);
+      const code =
+        isPlainObject(data) && typeof data.reference === "string" ? data.reference : null;
+
+      if (!response.ok || !code) throw new Error("submit_failed");
+
       setReference(code);
+      window.setTimeout(
+        () => successRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }),
+        80,
+      );
+    } catch {
+      setSubmitError(
+        locale === "ar"
+          ? "تعذر إرسال الطلب. تحقق من الاتصال وحاول مرة أخرى."
+          : "Could not send the request. Check your connection and try again.",
+      );
+    } finally {
       setSubmitting(false);
-      window.setTimeout(() => successRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 80);
-    }, 1400);
+    }
   };
 
   const reset = () => {
@@ -168,6 +203,7 @@ export function BidForm() {
     setFiles([]);
     setConsent(false);
     setErrors({});
+    setSubmitError("");
     setReference(null);
     setStep(0);
   };
@@ -475,6 +511,15 @@ export function BidForm() {
                 </p>
               ) : null}
             </div>
+
+            {submitError ? (
+              <p
+                className="border border-[#a3543f]/25 bg-[#a3543f]/5 px-4 py-3 text-[0.72rem] text-[#a3543f]"
+                role="alert"
+              >
+                {submitError}
+              </p>
+            ) : null}
           </div>
         ) : null}
 

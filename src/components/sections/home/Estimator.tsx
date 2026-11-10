@@ -180,12 +180,15 @@ export function Estimator() {
     };
   }, [area, city, pace, quality, type]);
 
-  const nf = new Intl.NumberFormat(locale === "ar" ? "ar-SA" : "en-US", {
-    maximumFractionDigits: 0,
-  });
-  const df = new Intl.NumberFormat(locale === "ar" ? "ar-SA" : "en-US", {
-    maximumFractionDigits: 1,
-  });
+  // Formatters are expensive to construct and this panel re-renders on every
+  // slider tick, so build them once per locale.
+  const { nf, df } = useMemo(() => {
+    const tag = locale === "ar" ? "ar-SA" : "en-US";
+    return {
+      nf: new Intl.NumberFormat(tag, { maximumFractionDigits: 0 }),
+      df: new Intl.NumberFormat(tag, { maximumFractionDigits: 1 }),
+    };
+  }, [locale]);
 
   const breakdown = [
     { key: "structure" as const, pct: 38 },

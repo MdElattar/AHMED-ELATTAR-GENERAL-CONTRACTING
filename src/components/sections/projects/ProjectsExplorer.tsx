@@ -45,6 +45,20 @@ export function ProjectsExplorer() {
 
   const filters: Filter[] = ["all", ...projectCategories];
 
+  const counts = useMemo(() => {
+    const next = new Map<Filter, number>([["all", projects.length]]);
+    for (const category of projectCategories) {
+      next.set(
+        category,
+        projects.reduce(
+          (total, project) => (project.category === category ? total + 1 : total),
+          0,
+        ),
+      );
+    }
+    return next;
+  }, [projects]);
+
   return (
     <>
       <section className="relative overflow-hidden bg-obsidian pb-16 pt-36 sm:pb-20 sm:pt-44">
@@ -96,10 +110,7 @@ export function ProjectsExplorer() {
             <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
               <SlidersHorizontal className="me-2 h-3.5 w-3.5 shrink-0 text-gold-dark" />
               {filters.map((item) => {
-                const count =
-                  item === "all"
-                    ? projects.length
-                    : projects.filter((project) => project.category === item).length;
+                const count = counts.get(item) ?? 0;
                 return (
                   <button
                     key={item}

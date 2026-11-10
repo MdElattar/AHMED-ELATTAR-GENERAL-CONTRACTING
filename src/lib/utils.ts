@@ -18,11 +18,22 @@ export function lerp(from: number, to: number, amount: number) {
   return from + (to - from) * amount;
 }
 
+const numberFormatters = new Map<number, Intl.NumberFormat>();
+
+/**
+ * Number formatting is used inside animation frames, so the `Intl` instance is
+ * cached per precision instead of being reconstructed on every tick.
+ */
 export function formatNumber(value: number, decimals = 0) {
-  return new Intl.NumberFormat("en-US", {
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  }).format(value);
+  let formatter = numberFormatters.get(decimals);
+  if (!formatter) {
+    formatter = new Intl.NumberFormat("en-US", {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    });
+    numberFormatters.set(decimals, formatter);
+  }
+  return formatter.format(value);
 }
 
 export function makeReference() {
