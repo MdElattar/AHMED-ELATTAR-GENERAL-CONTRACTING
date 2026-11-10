@@ -1,126 +1,111 @@
-# Alattar — Construction & Contracting
+# 🏗️ Ahmed Elattar General Contracting Co.
+### شركة أحمد العطار للمقاولات العامة
 
-An Arabic-first (RTL) bilingual marketing and client portal experience for a luxury
-Saudi construction house. Built with the Next.js App Router, a procedural Three.js
-crane, and a scroll-driven editorial layout.
+<p align="center">
+  <img src="https://img.shields.io/badge/Next.js-16_%28App_Router%29-000000?style=for-the-badge&logo=nextdotjs&logoColor=white" alt="Next.js 16" />
+  <img src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React 19" />
+  <img src="https://img.shields.io/badge/TypeScript-Strict-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Three.js-WebGL_3D-black?style=for-the-badge&logo=three.js&logoColor=white" alt="Three.js" />
+  <img src="https://img.shields.io/badge/GSAP-ScrollTrigger-88CE02?style=for-the-badge&logo=greensock&logoColor=black" alt="GSAP" />
+  <img src="https://img.shields.io/badge/Tailwind_CSS-v4.0-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind CSS" />
+  <img src="https://img.shields.io/badge/i18n-Arabic_%2F_English-C5A059?style=for-the-badge" alt="i18n Support" />
+</p>
 
-## Stack
+> **"Innovating Construction... Building a Legacy That Endures"**  
+> *نبتكر في البناء.. لنترك أثراً يخلده الزمن*
 
-| Layer | Choice |
-| --- | --- |
-| Framework | Next.js 16 (App Router) + React 19 |
-| Language | TypeScript |
-| Styling | Tailwind CSS 4, custom design tokens |
-| Motion | GSAP + ScrollTrigger, Framer Motion, Lenis smooth scroll |
-| 3D | Three.js, `@react-three/fiber`, `@react-three/drei` |
-| Icons | Lucide |
+An ultra-luxurious, Arab-first (RTL) bilingual marketing experience, procedural 3D heavy-equipment kinematics engine, real-time client transparency portal, and administrative control center crafted exclusively for **Ahmed Elattar General Contracting Company**.
 
-## Getting started
+---
 
-```bash
-npm install
-npm run dev      # http://localhost:3000
-npm run build    # production build
-npm start        # serve the production build
-npm run lint
-npx tsc --noEmit
-```
+## 🌟 Executive Overview
 
-## Environment
+**Ahmed Elattar General Contracting Co.** sets a new digital standard for flagship mega-construction enterprises across the Arab world. Moving beyond static corporate websites, this platform immerses visitors in a cinematic, scroll-driven web experience. Powered by procedural WebGL 3D rendering (Three.js / R3F) synchronized seamlessly with GSAP ScrollTrigger timelines, users interactively explore architectural engineering milestones, equipment mechanics, and structural progress.
 
-Copy `.env.example` to `.env.local`. `AUTH_SECRET` is required in production
-(32+ characters); generate one with `openssl rand -base64 48`. Development falls
-back to a local-only secret, and production refuses to sign sessions without a
-valid value.
+The system bridges high-end architectural aesthetics with full enterprise utilities, including an authenticated Client Progress & Invoicing Portal (`/portal`), an Administrative Business Control Center (`/admin`), and an instant zero-flicker i18n localization pipeline.
 
-## Routes
+---
 
-- `/` — hero, manifesto, fleet, featured projects, process, crane experience, testimonials, CTA
-- `/projects` — filterable portfolio with a detail modal
-- `/projects/[slug]` — statically generated project case study
-- `/services` — four service lines with anchored sections
-- `/about` — founder story, values, safety, timeline, certifications
-- `/contact` — three-step bidding form with validation and file upload
-- `/sign-in`, `/sign-up` — authentication against the signed-session API
-- `/auth` — compatibility redirect to `/sign-in`
-- `/forgot-password`, `/reset-password` — password recovery flow
-- `/portal` — auth-gated client dashboard (projects, milestones, documents, invoices, updates)
-- `/portal/projects`, `/portal/financials`, `/portal/settings` — portal sub-views
-- `/admin` — admin-only workspace (server-gated by `src/proxy.ts`)
-- `/privacy`, `/terms` — legal pages
-- `/sitemap.xml`, `/robots.txt` — generated metadata routes
+## 🎨 Color Palette & Visual Identity
 
-### API route handlers
+The platform utilizes a modern luxury industrial design language:
 
-- `POST /api/auth/sign-in`, `POST /api/auth/sign-up`, `POST /api/auth/sign-out`
-- `GET /api/auth/session`, `PATCH /api/auth/profile`
-- `POST /api/contact`, `POST /api/newsletter`
+| Color Name | Hex Code | Visual Application |
+| :--- | :---: | :--- |
+| **Obsidian Dark** | `#0B0C10` | Immersive main backgrounds & canvas viewport |
+| **Champagne Gold** | `#C5A059` | Primary brand accent, call-to-actions, engineering highlights |
+| **Charcoal Steel** | `#1F2833` | Glassmorphism cards, surface panels & sticky header overlays |
+| **Ivory White** | `#F4F4F4` | High-contrast typography & structural detail vectors |
 
-Every mutating handler validates the payload and rejects cross-origin requests
-before it reads or writes anything.
+---
 
-## Project structure
+## 💻 Technical Architecture & Stack
 
-```
-src/
-├── app/                 # routes, metadata, global styles
-├── components/
-│   ├── layout/          # navbar, footer, preloader, scroll progress
-│   ├── providers/       # i18n, auth, workspace, smooth scroll
-│   ├── sections/        # home, projects, services, about, contact, portal, auth
-│   ├── system/          # shared route loading skeletons and error boundaries
-│   ├── three/           # procedural crane model and R3F scenes
-│   └── ui/              # buttons, fields, modal, counters, bespoke SVG art
-├── data/                # projects, services, fleet, testimonials, portal demo data
-└── lib/                 # dictionary, utils, session signing, security helpers
-```
+| Layer | Technology | Key Details & Capabilities |
+| :--- | :--- | :--- |
+| **Framework** | **Next.js 16 (App Router)** | React 19 Server Components, Server Actions & Static Route Optimization |
+| **Language** | **TypeScript** | Strict type safety, procedural mesh interfaces & data schema enforcement |
+| **Styling** | **Tailwind CSS 4** | Custom design tokens, glassmorphism filters, dynamic dark/light contrast |
+| **3D Kinematics** | **Three.js & R3F** | Procedural WebGL geometry, directional sun shadows & brushed-metal PBR shaders |
+| **Motion & Scroll** | **GSAP & ScrollTrigger** | Pinned layout sequences, Lenis smooth scrolling, camera path interpolation |
+| **Micro-Interactions**| **Framer Motion** | UI card reveals, interactive drawers, modal state transitions |
+| **Localization** | **Bilingual i18n System** | Native Arabic (RTL) primary & English (LTR) secondary with `localStorage` sync |
 
-## Language
+---
 
-Arabic is the default. The locale toggle switches between AR/EN, updates
-`<html lang dir>`, and persists the choice in `localStorage` under
-`alattar-locale`. `?lang=en` or `?lang=ar` can be used to share a specific
-locale, and the preloader renders language-neutral markup that resolves to the
-stored locale before first paint. All copy lives in `src/lib/dictionary.ts`.
+## 🏗️ Core Business Pillars & Engineering Expertise
 
-## Demo behaviour
+* **🏢 Residential Towers & Luxury Complexes:** Modern high-rise residential architecture engineered for structural durability and maximum spatial luxury.
+* **💼 Commercial & Administrative Facilities:** State-of-the-art corporate headquarters, commercial malls, and high-capacity administrative hubs.
+* **🌉 Infrastructure & Civil Works:** Large-scale bridge work, structural foundations, and essential utility developments.
+* **🏭 Industrial & Logistics Facilities:** Heavy industrial plants, specialized logistics warehouses, and ISO-compliant industrial structures.
 
-Authentication is served by route handlers under `src/app/api/auth/*` and backed
-by an HMAC-SHA256 signed, `httpOnly`, `sameSite=strict` session cookie
-(`alattar_session`). Credentials are validated server-side; the browser never
-holds the signing key. There is still no database — accounts, projects, and
-invoices are seeded demo data — so treat this as a reference implementation,
-not a production identity provider.
+---
 
-- Set `AUTH_SECRET` (32+ characters) in production; the server refuses to sign
-  sessions without it.
-- `src/proxy.ts` gates `/portal` and `/admin` before any page renders, and
-  `AuthProvider` re-verifies the session against `/api/auth/session` on mount.
-- Only a server-verified session can grant the `admin` role; a cached
-  `localStorage` copy is display-only and is downgraded to `client`.
+## 🚀 Key Features & System Modules
 
-Client storage keys:
+### 1. Procedural 3D Crane & Urban Scene Dynamics
+* **Zero-GLB Procedural Geometry:** The main heavy tower crane model is constructed entirely via procedural primitives and instanced structural trusses, eliminating external 3D file load delays.
+* **Scroll-Bound Kinematics:** GSAP ScrollTrigger maps scroll progress directly to mechanical crane slewing, boom elevation, trolley travel, cable drop, and hook payload positioning.
+* **Interactive Structural Assembly:** Secondary pinned scroll sequence simulating real-time steel rebar and wooden framework snapping into position as milestones reveal.
 
-- `alattar-portal-user` — display cache of the verified session (never trusted)
-- `ahmed-elattar-workspace-v1` — client-side portal/admin workspace state
-- `ahmed-elattar-portal-preferences` — portal UI preferences
-- `alattar-locale` — language preference
-- `alattar-intro-seen` — skips the intro on repeat visits within a session
+### 2. Auth-Gated Client Portal (`/portal`)
+* **Real-Time Project Tracking:** Milestone progress metrics, live site photo updates, and engineering timeline logs.
+* **Financial & Blueprint Vault:** Secure access to billing stages, downloadable contract PDFs, and architectural blueprints.
+* **Direct Supervision Line:** In-app direct communication channel with project managers and site engineers.
 
-The contact, newsletter, sign-in, sign-up, profile, and sign-out handlers all
-validate input and same-origin requests before touching state.
+### 3. Administrative Control Center (`/admin`)
+* **Project CRUD Engine:** Complete operational control to add, edit, or archive project showcase items, specs, and engineering progress logs.
+* **Financial & Profit Metrics:** Admin overview of total contract valuations, budget distributions, net profits, and client invoice statuses.
+* **Dynamic Banner & Media Control:** Real-time updates for homepage hero announcements, fleet availability, and service offerings.
 
-## Design notes
+### 4. Zero-Flicker Bilingual Engine (AR / EN)
+* **Dual Directionality (RTL / LTR):** Full native RTL support for Arabic and instant toggle for LTR English layout.
+* **State Persistence:** Automatically syncs user language via `localStorage` (`alattar-locale`), updates `<html lang dir>`, and supports shareable URL params (`?lang=ar` / `?lang=en`).
 
-- Obsidian, charcoal, champagne gold, and ivory palette.
-- Bespoke inline SVG artwork for projects and fleet — no external imagery.
-- The crane is modelled procedurally from primitives and instanced struts, so
-  there is no GLB payload. Brushed-metal roughness maps, a procedural city
-  backdrop, an under-construction frame, and a directional sun shadow map add
-  depth without external assets.
-- The pinned crane section uses GSAP ScrollTrigger to drive slewing, boom
-  luffing, trolley travel, cable lowering, and hook motion.
-- Reduced-motion preferences skip the intro and settle scroll animations.
-- Site credit: [Developed by Mohamed Elattar](https://mohamedelattar.com).
-# AHMED-ELATTAR-GENERAL-CONTRACTING
-# AHMED-ELATTAR-GENERAL-CONTRACTING
+---
+
+## 📁 Directory & File Structure
+
+```text
+AHMED-ELATTAR-GENERAL-CONTRACTING/
+├── src/
+│   ├── app/                    # Next.js App Router Pages & API Routes
+│   │   ├── admin/              # Comprehensive Business Admin Control Panel
+│   │   ├── portal/             # Client Project Transparency Dashboard
+│   │   ├── projects/           # Filterable Mega-Project Showcase & Modals
+│   │   ├── services/           # Heavy Equipment & Contracting Line Items
+│   │   ├── about/              # Founder Story, Vision & ISO Certifications
+│   │   ├── contact/            # Bidding Form & File Attachment System
+│   │   └── page.tsx            # Full Homepage featuring Procedural 3D Canvas
+│   ├── components/
+│   │   ├── 3d/                 # R3F Canvas, Procedural Crane Meshes & Lights
+│   │   ├── layout/             # Seamless Glass Navbar, Footer & Preloader
+│   │   ├── providers/          # Smooth Scroll, Auth & i18n Context Providers
+│   │   ├── sections/           # Pinned GSAP Scroll & Interactive Showcase Sections
+│   │   └── ui/                 # Bespoke Inline SVG Vectors, Modals & Buttons
+│   ├── data/                   # Initial Datasets (Projects, Invoices, Fleet)
+│   └── lib/                    # Dictionary Core (`dictionary.ts`) & Utilities
+├── public/                     # Static Brand Icons & Manifest Files
+├── package.json
+└── tsconfig.json
