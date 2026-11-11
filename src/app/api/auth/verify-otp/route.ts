@@ -4,9 +4,11 @@ import {
   getOtp,
   incrementOtpAttempts,
   recordAudit,
+  setUserResetToken,
 } from "@/lib/db";
 import { OTP_MAX_ATTEMPTS, verifyOtpHash } from "@/lib/auth/otp";
-import { createResetToken } from "@/lib/auth/token";
+import { RESET_TTL_SECONDS, createResetToken } from "@/lib/auth/token";
+import { hashResetToken } from "@/lib/auth/password";
 import { setResetCookie } from "@/lib/auth/cookie";
 import { authUnavailable, isAuthConfigError } from "@/lib/auth/response";
 import {
@@ -85,9 +87,15 @@ export async function POST(request: NextRequest) {
   await consumeOtp(email);
 
   try {
-    const token = await createResetToken(email);
+    const { cookie, token } = await createResetToken(email);
+    await setUserResetToken(
+      email,
+      hashResetToken(token),
+      new Date(Date.now() + RESET_TTL_SECONDS * 1000).toISOString(),
+    );
+
     const response = NextResponse.json({ ok: true }, { headers: NO_STORE_HEADERS });
-    setResetCookie(response, token);
+    setResetCookie(response, cookie);
 
     await recordAudit({
       actor: email,

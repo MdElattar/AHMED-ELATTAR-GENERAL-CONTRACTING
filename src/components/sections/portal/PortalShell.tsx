@@ -66,7 +66,7 @@ export function PortalShell({
               {t.portal.signIn}
               <ArrowUpRight className={cn("h-4 w-4", isRTL && "-scale-x-100")} />
             </Link>
-            <p className="mt-6 text-[0.62rem] text-ivory/30">{t.auth.demoHint}</p>
+            <p className="mt-6 text-[0.62rem] text-ivory/30">{t.auth.secureNote}</p>
           </div>
         </div>
       </section>
@@ -144,8 +144,9 @@ export function PortalShell({
           </nav>
         </div>
       </section>
-      <section className="grain relative min-h-[60svh] overflow-hidden bg-ivory text-ink">
-        <div className="pointer-events-none absolute inset-0 opacity-[0.35] [background-image:linear-gradient(rgba(10,11,14,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(10,11,14,0.035)_1px,transparent_1px)] [background-size:90px_90px]" />
+      <section className="relative min-h-[60svh] overflow-hidden border-t border-white/10 bg-obsidian text-ivory">
+        <div className="blueprint-grid pointer-events-none absolute inset-0 opacity-20" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_80%_0%,rgba(200,169,107,0.05),transparent_55%)]" />
         <div className="container-lux relative pb-20 pt-10">{children}</div>
       </section>
     </>

@@ -9,7 +9,7 @@ import { useWorkspace } from "@/components/providers/WorkspaceProvider";
 import { CTA } from "@/components/sections/home/CTA";
 import { ProjectArt } from "@/components/ui/ProjectArt";
 import { Reveal } from "@/components/ui/Reveal";
-import { services, type ServiceIcon } from "@/data/services";
+import type { ServiceIcon } from "@/data/services";
 import { cn } from "@/lib/utils";
 
 const iconMap: Record<ServiceIcon, typeof Building2> = {
@@ -54,7 +54,7 @@ export function ServicesPage() {
   const { t, l, locale, isRTL } = useI18n();
   const { content } = useWorkspace();
   const { scrollTo } = useSmoothScroll();
-  const resolvedServices = services.map((service) => {
+  const resolvedServices = content.services.map((service) => {
     const override = content.serviceOverrides[service.slug];
     return {
       ...service,
@@ -96,39 +96,46 @@ export function ServicesPage() {
           </div>
 
           <div className="mt-14 grid gap-px border border-white/10 bg-white/10 sm:grid-cols-2 lg:grid-cols-4">
-            {resolvedServices.map((service, index) => {
-              const Icon = iconMap[service.icon];
-              return (
-                <Reveal key={service.slug} delay={index * 70}>
-                  <a
-                    href={`#${service.slug}`}
-                    onClick={(event) => {
-                      event.preventDefault();
-                      setActiveService(service.slug);
-                      // Route anchor scrolling through Lenis so it does not
-                      // fight the smooth-scroll engine with a native scroll.
-                      scrollTo(`#${service.slug}`, -96);
-                    }}
-                    className="group flex h-full flex-col justify-between gap-8 bg-obsidian p-6 transition-colors duration-500 hover:bg-coal"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <Icon className="h-5 w-5 text-gold/70" />
-                      <span className="tabular text-[0.55rem] text-ivory/25">
-                        {service.number}
-                      </span>
-                    </div>
-                    <div>
-                      <h2 className="font-display text-[1.35rem] leading-tight text-ivory transition-colors group-hover:text-gold">
-                        {l(service.title)}
-                      </h2>
-                      <p className="mt-2 text-[0.68rem] leading-relaxed text-ivory/35">
-                        {l(service.tagline)}
-                      </p>
-                    </div>
-                  </a>
-                </Reveal>
-              );
-            })}
+            {resolvedServices.length === 0
+              ? Array.from({ length: 4 }).map((_, index) => (
+                  <div
+                    key={`service-skeleton-${index}`}
+                    className="h-40 animate-pulse bg-obsidian p-6"
+                  />
+                ))
+              : resolvedServices.map((service, index) => {
+                  const Icon = iconMap[service.icon];
+                  return (
+                    <Reveal key={service.slug} delay={index * 70}>
+                      <a
+                        href={`#${service.slug}`}
+                        onClick={(event) => {
+                          event.preventDefault();
+                          setActiveService(service.slug);
+                          // Route anchor scrolling through Lenis so it does not
+                          // fight the smooth-scroll engine with a native scroll.
+                          scrollTo(`#${service.slug}`, -96);
+                        }}
+                        className="group flex h-full flex-col justify-between gap-8 bg-obsidian p-6 transition-colors duration-500 hover:bg-coal"
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <Icon className="h-5 w-5 text-gold/70" />
+                          <span className="tabular text-[0.55rem] text-ivory/25">
+                            {service.number}
+                          </span>
+                        </div>
+                        <div>
+                          <h2 className="font-display text-[1.35rem] leading-tight text-ivory transition-colors group-hover:text-gold">
+                            {l(service.title)}
+                          </h2>
+                          <p className="mt-2 text-[0.68rem] leading-relaxed text-ivory/35">
+                            {l(service.tagline)}
+                          </p>
+                        </div>
+                      </a>
+                    </Reveal>
+                  );
+                })}
           </div>
         </div>
       </section>
@@ -168,6 +175,11 @@ export function ServicesPage() {
                 {l(service.title)}
               </button>
             ))}
+            {resolvedServices.length === 0 ? (
+              <span className="px-2 text-[0.58rem] text-ink/35">
+                {locale === "ar" ? "جارٍ تحميل الخدمات…" : "Loading services…"}
+              </span>
+            ) : null}
           </div>
 
           {visibleServices.map((service, index) => {

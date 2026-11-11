@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { Field, TextInput } from "@/components/ui/Field";
-import { Logo } from "@/components/ui/Logo";
 
 type ResetMode = "request" | "reset";
 type Step = "email" | "code" | "password" | "done";
@@ -176,14 +175,17 @@ export function PasswordReset({ mode }: PasswordResetProps) {
   };
 
   return (
-    <section className="relative min-h-[100svh] overflow-hidden bg-ivory pt-20 text-ink">
+    <section className="relative min-h-[100svh] overflow-hidden bg-obsidian pt-20 text-ivory">
       <div className="grid min-h-[calc(100svh-5rem)] lg:grid-cols-[0.95fr_1.05fr]">
-        <aside className="relative hidden overflow-hidden bg-obsidian p-10 text-ivory lg:flex lg:flex-col lg:justify-between xl:p-14">
+        <aside className="relative hidden overflow-hidden border-e border-white/10 bg-coal/60 p-10 text-ivory lg:flex lg:flex-col lg:justify-between xl:p-14">
           <div className="blueprint-grid pointer-events-none absolute inset-0 opacity-40" />
           <div className="pointer-events-none absolute -start-20 bottom-10 h-[420px] w-[420px] rounded-full bg-gold/[0.07] blur-[130px]" />
 
           <div className="relative">
-            <Logo />
+            <span className="inline-flex items-center gap-2 border border-white/10 px-3 py-1.5 text-[0.52rem] uppercase tracking-[0.18em] text-gold/80">
+              <ShieldCheck className="h-3 w-3" />
+              {locale === "ar" ? "استعادة آمنة" : "Secure recovery"}
+            </span>
           </div>
 
           <div className="relative my-16">
@@ -216,48 +218,50 @@ export function PasswordReset({ mode }: PasswordResetProps) {
         </aside>
 
         <div className="relative flex items-center justify-center px-5 py-16 sm:px-10 lg:py-20">
-          <div className="pointer-events-none absolute inset-0 opacity-[0.35] [background-image:linear-gradient(rgba(10,11,14,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(10,11,14,0.03)_1px,transparent_1px)] [background-size:80px_80px]" />
+          <div className="blueprint-grid pointer-events-none absolute inset-0 opacity-[0.18]" />
           <div className="relative w-full max-w-md">
             <div className="flex items-center justify-between gap-4 lg:hidden">
-              <Logo tone="dark" />
+              <span className="text-[0.55rem] uppercase tracking-[0.18em] text-gold/70">
+                {t.portal.eyebrow}
+              </span>
               <Link
                 href="/"
-                className="inline-flex items-center gap-1.5 text-[0.58rem] uppercase tracking-[0.16em] text-ink/40"
+                className="inline-flex items-center gap-1.5 text-[0.58rem] uppercase tracking-[0.16em] text-ivory/40 transition-colors hover:text-gold"
               >
                 <BackIcon className="h-3 w-3" />
                 {t.auth.backHome}
               </Link>
             </div>
 
-            <span className="mt-10 block text-[0.58rem] uppercase tracking-[0.2em] text-gold-dark lg:mt-0">
+            <span className="mt-10 block text-[0.58rem] uppercase tracking-[0.2em] text-gold lg:mt-0">
               {t.portal.eyebrow}
             </span>
 
             {step === "code" ? (
               <div className="mt-6">
-                <span className="flex h-14 w-14 items-center justify-center rounded-full border border-gold-dark/30 bg-gold-dark/[0.06] text-gold-dark">
+                <span className="flex h-14 w-14 items-center justify-center rounded-full border border-gold/30 bg-gold/[0.06] text-gold">
                   <MailCheck className="h-6 w-6" />
                 </span>
-                <h1 className="display-title mt-7 text-[clamp(2.2rem,4vw,3.4rem)] text-ink">
+                <h1 className="display-title mt-7 text-[clamp(2.2rem,4vw,3.4rem)] text-ivory">
                   {t.auth.otpSentTitle}
                 </h1>
-                <p className="mt-4 text-[0.85rem] leading-relaxed text-ink/55">
+                <p className="mt-4 text-[0.85rem] leading-relaxed text-ivory/55">
                   {t.auth.otpSentText}{" "}
-                  <span className="font-semibold text-ink" dir="ltr">
+                  <span className="font-semibold text-ivory" dir="ltr">
                     {email}
                   </span>
                   .
                 </p>
 
                 {devCode ? (
-                  <div className="mt-5 border border-gold-dark/25 bg-gold-dark/[0.05] px-4 py-3">
-                    <p className="text-[0.6rem] uppercase tracking-[0.16em] text-gold-dark">
+                  <div className="mt-5 border border-gold/25 bg-gold/[0.05] px-4 py-3">
+                    <p className="text-[0.6rem] uppercase tracking-[0.16em] text-gold">
                       {t.auth.otpDevHint}
                     </p>
                     <button
                       type="button"
                       onClick={() => setCode(devCode)}
-                      className="mt-1 font-mono text-lg tracking-[0.35em] text-ink transition-colors hover:text-gold-dark"
+                      className="mt-1 font-mono text-lg tracking-[0.35em] text-ivory transition-colors hover:text-gold"
                     >
                       {devCode}
                     </button>
@@ -265,10 +269,10 @@ export function PasswordReset({ mode }: PasswordResetProps) {
                 ) : null}
 
                 <form onSubmit={submitCode} className="mt-7 flex flex-col gap-5" noValidate>
-                  <Field label={t.auth.otpCode} htmlFor="reset-code" required tone="light">
+                  <Field label={t.auth.otpCode} htmlFor="reset-code" required >
                     <TextInput
                       id="reset-code"
-                      tone="light"
+
                       type="text"
                       inputMode="numeric"
                       pattern="[0-9]*"
@@ -286,7 +290,7 @@ export function PasswordReset({ mode }: PasswordResetProps) {
 
                   {error ? (
                     <p
-                      className="border border-[#a3543f]/25 bg-[#a3543f]/5 px-4 py-3 text-[0.72rem] text-[#a3543f]"
+                      className="border border-red-400/25 bg-red-400/[0.06] px-4 py-3 text-[0.72rem] text-red-300"
                       role="alert"
                     >
                       {error}
@@ -296,7 +300,7 @@ export function PasswordReset({ mode }: PasswordResetProps) {
                   <button
                     type="submit"
                     disabled={loading || code.length !== 6}
-                    className="btn-shine inline-flex h-12 items-center justify-center gap-2.5 bg-ink px-6 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-ivory transition-colors hover:bg-gold-dark disabled:cursor-not-allowed disabled:opacity-60"
+                    className="btn-shine inline-flex h-12 items-center justify-center gap-2.5 bg-gold px-6 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-obsidian transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {loading ? (
                       <>
@@ -317,7 +321,7 @@ export function PasswordReset({ mode }: PasswordResetProps) {
                     type="button"
                     onClick={resend}
                     disabled={resending}
-                    className="inline-flex items-center gap-2 text-ink/45 transition-colors hover:text-gold-dark disabled:opacity-50"
+                    className="inline-flex items-center gap-2 text-ivory/45 transition-colors hover:text-gold disabled:opacity-50"
                   >
                     {resending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
                     {resending ? t.auth.otpResending : t.auth.otpResend}
@@ -330,7 +334,7 @@ export function PasswordReset({ mode }: PasswordResetProps) {
                       setDevCode("");
                       setCode("");
                     }}
-                    className="text-ink/45 transition-colors hover:text-gold-dark"
+                    className="text-ivory/45 transition-colors hover:text-gold"
                   >
                     {t.auth.otpChangeEmail}
                   </button>
@@ -338,18 +342,18 @@ export function PasswordReset({ mode }: PasswordResetProps) {
               </div>
             ) : step === "done" ? (
               <div className="mt-6">
-                <span className="flex h-14 w-14 items-center justify-center rounded-full border border-gold-dark/30 bg-gold-dark/[0.06] text-gold-dark">
+                <span className="flex h-14 w-14 items-center justify-center rounded-full border border-gold/30 bg-gold/[0.06] text-gold">
                   <ShieldCheck className="h-6 w-6" />
                 </span>
-                <h1 className="display-title mt-7 text-[clamp(2.2rem,4vw,3.4rem)] text-ink">
+                <h1 className="display-title mt-7 text-[clamp(2.2rem,4vw,3.4rem)] text-ivory">
                   {t.auth.resetSuccessTitle}
                 </h1>
-                <p className="mt-4 text-[0.85rem] leading-relaxed text-ink/55">
+                <p className="mt-4 text-[0.85rem] leading-relaxed text-ivory/55">
                   {t.auth.resetSuccessText}
                 </p>
                 <Link
                   href="/sign-in"
-                  className="btn-shine mt-8 inline-flex h-12 w-full items-center justify-center gap-2.5 bg-ink px-6 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-ivory transition-colors hover:bg-gold-dark"
+                  className="btn-shine mt-8 inline-flex h-12 w-full items-center justify-center gap-2.5 bg-gold px-6 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-obsidian transition-colors hover:bg-gold-light"
                 >
                   {t.auth.backToSignIn}
                   <ForwardIcon className="h-3.5 w-3.5" />
@@ -357,19 +361,19 @@ export function PasswordReset({ mode }: PasswordResetProps) {
               </div>
             ) : (
               <>
-                <h1 className="display-title mt-4 text-[clamp(2.2rem,4vw,3.4rem)] text-ink">
+                <h1 className="display-title mt-4 text-[clamp(2.2rem,4vw,3.4rem)] text-ivory">
                   {step === "email" ? t.auth.forgotTitle : t.auth.resetTitle}
                 </h1>
-                <p className="mt-3 text-[0.82rem] leading-relaxed text-ink/50">
+                <p className="mt-3 text-[0.82rem] leading-relaxed text-ivory/50">
                   {step === "email" ? t.auth.forgotSubtitle : t.auth.resetSubtitle}
                 </p>
 
                 {step === "email" ? (
                   <form onSubmit={submitEmail} className="mt-8 flex flex-col gap-5" noValidate>
-                    <Field label={t.auth.email} htmlFor="reset-email" required tone="light">
+                    <Field label={t.auth.email} htmlFor="reset-email" required >
                       <TextInput
                         id="reset-email"
-                        tone="light"
+
                         type="email"
                         dir="ltr"
                         className="text-start"
@@ -382,7 +386,7 @@ export function PasswordReset({ mode }: PasswordResetProps) {
 
                     {error ? (
                       <p
-                        className="border border-[#a3543f]/25 bg-[#a3543f]/5 px-4 py-3 text-[0.72rem] text-[#a3543f]"
+                        className="border border-red-400/25 bg-red-400/[0.06] px-4 py-3 text-[0.72rem] text-red-300"
                         role="alert"
                       >
                         {error}
@@ -392,7 +396,7 @@ export function PasswordReset({ mode }: PasswordResetProps) {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="btn-shine mt-1 inline-flex h-12 items-center justify-center gap-2.5 bg-ink px-6 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-ivory transition-colors hover:bg-gold-dark disabled:cursor-wait disabled:opacity-70"
+                      className="btn-shine mt-1 inline-flex h-12 items-center justify-center gap-2.5 bg-gold px-6 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-obsidian transition-colors hover:bg-gold-light disabled:cursor-wait disabled:opacity-70"
                     >
                       {loading ? (
                         <>
@@ -417,13 +421,13 @@ export function PasswordReset({ mode }: PasswordResetProps) {
                       label={t.auth.newPassword}
                       htmlFor="reset-password"
                       required
-                      tone="light"
+
                       hint={t.auth.shortPassword}
                     >
                       <div className="relative">
                         <TextInput
                           id="reset-password"
-                          tone="light"
+
                           type={showPassword ? "text" : "password"}
                           dir="ltr"
                           className="pe-11 text-start"
@@ -435,7 +439,7 @@ export function PasswordReset({ mode }: PasswordResetProps) {
                           type="button"
                           onClick={() => setShowPassword((current) => !current)}
                           aria-label={showPassword ? "Hide password" : "Show password"}
-                          className="absolute end-3 top-1/2 -translate-y-1/2 text-ink/35 transition-colors hover:text-ink/70"
+                          className="absolute end-3 top-1/2 -translate-y-1/2 text-ivory/35 transition-colors hover:text-ivory/70"
                         >
                           {showPassword ? (
                             <EyeOff className="h-4 w-4" />
@@ -450,11 +454,11 @@ export function PasswordReset({ mode }: PasswordResetProps) {
                       label={t.auth.confirmPassword}
                       htmlFor="reset-confirm"
                       required
-                      tone="light"
+
                     >
                       <TextInput
                         id="reset-confirm"
-                        tone="light"
+
                         type={showPassword ? "text" : "password"}
                         dir="ltr"
                         className="text-start"
@@ -466,7 +470,7 @@ export function PasswordReset({ mode }: PasswordResetProps) {
 
                     {error ? (
                       <div
-                        className="border border-[#a3543f]/25 bg-[#a3543f]/5 px-4 py-3 text-[0.72rem] text-[#a3543f]"
+                        className="border border-red-400/25 bg-red-400/[0.06] px-4 py-3 text-[0.72rem] text-red-300"
                         role="alert"
                       >
                         <p>{error}</p>
@@ -485,7 +489,7 @@ export function PasswordReset({ mode }: PasswordResetProps) {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="btn-shine mt-1 inline-flex h-12 items-center justify-center gap-2.5 bg-ink px-6 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-ivory transition-colors hover:bg-gold-dark disabled:cursor-wait disabled:opacity-70"
+                      className="btn-shine mt-1 inline-flex h-12 items-center justify-center gap-2.5 bg-gold px-6 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-obsidian transition-colors hover:bg-gold-light disabled:cursor-wait disabled:opacity-70"
                     >
                       {loading ? (
                         <>
@@ -504,7 +508,7 @@ export function PasswordReset({ mode }: PasswordResetProps) {
 
                 <Link
                   href="/sign-in"
-                  className="mt-6 flex items-center justify-center gap-2 text-[0.72rem] text-ink/45 transition-colors hover:text-gold-dark"
+                  className="mt-6 flex items-center justify-center gap-2 text-[0.72rem] text-ivory/45 transition-colors hover:text-gold"
                 >
                   <BackIcon className="h-3.5 w-3.5" />
                   {t.auth.backToSignIn}
@@ -513,11 +517,11 @@ export function PasswordReset({ mode }: PasswordResetProps) {
             )}
 
             {step === "email" ? (
-              <p className="mt-4 text-center text-[0.72rem] text-ink/45">
+              <p className="mt-4 text-center text-[0.72rem] text-ivory/45">
                 {t.auth.haveAccount}{" "}
                 <Link
                   href="/sign-in"
-                  className="font-semibold text-gold-dark underline-offset-4 hover:underline"
+                  className="font-semibold text-gold underline-offset-4 hover:underline"
                 >
                   {t.auth.signInLink}
                 </Link>

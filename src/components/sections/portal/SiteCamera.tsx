@@ -66,7 +66,7 @@ export function SiteCamera({
   ];
 
   return (
-    <div className="overflow-hidden border border-ink/10 bg-obsidian text-ivory">
+    <div className="overflow-hidden border border-white/10 bg-obsidian text-ivory">
       <div className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-3">
         <div className="flex items-center gap-2">
           <span className="relative flex h-2 w-2">

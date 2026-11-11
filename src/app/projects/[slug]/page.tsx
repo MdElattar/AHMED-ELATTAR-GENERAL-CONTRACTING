@@ -1,21 +1,35 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { ProjectDetailLive } from "@/components/sections/projects/ProjectDetail";
-import { getProject, projects } from "@/data/projects";
+import type { Project } from "@/data/projects";
+import { getProjectBySlug } from "@/lib/db";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
 };
 
-export function generateStaticParams() {
-  return projects.map((project) => ({ slug: project.slug }));
+// The route reads the live project from MongoDB at request time. Opting out of
+// instant-navigation validation keeps the shell from being prerendered with a
+// client-only pathname while the database record is resolved.
+export const instant = false;
+
+async function loadProject(slug: string) {
+  await connection();
+  try {
+    const record = await getProjectBySlug(slug);
+    if (!record || record.slug.startsWith("__")) return null;
+    return record.payload as unknown as Project;
+  } catch (error) {
+    console.error("[project] failed to load", slug, error);
+    return null;
+  }
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const project = getProject(slug);
+  const project = await loadProject(slug);
+
   if (!project) {
-    // Unknown slugs may still resolve from the client-side admin workspace,
-    // so keep the soft fallback but never let crawlers index it.
     return { robots: { index: false, follow: false } };
   }
 
@@ -34,7 +48,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function ProjectPage({ params }: PageProps) {
   const { slug } = await params;
-  const project = getProject(slug);
+  const project = await loadProject(slug);
 
-  return <ProjectDetailLive slug={slug} initialProject={project ?? null} />;
+  return <ProjectDetailLive slug={slug} initialProject={project} />;
 }

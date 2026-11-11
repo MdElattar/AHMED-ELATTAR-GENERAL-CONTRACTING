@@ -7,7 +7,6 @@ import { useI18n } from "@/components/providers/I18nProvider";
 import { useWorkspace } from "@/components/providers/WorkspaceProvider";
 import { Reveal } from "@/components/ui/Reveal";
 import { SectionHeading } from "@/components/ui/SectionHeading";
-import { services } from "@/data/services";
 import { projectPhotos } from "@/data/media";
 import { cn } from "@/lib/utils";
 
@@ -62,70 +61,77 @@ export function ServicesGrid() {
         </div>
 
         <div className="mt-14 grid gap-px overflow-hidden border border-ink/10 bg-ink/10 md:grid-cols-2">
-          {services.map((service, index) => {
-            const override = content.serviceOverrides[service.slug];
-            const title = override?.title ?? service.title;
-            const description = override?.description ?? service.description;
-            const tagline = override?.tagline ?? service.tagline;
-            const photo = projectPhotos[service.art];
-            return (
-              <Reveal key={service.slug} delay={(index % 2) * 80}>
-                <Link
-                  href={`/services#${service.slug}`}
-                  className="group relative flex h-full flex-col bg-ivory p-7 transition-colors duration-500 hover:bg-paper sm:p-9"
-                >
-                  <div className="flex items-start justify-between gap-5">
-                    <span className="font-display text-4xl leading-none text-gold-dark/45">
-                      {service.number}
-                    </span>
-                    <span className="flex h-10 w-10 items-center justify-center rounded-full border border-ink/12 text-ink/35 transition-colors group-hover:border-gold-dark/50 group-hover:text-gold-dark">
-                      <ArrowUpRight
-                        className={cn(
-                          "h-4 w-4 transition-transform duration-500 group-hover:-translate-y-0.5 group-hover:translate-x-0.5",
-                          isRTL && "-scale-x-100",
-                        )}
-                      />
-                    </span>
-                  </div>
+          {content.services.length === 0
+            ? Array.from({ length: 4 }).map((_, index) => (
+                <div
+                  key={`service-skeleton-${index}`}
+                  className="h-80 animate-pulse bg-ivory p-7 sm:p-9"
+                />
+              ))
+            : content.services.map((service, index) => {
+                const override = content.serviceOverrides[service.slug];
+                const title = override?.title ?? service.title;
+                const description = override?.description ?? service.description;
+                const tagline = override?.tagline ?? service.tagline;
+                const photo = projectPhotos[service.art];
+                return (
+                  <Reveal key={service.slug} delay={(index % 2) * 80}>
+                    <Link
+                      href={`/services#${service.slug}`}
+                      className="group relative flex h-full flex-col bg-ivory p-7 transition-colors duration-500 hover:bg-paper sm:p-9"
+                    >
+                      <div className="flex items-start justify-between gap-5">
+                        <span className="font-display text-4xl leading-none text-gold-dark/45">
+                          {service.number}
+                        </span>
+                        <span className="flex h-10 w-10 items-center justify-center rounded-full border border-ink/12 text-ink/35 transition-colors group-hover:border-gold-dark/50 group-hover:text-gold-dark">
+                          <ArrowUpRight
+                            className={cn(
+                              "h-4 w-4 transition-transform duration-500 group-hover:-translate-y-0.5 group-hover:translate-x-0.5",
+                              isRTL && "-scale-x-100",
+                            )}
+                          />
+                        </span>
+                      </div>
 
-                  <div className="relative mt-7 aspect-[16/8] overflow-hidden border border-ink/10 bg-sand/40">
-                    <Image
-                      src={photo.src}
-                      alt={photo.alt}
-                      fill
-                      sizes="(max-width: 768px) 100vw, 50vw"
-                      className="object-cover photo-grade transition-transform duration-[1.4s] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.05]"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-ink/70 via-ink/10 to-transparent" />
-                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_74%_18%,rgb(var(--atmo-glow)/0.16),transparent_55%)]" />
-                    <span className="absolute inset-x-4 bottom-3 text-[0.55rem] uppercase tracking-[0.18em] text-ivory/80">
-                      {l(tagline)}
-                    </span>
-                    <span className="absolute -top-px start-0 h-px w-14 bg-gold-dark/70" />
-                  </div>
+                      <div className="relative mt-7 aspect-[16/8] overflow-hidden border border-ink/10 bg-sand/40">
+                        <Image
+                          src={photo.src}
+                          alt={photo.alt}
+                          fill
+                          sizes="(max-width: 768px) 100vw, 50vw"
+                          className="object-cover photo-grade transition-transform duration-[1.4s] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.05]"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-ink/70 via-ink/10 to-transparent" />
+                        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_74%_18%,rgb(var(--atmo-glow)/0.16),transparent_55%)]" />
+                        <span className="absolute inset-x-4 bottom-3 text-[0.55rem] uppercase tracking-[0.18em] text-ivory/80">
+                          {l(tagline)}
+                        </span>
+                        <span className="absolute -top-px start-0 h-px w-14 bg-gold-dark/70" />
+                      </div>
 
-                  <h3 className="mt-6 font-display text-[clamp(1.7rem,3vw,2.5rem)] leading-tight text-ink">
-                    {l(title)}
-                  </h3>
-                  <p className="mt-3 max-w-xl text-[0.82rem] leading-[1.85] text-ink/55">
-                    {l(description)}
-                  </p>
+                      <h3 className="mt-6 font-display text-[clamp(1.7rem,3vw,2.5rem)] leading-tight text-ink">
+                        {l(title)}
+                      </h3>
+                      <p className="mt-3 max-w-xl text-[0.82rem] leading-[1.85] text-ink/55">
+                        {l(description)}
+                      </p>
 
-                  <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 border-t border-ink/10 pt-5">
-                    {service.capabilities.slice(0, 3).map((capability) => (
-                      <span
-                        key={capability.en}
-                        className="inline-flex items-center gap-1.5 text-[0.62rem] text-ink/45"
-                      >
-                        <Check className="h-3 w-3 text-gold-dark" />
-                        {l(capability)}
-                      </span>
-                    ))}
-                  </div>
-                </Link>
-              </Reveal>
-            );
-          })}
+                      <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 border-t border-ink/10 pt-5">
+                        {service.capabilities.slice(0, 3).map((capability) => (
+                          <span
+                            key={capability.en}
+                            className="inline-flex items-center gap-1.5 text-[0.62rem] text-ink/45"
+                          >
+                            <Check className="h-3 w-3 text-gold-dark" />
+                            {l(capability)}
+                          </span>
+                        ))}
+                      </div>
+                    </Link>
+                  </Reveal>
+                );
+              })}
         </div>
       </div>
     </section>

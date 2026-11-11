@@ -311,6 +311,12 @@ export function AdminProjectEditor({
       updatedAt: new Date().toISOString().slice(0, 10),
       gallery,
       milestones: project?.milestones ?? [],
+      documents: project?.documents ?? [],
+      invoices: project?.invoices ?? [],
+      phase: project?.phase ?? L("التخطيط", "Planning"),
+      manager: project?.manager ?? L("فريق المشاريع", "Project team"),
+      lastUpdate: project?.lastUpdate ?? L("", ""),
+      nextMilestone: project?.nextMilestone ?? L("", ""),
     };
     onSave(next);
   };

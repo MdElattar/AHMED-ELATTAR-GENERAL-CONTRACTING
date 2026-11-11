@@ -1,7 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { cookies } from "next/headers";
-import { getUserByEmail, recordAudit, updateUser } from "@/lib/db";
-import { hashPassword } from "@/lib/auth/password";
+import { timingSafeEqual } from "node:crypto";
+import { clearUserResetToken, getUserByEmail, recordAudit, updateUser } from "@/lib/db";
+import { hashPassword, hashResetToken } from "@/lib/auth/password";
 import { RESET_COOKIE, verifyResetToken } from "@/lib/auth/token";
 import { clearResetCookie } from "@/lib/auth/cookie";
 import { authUnavailable, isAuthConfigError } from "@/lib/auth/response";
@@ -13,6 +14,13 @@ import {
 } from "@/lib/security/http";
 import { rateLimit } from "@/lib/security/rate-limit";
 import { resetPasswordSchema } from "@/lib/security/schemas";
+
+function sameHash(a: string, b: string) {
+  const left = Buffer.from(a, "hex");
+  const right = Buffer.from(b, "hex");
+  if (left.length !== right.length || left.length === 0) return false;
+  return timingSafeEqual(left, right);
+}
 
 export async function POST(request: NextRequest) {
   if (!isSameOrigin(request)) {
@@ -31,10 +39,10 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const token = (await cookies()).get(RESET_COOKIE)?.value;
-  const email = token ? await verifyResetToken(token) : null;
+  const cookie = (await cookies()).get(RESET_COOKIE)?.value;
+  const reset = cookie ? await verifyResetToken(cookie) : null;
 
-  if (!email) {
+  if (!reset) {
     return NextResponse.json(
       { error: "invalid_token" },
       { status: 401, headers: NO_STORE_HEADERS },
@@ -51,8 +59,13 @@ export async function POST(request: NextRequest) {
 
   const { password } = parsed.data;
 
-  const user = await getUserByEmail(email);
-  if (!user) {
+  const user = await getUserByEmail(reset.email);
+  if (
+    !user?.resetTokenHash ||
+    !user.resetTokenExpiry ||
+    Date.parse(user.resetTokenExpiry) <= Date.now() ||
+    !sameHash(hashResetToken(reset.token), user.resetTokenHash)
+  ) {
     return NextResponse.json(
       { error: "invalid_token" },
       { status: 401, headers: NO_STORE_HEADERS },
@@ -61,10 +74,11 @@ export async function POST(request: NextRequest) {
 
   try {
     const passwordHash = await hashPassword(password);
-    await updateUser(email, { passwordHash });
+    await updateUser(reset.email, { passwordHash });
+    await clearUserResetToken(reset.email);
 
     await recordAudit({
-      actor: email,
+      actor: reset.email,
       action: "password.reset.completed",
       entity: "user",
       entityId: user.id,

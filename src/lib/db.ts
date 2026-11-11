@@ -1,5 +1,11 @@
 import type { Model, Mongoose } from "mongoose";
 import { hashPassword } from "@/lib/auth/password";
+import {
+  CONTENT_SLUG,
+  buildSeedContent,
+  buildSeedProjects,
+  seedAdminIdentity,
+} from "@/lib/db-seed";
 
 export type UserRole = "client" | "admin";
 
@@ -12,6 +18,8 @@ export type StoredUser = {
   passwordHash: string;
   role: UserRole;
   accountId: string;
+  resetTokenHash?: string;
+  resetTokenExpiry?: string;
   createdAt: string;
   updatedAt: string;
   lastLoginAt?: string;
@@ -37,6 +45,7 @@ export type StoredInquiry = {
   company?: string;
   service?: string;
   projectType?: string;
+  budget?: string;
   location?: string;
   message?: string;
   files?: { name: string; size: number; type: string }[];
@@ -110,6 +119,8 @@ type MongoModels = {
 const globalForDb = globalThis as unknown as {
   __alattarMemoryDb?: MemoryDb;
   __alattarMongoose?: MongooseCache;
+  __alattarForceMemory?: boolean;
+  __alattarMongoProbe?: Promise<boolean>;
 };
 
 function memory(): MemoryDb {
@@ -134,14 +145,50 @@ function now() {
   return new Date().toISOString();
 }
 
-export function databaseMode(): "mongodb" | "memory" {
-  return process.env.MONGODB_URI?.trim() ? "mongodb" : "memory";
+function hasMongoUri() {
+  return Boolean(process.env.MONGODB_URI?.trim());
 }
 
-export function demoAccountsAllowed() {
-  if (process.env.ALLOW_DEMO_ACCOUNTS === "true") return true;
-  if (process.env.ALLOW_DEMO_ACCOUNTS === "false") return false;
-  return process.env.NODE_ENV !== "production";
+/** Synchronous diagnostics only; data access awaits `activeMode()`. */
+export function databaseMode(): "mongodb" | "memory" {
+  if (!hasMongoUri() || globalForDb.__alattarForceMemory) return "memory";
+  return "mongodb";
+}
+
+/**
+ * Resolves the active backend. In development an unreachable MongoDB instance
+ * falls back to the seeded in-process repository so the product remains
+ * runnable; in production it fails closed instead of silently losing writes.
+ */
+async function activeMode(): Promise<"mongodb" | "memory"> {
+  if (!hasMongoUri()) {
+    if (process.env.NODE_ENV === "production" && process.env.ALLOW_IN_MEMORY_DB !== "true") {
+      throw new Error("MONGODB_URI is required in production.");
+    }
+    return "memory";
+  }
+
+  if (globalForDb.__alattarForceMemory) return "memory";
+
+  if (!globalForDb.__alattarMongoProbe) {
+    globalForDb.__alattarMongoProbe = connectMongo()
+      .then(() => true)
+      .catch((error: unknown) => {
+        if (process.env.NODE_ENV !== "production") {
+          globalForDb.__alattarForceMemory = true;
+          console.warn(
+            "[db] MongoDB is unreachable — using the in-process development repository. " +
+              "Start MongoDB or set a reachable MONGODB_URI to persist data.",
+            error instanceof Error ? error.message : error,
+          );
+          return false;
+        }
+        throw error;
+      });
+  }
+
+  const ok = await globalForDb.__alattarMongoProbe;
+  return ok ? "mongodb" : "memory";
 }
 
 async function seedMemory() {
@@ -149,33 +196,15 @@ async function seedMemory() {
   if (db.seed) return db.seed;
 
   db.seed = (async () => {
-    if (demoAccountsAllowed() && !db.users.has("demo@alattar.sa")) {
-      const passwordHash = await hashPassword("demo1234");
+    const identity = seedAdminIdentity();
+    if (identity && !db.users.has(identity.email)) {
+      const passwordHash = await hashPassword(identity.password);
       const timestamp = now();
-      db.users.set("demo@alattar.sa", {
-        id: "demo-admin",
-        email: "demo@alattar.sa",
-        name: "Mohammed Alabdullah",
-        company: "Riyadh Development Holding",
-        phone: "+966 55 214 8890",
-        passwordHash,
-        role: "admin",
-        accountId: "ALT-2048",
-        createdAt: timestamp,
-        updatedAt: timestamp,
-      });
-    }
-
-    const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
-    const adminPassword = process.env.ADMIN_PASSWORD;
-    if (adminEmail && adminPassword && adminPassword.length >= 8 && !db.users.has(adminEmail)) {
-      const passwordHash = await hashPassword(adminPassword);
-      const timestamp = now();
-      db.users.set(adminEmail, {
+      db.users.set(identity.email, {
         id: id(),
-        email: adminEmail,
-        name: process.env.ADMIN_NAME?.trim() || "Platform Administrator",
-        company: "Ahmed Elattar General Contracting",
+        email: identity.email,
+        name: identity.name,
+        company: identity.company,
         passwordHash,
         role: "admin",
         accountId: `ALT-${String(Math.floor(Math.random() * 9000) + 1000)}`,
@@ -183,9 +212,37 @@ async function seedMemory() {
         updatedAt: timestamp,
       });
     }
+
+    if (db.projects.size === 0) {
+      const timestamp = now();
+      for (const payload of buildSeedProjects()) {
+        const slug = String(payload.slug);
+        db.projects.set(slug, {
+          id: id(),
+          slug,
+          featured: payload.featured === true,
+          payload: { ...payload, slug },
+          createdAt: timestamp,
+          updatedAt: timestamp,
+        });
+      }
+      db.projects.set(CONTENT_SLUG, {
+        id: id(),
+        slug: CONTENT_SLUG,
+        featured: false,
+        payload: buildSeedContent(),
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      });
+    }
   })();
 
-  return db.seed;
+  try {
+    await db.seed;
+  } catch (error) {
+    db.seed = null;
+    throw error;
+  }
 }
 
 async function connectMongo(): Promise<Mongoose> {
@@ -203,7 +260,7 @@ async function connectMongo(): Promise<Mongoose> {
       if (!uri) throw new Error("MONGODB_URI is not configured");
       return mongoose.connect(uri, {
         maxPoolSize: 10,
-        serverSelectionTimeoutMS: 8000,
+        serverSelectionTimeoutMS: process.env.NODE_ENV === "production" ? 8000 : 2500,
       });
     })();
   }
@@ -238,6 +295,8 @@ async function mongoModels(): Promise<MongoModels> {
         passwordHash: { type: String, required: true },
         role: { type: String, enum: ["client", "admin"], default: "client", index: true },
         accountId: { type: String, required: true, index: true },
+        resetTokenHash: { type: String, index: true },
+        resetTokenExpiry: { type: Date },
         lastLoginAt: { type: Date },
       },
       { timestamps: true, versionKey: false },
@@ -246,6 +305,12 @@ async function mongoModels(): Promise<MongoModels> {
     const projectSchema = new mongoose.Schema(
       {
         slug: { type: String, required: true, unique: true, index: true, lowercase: true },
+        title: { type: mongoose.Schema.Types.Mixed },
+        category: { type: String, index: true },
+        location: { type: mongoose.Schema.Types.Mixed, index: true },
+        images: [{ type: String }],
+        specs: { type: mongoose.Schema.Types.Mixed },
+        status: { type: String, index: true },
         featured: { type: Boolean, default: false, index: true },
         payload: { type: mongoose.Schema.Types.Mixed, required: true },
       },
@@ -261,6 +326,7 @@ async function mongoModels(): Promise<MongoModels> {
         company: String,
         service: String,
         projectType: String,
+        budget: String,
         location: String,
         message: String,
         files: [{ name: String, size: Number, type: String }],
@@ -351,6 +417,8 @@ function mapUser(doc: LeanDoc): StoredUser {
     passwordHash: str(doc.passwordHash),
     role: doc.role === "admin" ? "admin" : "client",
     accountId: str(doc.accountId),
+    ...(str(doc.resetTokenHash) ? { resetTokenHash: str(doc.resetTokenHash) } : {}),
+    ...(doc.resetTokenExpiry ? { resetTokenExpiry: iso(doc.resetTokenExpiry) } : {}),
     createdAt: iso(doc.createdAt),
     updatedAt: iso(doc.updatedAt),
     ...(doc.lastLoginAt ? { lastLoginAt: iso(doc.lastLoginAt) } : {}),
@@ -392,6 +460,7 @@ function mapInquiry(doc: LeanDoc): StoredInquiry {
     ...(str(doc.company) ? { company: str(doc.company) } : {}),
     ...(str(doc.service) ? { service: str(doc.service) } : {}),
     ...(str(doc.projectType) ? { projectType: str(doc.projectType) } : {}),
+    ...(str(doc.budget) ? { budget: str(doc.budget) } : {}),
     ...(str(doc.location) ? { location: str(doc.location) } : {}),
     ...(str(doc.message) ? { message: str(doc.message) } : {}),
     ...(files?.length ? { files } : {}),
@@ -436,7 +505,7 @@ export async function getUserByEmail(email: string): Promise<StoredUser | null> 
   const normalized = email.trim().toLowerCase();
   if (!normalized) return null;
 
-  if (databaseMode() === "memory") {
+  if ((await activeMode()) === "memory") {
     await seedMemory();
     return memory().users.get(normalized) ?? null;
   }
@@ -447,7 +516,7 @@ export async function getUserByEmail(email: string): Promise<StoredUser | null> 
 }
 
 export async function getUserById(userId: string): Promise<StoredUser | null> {
-  if (databaseMode() === "memory") {
+  if ((await activeMode()) === "memory") {
     await seedMemory();
     for (const user of memory().users.values()) {
       if (user.id === userId) return user;
@@ -475,7 +544,7 @@ export async function createUser(input: NewUser): Promise<StoredUser> {
     updatedAt: timestamp,
   };
 
-  if (databaseMode() === "memory") {
+  if ((await activeMode()) === "memory") {
     await seedMemory();
     const db = memory();
     if (db.users.has(user.email)) throw new Error("email_taken");
@@ -499,11 +568,23 @@ export async function createUser(input: NewUser): Promise<StoredUser> {
 
 export async function updateUser(
   email: string,
-  patch: Partial<Pick<StoredUser, "name" | "company" | "phone" | "passwordHash" | "lastLoginAt">>,
+  patch: Partial<
+    Pick<
+      StoredUser,
+      | "name"
+      | "company"
+      | "phone"
+      | "passwordHash"
+      | "lastLoginAt"
+      | "role"
+      | "resetTokenHash"
+      | "resetTokenExpiry"
+    >
+  >,
 ): Promise<StoredUser | null> {
   const normalized = email.trim().toLowerCase();
 
-  if (databaseMode() === "memory") {
+  if ((await activeMode()) === "memory") {
     await seedMemory();
     const db = memory();
     const existing = db.users.get(normalized);
@@ -526,10 +607,40 @@ export async function updateUser(
   return doc ? mapUser(doc) : null;
 }
 
+export async function setUserResetToken(
+  email: string,
+  tokenHash: string,
+  expiresAt: string,
+): Promise<StoredUser | null> {
+  return updateUser(email, { resetTokenHash: tokenHash, resetTokenExpiry: expiresAt });
+}
+
+export async function clearUserResetToken(email: string): Promise<void> {
+  const normalized = email.trim().toLowerCase();
+
+  if ((await activeMode()) === "memory") {
+    const db = memory();
+    const existing = db.users.get(normalized);
+    if (!existing) return;
+    const next = { ...existing, updatedAt: now() };
+    delete next.resetTokenHash;
+    delete next.resetTokenExpiry;
+    db.users.set(normalized, next);
+    return;
+  }
+
+  const { User } = await mongoModels();
+  await User.updateOne(
+    { email: normalized },
+    { $unset: { resetTokenHash: "", resetTokenExpiry: "" }, $set: { updatedAt: new Date() } },
+  );
+}
+
 /* --------------------------------------------------------------- projects */
 
 export async function listProjects(): Promise<StoredProject[]> {
-  if (databaseMode() === "memory") {
+  if ((await activeMode()) === "memory") {
+    await seedMemory();
     return [...memory().projects.values()].sort((a, b) =>
       a.createdAt < b.createdAt ? 1 : -1,
     );
@@ -540,13 +651,46 @@ export async function listProjects(): Promise<StoredProject[]> {
   return docs.map(mapProject);
 }
 
+export async function getProjectBySlug(slug: string): Promise<StoredProject | null> {
+  const normalized = slug.trim().toLowerCase();
+  if (!normalized) return null;
+
+  if ((await activeMode()) === "memory") {
+    await seedMemory();
+    return memory().projects.get(normalized) ?? null;
+  }
+
+  const { Project } = await mongoModels();
+  const doc = (await Project.findOne({ slug: normalized }).lean()) as LeanDoc | null;
+  return doc ? mapProject(doc) : null;
+}
+
+/** Persisted site content (hero copy, services catalogue, overrides). */
+export async function getSiteContent(): Promise<Record<string, unknown> | null> {
+  const record = await getProjectBySlug(CONTENT_SLUG);
+  return record?.payload ?? null;
+}
+
+export async function listServiceSlugs(): Promise<string[]> {
+  const content = await getSiteContent();
+  const services = Array.isArray(content?.services) ? content.services : [];
+  return services
+    .map((service) =>
+      typeof service === "object" && service !== null && "slug" in service
+        ? String((service as { slug?: unknown }).slug ?? "")
+        : "",
+    )
+    .filter(Boolean);
+}
+
 export async function upsertProject(
   slug: string,
   payload: Record<string, unknown>,
 ): Promise<StoredProject> {
   const normalized = slug.trim().toLowerCase();
 
-  if (databaseMode() === "memory") {
+  if ((await activeMode()) === "memory") {
+    await seedMemory();
     const db = memory();
     const existing = db.projects.get(normalized);
     const timestamp = now();
@@ -563,11 +707,31 @@ export async function upsertProject(
   }
 
   const { Project } = await mongoModels();
+  const images = Array.isArray(payload.gallery)
+    ? payload.gallery.filter((item): item is string => typeof item === "string")
+    : typeof payload.art === "string"
+      ? [payload.art]
+      : [];
+  const specs = {
+    area: payload.area ?? null,
+    value: payload.value ?? null,
+    year: payload.year ?? null,
+    client: payload.client ?? null,
+    scope: payload.scope ?? [],
+    highlights: payload.highlights ?? [],
+  };
+
   const doc = (await Project.findOneAndUpdate(
     { slug: normalized },
     {
       $set: {
         slug: normalized,
+        title: payload.title ?? null,
+        category: typeof payload.category === "string" ? payload.category : undefined,
+        location: payload.location ?? null,
+        images,
+        specs,
+        status: typeof payload.status === "string" ? payload.status : undefined,
         featured: payload.featured === true,
         payload: { ...payload, slug: normalized },
         updatedAt: new Date(),
@@ -582,7 +746,8 @@ export async function upsertProject(
 export async function deleteProject(slug: string): Promise<boolean> {
   const normalized = slug.trim().toLowerCase();
 
-  if (databaseMode() === "memory") {
+  if ((await activeMode()) === "memory") {
+    await seedMemory();
     return memory().projects.delete(normalized);
   }
 
@@ -603,7 +768,7 @@ export async function createInquiry(input: NewInquiry): Promise<StoredInquiry> {
     updatedAt: timestamp,
   };
 
-  if (databaseMode() === "memory") {
+  if ((await activeMode()) === "memory") {
     memory().inquiries.set(inquiry.id, inquiry);
     return inquiry;
   }
@@ -615,7 +780,7 @@ export async function createInquiry(input: NewInquiry): Promise<StoredInquiry> {
 }
 
 export async function listInquiries(limit = 100): Promise<StoredInquiry[]> {
-  if (databaseMode() === "memory") {
+  if ((await activeMode()) === "memory") {
     return [...memory().inquiries.values()]
       .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
       .slice(0, limit);
@@ -630,7 +795,7 @@ export async function updateInquiry(
   inquiryId: string,
   patch: Partial<Pick<StoredInquiry, "status">>,
 ): Promise<StoredInquiry | null> {
-  if (databaseMode() === "memory") {
+  if ((await activeMode()) === "memory") {
     const db = memory();
     const existing = db.inquiries.get(inquiryId);
     if (!existing) return null;
@@ -655,7 +820,7 @@ export async function recordAudit(
 ): Promise<void> {
   const audit: StoredAudit = { ...entry, id: id(), createdAt: now() };
 
-  if (databaseMode() === "memory") {
+  if ((await activeMode()) === "memory") {
     memory().audit.unshift(audit);
     if (memory().audit.length > 1000) memory().audit.length = 1000;
     return;
@@ -670,7 +835,7 @@ export async function recordAudit(
 }
 
 export async function listAudit(limit = 50): Promise<StoredAudit[]> {
-  if (databaseMode() === "memory") {
+  if ((await activeMode()) === "memory") {
     return memory().audit.slice(0, limit);
   }
 
@@ -697,7 +862,7 @@ export async function saveOtp(input: {
     createdAt: timestamp,
   };
 
-  if (databaseMode() === "memory") {
+  if ((await activeMode()) === "memory") {
     memory().otps.set(email, otp);
     return otp;
   }
@@ -712,7 +877,7 @@ export async function saveOtp(input: {
 export async function getOtp(email: string): Promise<StoredOtp | null> {
   const normalized = email.trim().toLowerCase();
 
-  if (databaseMode() === "memory") {
+  if ((await activeMode()) === "memory") {
     return memory().otps.get(normalized) ?? null;
   }
 
@@ -726,7 +891,7 @@ export async function getOtp(email: string): Promise<StoredOtp | null> {
 export async function incrementOtpAttempts(email: string): Promise<void> {
   const normalized = email.trim().toLowerCase();
 
-  if (databaseMode() === "memory") {
+  if ((await activeMode()) === "memory") {
     const otp = memory().otps.get(normalized);
     if (otp) memory().otps.set(normalized, { ...otp, attempts: otp.attempts + 1 });
     return;
@@ -739,7 +904,7 @@ export async function incrementOtpAttempts(email: string): Promise<void> {
 export async function consumeOtp(email: string): Promise<void> {
   const normalized = email.trim().toLowerCase();
 
-  if (databaseMode() === "memory") {
+  if ((await activeMode()) === "memory") {
     const otp = memory().otps.get(normalized);
     if (otp) {
       memory().otps.set(normalized, { ...otp, consumedAt: now(), attempts: otp.attempts + 1 });
@@ -752,4 +917,55 @@ export async function consumeOtp(email: string): Promise<void> {
     { email: normalized },
     { $set: { consumedAt: new Date() }, $inc: { attempts: 1 } },
   );
+}
+
+/* ------------------------------------------------------------------- seed */
+
+/**
+ * Idempotent MongoDB bootstrap used by `npm run seed`: creates (or promotes)
+ * the super-admin from ADMIN_EMAIL/ADMIN_PASSWORD and upserts the canonical
+ * projects + site content. Requires a reachable MongoDB.
+ */
+export async function seedDatabase(): Promise<{
+  admin: string;
+  projects: number;
+  content: boolean;
+}> {
+  if (!hasMongoUri()) {
+    throw new Error("MONGODB_URI is required to seed MongoDB.");
+  }
+
+  // Force a real connection before any repository call so an unreachable
+  // instance fails loudly instead of silently seeding the dev repository.
+  await mongoModels();
+
+  const identity = seedAdminIdentity();
+  if (!identity) {
+    throw new Error(
+      "ADMIN_EMAIL and ADMIN_PASSWORD (at least 8 characters) are required to seed the super-admin.",
+    );
+  }
+
+  let admin = await getUserByEmail(identity.email);
+  if (!admin) {
+    admin = await createUser({
+      email: identity.email,
+      name: identity.name,
+      company: identity.company,
+      passwordHash: await hashPassword(identity.password),
+      role: "admin",
+      accountId: `ALT-${String(Math.floor(Math.random() * 9000) + 1000)}`,
+    });
+  } else if (admin.role !== "admin") {
+    admin = (await updateUser(identity.email, { role: "admin" })) ?? admin;
+  }
+
+  let projects = 0;
+  for (const payload of buildSeedProjects()) {
+    await upsertProject(String(payload.slug), payload);
+    projects += 1;
+  }
+  await upsertProject(CONTENT_SLUG, buildSeedContent());
+
+  return { admin: identity.email, projects, content: true };
 }

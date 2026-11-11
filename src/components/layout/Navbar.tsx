@@ -34,7 +34,6 @@ export function Navbar() {
   const { t, toggleLocale, isRTL, locale } = useI18n();
   const { user } = useAuth();
   const { stop, start } = useSmoothScroll();
-  const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -43,20 +42,6 @@ export function Navbar() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setOpen(false);
   }, [pathname]);
-
-  useEffect(() => {
-    let frame = 0;
-    const onScroll = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => setScrolled(window.scrollY > 16));
-    };
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      cancelAnimationFrame(frame);
-      window.removeEventListener("scroll", onScroll);
-    };
-  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -85,14 +70,7 @@ export function Navbar() {
 
   return (
     <>
-      <header
-        className={cn(
-          "fixed inset-x-0 top-0 z-[90] border-b transition-[background-color,border-color,box-shadow] duration-500",
-          scrolled || open
-            ? "border-white/10 bg-obsidian/88 shadow-[0_24px_70px_-36px_rgba(0,0,0,0.95)] backdrop-blur-2xl"
-            : "border-white/[0.06] bg-obsidian/55 backdrop-blur-xl",
-        )}
-      >
+      <header className="fixed inset-x-0 top-0 z-[90] border-b border-white/10 bg-black/90 backdrop-blur-md">
         <div className="container-lux flex h-[76px] items-center justify-between gap-4">
           <Link
             href="/"

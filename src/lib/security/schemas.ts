@@ -102,6 +102,12 @@ export const contactSchema = z.object({
     .max(120)
     .transform((value) => cleanString(value, 120))
     .refine((value) => value.length > 0, { message: "invalid_project_type" }),
+  budget: z
+    .string()
+    .max(80)
+    .optional()
+    .default("")
+    .transform((value) => cleanString(value, 80)),
   location: z
     .string()
     .max(160)

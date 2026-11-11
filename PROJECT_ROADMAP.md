@@ -18,7 +18,8 @@
 
 ## 2. Header & Navigation Absolute Overhaul
 
-- [x] Replace conditional white/ivory navbar with one deep-obsidian frosted-glass bar
+- [x] Replace conditional white/ivory navbar with one pitch-black frosted-glass bar
+  (`bg-black/90 backdrop-blur-md border-b border-white/10`, fixed to viewport top)
 - [x] Remove the floating "GOLD" atmosphere tag from the header
 - [x] Remove duplicated branding and the giant repeated footer wordmark
 - [x] Clean primary links: Home · Projects · Services · About · Contact
@@ -47,8 +48,12 @@
 
 - [x] Add Mongoose models: `User`, `Project`, `Inquiry`, `AuditLog`, `OtpToken`
 - [x] Add a resilient repository layer (MongoDB in production, seeded memory in dev)
-- [x] Hash passwords with Node `scrypt` + per-user salt
-- [x] Persist sign-up users and verify credentials on sign-in
+- [x] Hash passwords with bcrypt (cost 12) + SHA-256 prehash for long passphrases
+- [x] Keep legacy scrypt hashes verifiable and rehash them transparently on sign-in
+- [x] Persist sign-up users and verify credentials on sign-in against MongoDB
+- [x] Remove every demo-account bypass and hardcoded portal credential
+- [x] Add `/api/auth/password` with current-password verification and bcrypt update
+- [x] Add a bootstrap seed script (`npm run seed`) for the first super-admin
 - [x] Rate-limit auth, OTP, contact, and newsletter endpoints
 - [x] Implement 6-digit email OTP "Forgot Password" request endpoint
 - [x] Implement OTP verification with hashed codes, expiry, and attempt limits
@@ -72,6 +77,10 @@
 - [x] Live audit trail surface
 - [x] Portal project tracking, document vault, and message channel
 - [x] Portal financials, invoices, and profile settings
+- [x] Convert `/sign-in`, `/sign-up`, forgot/reset password, and every portal page to the obsidian luxury system
+- [x] Remove all white content blocks, demo badges, and demo-only copy from auth + portal
+- [x] Read services, portfolio, project detail, portal projects, financials, and settings from the live database
+- [x] Project detail page and sitemap resolve projects at request time instead of static mock imports
 
 ## 6. AI Estimator & Portfolio
 
@@ -98,12 +107,14 @@
 | Variable | Required | Purpose |
 | :--- | :---: | :--- |
 | `AUTH_SECRET` | ✅ | HMAC signing for sessions + reset tokens (32+ chars) |
-| `MONGODB_URI` | recommended | MongoDB Atlas connection string |
+| `JWT_SECRET` | optional | Accepted alias for `AUTH_SECRET` |
+| `MONGODB_URI` | production | MongoDB Atlas / self-hosted connection string |
 | `RESEND_API_KEY` | production | OTP email delivery |
 | `OTP_FROM_EMAIL` | production | Verified sender, e.g. `no-reply@alattar.sa` |
-| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | production | First admin bootstrap (hashed on seed) |
-| `ALLOW_DEMO_ACCOUNTS` | optional | Enables `demo@alattar.sa` in non-production |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | production | First admin bootstrap (hashed by `npm run seed`) |
+| `ALLOW_IN_MEMORY_DB` | optional | Explicitly allows the seeded memory repository in production |
 
-> Without `MONGODB_URI`, the platform runs on a seeded in-memory repository so
-> local demos and CI builds remain fully functional. Production deployments
-> must set `MONGODB_URI` and `RESEND_API_KEY`.
+> Production fails closed without `MONGODB_URI` unless `ALLOW_IN_MEMORY_DB=true`.
+> Development falls back to the seeded in-process repository when MongoDB is
+> unreachable. Run `npm run seed` once against the production database to
+> bootstrap the first super-admin and the project/service catalogue.

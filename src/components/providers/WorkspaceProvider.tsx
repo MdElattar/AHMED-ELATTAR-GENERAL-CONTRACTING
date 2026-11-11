@@ -11,14 +11,18 @@ import {
   type ReactNode,
 } from "react";
 import { L, type Localized } from "@/lib/dictionary";
-import {
-  projects as seedProjects,
-  type ArtVariant,
-  type Project,
-  type ProjectCategory,
-  type ProjectStatus,
+import type {
+  ArtVariant,
+  Project,
+  ProjectCategory,
+  ProjectStatus,
 } from "@/data/projects";
-import { portalProjects, type PortalMilestone } from "@/data/portal";
+import type {
+  PortalDocument,
+  PortalInvoice,
+  PortalMilestone,
+} from "@/data/portal";
+import type { Service } from "@/data/services";
 import { isSafeInternalPath } from "@/lib/security/validation";
 
 export type WorkspaceProject = Project & {
@@ -30,6 +34,12 @@ export type WorkspaceProject = Project & {
   updatedAt: string;
   gallery: ArtVariant[];
   milestones: PortalMilestone[];
+  documents: PortalDocument[];
+  invoices: PortalInvoice[];
+  phase: Localized;
+  manager: Localized;
+  lastUpdate: Localized;
+  nextMilestone: Localized;
 };
 
 export type ServiceOverride = {
@@ -47,6 +57,7 @@ export type SiteContent = {
   promoTitle: Localized;
   promoText: Localized;
   promoHref: string;
+  services: Service[];
   serviceOverrides: Record<string, ServiceOverride>;
 };
 
@@ -76,47 +87,7 @@ type WorkspaceContextValue = WorkspaceState & {
   resetWorkspace: () => void;
 };
 
-const STORAGE_KEY = "ahmed-elattar-workspace-v1";
-
-const progressBySlug: Record<string, number> = {
-  "advanced-industries": 68,
-  "al-hijr-hotel": 42,
-  "marina-quarter": 12,
-};
-
-const financialsBySlug: Record<string, { budget: number; spent: number; profit: number }> = {
-  "aurora-tower": { budget: 1400, spent: 1260, profit: 238 },
-  "palm-oasis": { budget: 780, spent: 760, profit: 132 },
-  "wadi-crossing": { budget: 920, spent: 905, profit: 148 },
-  "advanced-industries": { budget: 1100, spent: 748, profit: 176 },
-  "al-hijr-hotel": { budget: 650, spent: 273, profit: 104 },
-  "riyadh-central-interchange": { budget: 540, spent: 531, profit: 82 },
-  "marina-quarter": { budget: 1800, spent: 216, profit: 324 },
-  "solar-energy-park": { budget: 2300, spent: 1564, profit: 391 },
-};
-
-const defaultProjects: WorkspaceProject[] = seedProjects.map((project, index) => {
-  const progress =
-    progressBySlug[project.slug] ??
-    (project.status === "completed" ? 100 : project.status === "upcoming" ? 12 : 54);
-  const financials =
-    financialsBySlug[project.slug] ?? {
-      budget: 500 + index * 120,
-      spent: (500 + index * 120) * (progress / 100),
-      profit: (500 + index * 120) * 0.18,
-    };
-  return {
-    ...project,
-    progress,
-    budget: financials.budget,
-    spent: Math.round(financials.spent),
-    profit: Math.round(financials.profit),
-    contractValue: financials.budget,
-    updatedAt: "2026-10-12",
-    gallery: [project.art],
-    milestones: portalProjects.find((item) => item.slug === project.slug)?.milestones ?? [],
-  };
-});
+const STORAGE_KEY = "ahmed-elattar-workspace-v2";
 
 const defaultContent: SiteContent = {
   heroEyebrow: L(
@@ -136,37 +107,14 @@ const defaultContent: SiteContent = {
     "Our development team is ready to review your scope and share an initial approach within 24 hours.",
   ),
   promoHref: "/contact",
+  services: [],
   serviceOverrides: {},
 };
 
-const defaultMessages: PortalMessage[] = [
-  {
-    id: "msg-1",
-    projectSlug: "advanced-industries",
-    author: "manager",
-    text: "تم اعتماد عينات الهياكل الفولاذية للوحدة ٧. سنبدأ التركيب صباح الأحد.",
-    at: "2026-10-11T09:40:00.000Z",
-  },
-  {
-    id: "msg-2",
-    projectSlug: "advanced-industries",
-    author: "client",
-    text: "شكراً. هل يمكن إضافة تقرير الجودة الأسبوعي إلى المستندات؟",
-    at: "2026-10-11T10:12:00.000Z",
-  },
-  {
-    id: "msg-3",
-    projectSlug: "advanced-industries",
-    author: "manager",
-    text: "تم رفع التقرير، وسيتم تحديث لوحة التقدم اليوم.",
-    at: "2026-10-11T10:26:00.000Z",
-  },
-];
-
 const initialState: WorkspaceState = {
-  projects: defaultProjects,
+  projects: [],
   content: defaultContent,
-  messages: defaultMessages,
+  messages: [],
 };
 
 const categories: ProjectCategory[] = [
@@ -186,7 +134,15 @@ const artVariants: ArtVariant[] = [
   "marina",
   "solar",
 ];
-const seedSlugs = new Set(seedProjects.map((project) => project.slug));
+const serviceIcons: Service["icon"][] = ["building", "truck", "compass", "pen"];
+const serviceArts: Service["art"][] = ["tower", "bridge", "villa", "industrial"];
+const documentTypes: PortalDocument["type"][] = [
+  "contract",
+  "drawing",
+  "report",
+  "certificate",
+];
+const invoiceStatuses: PortalInvoice["status"][] = ["paid", "due", "pending"];
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -198,6 +154,10 @@ function finiteNumber(value: unknown, fallback: number) {
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
+}
+
+function safeText(value: unknown, max: number) {
+  return typeof value === "string" ? value.trim().slice(0, max) : "";
 }
 
 function normalizeLocalized(value: unknown, fallback: Localized): Localized {
@@ -212,23 +172,124 @@ function normalizeLocalized(value: unknown, fallback: Localized): Localized {
   };
 }
 
-function normalizeMilestones(value: unknown, fallback: PortalMilestone[]): PortalMilestone[] {
-  if (!Array.isArray(value)) return fallback;
+function normalizeMilestones(value: unknown): PortalMilestone[] {
+  if (!Array.isArray(value)) return [];
 
-  const statuses: PortalMilestone["status"][] = ["complete", "current", "upcoming"];
+  const milestoneStatuses: PortalMilestone["status"][] = ["complete", "current", "upcoming"];
 
   return value
     .map((item) => {
       if (!isRecord(item)) return null;
       const title = normalizeLocalized(item.title, L("", ""));
       const date = normalizeLocalized(item.date, L("", ""));
-      const status = statuses.includes(item.status as PortalMilestone["status"])
+      const status = milestoneStatuses.includes(item.status as PortalMilestone["status"])
         ? (item.status as PortalMilestone["status"])
         : "upcoming";
       if (!title.ar && !title.en) return null;
       return { title, date, status };
     })
     .filter((item): item is PortalMilestone => item !== null)
+    .slice(0, 30);
+}
+
+function normalizeDocuments(value: unknown): PortalDocument[] {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .map((item) => {
+      if (!isRecord(item)) return null;
+      const name = normalizeLocalized(item.name, L("", ""));
+      if (!name.ar && !name.en) return null;
+      const type = documentTypes.includes(item.type as PortalDocument["type"])
+        ? (item.type as PortalDocument["type"])
+        : "report";
+      return {
+        name,
+        type,
+        date: safeText(item.date, 40),
+        size: safeText(item.size, 40),
+      };
+    })
+    .filter((item): item is PortalDocument => item !== null)
+    .slice(0, 60);
+}
+
+function normalizeInvoices(value: unknown): PortalInvoice[] {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .map((item) => {
+      if (!isRecord(item)) return null;
+      const number = safeText(item.number, 60);
+      const title = normalizeLocalized(item.title, L("", ""));
+      const amount = safeText(item.amount, 60);
+      if (!number || !amount || (!title.ar && !title.en)) return null;
+      const status = invoiceStatuses.includes(item.status as PortalInvoice["status"])
+        ? (item.status as PortalInvoice["status"])
+        : "pending";
+      return { number, title, amount, date: safeText(item.date, 40), status };
+    })
+    .filter((item): item is PortalInvoice => item !== null)
+    .slice(0, 60);
+}
+
+function normalizeService(value: unknown): Service | null {
+  if (!isRecord(value)) return null;
+
+  const slug = safeText(value.slug, 80).toLowerCase();
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) return null;
+
+  const title = normalizeLocalized(value.title, L("", ""));
+  if (!title.ar && !title.en) return null;
+
+  const capabilities = Array.isArray(value.capabilities)
+    ? value.capabilities
+        .map((item) => normalizeLocalized(item, L("", "")))
+        .filter((item) => item.ar || item.en)
+        .slice(0, 20)
+    : [];
+
+  const stats = Array.isArray(value.stats)
+    ? value.stats
+        .map((item) => {
+          if (!isRecord(item)) return null;
+          const metric = safeText(item.value, 40);
+          const label = normalizeLocalized(item.label, L("", ""));
+          if (!metric || (!label.ar && !label.en)) return null;
+          return { value: metric, label };
+        })
+        .filter((item): item is { value: string; label: Localized } => item !== null)
+        .slice(0, 12)
+    : [];
+
+  return {
+    slug,
+    number: safeText(value.number, 8),
+    title,
+    tagline: normalizeLocalized(value.tagline, L("", "")),
+    description: normalizeLocalized(value.description, L("", "")),
+    detail: normalizeLocalized(value.detail, L("", "")),
+    capabilities,
+    stats,
+    icon: serviceIcons.includes(value.icon as Service["icon"])
+      ? (value.icon as Service["icon"])
+      : "building",
+    art: serviceArts.includes(value.art as Service["art"])
+      ? (value.art as Service["art"])
+      : "tower",
+  };
+}
+
+function normalizeServices(value: unknown): Service[] {
+  if (!Array.isArray(value)) return [];
+  const seen = new Set<string>();
+  return value
+    .map(normalizeService)
+    .filter((service): service is Service => {
+      if (!service || seen.has(service.slug)) return false;
+      seen.add(service.slug);
+      return true;
+    })
     .slice(0, 30);
 }
 
@@ -239,18 +300,15 @@ function normalizeProject(value: unknown): WorkspaceProject | null {
     typeof value.slug === "string" ? value.slug.trim().toLowerCase().slice(0, 80) : "";
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) return null;
 
-  const seed = seedProjects.find((project) => project.slug === slug);
-  const seedWorkspace = defaultProjects.find((project) => project.slug === slug);
-  const titleFallback = seed?.title ?? L(slug, slug);
   const category = categories.includes(value.category as ProjectCategory)
     ? (value.category as ProjectCategory)
-    : (seed?.category ?? "commercial");
+    : "commercial";
   const status = statuses.includes(value.status as ProjectStatus)
     ? (value.status as ProjectStatus)
-    : (seed?.status ?? "ongoing");
+    : "ongoing";
   const art = artVariants.includes(value.art as ArtVariant)
     ? (value.art as ArtVariant)
-    : (seed?.art ?? "tower");
+    : "tower";
   const gallery = Array.isArray(value.gallery)
     ? value.gallery
         .filter((item): item is ArtVariant => artVariants.includes(item as ArtVariant))
@@ -262,7 +320,7 @@ function normalizeProject(value: unknown): WorkspaceProject | null {
         .map((item) => normalizeLocalized(item, L("", "")))
         .filter((item) => item.ar || item.en)
         .slice(0, 20)
-    : (seed?.scope ?? []);
+    : [];
 
   const highlights = Array.isArray(value.highlights)
     ? value.highlights
@@ -275,56 +333,53 @@ function normalizeProject(value: unknown): WorkspaceProject | null {
         })
         .filter((item): item is { value: string; label: Localized } => item !== null)
         .slice(0, 12)
-    : (seed?.highlights ?? []);
+    : [];
 
-  const fallbackProgress =
-    seedWorkspace?.progress ??
-    (status === "completed" ? 100 : status === "upcoming" ? 12 : 54);
-  const budget = Math.max(0, finiteNumber(value.budget, seedWorkspace?.budget ?? 500));
-  const spent = clamp(finiteNumber(value.spent, seedWorkspace?.spent ?? 0), 0, budget);
-  const profit = Math.max(0, finiteNumber(value.profit, seedWorkspace?.profit ?? 0));
-  const contractValue = Math.max(
-    0,
-    finiteNumber(value.contractValue, seedWorkspace?.contractValue ?? budget),
-  );
+  const fallbackProgress = status === "completed" ? 100 : status === "upcoming" ? 12 : 54;
+  const budget = Math.max(0, finiteNumber(value.budget, 0));
+  const spent = clamp(finiteNumber(value.spent, 0), 0, budget || Number.MAX_SAFE_INTEGER);
+  const profit = Math.max(0, finiteNumber(value.profit, 0));
+  const contractValue = Math.max(0, finiteNumber(value.contractValue, budget));
   const updatedAt =
     typeof value.updatedAt === "string" && !Number.isNaN(Date.parse(value.updatedAt))
       ? value.updatedAt.slice(0, 40)
-      : (seedWorkspace?.updatedAt ?? "2026-10-12");
+      : "";
 
   return {
     slug,
-    title: normalizeLocalized(value.title, titleFallback),
+    title: normalizeLocalized(value.title, L(slug, slug)),
     category,
     status,
-    location: normalizeLocalized(value.location, seed?.location ?? L("", "")),
-    year: typeof value.year === "string" ? value.year.trim().slice(0, 20) : (seed?.year ?? ""),
-    client: normalizeLocalized(value.client, seed?.client ?? L("", "")),
-    area: normalizeLocalized(value.area, seed?.area ?? L("", "")),
-    value: normalizeLocalized(value.value, seed?.value ?? L("", "")),
-    summary: normalizeLocalized(value.summary, seed?.summary ?? L("", "")),
-    description: normalizeLocalized(value.description, seed?.description ?? L("", "")),
+    location: normalizeLocalized(value.location, L("", "")),
+    year: typeof value.year === "string" ? value.year.trim().slice(0, 20) : "",
+    client: normalizeLocalized(value.client, L("", "")),
+    area: normalizeLocalized(value.area, L("", "")),
+    value: normalizeLocalized(value.value, L("", "")),
+    summary: normalizeLocalized(value.summary, L("", "")),
+    description: normalizeLocalized(value.description, L("", "")),
     scope,
     highlights,
     art,
-    ...(typeof value.featured === "boolean"
-      ? { featured: value.featured }
-      : seed?.featured
-        ? { featured: true }
-        : {}),
+    ...(value.featured === true ? { featured: true } : {}),
     progress: clamp(finiteNumber(value.progress, fallbackProgress), 0, 100),
     budget,
     spent,
     profit,
     contractValue,
     updatedAt,
-    gallery: gallery.length ? gallery : (seedWorkspace?.gallery ?? [art]),
-    milestones: normalizeMilestones(value.milestones, seedWorkspace?.milestones ?? []),
+    gallery: gallery.length ? gallery : [art],
+    milestones: normalizeMilestones(value.milestones),
+    documents: normalizeDocuments(value.documents),
+    invoices: normalizeInvoices(value.invoices),
+    phase: normalizeLocalized(value.phase, L("", "")),
+    manager: normalizeLocalized(value.manager, L("", "")),
+    lastUpdate: normalizeLocalized(value.lastUpdate, L("", "")),
+    nextMilestone: normalizeLocalized(value.nextMilestone, L("", "")),
   };
 }
 
 function normalizeMessages(value: unknown): PortalMessage[] {
-  if (!Array.isArray(value)) return defaultMessages;
+  if (!Array.isArray(value)) return [];
 
   return value
     .slice(-200)
@@ -334,7 +389,8 @@ function normalizeMessages(value: unknown): PortalMessage[] {
       const projectSlug =
         typeof item.projectSlug === "string" ? item.projectSlug.trim().slice(0, 80) : "";
       const text = typeof item.text === "string" ? item.text.trim().slice(0, 4000) : "";
-      const author = item.author === "manager" ? "manager" : item.author === "client" ? "client" : null;
+      const author =
+        item.author === "manager" ? "manager" : item.author === "client" ? "client" : null;
       const at =
         typeof item.at === "string" && !Number.isNaN(Date.parse(item.at))
           ? item.at.slice(0, 40)
@@ -392,6 +448,7 @@ function normalizeContent(value: unknown): SiteContent {
       typeof stored.promoHref === "string" && isSafeInternalPath(stored.promoHref)
         ? stored.promoHref.slice(0, 300)
         : defaultContent.promoHref,
+    services: normalizeServices(stored.services),
     serviceOverrides,
   };
 }
@@ -409,7 +466,7 @@ function loadState(): WorkspaceState {
           .slice(0, 100)
           .map(normalizeProject)
           .filter((project): project is WorkspaceProject => project !== null)
-      : defaultProjects;
+      : [];
 
     return {
       projects,
@@ -427,7 +484,6 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<WorkspaceState>(initialState);
   const [ready, setReady] = useState(false);
   const stateRef = useRef<WorkspaceState>(initialState);
-  const replyTimers = useRef<Set<number>>(new Set());
 
   const commit = useCallback((next: WorkspaceState) => {
     stateRef.current = next;
@@ -443,9 +499,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     setReady(true);
   }, []);
 
-  // Pull the persisted site content and any admin-created project overrides.
-  // The static seed remains the source of truth for untouched records, so the
-  // public site is complete even before the first database write.
+  // Hydrate from the database. The server is authoritative: no static mock
+  // records are merged into the live feed.
   useEffect(() => {
     if (!ready) return;
     let cancelled = false;
@@ -473,34 +528,19 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
           next = { ...next, content: normalizeContent(contentData.content) };
         }
 
-        if (Array.isArray(projectsData.projects)) {
-          const serverProjects = projectsData.projects
-            .map(normalizeProject)
-            .filter((project): project is WorkspaceProject => project !== null);
-
-          // The database is authoritative for portfolio records. Once the feed
-          // answers successfully, drop any locally cached project that no longer
-          // exists on the server (deleted from another browser), while keeping
-          // the static seed as the always-available baseline.
-          const serverSlugs = new Set(serverProjects.map((project) => project.slug));
-          const retained = projectsResponse.ok
-            ? next.projects.filter(
-                (project) => seedSlugs.has(project.slug) || serverSlugs.has(project.slug),
-              )
-            : next.projects;
-
-          const merged = [...retained];
-          for (const normalized of serverProjects) {
-            const index = merged.findIndex((item) => item.slug === normalized.slug);
-            if (index >= 0) merged[index] = { ...merged[index], ...normalized };
-            else merged.unshift(normalized);
-          }
-          next = { ...next, projects: merged.slice(0, 100) };
+        if (projectsResponse.ok && Array.isArray(projectsData.projects)) {
+          next = {
+            ...next,
+            projects: projectsData.projects
+              .map(normalizeProject)
+              .filter((project): project is WorkspaceProject => project !== null)
+              .slice(0, 100),
+          };
         }
 
         if (!cancelled) commit(next);
       } catch {
-        // Offline or database-unavailable: the seeded state stays usable.
+        // Offline: retain the last cached snapshot until the feed recovers.
       }
     };
 
@@ -535,14 +575,6 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ content }),
     }).catch(() => undefined);
-  }, []);
-
-  useEffect(() => {
-    const timers = replyTimers.current;
-    return () => {
-      for (const timer of timers) window.clearTimeout(timer);
-      timers.clear();
-    };
   }, []);
 
   useEffect(() => {
@@ -654,26 +686,6 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
           { id, projectSlug, author: "client" as const, text: trimmed, at: now },
         ].slice(-200),
       });
-
-      const timer = window.setTimeout(() => {
-        replyTimers.current.delete(timer);
-        const latest = stateRef.current;
-        commit({
-          ...latest,
-          messages: [
-            ...latest.messages,
-            {
-              id: `${id}-reply`,
-              projectSlug,
-              author: "manager" as const,
-              text: "تم استلام رسالتك. سأراجع الملف وأعود إليك خلال ساعات العمل.",
-              at: new Date().toISOString(),
-            },
-          ].slice(-200),
-        });
-      }, 1400);
-
-      replyTimers.current.add(timer);
     },
     [commit],
   );
@@ -702,8 +714,6 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   );
 
   const resetWorkspace = useCallback(() => {
-    for (const timer of replyTimers.current) window.clearTimeout(timer);
-    replyTimers.current.clear();
     commit(initialState);
   }, [commit]);
 
@@ -745,6 +755,6 @@ export function useWorkspace() {
   return context;
 }
 
-export function projectProgress(slug: string) {
-  return portalProjects.find((project) => project.slug === slug)?.progress ?? 0;
+export function projectProgress(projects: WorkspaceProject[], slug: string) {
+  return projects.find((project) => project.slug === slug)?.progress ?? 0;
 }

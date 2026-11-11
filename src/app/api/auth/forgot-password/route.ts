@@ -1,5 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { demoAccountsAllowed, getUserByEmail, recordAudit, saveOtp } from "@/lib/db";
+import {
+  clearUserResetToken,
+  getUserByEmail,
+  recordAudit,
+  saveOtp,
+} from "@/lib/db";
 import { OTP_TTL_SECONDS, generateOtp, hashOtp } from "@/lib/auth/otp";
 import { sendOtpEmail } from "@/lib/email";
 import { authUnavailable, isAuthConfigError } from "@/lib/auth/response";
@@ -55,6 +60,7 @@ export async function POST(request: NextRequest) {
       codeHash: hashOtp(email, code),
       expiresAt,
     });
+    await clearUserResetToken(email);
 
     const delivery = await sendOtpEmail({
       to: email,
@@ -86,9 +92,9 @@ export async function POST(request: NextRequest) {
       {
         ok: true,
         expiresIn: OTP_TTL_SECONDS,
-        // Local development has no inbox wired up. Expose the code only when
-        // demo accounts are explicitly allowed so production never leaks it.
-        ...(delivery.provider === "development" && demoAccountsAllowed()
+        // Local development has no inbox wired up. Expose the code only in
+        // non-production so a real deployment can never leak it.
+        ...(delivery.provider === "development" && process.env.NODE_ENV !== "production"
           ? { devCode: code }
           : {}),
       },

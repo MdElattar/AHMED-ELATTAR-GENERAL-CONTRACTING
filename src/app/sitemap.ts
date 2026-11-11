@@ -1,9 +1,12 @@
 import type { MetadataRoute } from "next";
-import { projects } from "@/data/projects";
+import { connection } from "next/server";
+import { listProjects } from "@/lib/db";
 
 const baseUrl = "https://alattar.sa";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  await connection();
+
   const now = new Date();
 
   const staticRoutes = [
@@ -16,6 +19,21 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: "/terms", priority: 0.3 },
   ];
 
+  let projectRoutes: MetadataRoute.Sitemap = [];
+  try {
+    const projects = (await listProjects()).filter(
+      (project) => !project.slug.startsWith("__"),
+    );
+    projectRoutes = projects.map((project) => ({
+      url: `${baseUrl}/projects/${project.slug}`,
+      lastModified: project.updatedAt,
+      changeFrequency: "yearly" as const,
+      priority: 0.7,
+    }));
+  } catch (error) {
+    console.error("[sitemap] failed to load projects", error);
+  }
+
   return [
     ...staticRoutes.map((route) => ({
       url: `${baseUrl}${route.path}`,
@@ -23,11 +41,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly" as const,
       priority: route.priority,
     })),
-    ...projects.map((project) => ({
-      url: `${baseUrl}/projects/${project.slug}`,
-      lastModified: now,
-      changeFrequency: "yearly" as const,
-      priority: 0.7,
-    })),
+    ...projectRoutes,
   ];
 }

@@ -1,5 +1,6 @@
-export const SESSION_COOKIE = "alattar_session";
+import { randomBytes } from "node:crypto";
 
+export const SESSION_COOKIE = "alattar_session";
 export const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7;
 export const REMEMBERED_SESSION_TTL_SECONDS = 60 * 60 * 24 * 30;
 
@@ -30,7 +31,7 @@ export type PublicSessionUser = {
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
-const FALLBACK_SECRET = "alattar-demo-session-secret-change-in-production";
+const DEV_FALLBACK_SECRET = "alattar-local-development-session-secret";
 
 /**
  * Thrown when the deployment is missing a valid signing secret. Route handlers
@@ -47,17 +48,18 @@ export class AuthConfigError extends Error {
 let keyPromise: Promise<CryptoKey> | null = null;
 
 function sessionSecret() {
-  const value = process.env.AUTH_SECRET?.trim();
+  // AUTH_SECRET is the canonical name; JWT_SECRET is accepted for deployments
+  // that already provision the conventional variable.
+  const value = (process.env.AUTH_SECRET ?? process.env.JWT_SECRET)?.trim();
   if (value && value.length >= 32) return value;
 
-  // Fail closed in production rather than signing sessions with a public,
-  // well-known fallback. Development keeps a predictable local secret so the
-  // demo remains runnable without extra setup.
+  // Development keeps a predictable local secret so the app remains runnable
+  // without extra setup. Never use this path in production.
   if (process.env.NODE_ENV === "production") {
     throw new AuthConfigError();
   }
 
-  return FALLBACK_SECRET;
+  return DEV_FALLBACK_SECRET;
 }
 
 function getKey() {
@@ -216,6 +218,7 @@ export const RESET_TTL_SECONDS = 15 * 60;
 
 type ResetPayload = {
   email: string;
+  token: string;
   purpose: "password-reset";
   iat: number;
   exp: number;
@@ -223,12 +226,18 @@ type ResetPayload = {
 
 /**
  * Short-lived, HMAC-signed proof that an email address passed OTP
- * verification. It is stored in an httpOnly cookie and never exposed to JS.
+ * verification. The random `token` is also hashed into the user record, so a
+ * stolen cookie cannot be replayed after the reset completes. It is stored in
+ * an httpOnly cookie and never exposed to JS.
  */
-export async function createResetToken(email: string): Promise<string> {
+export async function createResetToken(
+  email: string,
+): Promise<{ cookie: string; token: string }> {
   const now = Math.floor(Date.now() / 1000);
+  const token = randomBytes(32).toString("base64url");
   const payload: ResetPayload = {
     email: email.toLowerCase(),
+    token,
     purpose: "password-reset",
     iat: now,
     exp: now + RESET_TTL_SECONDS,
@@ -237,12 +246,17 @@ export async function createResetToken(email: string): Promise<string> {
   const body = toBase64Url(encoder.encode(JSON.stringify(payload)));
   const signature = await crypto.subtle.sign("HMAC", await getKey(), encoder.encode(body));
 
-  return `${body}.${toBase64Url(new Uint8Array(signature))}`;
+  return {
+    cookie: `${body}.${toBase64Url(new Uint8Array(signature))}`,
+    token,
+  };
 }
 
-export async function verifyResetToken(token: string): Promise<string | null> {
+export async function verifyResetToken(
+  cookie: string,
+): Promise<{ email: string; token: string } | null> {
   try {
-    const [body, signature] = token.split(".");
+    const [body, signature] = cookie.split(".");
     if (!body || !signature) return null;
 
     const valid = await crypto.subtle.verify(
@@ -258,11 +272,12 @@ export async function verifyResetToken(token: string): Promise<string | null> {
 
     const now = Math.floor(Date.now() / 1000);
     const email = safeText(parsed.email, 254).toLowerCase();
-    if (!email) return null;
+    const token = safeText(parsed.token, 128);
+    if (!email || !token) return null;
     if (parsed.purpose !== "password-reset") return null;
     if (typeof parsed.exp !== "number" || parsed.exp <= now) return null;
 
-    return email;
+    return { email, token };
   } catch {
     return null;
   }

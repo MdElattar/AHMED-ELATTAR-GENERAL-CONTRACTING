@@ -24,7 +24,7 @@ const copy = {
         },
         {
           title: "التخزين والأمان",
-          text: "تُنقل البيانات عبر اتصال مشفر، وتُقيّد الصلاحيات على من يحتاجها فقط. بيانات البوابة التجريبية تُخزَّن محلياً في متصفحك ولا تُرسل إلى خادم إنتاجي.",
+          text: "تُنقل البيانات عبر اتصال مشفر، وتُقيّد الصلاحيات على من يحتاجها فقط. تُخزَّن بيانات الحساب والمشاريع في قاعدة بيانات الشركة، ولا تُشارك مع أطراف ثالثة.",
         },
         {
           title: "حقوقك",
@@ -50,8 +50,8 @@ const copy = {
           text: "العلامات التجارية والتصاميم والنصوص والصور مملوكة للشركة أو مرخصة لها. لا يجوز إعادة استخدامها تجارياً دون إذن كتابي.",
         },
         {
-          title: "البوابة التجريبية",
-          text: "حسابات البوابة التجريبية لأغراض العرض فقط. لا تُخزَّن كلمات المرور فعلياً، ولا ينبغي إدخال بيانات سرية أو حساسة.",
+          title: "بوابة العملاء",
+          text: "حسابات بوابة العملاء مخصصة للعملاء المعتمدين. تُخزَّن كلمات المرور بصيغة مشفرة، ولا ينبغي مشاركة بيانات الدخول مع أي طرف آخر.",
         },
       ],
     },
@@ -73,7 +73,7 @@ const copy = {
         },
         {
           title: "Storage and security",
-          text: "Data is transmitted over an encrypted connection and access is limited to those who need it. Demo portal data is stored locally in your browser and is not sent to a production server.",
+          text: "Data is transmitted over an encrypted connection and access is limited to those who need it. Account and project data are stored in the company database and are not shared with third parties.",
         },
         {
           title: "Your rights",
@@ -99,8 +99,8 @@ const copy = {
           text: "Trademarks, designs, text, and imagery are owned by or licensed to the company. Commercial reuse requires written permission.",
         },
         {
-          title: "Demo portal",
-          text: "Demo portal accounts are for presentation only. Passwords are not stored for real, and no confidential or sensitive data should be entered.",
+          title: "Client portal",
+          text: "Client portal accounts are reserved for approved clients. Passwords are stored in encrypted form, and sign-in credentials should never be shared with anyone else.",
         },
       ],
     },

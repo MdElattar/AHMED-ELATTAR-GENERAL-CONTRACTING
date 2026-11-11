@@ -11,8 +11,8 @@ import {
   X,
 } from "lucide-react";
 import { useI18n } from "@/components/providers/I18nProvider";
+import { useWorkspace } from "@/components/providers/WorkspaceProvider";
 import { Field, Select, Textarea, TextInput } from "@/components/ui/Field";
-import { services } from "@/data/services";
 import { isPlainObject } from "@/lib/security/validation";
 import { cn } from "@/lib/utils";
 
@@ -52,6 +52,7 @@ function formatBytes(bytes: number) {
 
 export function BidForm() {
   const { t, l, isRTL, locale } = useI18n();
+  const { content } = useWorkspace();
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<FormState>(initialForm);
   const [files, setFiles] = useState<File[]>([]);
@@ -73,12 +74,12 @@ export function BidForm() {
 
   useEffect(() => {
     const requested = new URLSearchParams(window.location.search).get("service");
-    if (requested && services.some((service) => service.slug === requested)) {
+    if (requested && content.services.some((service) => service.slug === requested)) {
       // Hydration-safe: the query string is only read after mount.
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setForm((current) => ({ ...current, service: requested }));
     }
-  }, []);
+  }, [content.services]);
 
   const update = (key: keyof FormState, value: string) => {
     setForm((current) => ({ ...current, [key]: value }));
@@ -90,7 +91,7 @@ export function BidForm() {
     });
   };
 
-  const serviceOptions = services.map((service) => ({
+  const serviceOptions = content.services.map((service) => ({
     value: service.slug,
     label: l(service.title),
   }));

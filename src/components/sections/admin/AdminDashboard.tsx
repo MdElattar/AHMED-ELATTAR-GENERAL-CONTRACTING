@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -20,7 +20,6 @@ import {
   MessageSquare,
   Pencil,
   Plus,
-  RefreshCcw,
   Save,
   Send,
   Settings,
@@ -39,8 +38,6 @@ import { AdminProjectEditor } from "@/components/sections/admin/AdminProjectEdit
 import { AuditPanel, InquiriesPanel, MilestonesPanel } from "@/components/sections/admin/AdminOperations";
 import { Field, TextInput, Textarea } from "@/components/ui/Field";
 import { ProjectArt } from "@/components/ui/ProjectArt";
-import { portalProjects } from "@/data/portal";
-import { services } from "@/data/services";
 import type { ArtVariant } from "@/data/projects";
 import { L } from "@/lib/dictionary";
 import { cn } from "@/lib/utils";
@@ -73,7 +70,6 @@ const copy = {
     portal: "بوابة العملاء",
     signOut: "تسجيل الخروج",
     welcome: "مرحباً",
-    demo: "مساحة عرض تجريبية",
     totalProjects: "إجمالي المشاريع",
     activeProjects: "مشاريع قيد التنفيذ",
     portfolioValue: "قيمة المحفظة",
@@ -127,8 +123,6 @@ const copy = {
     cover: "الغلاف",
     gallery: "المعرض",
     setCover: "تعيين كغلاف",
-    reset: "إعادة تعيين مساحة العرض",
-    resetConfirm: "سيتم حذف كل التعديلات التجريبية والعودة للبيانات الأصلية. متابعة؟",
     messagesTitle: "رسائل العملاء",
     messagesText: "راجع رسائل بوابة العملاء وردّ مباشرة.",
     reply: "ردّ كمدير المشروع",
@@ -138,9 +132,9 @@ const copy = {
     client: "العميل",
     manager: "مدير المشروع",
     accessTitle: "صلاحية إدارية مطلوبة",
-    accessText: "سجّل الدخول بحساب العرض الإداري للوصول إلى لوحة التحكم.",
+    accessText: "سجّل الدخول بحساب إداري للوصول إلى لوحة التحكم.",
     signIn: "تسجيل الدخول",
-    demoHint: "demo@alattar.sa · demo1234",
+    secureNote: "جلسة آمنة · بيانات محدثة مباشرة.",
     categoryLabels: {
       commercial: "تجاري",
       residential: "سكني",
@@ -184,7 +178,6 @@ const copy = {
     portal: "Client portal",
     signOut: "Sign out",
     welcome: "Welcome",
-    demo: "Demo workspace",
     totalProjects: "Total projects",
     activeProjects: "Active projects",
     portfolioValue: "Portfolio value",
@@ -238,8 +231,6 @@ const copy = {
     cover: "Cover",
     gallery: "Gallery",
     setCover: "Set as cover",
-    reset: "Reset demo workspace",
-    resetConfirm: "This will remove all demo edits and restore the original data. Continue?",
     messagesTitle: "Client messages",
     messagesText: "Review client portal messages and reply directly.",
     reply: "Reply as project manager",
@@ -249,9 +240,9 @@ const copy = {
     client: "Client",
     manager: "Project manager",
     accessTitle: "Admin access required",
-    accessText: "Sign in with the demo admin account to access the control center.",
+    accessText: "Sign in with an administrator account to access the control center.",
     signIn: "Sign in",
-    demoHint: "demo@alattar.sa · demo1234",
+    secureNote: "Secure session · live data.",
     categoryLabels: {
       commercial: "Commercial",
       residential: "Residential",
@@ -300,7 +291,7 @@ const formatM = (value: number, locale: "ar" | "en") =>
 export function AdminDashboard() {
   const { locale } = useI18n();
   const { user, ready, signOut } = useAuth();
-  const { projects, messages, addProject, updateProject, deleteProject, resetWorkspace } =
+  const { projects, messages, addProject, updateProject, deleteProject } =
     useWorkspace();
   const router = useRouter();
   const c = copy[locale];
@@ -340,7 +331,7 @@ export function AdminDashboard() {
               {c.signIn}
               <ArrowUpRight className="h-4 w-4" />
             </Link>
-            <p className="mt-6 text-[0.62rem] text-ivory/30">{c.demoHint}</p>
+            <p className="mt-6 text-[0.62rem] text-ivory/30">{c.secureNote}</p>
           </div>
         </div>
       </section>
@@ -453,7 +444,7 @@ export function AdminDashboard() {
                     {user.name}
                   </h1>
                   <p className="mt-1 text-[0.6rem] text-ivory/35">
-                    {user.email} · {c.demo}
+                    {user.email} · {c.secureNote}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -495,7 +486,7 @@ export function AdminDashboard() {
                 {section === "financials" ? <FinancialsSection projects={projects} /> : null}
                 {section === "content" ? <ContentSection /> : null}
                 {section === "media" ? (
-                  <MediaSection projects={projects} onReset={resetWorkspace} />
+                  <MediaSection projects={projects} />
                 ) : null}
                 {section === "messages" ? <MessagesSection projects={projects} /> : null}
                 {section === "audit" ? <AuditPanel /> : null}
@@ -877,7 +868,6 @@ function FinancialsSection({ projects }: { projects: WorkspaceProject[] }) {
     ? selected
     : (projects[0]?.slug ?? "");
   const selectedProject = projects.find((project) => project.slug === activeSlug) ?? projects[0];
-  const portalProject = portalProjects.find((project) => project.slug === activeSlug);
 
   const totalBudget = projects.reduce((sum, project) => sum + project.budget, 0);
   const totalSpent = projects.reduce((sum, project) => sum + project.spent, 0);
@@ -1036,9 +1026,9 @@ function FinancialsSection({ projects }: { projects: WorkspaceProject[] }) {
               ))}
             </select>
           </div>
-          {selectedProject && portalProject ? (
+          {selectedProject && selectedProject.invoices.length > 0 ? (
             <div className="divide-y divide-white/6">
-              {portalProject.invoices.map((invoice) => (
+              {selectedProject.invoices.map((invoice) => (
                 <div key={invoice.number} className="flex items-center gap-3 px-5 py-3.5">
                   <FileText className="h-3.5 w-3.5 shrink-0 text-gold" />
                   <div className="min-w-0 flex-1">
@@ -1081,6 +1071,7 @@ function ContentSection() {
   const { locale, l } = useI18n();
   const c = copy[locale];
   const { content, updateContent, updateService } = useWorkspace();
+  const services = content.services;
   const [hero, setHero] = useState({
     eyebrowAr: content.heroEyebrow.ar,
     eyebrowEn: content.heroEyebrow.en,
@@ -1112,24 +1103,31 @@ function ContentSection() {
     savedTimer.current = window.setTimeout(() => setSaved(false), 2400);
   };
 
-  const buildServiceForm = (slug: string) => {
-    const service = services.find((item) => item.slug === slug) ?? services[0];
-    const override = content.serviceOverrides[slug];
-    return {
-      titleAr: override?.title.ar ?? service.title.ar,
-      titleEn: override?.title.en ?? service.title.en,
-      taglineAr: override?.tagline.ar ?? service.tagline.ar,
-      taglineEn: override?.tagline.en ?? service.tagline.en,
-      descriptionAr: override?.description.ar ?? service.description.ar,
-      descriptionEn: override?.description.en ?? service.description.en,
-    };
-  };
-  const [serviceSlug, setServiceSlug] = useState(services[0].slug);
-  const [serviceForm, setServiceForm] = useState(() => buildServiceForm(services[0].slug));
+  const buildServiceForm = useCallback(
+    (slug: string) => {
+      const service = services.find((item) => item.slug === slug) ?? services[0];
+      const override = content.serviceOverrides[slug];
+      return {
+        titleAr: override?.title.ar ?? service?.title.ar ?? "",
+        titleEn: override?.title.en ?? service?.title.en ?? "",
+        taglineAr: override?.tagline.ar ?? service?.tagline.ar ?? "",
+        taglineEn: override?.tagline.en ?? service?.tagline.en ?? "",
+        descriptionAr: override?.description.ar ?? service?.description.ar ?? "",
+        descriptionEn: override?.description.en ?? service?.description.en ?? "",
+      };
+    },
+    [content.serviceOverrides, services],
+  );
+  const [serviceSlug, setServiceSlug] = useState("");
+  const [serviceDraft, setServiceDraft] = useState<ReturnType<
+    typeof buildServiceForm
+  > | null>(null);
+  const activeServiceSlug = serviceSlug || services[0]?.slug || "";
+  const serviceForm = serviceDraft ?? buildServiceForm(activeServiceSlug);
 
   const selectService = (slug: string) => {
     setServiceSlug(slug);
-    setServiceForm(buildServiceForm(slug));
+    setServiceDraft(null);
   };
 
   const saveContent = (event: React.FormEvent) => {
@@ -1149,7 +1147,8 @@ function ContentSection() {
 
   const saveService = (event: React.FormEvent) => {
     event.preventDefault();
-    updateService(serviceSlug, {
+    if (!activeServiceSlug) return;
+    updateService(activeServiceSlug, {
       title: L(serviceForm.titleAr, serviceForm.titleEn),
       tagline: L(serviceForm.taglineAr, serviceForm.taglineEn),
       description: L(serviceForm.descriptionAr, serviceForm.descriptionEn),
@@ -1312,7 +1311,7 @@ function ContentSection() {
             {c.serviceCards}
           </span>
           <select
-            value={serviceSlug}
+            value={activeServiceSlug}
             onChange={(event) => selectService(event.target.value)}
             className="h-8 border border-white/12 bg-coal px-2 text-[0.6rem] text-ivory/60 outline-none focus:border-gold/50"
           >
@@ -1321,6 +1320,7 @@ function ContentSection() {
                 {l(content.serviceOverrides[service.slug]?.title ?? service.title)}
               </option>
             ))}
+            {services.length === 0 ? <option value="">—</option> : null}
           </select>
         </div>
         <div className="grid gap-4 p-5 sm:grid-cols-2">
@@ -1328,7 +1328,7 @@ function ContentSection() {
             <TextInput
               id="service-title-ar"
               value={serviceForm.titleAr}
-              onChange={(event) => setServiceForm({ ...serviceForm, titleAr: event.target.value })}
+              onChange={(event) => setServiceDraft({ ...serviceForm, titleAr: event.target.value })}
               dir="rtl"
             />
           </Field>
@@ -1336,14 +1336,14 @@ function ContentSection() {
             <TextInput
               id="service-title-en"
               value={serviceForm.titleEn}
-              onChange={(event) => setServiceForm({ ...serviceForm, titleEn: event.target.value })}
+              onChange={(event) => setServiceDraft({ ...serviceForm, titleEn: event.target.value })}
             />
           </Field>
           <Field label={c.serviceTagline} htmlFor="service-tagline-ar">
             <TextInput
               id="service-tagline-ar"
               value={serviceForm.taglineAr}
-              onChange={(event) => setServiceForm({ ...serviceForm, taglineAr: event.target.value })}
+              onChange={(event) => setServiceDraft({ ...serviceForm, taglineAr: event.target.value })}
               dir="rtl"
             />
           </Field>
@@ -1351,7 +1351,7 @@ function ContentSection() {
             <TextInput
               id="service-tagline-en"
               value={serviceForm.taglineEn}
-              onChange={(event) => setServiceForm({ ...serviceForm, taglineEn: event.target.value })}
+              onChange={(event) => setServiceDraft({ ...serviceForm, taglineEn: event.target.value })}
             />
           </Field>
           <Field label={c.serviceDescription} htmlFor="service-description-ar">
@@ -1360,7 +1360,7 @@ function ContentSection() {
               rows={4}
               value={serviceForm.descriptionAr}
               onChange={(event) =>
-                setServiceForm({ ...serviceForm, descriptionAr: event.target.value })
+                setServiceDraft({ ...serviceForm, descriptionAr: event.target.value })
               }
               dir="rtl"
             />
@@ -1371,7 +1371,7 @@ function ContentSection() {
               rows={4}
               value={serviceForm.descriptionEn}
               onChange={(event) =>
-                setServiceForm({ ...serviceForm, descriptionEn: event.target.value })
+                setServiceDraft({ ...serviceForm, descriptionEn: event.target.value })
               }
             />
           </Field>
@@ -1390,13 +1390,7 @@ function ContentSection() {
   );
 }
 
-function MediaSection({
-  projects,
-  onReset,
-}: {
-  projects: WorkspaceProject[];
-  onReset: () => void;
-}) {
+function MediaSection({ projects }: { projects: WorkspaceProject[] }) {
   const { locale, l } = useI18n();
   const c = copy[locale];
   const { updateProject } = useWorkspace();
@@ -1410,16 +1404,6 @@ function MediaSection({
             {c.mediaText}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => {
-            if (window.confirm(c.resetConfirm)) onReset();
-          }}
-          className="inline-flex h-9 shrink-0 items-center gap-2 border border-red-400/25 px-4 text-[0.54rem] font-semibold uppercase tracking-[0.12em] text-red-300/70 transition-colors hover:border-red-400/60 hover:text-red-300"
-        >
-          <RefreshCcw className="h-3.5 w-3.5" />
-          {c.reset}
-        </button>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">

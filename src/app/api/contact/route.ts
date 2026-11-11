@@ -1,7 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { services } from "@/data/services";
 import { randomReference } from "@/lib/auth/token";
-import { createInquiry } from "@/lib/db";
+import { createInquiry, listServiceSlugs } from "@/lib/db";
 import {
   NO_STORE_HEADERS,
   clientIp,
@@ -12,7 +11,6 @@ import { rateLimit } from "@/lib/security/rate-limit";
 import { contactSchema } from "@/lib/security/schemas";
 import { cleanString, isPlainObject } from "@/lib/security/validation";
 
-const allowedServices = new Set(services.map((service) => service.slug));
 const MAX_FILE_SIZE = 25 * 1024 * 1024;
 
 function fileMetadata(value: unknown) {
@@ -59,12 +57,23 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { name, email, phone, company, service, projectType, location, message } =
+  const { name, email, phone, company, service, projectType, budget, location, message } =
     parsed.data;
   const consent = body.consent === true;
   const files = fileMetadata(body.files);
 
-  if (!allowedServices.has(service) || !consent) {
+  let allowedServices: string[] = [];
+  try {
+    allowedServices = await listServiceSlugs();
+  } catch (error) {
+    console.error("[contact] failed to load service catalogue", error);
+    return NextResponse.json(
+      { error: "server_error" },
+      { status: 500, headers: NO_STORE_HEADERS },
+    );
+  }
+
+  if (!allowedServices.includes(service) || !consent) {
     return NextResponse.json(
       { error: "invalid_input" },
       { status: 400, headers: NO_STORE_HEADERS },
@@ -82,6 +91,7 @@ export async function POST(request: NextRequest) {
       ...(company ? { company } : {}),
       service,
       projectType,
+      ...(budget ? { budget } : {}),
       location,
       message,
       ...(files.length ? { files } : {}),

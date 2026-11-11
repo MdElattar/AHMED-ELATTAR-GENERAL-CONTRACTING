@@ -18,8 +18,6 @@ import {
 import { rateLimit } from "@/lib/security/rate-limit";
 import { signUpSchema } from "@/lib/security/schemas";
 
-const DEMO_EMAILS = new Set(["demo@alattar.sa", "demo@ahmedelattar.sa"]);
-
 export async function POST(request: NextRequest) {
   if (!isSameOrigin(request)) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
@@ -47,13 +45,6 @@ export async function POST(request: NextRequest) {
 
   const { name, email, phone, password } = parsed.data;
   const company = parsed.data.company || "Ahmed Elattar Client";
-
-  if (DEMO_EMAILS.has(email)) {
-    return NextResponse.json(
-      { error: "email_unavailable" },
-      { status: 409, headers: NO_STORE_HEADERS },
-    );
-  }
 
   const existing = await getUserByEmail(email);
   if (existing) {

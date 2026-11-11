@@ -1,13 +1,12 @@
 import { createHmac, randomInt, timingSafeEqual } from "node:crypto";
+import { AuthConfigError } from "@/lib/auth/token";
 
 function otpSecret() {
-  const secret = process.env.AUTH_SECRET?.trim();
+  const secret = (process.env.AUTH_SECRET ?? process.env.JWT_SECRET)?.trim();
   if (secret && secret.length >= 32) return secret;
 
   if (process.env.NODE_ENV === "production") {
-    console.warn(
-      "[otp] AUTH_SECRET is missing or shorter than 32 characters; OTP hashing is using a development fallback.",
-    );
+    throw new AuthConfigError();
   }
   return "alattar-development-otp-secret-change-me";
 }
