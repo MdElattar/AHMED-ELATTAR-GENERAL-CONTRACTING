@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useRef, useState } from "react";
+import { startTransition, useCallback, useEffect, useRef, useState } from "react";
 import { MoveDown } from "lucide-react";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { useSmoothScroll } from "@/components/providers/SmoothScroll";
@@ -139,9 +139,13 @@ export function CraftsmanshipExperience() {
   const { scrollTo } = useSmoothScroll();
   const c = copy[locale];
 
-  useEffect(() => {
-    activeRef.current = active;
-  }, [active]);
+  // The 2D canvas reads `progressRef`/`activeRef` directly on its own rAF, so
+  // the step change is written to the ref immediately and only the DOM state
+  // update is deferred as a transition.
+  const handleActive = useCallback((index: number) => {
+    activeRef.current = index;
+    startTransition(() => setActive(index));
+  }, []);
 
   useEffect(() => {
     stepCountRef.current = c.steps.length;
@@ -154,7 +158,7 @@ export function CraftsmanshipExperience() {
     stepCount: c.steps.length,
     // Five steps × ~40vh of scroll.
     end: "+=200%",
-    onActive: setActive,
+    onActive: handleActive,
   });
 
 

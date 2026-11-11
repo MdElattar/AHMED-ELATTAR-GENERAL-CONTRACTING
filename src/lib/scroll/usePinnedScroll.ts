@@ -68,6 +68,13 @@ export function usePinnedScroll({
           pin: true,
           pinSpacing: true,
           anticipatePin: 1,
+          // A fast flick must not leave the pin mid-transition: snap the
+          // trigger to its end state instead of interpolating through every
+          // step while the page is already past the section.
+          fastScrollEnd: true,
+          // Keeps this pin from fighting a neighbouring pinned section when
+          // their start/end measurements touch after a refresh.
+          preventOverlaps: true,
           invalidateOnRefresh: true,
           onRefresh: (self) => {
             triggerRef.current = { start: self.start, end: self.end };

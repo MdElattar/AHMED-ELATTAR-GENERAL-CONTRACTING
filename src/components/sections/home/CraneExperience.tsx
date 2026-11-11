@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { startTransition, useCallback, useRef, useState } from "react";
 import { MoveDown } from "lucide-react";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { useSmoothScroll } from "@/components/providers/SmoothScroll";
@@ -16,6 +16,13 @@ export function CraneExperience() {
   const { t } = useI18n();
   const { scrollTo } = useSmoothScroll();
 
+  // The 3D scene consumes `progressRef` directly inside `useFrame`, so the
+  // scroll never re-renders React. Only the discrete step index crosses the
+  // boundary, and it is a transition so it cannot interrupt the paint loop.
+  const handleActive = useCallback((index: number) => {
+    startTransition(() => setActive(index));
+  }, []);
+
   const triggerRef = usePinnedScroll({
     sectionRef,
     progressRef,
@@ -24,7 +31,7 @@ export function CraneExperience() {
     // ~40vh of scroll per step: enough room for each card/camera beat to land,
     // short enough that the pin never feels like it has trapped the page.
     end: "+=200%",
-    onActive: setActive,
+    onActive: handleActive,
   });
 
   const jumpTo = (index: number) => {

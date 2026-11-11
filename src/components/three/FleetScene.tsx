@@ -5,7 +5,14 @@ import * as THREE from "three";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { ContactShadows, Environment, Lightformer, Sparkles } from "@react-three/drei";
 import { useCanvasVisibility } from "@/components/three/useCanvasVisibility";
-import { SCENE_DPR, SCENE_GL, SCENE_PERFORMANCE } from "@/components/three/config";
+import {
+  SCENE_DPR,
+  SCENE_GL,
+  SCENE_PERFORMANCE,
+  configureRenderer,
+  revealAfterFirstFrame,
+} from "@/components/three/config";
+import { WireframeCrane3D } from "@/components/three/WireframeCrane";
 import { smoothstep } from "@/lib/utils";
 
 function FleetRig({ progressRef }: { progressRef: MutableRefObject<number> }) {
@@ -202,8 +209,10 @@ function FleetCamera({ progressRef }: { progressRef: MutableRefObject<number> })
 
 export default function FleetScene({
   progressRef,
+  onReady,
 }: {
   progressRef: MutableRefObject<number>;
+  onReady?: () => void;
 }) {
   const reduced = useMemo(() => {
     if (typeof window === "undefined") return false;
@@ -218,10 +227,14 @@ export default function FleetScene({
         shadows
         dpr={SCENE_DPR.fleet}
         performance={SCENE_PERFORMANCE}
-        frameloop={visible ? (reduced ? "demand" : "always") : "never"}
+        frameloop={visible ? "always" : "never"}
         gl={SCENE_GL}
         camera={{ position: [10, 4.8, 15], fov: 35, near: 0.1, far: 90 }}
         className="!absolute inset-0"
+        onCreated={({ gl }) => {
+          configureRenderer(gl, SCENE_DPR.fleet[1]);
+          revealAfterFirstFrame(onReady);
+        }}
       >
         <fog attach="fog" args={["#060708", 24, 72]} />
         <ambientLight intensity={0.28} />
@@ -251,7 +264,7 @@ export default function FleetScene({
         />
         <pointLight position={[7, 2, -6]} intensity={36} color="#5f8394" distance={26} />
 
-        <Suspense fallback={null}>
+        <Suspense fallback={<WireframeCrane3D />}>
           <Environment resolution={64} frames={1}>
             <Lightformer form="rect" intensity={2.2} color="#ffd7a0" position={[0, 14, -18]} scale={[22, 8, 1]} />
             <Lightformer form="rect" intensity={1} color="#5f8394" position={[-18, 5, 8]} scale={[12, 12, 1]} />

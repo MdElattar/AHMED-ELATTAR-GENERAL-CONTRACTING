@@ -6,8 +6,15 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { ContactShadows, Edges, Environment, Lightformer, Sparkles } from "@react-three/drei";
 import { CraneModel } from "@/components/three/CraneModel";
 import { Cityscape } from "@/components/three/Cityscape";
-import { SCENE_DPR, SCENE_GL, SCENE_PERFORMANCE } from "@/components/three/config";
+import {
+  SCENE_DPR,
+  SCENE_GL,
+  SCENE_PERFORMANCE,
+  configureRenderer,
+  revealAfterFirstFrame,
+} from "@/components/three/config";
 import { useCanvasVisibility } from "@/components/three/useCanvasVisibility";
+import { WireframeCrane3D } from "@/components/three/WireframeCrane";
 
 function Rig({ reduced }: { reduced: boolean }) {
   const { camera } = useThree();
@@ -92,7 +99,7 @@ function Backdrop() {
   );
 }
 
-export default function HeroScene() {
+export default function HeroScene({ onReady }: { onReady?: () => void }) {
   const reduced = useMemo(() => {
     if (typeof window === "undefined") return false;
     return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -106,10 +113,14 @@ export default function HeroScene() {
         shadows
         dpr={SCENE_DPR.hero}
         performance={SCENE_PERFORMANCE}
-        frameloop={visible ? (reduced ? "demand" : "always") : "never"}
+        frameloop={visible ? "always" : "never"}
         gl={SCENE_GL}
         camera={{ position: [16, 6.6, 21], fov: 34, near: 0.1, far: 90 }}
         className="!absolute inset-0"
+        onCreated={({ gl }) => {
+          configureRenderer(gl, SCENE_DPR.hero[1]);
+          revealAfterFirstFrame(onReady);
+        }}
       >
         <fog attach="fog" args={["#060708", 22, 78]} />
         <ambientLight intensity={0.24} />
@@ -140,7 +151,7 @@ export default function HeroScene() {
         <pointLight position={[9, 2, -6]} intensity={48} color="#5f8394" distance={30} />
         <pointLight position={[1, -3, 7]} intensity={20} color="#c9a45c" distance={18} />
 
-        <Suspense fallback={null}>
+        <Suspense fallback={<WireframeCrane3D />}>
           <Environment resolution={64} frames={1}>
             <Lightformer
               form="rect"

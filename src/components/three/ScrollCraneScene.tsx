@@ -6,8 +6,15 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { ContactShadows, Environment, Lightformer, Sparkles } from "@react-three/drei";
 import { CraneModel } from "@/components/three/CraneModel";
 import { Cityscape } from "@/components/three/Cityscape";
-import { SCENE_DPR, SCENE_GL, SCENE_PERFORMANCE } from "@/components/three/config";
+import {
+  SCENE_DPR,
+  SCENE_GL,
+  SCENE_PERFORMANCE,
+  configureRenderer,
+  revealAfterFirstFrame,
+} from "@/components/three/config";
 import { useCanvasVisibility } from "@/components/three/useCanvasVisibility";
+import { WireframeCrane3D } from "@/components/three/WireframeCrane";
 import { smoothstep } from "@/lib/utils";
 
 const CAMERA_KEYS = [
@@ -169,8 +176,10 @@ function Platform() {
 
 export default function ScrollCraneScene({
   progressRef,
+  onReady,
 }: {
   progressRef: MutableRefObject<number>;
+  onReady?: () => void;
 }) {
   const reduced = useMemo(() => {
     if (typeof window === "undefined") return false;
@@ -185,10 +194,14 @@ export default function ScrollCraneScene({
         shadows
         dpr={SCENE_DPR.crane}
         performance={SCENE_PERFORMANCE}
-        frameloop={visible ? (reduced ? "demand" : "always") : "never"}
+        frameloop={visible ? "always" : "never"}
         gl={SCENE_GL}
         camera={{ position: [15, 6.4, 20], fov: 34, near: 0.1, far: 90 }}
         className="!absolute inset-0"
+        onCreated={({ gl }) => {
+          configureRenderer(gl, SCENE_DPR.crane[1]);
+          revealAfterFirstFrame(onReady);
+        }}
       >
         <fog attach="fog" args={["#060708", 22, 78]} />
         <ambientLight intensity={0.24} />
@@ -219,7 +232,7 @@ export default function ScrollCraneScene({
         <pointLight position={[8, 1, -5]} intensity={42} color="#5f8394" distance={28} />
         <pointLight position={[1.5, 4.5, 2]} intensity={14} color="#e7cf99" distance={12} />
 
-        <Suspense fallback={null}>
+        <Suspense fallback={<WireframeCrane3D />}>
           <Environment resolution={64} frames={1}>
             <Lightformer
               form="rect"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { startTransition, useCallback, useRef, useState } from "react";
 import { Gauge, MoveDown } from "lucide-react";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { useSmoothScroll } from "@/components/providers/SmoothScroll";
@@ -60,6 +60,12 @@ export function FleetExperience() {
   const c = copy[locale];
   const machine = featured[active] ?? featured[0];
 
+  // FleetScene reads `progressRef` imperatively every frame; only the active
+  // machine index re-renders, and it does so as a non-urgent transition.
+  const handleActive = useCallback((index: number) => {
+    startTransition(() => setActive(index));
+  }, []);
+
   const triggerRef = usePinnedScroll({
     sectionRef,
     progressRef,
@@ -67,7 +73,7 @@ export function FleetExperience() {
     stepCount: featured.length,
     // Three featured machines × ~40vh of scroll.
     end: "+=120%",
-    onActive: setActive,
+    onActive: handleActive,
   });
 
   const jumpTo = (index: number) => {
