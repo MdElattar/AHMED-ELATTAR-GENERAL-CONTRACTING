@@ -2,12 +2,15 @@
 
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   ArrowRight,
   Check,
   Eye,
   EyeOff,
+  KeyRound,
+  Loader2,
   MailCheck,
   ShieldCheck,
 } from "lucide-react";
@@ -16,57 +19,157 @@ import { Field, TextInput } from "@/components/ui/Field";
 import { Logo } from "@/components/ui/Logo";
 
 type ResetMode = "request" | "reset";
+type Step = "email" | "code" | "password" | "done";
 
 type PasswordResetProps = {
   mode: ResetMode;
 };
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 export function PasswordReset({ mode }: PasswordResetProps) {
-  const { t, isRTL } = useI18n();
+  const { t, isRTL, locale } = useI18n();
+  const router = useRouter();
 
+  const [step, setStep] = useState<Step>(mode === "reset" ? "password" : "email");
   const [email, setEmail] = useState("");
+  const [code, setCode] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
   const [error, setError] = useState("");
-  const [sent, setSent] = useState(false);
-  const [done, setDone] = useState(false);
+  const [devCode, setDevCode] = useState("");
 
-  const isRequest = mode === "request";
   const BackIcon = isRTL ? ArrowRight : ArrowLeft;
   const ForwardIcon = isRTL ? ArrowLeft : ArrowRight;
 
-  const submit = async (event: FormEvent) => {
+  const requestCode = async () => {
+    const response = await fetch("/api/auth/forgot-password", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email.trim().toLowerCase(), locale }),
+    });
+    const data = (await response.json().catch(() => ({}))) as {
+      devCode?: unknown;
+      error?: unknown;
+    };
+
+    if (!response.ok) {
+      setError(
+        response.status === 429 ? t.auth.otpRateLimited : t.auth.otpEmailUnavailable,
+      );
+      return false;
+    }
+
+    setDevCode(typeof data.devCode === "string" ? data.devCode : "");
+    return true;
+  };
+
+  const submitEmail = async (event: FormEvent) => {
     event.preventDefault();
     setError("");
 
-    if (isRequest) {
-      if (!EMAIL_PATTERN.test(email.trim())) {
-        setError(t.contactPage.form.emailError);
-        return;
-      }
-    } else {
-      if (password.length < 8) {
-        setError(t.auth.shortPassword);
-        return;
-      }
-      if (password !== confirm) {
-        setError(t.auth.mismatch);
-        return;
-      }
+    if (!EMAIL_PATTERN.test(email.trim())) {
+      setError(t.contactPage.form.emailError);
+      return;
     }
 
     setLoading(true);
     try {
-      await new Promise((resolve) => window.setTimeout(resolve, 900));
-      if (isRequest) {
-        setSent(true);
-      } else {
-        setDone(true);
+      if (await requestCode()) {
+        setCode("");
+        setStep("code");
       }
+    } catch {
+      setError(t.auth.otpEmailUnavailable);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resend = async () => {
+    setError("");
+    setResending(true);
+    try {
+      if (await requestCode()) setCode("");
+    } catch {
+      setError(t.auth.otpEmailUnavailable);
+    } finally {
+      setResending(false);
+    }
+  };
+
+  const submitCode = async (event: FormEvent) => {
+    event.preventDefault();
+    setError("");
+
+    const normalized = code.replace(/\D/g, "");
+    if (normalized.length !== 6) {
+      setError(t.auth.otpInvalid);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch("/api/auth/verify-otp", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim().toLowerCase(), code: normalized }),
+      });
+      const data = (await response.json().catch(() => ({}))) as { error?: unknown };
+
+      if (!response.ok) {
+        if (response.status === 410) setError(t.auth.otpExpired);
+        else if (response.status === 429) setError(t.auth.otpTooMany);
+        else setError(t.auth.otpInvalid);
+        return;
+      }
+
+      void data;
+      router.push("/reset-password");
+    } catch {
+      setError(t.auth.otpInvalid);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const submitPassword = async (event: FormEvent) => {
+    event.preventDefault();
+    setError("");
+
+    if (password.length < 8) {
+      setError(t.auth.shortPassword);
+      return;
+    }
+    if (password !== confirm) {
+      setError(t.auth.mismatch);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+
+      if (!response.ok) {
+        setError(
+          response.status === 401 ? t.auth.resetLinkInvalid : t.auth.otpEmailUnavailable,
+        );
+        return;
+      }
+
+      setStep("done");
+    } catch {
+      setError(t.auth.otpEmailUnavailable);
     } finally {
       setLoading(false);
     }
@@ -130,40 +233,110 @@ export function PasswordReset({ mode }: PasswordResetProps) {
               {t.portal.eyebrow}
             </span>
 
-            {isRequest && sent ? (
+            {step === "code" ? (
               <div className="mt-6">
                 <span className="flex h-14 w-14 items-center justify-center rounded-full border border-gold-dark/30 bg-gold-dark/[0.06] text-gold-dark">
                   <MailCheck className="h-6 w-6" />
                 </span>
                 <h1 className="display-title mt-7 text-[clamp(2.2rem,4vw,3.4rem)] text-ink">
-                  {t.auth.resetSentTitle}
+                  {t.auth.otpSentTitle}
                 </h1>
                 <p className="mt-4 text-[0.85rem] leading-relaxed text-ink/55">
-                  {t.auth.resetSentText}{" "}
+                  {t.auth.otpSentText}{" "}
                   <span className="font-semibold text-ink" dir="ltr">
                     {email}
                   </span>
                   .
                 </p>
-                <p className="mt-3 text-[0.72rem] leading-relaxed text-ink/40">
-                  {t.auth.resetSentNote}
-                </p>
-                <Link
-                  href="/reset-password?token=demo"
-                  className="btn-shine mt-8 inline-flex h-12 w-full items-center justify-center gap-2.5 bg-ink px-6 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-ivory transition-colors hover:bg-gold-dark"
-                >
-                  {t.auth.openResetDemo}
-                  <ForwardIcon className="h-3.5 w-3.5" />
-                </Link>
-                <Link
-                  href="/sign-in"
-                  className="mt-5 flex items-center justify-center gap-2 text-[0.72rem] text-ink/45 transition-colors hover:text-gold-dark"
-                >
-                  <BackIcon className="h-3.5 w-3.5" />
-                  {t.auth.backToSignIn}
-                </Link>
+
+                {devCode ? (
+                  <div className="mt-5 border border-gold-dark/25 bg-gold-dark/[0.05] px-4 py-3">
+                    <p className="text-[0.6rem] uppercase tracking-[0.16em] text-gold-dark">
+                      {t.auth.otpDevHint}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setCode(devCode)}
+                      className="mt-1 font-mono text-lg tracking-[0.35em] text-ink transition-colors hover:text-gold-dark"
+                    >
+                      {devCode}
+                    </button>
+                  </div>
+                ) : null}
+
+                <form onSubmit={submitCode} className="mt-7 flex flex-col gap-5" noValidate>
+                  <Field label={t.auth.otpCode} htmlFor="reset-code" required tone="light">
+                    <TextInput
+                      id="reset-code"
+                      tone="light"
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={6}
+                      autoComplete="one-time-code"
+                      dir="ltr"
+                      value={code}
+                      onChange={(event) =>
+                        setCode(event.target.value.replace(/\D/g, "").slice(0, 6))
+                      }
+                      className="text-center font-mono text-xl tracking-[0.5em]"
+                      placeholder="000000"
+                    />
+                  </Field>
+
+                  {error ? (
+                    <p
+                      className="border border-[#a3543f]/25 bg-[#a3543f]/5 px-4 py-3 text-[0.72rem] text-[#a3543f]"
+                      role="alert"
+                    >
+                      {error}
+                    </p>
+                  ) : null}
+
+                  <button
+                    type="submit"
+                    disabled={loading || code.length !== 6}
+                    className="btn-shine inline-flex h-12 items-center justify-center gap-2.5 bg-ink px-6 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-ivory transition-colors hover:bg-gold-dark disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        {t.auth.otpVerifying}
+                      </>
+                    ) : (
+                      <>
+                        {t.auth.otpVerify}
+                        <ForwardIcon className="h-3.5 w-3.5" />
+                      </>
+                    )}
+                  </button>
+                </form>
+
+                <div className="mt-6 flex flex-wrap items-center justify-between gap-3 text-[0.72rem]">
+                  <button
+                    type="button"
+                    onClick={resend}
+                    disabled={resending}
+                    className="inline-flex items-center gap-2 text-ink/45 transition-colors hover:text-gold-dark disabled:opacity-50"
+                  >
+                    {resending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+                    {resending ? t.auth.otpResending : t.auth.otpResend}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStep("email");
+                      setError("");
+                      setDevCode("");
+                      setCode("");
+                    }}
+                    className="text-ink/45 transition-colors hover:text-gold-dark"
+                  >
+                    {t.auth.otpChangeEmail}
+                  </button>
+                </div>
               </div>
-            ) : !isRequest && done ? (
+            ) : step === "done" ? (
               <div className="mt-6">
                 <span className="flex h-14 w-14 items-center justify-center rounded-full border border-gold-dark/30 bg-gold-dark/[0.06] text-gold-dark">
                   <ShieldCheck className="h-6 w-6" />
@@ -185,14 +358,14 @@ export function PasswordReset({ mode }: PasswordResetProps) {
             ) : (
               <>
                 <h1 className="display-title mt-4 text-[clamp(2.2rem,4vw,3.4rem)] text-ink">
-                  {isRequest ? t.auth.forgotTitle : t.auth.resetTitle}
+                  {step === "email" ? t.auth.forgotTitle : t.auth.resetTitle}
                 </h1>
                 <p className="mt-3 text-[0.82rem] leading-relaxed text-ink/50">
-                  {isRequest ? t.auth.forgotSubtitle : t.auth.resetSubtitle}
+                  {step === "email" ? t.auth.forgotSubtitle : t.auth.resetSubtitle}
                 </p>
 
-                <form onSubmit={submit} className="mt-8 flex flex-col gap-5" noValidate>
-                  {isRequest ? (
+                {step === "email" ? (
+                  <form onSubmit={submitEmail} className="mt-8 flex flex-col gap-5" noValidate>
                     <Field label={t.auth.email} htmlFor="reset-email" required tone="light">
                       <TextInput
                         id="reset-email"
@@ -206,105 +379,140 @@ export function PasswordReset({ mode }: PasswordResetProps) {
                         placeholder="name@company.com"
                       />
                     </Field>
-                  ) : (
-                    <>
-                      <Field
-                        label={t.auth.newPassword}
-                        htmlFor="reset-password"
-                        required
-                        tone="light"
-                        hint={t.auth.shortPassword}
-                      >
-                        <div className="relative">
-                          <TextInput
-                            id="reset-password"
-                            tone="light"
-                            type={showPassword ? "text" : "password"}
-                            dir="ltr"
-                            className="pe-11 text-start"
-                            value={password}
-                            onChange={(event) => setPassword(event.target.value)}
-                            autoComplete="new-password"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowPassword((current) => !current)}
-                            aria-label={showPassword ? "Hide password" : "Show password"}
-                            className="absolute end-3 top-1/2 -translate-y-1/2 text-ink/35 transition-colors hover:text-ink/70"
-                          >
-                            {showPassword ? (
-                              <EyeOff className="h-4 w-4" />
-                            ) : (
-                              <Eye className="h-4 w-4" />
-                            )}
-                          </button>
-                        </div>
-                      </Field>
 
-                      <Field
-                        label={t.auth.confirmPassword}
-                        htmlFor="reset-confirm"
-                        required
-                        tone="light"
+                    {error ? (
+                      <p
+                        className="border border-[#a3543f]/25 bg-[#a3543f]/5 px-4 py-3 text-[0.72rem] text-[#a3543f]"
+                        role="alert"
                       >
+                        {error}
+                      </p>
+                    ) : null}
+
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="btn-shine mt-1 inline-flex h-12 items-center justify-center gap-2.5 bg-ink px-6 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-ivory transition-colors hover:bg-gold-dark disabled:cursor-wait disabled:opacity-70"
+                    >
+                      {loading ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          {t.auth.sendingReset}
+                        </>
+                      ) : (
+                        <>
+                          {t.auth.sendReset}
+                          <ForwardIcon className="h-3.5 w-3.5" />
+                        </>
+                      )}
+                    </button>
+                  </form>
+                ) : (
+                  <form
+                    onSubmit={submitPassword}
+                    className="mt-8 flex flex-col gap-5"
+                    noValidate
+                  >
+                    <Field
+                      label={t.auth.newPassword}
+                      htmlFor="reset-password"
+                      required
+                      tone="light"
+                      hint={t.auth.shortPassword}
+                    >
+                      <div className="relative">
                         <TextInput
-                          id="reset-confirm"
+                          id="reset-password"
                           tone="light"
                           type={showPassword ? "text" : "password"}
                           dir="ltr"
-                          className="text-start"
-                          value={confirm}
-                          onChange={(event) => setConfirm(event.target.value)}
+                          className="pe-11 text-start"
+                          value={password}
+                          onChange={(event) => setPassword(event.target.value)}
                           autoComplete="new-password"
                         />
-                      </Field>
-                    </>
-                  )}
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword((current) => !current)}
+                          aria-label={showPassword ? "Hide password" : "Show password"}
+                          className="absolute end-3 top-1/2 -translate-y-1/2 text-ink/35 transition-colors hover:text-ink/70"
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
+                    </Field>
 
-                  {error ? (
-                    <p
-                      className="border border-[#a3543f]/25 bg-[#a3543f]/5 px-4 py-3 text-[0.72rem] text-[#a3543f]"
-                      role="alert"
+                    <Field
+                      label={t.auth.confirmPassword}
+                      htmlFor="reset-confirm"
+                      required
+                      tone="light"
                     >
-                      {error}
-                    </p>
-                  ) : null}
+                      <TextInput
+                        id="reset-confirm"
+                        tone="light"
+                        type={showPassword ? "text" : "password"}
+                        dir="ltr"
+                        className="text-start"
+                        value={confirm}
+                        onChange={(event) => setConfirm(event.target.value)}
+                        autoComplete="new-password"
+                      />
+                    </Field>
 
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="btn-shine mt-1 inline-flex h-12 items-center justify-center gap-2.5 bg-ink px-6 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-ivory transition-colors hover:bg-gold-dark disabled:cursor-wait disabled:opacity-70"
-                  >
-                    {loading
-                      ? isRequest
-                        ? t.auth.sendingReset
-                        : t.auth.resetting
-                      : isRequest
-                        ? t.auth.sendReset
-                        : t.auth.resetPassword}
-                    {loading ? null : <ForwardIcon className="h-3.5 w-3.5" />}
-                  </button>
-                </form>
+                    {error ? (
+                      <div
+                        className="border border-[#a3543f]/25 bg-[#a3543f]/5 px-4 py-3 text-[0.72rem] text-[#a3543f]"
+                        role="alert"
+                      >
+                        <p>{error}</p>
+                        {error === t.auth.resetLinkInvalid ? (
+                          <Link
+                            href="/forgot-password"
+                            className="mt-2 inline-flex items-center gap-1.5 font-semibold underline underline-offset-4"
+                          >
+                            <KeyRound className="h-3 w-3" />
+                            {t.auth.resetStartOver}
+                          </Link>
+                        ) : null}
+                      </div>
+                    ) : null}
 
-                {!isRequest ? (
-                  <Link
-                    href="/sign-in"
-                    className="mt-6 flex items-center justify-center gap-2 text-[0.72rem] text-ink/45 transition-colors hover:text-gold-dark"
-                  >
-                    <BackIcon className="h-3.5 w-3.5" />
-                    {t.auth.backToSignIn}
-                  </Link>
-                ) : null}
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="btn-shine mt-1 inline-flex h-12 items-center justify-center gap-2.5 bg-ink px-6 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-ivory transition-colors hover:bg-gold-dark disabled:cursor-wait disabled:opacity-70"
+                    >
+                      {loading ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          {t.auth.resetting}
+                        </>
+                      ) : (
+                        <>
+                          {t.auth.resetPassword}
+                          <ForwardIcon className="h-3.5 w-3.5" />
+                        </>
+                      )}
+                    </button>
+                  </form>
+                )}
+
+                <Link
+                  href="/sign-in"
+                  className="mt-6 flex items-center justify-center gap-2 text-[0.72rem] text-ink/45 transition-colors hover:text-gold-dark"
+                >
+                  <BackIcon className="h-3.5 w-3.5" />
+                  {t.auth.backToSignIn}
+                </Link>
               </>
             )}
 
-            {!sent && !done ? (
-              <p className="mt-7 text-center text-[0.62rem] leading-relaxed text-ink/35">
-                {t.auth.demoHint}
-              </p>
-            ) : null}
-
-            {isRequest && !sent ? (
+            {step === "email" ? (
               <p className="mt-4 text-center text-[0.72rem] text-ink/45">
                 {t.auth.haveAccount}{" "}
                 <Link

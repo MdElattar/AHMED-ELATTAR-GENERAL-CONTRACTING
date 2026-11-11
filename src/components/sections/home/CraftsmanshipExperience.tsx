@@ -1,14 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import { startTransition, useCallback, useRef, useState } from "react";
 import { MoveDown } from "lucide-react";
 import { useI18n } from "@/components/providers/I18nProvider";
-import { useSmoothScroll } from "@/components/providers/SmoothScroll";
-import { TimelineTracker } from "@/components/ui/TimelineTracker";
+import { Reveal } from "@/components/ui/Reveal";
 import { craftsmanshipPhotos } from "@/data/media";
-import { pinEndForSteps } from "@/lib/scroll/pin";
-import { usePinnedScroll } from "@/lib/scroll/usePinnedScroll";
 import { cn } from "@/lib/utils";
 
 const copy = {
@@ -16,8 +12,8 @@ const copy = {
     eyebrow: "حرفية التنفيذ",
     title: "كل مفصل. كل ملليمتر. كل مرة.",
     description:
-      "البناء ليس تجميع مواد. إنه تسلسل دقيق: مسح، تسليح، صب، تركيب، ثم تحقق. مرّر بحرية عبر المراحل الخمس — كل مرحلة تُمنح مساحتها الكاملة من التمرير.",
-    hint: "مرّر عبر مراحل البناء",
+      "البناء ليس تجميع مواد. إنه تسلسل دقيق: مسح، تسليح، صب، تركيب، ثم تحقق. خمس مراحل موثقة ميدانياً — كل مرحلة لها صورتها ورقمها.",
+    hint: "خمس مراحل من التنفيذ",
     liveNote: "توثيق ميداني — مواقع فعلية للشركة",
     stepLabel: "المرحلة",
     steps: [
@@ -67,8 +63,8 @@ const copy = {
     eyebrow: "Construction craftsmanship",
     title: "Every joint. Every millimetre. Every time.",
     description:
-      "Construction is not assembling materials. It is a precise sequence: survey, reinforcement, pour, install, verify. Scroll freely through the five phases — each milestone gets its full scroll budget.",
-    hint: "Scroll through the build phases",
+      "Construction is not assembling materials. It is a precise sequence: survey, reinforcement, pour, install, verify. Five field-documented phases, each with its own frame and number.",
+    hint: "Five build phases",
     liveNote: "Field documentation — live company sites",
     stepLabel: "Phase",
     steps: [
@@ -117,211 +113,110 @@ const copy = {
 };
 
 /**
- * The craftsmanship sequence — a pinned, scroll-scrubbed build diary.
+ * The craftsmanship sequence — an alternating editorial diary.
  *
- * The stage is pinned for `+=300%` with `scrub: 0.5`. Below lg the
- * photographic crossfade runs as a full-bleed stage backdrop behind the
- * editorial copy, with the phase rail docked to the bottom of the stage; at
- * lg it resolves into a framed panel beside the copy with the rail beneath
- * it. A scrub-linked drift keeps the imagery alive without a re-render.
+ * Natural document flow only: each phase owns a photographic row that enters
+ * with a reveal, and the whole section remains fully scrollable at 60 FPS on
+ * low-end mobile because nothing is pinned or measured on scroll.
  */
 export function CraftsmanshipExperience() {
-  const sectionRef = useRef<HTMLElement | null>(null);
-  const progressRef = useRef(0);
-  const fillRef = useRef<HTMLDivElement | null>(null);
-  const photoWrapRef = useRef<HTMLDivElement | null>(null);
-  const timelineFillRef = useRef<HTMLDivElement | null>(null);
-  const [active, setActive] = useState(0);
   const { locale } = useI18n();
-  const { scrollTo } = useSmoothScroll();
-
   const c = copy[locale];
-  const steps = c.steps;
-
-  const handleActive = useCallback((index: number) => {
-    startTransition(() => setActive(index));
-  }, []);
-
-  const handleProgress = useCallback((value: number) => {
-    if (timelineFillRef.current) {
-      timelineFillRef.current.style.transform = `scaleX(${value})`;
-    }
-    if (photoWrapRef.current) {
-      // The photographic panel drifts vertically inside its clipped frame as
-      // the scrub advances — parallax depth without a re-render.
-      const drift = (value - 0.5) * -6;
-      const scale = 1.06 + value * 0.06;
-      photoWrapRef.current.style.transform = `scale(${scale}) translate3d(0, ${drift}%, 0)`;
-    }
-  }, []);
-
-  const triggerRef = usePinnedScroll({
-    sectionRef,
-    progressRef,
-    fillRef,
-    stepCount: steps.length,
-    end: pinEndForSteps(steps.length),
-    onActive: handleActive,
-    onProgress: handleProgress,
-  });
-
-  const jumpTo = (index: number) => {
-    const trigger = triggerRef.current;
-    if (!trigger) return;
-    const span = trigger.end - trigger.start;
-    const ratio = 0.12 + (index / Math.max(1, steps.length - 1)) * 0.76;
-    scrollTo(trigger.start + span * ratio, 0);
-  };
-
-  const trackerSteps = steps.map((step) => ({
-    title: step.title,
-    subtitle: step.metricLabel,
-  }));
 
   return (
-    <section
-      ref={sectionRef}
-      id="craftsmanship"
-      className="relative h-[100svh] overflow-hidden bg-obsidian"
-    >
-      <div className="blueprint-grid pointer-events-none absolute inset-0 opacity-25" />
-      <div className="atmo-glow pointer-events-none absolute inset-0 opacity-40" aria-hidden="true" />
-      <div className="pointer-events-none absolute -end-20 bottom-1/4 select-none text-[13rem] font-semibold leading-none tracking-tighter text-white/[0.022] sm:text-[20rem]">
+    <section id="craftsmanship" className="relative overflow-hidden bg-ink py-20 sm:py-28">
+      <div className="blueprint-grid pointer-events-none absolute inset-0 opacity-20" />
+      <div className="pointer-events-none absolute -end-20 bottom-1/4 select-none text-[11rem] font-semibold leading-none tracking-tighter text-white/[0.02] sm:text-[18rem]">
         {locale === "ar" ? "حرفية" : "CRAFT"}
       </div>
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-[2] h-px bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold/35 to-transparent" />
 
-      <div className="relative z-10 flex h-full flex-col pb-6 pt-28 sm:pb-8 sm:pt-32 lg:pb-6 lg:pt-28">
-        <div className="container-lux grid flex-1 items-center gap-10 pb-20 lg:grid-cols-12 lg:gap-14 lg:pb-0">
-          {/* Editorial copy column */}
-          <div className="relative z-10 lg:col-span-6 xl:col-span-5">
+      <div className="container-lux relative">
+        <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-end">
+          <Reveal className="max-w-2xl">
             <span className="eyebrow">{c.eyebrow}</span>
-            <h2 className="display-title text-shadow-lux mt-5 text-[clamp(1.9rem,4.2vw,4rem)] text-ivory">
+            <h2 className="display-title mt-5 text-[clamp(2rem,4.4vw,4rem)] text-ivory">
               {c.title}
             </h2>
-            <p className="phase-description mt-4 max-w-md text-sm leading-relaxed text-ivory/55">
+            <p className="mt-4 max-w-xl text-sm leading-[1.9] text-ivory/55">
               {c.description}
             </p>
+          </Reveal>
+          <Reveal delay={120} className="hidden items-center gap-3 text-ivory/35 lg:flex">
+            <span className="text-[0.55rem] uppercase tracking-[0.2em]">{c.hint}</span>
+            <MoveDown className="h-4 w-4 text-gold/60" />
+          </Reveal>
+        </div>
 
-            <div className="relative mt-6 min-h-[176px] sm:mt-8 sm:min-h-[250px] lg:min-h-[320px]">
-              {steps.map((step, index) => (
-                <article
-                  key={step.title}
-                  aria-hidden={active !== index}
+        <div className="mt-14 flex flex-col gap-6">
+          {c.steps.map((step, index) => {
+            const photo = craftsmanshipPhotos[index % craftsmanshipPhotos.length];
+            const reversed = index % 2 === 1;
+
+            return (
+              <Reveal
+                key={step.title}
+                delay={40}
+                className="group grid overflow-hidden border border-white/10 bg-coal/60 lg:grid-cols-2"
+              >
+                <div
                   className={cn(
-                    "absolute inset-0 transition-all duration-700",
-                    active === index
-                      ? "pointer-events-auto translate-y-0 opacity-100"
-                      : "pointer-events-none translate-y-4 opacity-0",
+                    "relative aspect-[16/11] overflow-hidden lg:aspect-auto lg:min-h-[360px]",
+                    reversed && "lg:order-2",
                   )}
                 >
-                  <div className="hidden items-baseline gap-4 sm:flex">
-                    <span className="font-display text-5xl italic leading-none text-gold/45 sm:text-6xl">
-                      {step.index}
-                    </span>
-                    <span className="h-px flex-1 bg-gradient-to-r from-gold/50 to-transparent" />
-                  </div>
-                  <h3 className="mt-2 font-display text-[clamp(1.35rem,3vw,2.35rem)] leading-tight text-ivory sm:mt-4">
+                  <Image
+                    src={photo.src}
+                    alt={photo.alt}
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 50vw"
+                    loading="lazy"
+                    className="object-cover photo-grade brightness-[0.82] transition-transform duration-[1500ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.035]"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-obsidian/65 via-transparent to-obsidian/15 lg:bg-gradient-to-r lg:from-obsidian/35 lg:to-transparent" />
+                  <span className="tabular absolute bottom-5 start-5 font-display text-5xl italic leading-none text-gold/75 sm:text-6xl">
+                    {step.index}
+                  </span>
+                </div>
+
+                <div
+                  className={cn(
+                    "flex flex-col justify-center p-6 sm:p-9 lg:p-12",
+                    reversed && "lg:order-1",
+                  )}
+                >
+                  <span className="text-[0.56rem] font-semibold uppercase tracking-[0.22em] text-gold/85">
+                    {c.stepLabel} · {step.title}
+                  </span>
+                  <h3 className="mt-3 font-display text-[clamp(1.6rem,3vw,2.5rem)] leading-tight text-ivory">
                     {step.heading}
                   </h3>
-                  <span className="mt-2 block text-[0.58rem] font-semibold uppercase tracking-[0.2em] text-gold/85">
-                    {step.title}
-                  </span>
-                  <p className="mt-3 hidden max-w-md text-[0.84rem] leading-[1.9] text-ivory/58 sm:block">
+                  <p className="mt-4 max-w-md text-[0.86rem] leading-[1.9] text-ivory/55">
                     {step.text}
                   </p>
-                  <div className="mt-5 flex items-end gap-6 border-t border-white/10 pt-4 sm:mt-6">
+                  <div className="mt-7 flex items-end justify-between gap-6 border-t border-white/10 pt-5">
                     <div>
                       <span className="tabular block text-2xl font-light text-gold">
                         {step.metric}
                       </span>
-                      <span className="mt-1 block text-[0.55rem] uppercase tracking-[0.18em] text-ivory/35">
+                      <span className="mt-1 block text-[0.52rem] uppercase tracking-[0.18em] text-ivory/35">
                         {step.metricLabel}
                       </span>
                     </div>
-                    <div className="mb-1.5 hidden h-px flex-1 overflow-hidden bg-white/10 sm:block">
-                      <div
-                        className="h-full bg-gradient-to-r from-gold-dark via-gold to-gold-light transition-[width] duration-700"
-                        style={{ width: `${((index + 1) / steps.length) * 100}%` }}
-                      />
-                    </div>
+                    <span className="hidden items-center gap-2 text-[0.52rem] uppercase tracking-[0.14em] text-ivory/30 sm:flex">
+                      <span className="relative flex h-2 w-2">
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-gold/50" />
+                        <span className="relative inline-flex h-2 w-2 rounded-full bg-gold" />
+                      </span>
+                      {c.liveNote}
+                    </span>
                   </div>
-                </article>
-              ))}
-            </div>
-
-            <div className="mt-6 hidden items-center gap-3 lg:mt-4 lg:flex">
-              <span className="glass-panel-soft flex items-center gap-3 px-4 py-2.5">
-                <span className="relative flex h-2 w-2 shrink-0">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-gold/60" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-gold" />
-                </span>
-                <span className="text-[0.55rem] uppercase tracking-[0.14em] text-ivory/40">
-                  {c.liveNote}
-                </span>
-              </span>
-              <MoveDown className="h-4 w-4 text-gold/60" />
-            </div>
-          </div>
-
-          {/* Photographic column — full-bleed stage backdrop below lg, framed panel beside the copy at lg */}
-          <div className="absolute inset-0 z-0 lg:relative lg:z-auto lg:col-span-6 xl:col-span-7">
-            <div className="absolute inset-0 overflow-hidden lg:relative lg:aspect-[16/12] lg:max-h-[48svh] lg:w-full lg:border lg:border-white/10 lg:bg-coal lg:shadow-[0_40px_120px_-40px_rgba(0,0,0,0.9)]">
-              <div ref={photoWrapRef} className="absolute inset-0 will-change-transform">
-                {craftsmanshipPhotos.map((photo, index) => (
-                  <div
-                    key={photo.src}
-                    className={cn(
-                      "absolute inset-0 transition-opacity duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)]",
-                      index === active ? "opacity-100" : "opacity-0",
-                    )}
-                  >
-                    <Image
-                      src={photo.src}
-                      alt={photo.alt}
-                      fill
-                      sizes="(max-width: 1024px) 100vw, 900px"
-                      className="object-cover photo-grade brightness-[0.85]"
-                    />
-                  </div>
-                ))}
-              </div>
-
-              <div className="pointer-events-none absolute inset-0 z-[2] bg-gradient-to-t from-obsidian/80 via-obsidian/45 to-obsidian/90 lg:from-obsidian/60 lg:via-transparent lg:to-obsidian/30" />
-              <div className="pointer-events-none absolute inset-0 z-[2] bg-[radial-gradient(ellipse_at_72%_20%,rgb(var(--atmo-glow)/0.16),transparent_55%)]" />
-
-              <span className="tabular glass-panel-soft absolute bottom-4 end-4 z-10 hidden px-3.5 py-2 font-display text-2xl italic text-gold/85 lg:block">
-                {steps[active]?.index}
-              </span>
-              <span className="absolute -top-px start-0 z-10 hidden h-px w-16 bg-gold lg:block" />
-              <span className="absolute -start-px top-0 z-10 hidden h-16 w-px bg-gold/50 lg:block" />
-              <span className="absolute inset-x-0 top-0 z-10 hidden h-px bg-gradient-to-r from-transparent via-gold/50 to-transparent lg:block" />
-            </div>
-
-            <div className="absolute inset-x-[clamp(1.25rem,4vw,4.5rem)] bottom-7 z-20 lg:static lg:mt-5">
-              <TimelineTracker
-                steps={trackerSteps}
-                active={active}
-                onSelect={jumpTo}
-                label={c.stepLabel}
-                orientation="horizontal"
-                fillRef={timelineFillRef}
-              />
-            </div>
-          </div>
+                </div>
+              </Reveal>
+            );
+          })}
         </div>
       </div>
-
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] h-16 bg-gradient-to-t from-obsidian to-transparent" />
-      <div className="absolute inset-x-0 bottom-0 z-20 h-[2px] bg-white/10">
-        <div
-          ref={fillRef}
-          className="h-full w-0 bg-gradient-to-r from-gold-dark via-gold to-gold-light shadow-[0_0_18px_rgb(var(--atmo-glow)/0.6)]"
-        />
-      </div>
-      <span className="sr-only" aria-live="polite">
-        {steps[active]?.title}
-      </span>
     </section>
   );
 }

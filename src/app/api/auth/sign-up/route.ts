@@ -7,6 +7,8 @@ import {
 } from "@/lib/auth/token";
 import { setSessionCookie } from "@/lib/auth/cookie";
 import { authUnavailable, isAuthConfigError } from "@/lib/auth/response";
+import { createUser, getUserByEmail, recordAudit } from "@/lib/db";
+import { hashPassword } from "@/lib/auth/password";
 import {
   NO_STORE_HEADERS,
   clientIp,
@@ -14,14 +16,7 @@ import {
   readJsonBody,
 } from "@/lib/security/http";
 import { rateLimit } from "@/lib/security/rate-limit";
-import {
-  cleanString,
-  isDisplayName,
-  isEmail,
-  isPhone,
-  isPlainObject,
-  normalizeEmail,
-} from "@/lib/security/validation";
+import { signUpSchema } from "@/lib/security/schemas";
 
 const DEMO_EMAILS = new Set(["demo@alattar.sa", "demo@ahmedelattar.sa"]);
 
@@ -30,7 +25,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 
-  const limited = rateLimit(`sign-up:${clientIp(request)}`, 5, 30 * 60 * 1000);
+  const ip = clientIp(request);
+  const limited = rateLimit(`sign-up:${ip}`, 5, 30 * 60 * 1000);
   if (!limited.ok) {
     return NextResponse.json(
       { error: "rate_limited" },
@@ -41,29 +37,16 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const body = await readJsonBody(request);
-  if (!isPlainObject(body)) {
-    return NextResponse.json({ error: "invalid_input" }, { status: 400 });
-  }
-
-  const name = cleanString(body.name, 120);
-  const email = normalizeEmail(body.email);
-  const company = cleanString(body.company, 160) || "Ahmed Elattar Client";
-  const phone = cleanString(body.phone, 40);
-  const password = typeof body.password === "string" ? body.password : "";
-
-  if (
-    !isDisplayName(name) ||
-    !isEmail(email) ||
-    (phone.length > 0 && !isPhone(phone)) ||
-    password.length < 8 ||
-    password.length > 128
-  ) {
+  const parsed = signUpSchema.safeParse(await readJsonBody(request));
+  if (!parsed.success) {
     return NextResponse.json(
       { error: "invalid_input" },
       { status: 400, headers: NO_STORE_HEADERS },
     );
   }
+
+  const { name, email, phone, password } = parsed.data;
+  const company = parsed.data.company || "Ahmed Elattar Client";
 
   if (DEMO_EMAILS.has(email)) {
     return NextResponse.json(
@@ -72,19 +55,53 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const existing = await getUserByEmail(email);
+  if (existing) {
+    return NextResponse.json(
+      { error: "email_unavailable" },
+      { status: 409, headers: NO_STORE_HEADERS },
+    );
+  }
+
   const accountId = randomAccountId();
 
-  let created: Awaited<ReturnType<typeof createSession>>;
   try {
-    created = await createSession({
-      sub: accountId,
+    const passwordHash = await hashPassword(password);
+    const user = await createUser({
       email,
       name,
       company,
-      accountId,
       ...(phone ? { phone } : {}),
+      passwordHash,
       role: "client",
+      accountId,
     });
+
+    const { token, session } = await createSession({
+      sub: user.id,
+      email: user.email,
+      name: user.name,
+      company: user.company,
+      accountId: user.accountId,
+      ...(user.phone ? { phone: user.phone } : {}),
+      role: user.role,
+    });
+
+    await recordAudit({
+      actor: email,
+      action: "auth.sign_up",
+      entity: "user",
+      entityId: user.id,
+      ip,
+    });
+
+    const response = NextResponse.json(
+      { user: publicSessionUser(session) },
+      { status: 201, headers: NO_STORE_HEADERS },
+    );
+
+    setSessionCookie(response, token, REMEMBERED_SESSION_TTL_SECONDS);
+    return response;
   } catch (error) {
     if (isAuthConfigError(error)) {
       console.error(
@@ -92,16 +109,21 @@ export async function POST(request: NextRequest) {
       );
       return authUnavailable();
     }
-    throw error;
+
+    if (
+      error instanceof Error &&
+      (error.message === "email_taken" || error.message.includes("E11000"))
+    ) {
+      return NextResponse.json(
+        { error: "email_unavailable" },
+        { status: 409, headers: NO_STORE_HEADERS },
+      );
+    }
+
+    console.error("[auth] sign-up failed", error);
+    return NextResponse.json(
+      { error: "server_error" },
+      { status: 500, headers: NO_STORE_HEADERS },
+    );
   }
-
-  const { token, session } = created;
-
-  const response = NextResponse.json(
-    { user: publicSessionUser(session) },
-    { status: 201, headers: NO_STORE_HEADERS },
-  );
-
-  setSessionCookie(response, token, REMEMBERED_SESSION_TTL_SECONDS);
-  return response;
 }

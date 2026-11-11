@@ -8,7 +8,6 @@ import { AuthProvider } from "@/components/providers/AuthProvider";
 import { WorkspaceProvider } from "@/components/providers/WorkspaceProvider";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
-import { Preloader } from "@/components/layout/Preloader";
 import { ScrollProgress } from "@/components/layout/ScrollProgress";
 
 const arabic = Tajawal({
@@ -112,7 +111,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <SmoothScrollProvider>
               <AuthProvider>
                 <WorkspaceProvider>
-                  <Preloader />
                   <ScrollProgress />
                   <a
                     href="#main"

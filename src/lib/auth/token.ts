@@ -210,3 +210,60 @@ export function randomReference(prefix = "ALT") {
   const value = ((bytes[0] << 8) | bytes[1]) % 9000 + 1000;
   return `${prefix}-${new Date().getFullYear()}-${value}`;
 }
+
+export const RESET_COOKIE = "alattar_reset";
+export const RESET_TTL_SECONDS = 15 * 60;
+
+type ResetPayload = {
+  email: string;
+  purpose: "password-reset";
+  iat: number;
+  exp: number;
+};
+
+/**
+ * Short-lived, HMAC-signed proof that an email address passed OTP
+ * verification. It is stored in an httpOnly cookie and never exposed to JS.
+ */
+export async function createResetToken(email: string): Promise<string> {
+  const now = Math.floor(Date.now() / 1000);
+  const payload: ResetPayload = {
+    email: email.toLowerCase(),
+    purpose: "password-reset",
+    iat: now,
+    exp: now + RESET_TTL_SECONDS,
+  };
+
+  const body = toBase64Url(encoder.encode(JSON.stringify(payload)));
+  const signature = await crypto.subtle.sign("HMAC", await getKey(), encoder.encode(body));
+
+  return `${body}.${toBase64Url(new Uint8Array(signature))}`;
+}
+
+export async function verifyResetToken(token: string): Promise<string | null> {
+  try {
+    const [body, signature] = token.split(".");
+    if (!body || !signature) return null;
+
+    const valid = await crypto.subtle.verify(
+      "HMAC",
+      await getKey(),
+      fromBase64Url(signature),
+      encoder.encode(body),
+    );
+    if (!valid) return null;
+
+    const parsed: unknown = JSON.parse(decoder.decode(fromBase64Url(body)));
+    if (!isRecord(parsed)) return null;
+
+    const now = Math.floor(Date.now() / 1000);
+    const email = safeText(parsed.email, 254).toLowerCase();
+    if (!email) return null;
+    if (parsed.purpose !== "password-reset") return null;
+    if (typeof parsed.exp !== "number" || parsed.exp <= now) return null;
+
+    return email;
+  } catch {
+    return null;
+  }
+}

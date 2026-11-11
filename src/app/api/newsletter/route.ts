@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { createInquiry, listInquiries } from "@/lib/db";
 import {
   NO_STORE_HEADERS,
   clientIp,
@@ -6,7 +7,7 @@ import {
   readJsonBody,
 } from "@/lib/security/http";
 import { rateLimit } from "@/lib/security/rate-limit";
-import { isEmail, isPlainObject, normalizeEmail } from "@/lib/security/validation";
+import { newsletterSchema } from "@/lib/security/schemas";
 
 export async function POST(request: NextRequest) {
   if (!isSameOrigin(request)) {
@@ -24,19 +25,29 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const body = await readJsonBody(request, 4_000);
-  if (!isPlainObject(body)) {
-    return NextResponse.json({ error: "invalid_input" }, { status: 400 });
-  }
-
-  const email = normalizeEmail(body.email);
-  if (!isEmail(email)) {
+  const parsed = newsletterSchema.safeParse(await readJsonBody(request, 4_000));
+  if (!parsed.success) {
     return NextResponse.json(
       { error: "invalid_email" },
       { status: 400, headers: NO_STORE_HEADERS },
     );
   }
 
+  const { email } = parsed.data;
+
   // Always return the same acknowledgement to avoid email enumeration.
+  try {
+    const recent = await listInquiries(200);
+    const subscribed = recent.some(
+      (entry) => entry.kind === "newsletter" && entry.email === email,
+    );
+
+    if (!subscribed) {
+      await createInquiry({ kind: "newsletter", email });
+    }
+  } catch (error) {
+    console.error("[newsletter] failed to persist subscription", error);
+  }
+
   return NextResponse.json({ ok: true }, { headers: NO_STORE_HEADERS });
 }

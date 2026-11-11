@@ -56,6 +56,7 @@ const copy = {
       jeddah: "جدة",
       neom: "نيوم",
       other: "مدينة أخرى",
+      cairo: "مصر — القاهرة",
     },
     paces: {
       standard: "قياسي",
@@ -104,6 +105,7 @@ const copy = {
       jeddah: "Jeddah",
       neom: "NEOM",
       other: "Another city",
+      cairo: "Egypt — Cairo",
     },
     paces: {
       standard: "Standard",

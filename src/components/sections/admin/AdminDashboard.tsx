@@ -4,14 +4,17 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  Activity,
   ArrowUpRight,
   BarChart3,
   Building2,
   Check,
   CircleDollarSign,
   FileText,
+  Flag,
   FolderKanban,
   Image as ImageIcon,
+  Inbox,
   LayoutDashboard,
   LogOut,
   MessageSquare,
@@ -33,6 +36,7 @@ import {
   type WorkspaceProject,
 } from "@/components/providers/WorkspaceProvider";
 import { AdminProjectEditor } from "@/components/sections/admin/AdminProjectEditor";
+import { AuditPanel, InquiriesPanel, MilestonesPanel } from "@/components/sections/admin/AdminOperations";
 import { Field, TextInput, Textarea } from "@/components/ui/Field";
 import { ProjectArt } from "@/components/ui/ProjectArt";
 import { portalProjects } from "@/data/portal";
@@ -41,7 +45,16 @@ import type { ArtVariant } from "@/data/projects";
 import { L } from "@/lib/dictionary";
 import { cn } from "@/lib/utils";
 
-type Section = "overview" | "projects" | "financials" | "content" | "media" | "messages";
+type Section =
+  | "overview"
+  | "projects"
+  | "milestones"
+  | "inquiries"
+  | "financials"
+  | "content"
+  | "media"
+  | "messages"
+  | "audit";
 
 const copy = {
   ar: {
@@ -53,6 +66,9 @@ const copy = {
     content: "محتوى الموقع",
     media: "الوسائط والبانرات",
     messages: "رسائل العملاء",
+    inquiries: "الاستفسارات",
+    audit: "سجل النشاط",
+    milestones: "المراحل",
     back: "العودة للموقع",
     portal: "بوابة العملاء",
     signOut: "تسجيل الخروج",
@@ -161,6 +177,9 @@ const copy = {
     content: "Site content",
     media: "Media & banners",
     messages: "Client messages",
+    inquiries: "Inquiries",
+    audit: "Audit trail",
+    milestones: "Milestones",
     back: "Back to site",
     portal: "Client portal",
     signOut: "Sign out",
@@ -331,10 +350,13 @@ export function AdminDashboard() {
   const navItems: { id: Section; label: string; icon: typeof LayoutDashboard }[] = [
     { id: "overview", label: c.overview, icon: LayoutDashboard },
     { id: "projects", label: c.projects, icon: FolderKanban },
+    { id: "milestones", label: c.milestones, icon: Flag },
+    { id: "inquiries", label: c.inquiries, icon: Inbox },
     { id: "financials", label: c.financials, icon: Wallet },
     { id: "content", label: c.content, icon: Settings },
     { id: "media", label: c.media, icon: ImageIcon },
     { id: "messages", label: c.messages, icon: MessageSquare },
+    { id: "audit", label: c.audit, icon: Activity },
   ];
 
   const openNew = () => {
@@ -468,12 +490,15 @@ export function AdminDashboard() {
                     }}
                   />
                 ) : null}
+                {section === "milestones" ? <MilestonesPanel /> : null}
+                {section === "inquiries" ? <InquiriesPanel /> : null}
                 {section === "financials" ? <FinancialsSection projects={projects} /> : null}
                 {section === "content" ? <ContentSection /> : null}
                 {section === "media" ? (
                   <MediaSection projects={projects} onReset={resetWorkspace} />
                 ) : null}
                 {section === "messages" ? <MessagesSection projects={projects} /> : null}
+                {section === "audit" ? <AuditPanel /> : null}
               </div>
             </div>
           </div>

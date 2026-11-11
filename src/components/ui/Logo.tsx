@@ -48,8 +48,8 @@ export function Logo({ className, compact = false, tone = "light", locale: local
               "font-semibold",
               tone === "light" ? "text-ivory" : "text-ink",
               isArabic
-                ? "text-[1.35rem] font-bold tracking-normal"
-                : "text-[0.9rem] tracking-[0.18em]",
+                ? "text-[1.1rem] font-bold tracking-normal sm:text-[1.35rem]"
+                : "text-[0.78rem] tracking-[0.16em] sm:text-[0.9rem] sm:tracking-[0.18em]",
             )}
           >
             {isArabic ? "أحمد العطار" : "AHMED ELATTAR"}
@@ -57,6 +57,7 @@ export function Logo({ className, compact = false, tone = "light", locale: local
           <span
             className={cn(
               "mt-1.5 text-[0.47rem] font-medium uppercase tracking-[0.24em]",
+              "hidden sm:block",
               tone === "light" ? "text-ivory/45" : "text-ink/45",
               isArabic && "tracking-[0.02em] text-[0.56rem]",
             )}

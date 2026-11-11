@@ -4,10 +4,11 @@ import {
   SESSION_TTL_SECONDS,
   createSession,
   publicSessionUser,
-  randomAccountId,
 } from "@/lib/auth/token";
 import { setSessionCookie } from "@/lib/auth/cookie";
 import { authUnavailable, isAuthConfigError } from "@/lib/auth/response";
+import { demoAccountsAllowed, getUserByEmail, recordAudit, updateUser } from "@/lib/db";
+import { verifyPassword } from "@/lib/auth/password";
 import {
   NO_STORE_HEADERS,
   clientIp,
@@ -15,28 +16,18 @@ import {
   readJsonBody,
 } from "@/lib/security/http";
 import { rateLimit } from "@/lib/security/rate-limit";
-import { isEmail, isPlainObject, normalizeEmail } from "@/lib/security/validation";
+import { signInSchema } from "@/lib/security/schemas";
 
 const DEMO_EMAILS = new Set(["demo@alattar.sa", "demo@ahmedelattar.sa"]);
 const DEMO_PASSWORD = "demo1234";
-
-function titleFromEmail(email: string) {
-  const handle = email.split("@")[0] ?? "Client";
-  return (
-    handle
-      .split(/[._-]/)
-      .filter(Boolean)
-      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-      .join(" ") || "Client"
-  );
-}
 
 export async function POST(request: NextRequest) {
   if (!isSameOrigin(request)) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 
-  const limited = rateLimit(`sign-in:${clientIp(request)}`, 8, 15 * 60 * 1000);
+  const ip = clientIp(request);
+  const limited = rateLimit(`sign-in:${ip}`, 8, 15 * 60 * 1000);
   if (!limited.ok) {
     return NextResponse.json(
       { error: "rate_limited" },
@@ -47,44 +38,55 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const body = await readJsonBody(request);
-  if (!isPlainObject(body)) {
-    return NextResponse.json({ error: "invalid_input" }, { status: 400 });
-  }
-
-  const email = normalizeEmail(body.email);
-  const password = typeof body.password === "string" ? body.password : "";
-  const remember = body.remember === true;
-
-  if (!isEmail(email) || password.length < 8 || password.length > 128) {
+  const parsed = signInSchema.safeParse(await readJsonBody(request));
+  if (!parsed.success) {
     return NextResponse.json(
       { error: "invalid_credentials" },
       { status: 401, headers: NO_STORE_HEADERS },
     );
   }
 
-  const isDemo = DEMO_EMAILS.has(email);
-  if (isDemo && password !== DEMO_PASSWORD) {
+  const { email, password, remember } = parsed.data;
+
+  const user = await getUserByEmail(email);
+  const demoAccess =
+    demoAccountsAllowed() && DEMO_EMAILS.has(email) && password === DEMO_PASSWORD;
+
+  if (user && !(await verifyPassword(password, user.passwordHash))) {
+    await recordAudit({
+      actor: email,
+      action: "auth.sign_in_failed",
+      entity: "user",
+      entityId: user.id,
+      ip,
+    });
     return NextResponse.json(
       { error: "invalid_credentials" },
       { status: 401, headers: NO_STORE_HEADERS },
     );
   }
 
-  const accountId = isDemo ? "ALT-2048" : randomAccountId();
+  if (!user && !demoAccess) {
+    return NextResponse.json(
+      { error: "invalid_credentials" },
+      { status: 401, headers: NO_STORE_HEADERS },
+    );
+  }
+
+  const accountId = user?.accountId ?? "ALT-2048";
   const ttl = remember ? REMEMBERED_SESSION_TTL_SECONDS : SESSION_TTL_SECONDS;
 
   let created: Awaited<ReturnType<typeof createSession>>;
   try {
     created = await createSession(
       {
-        sub: accountId,
+        sub: user?.id ?? "demo-admin",
         email,
-        name: isDemo ? "Mohammed Alabdullah" : titleFromEmail(email),
-        company: isDemo ? "Riyadh Development Holding" : "Ahmed Elattar Client",
+        name: user?.name ?? "Mohammed Alabdullah",
+        company: user?.company ?? "Riyadh Development Holding",
         accountId,
-        ...(isDemo ? { phone: "+966 55 214 8890" } : {}),
-        role: isDemo ? "admin" : "client",
+        ...(user?.phone ? { phone: user.phone } : { phone: "+966 55 214 8890" }),
+        role: user?.role ?? "admin",
       },
       ttl,
     );
@@ -99,6 +101,18 @@ export async function POST(request: NextRequest) {
   }
 
   const { token, session } = created;
+
+  if (user) {
+    await updateUser(email, { lastLoginAt: new Date().toISOString() });
+  }
+
+  await recordAudit({
+    actor: email,
+    action: "auth.sign_in",
+    entity: "user",
+    entityId: user?.id,
+    ip,
+  });
 
   const response = NextResponse.json(
     { user: publicSessionUser(session) },

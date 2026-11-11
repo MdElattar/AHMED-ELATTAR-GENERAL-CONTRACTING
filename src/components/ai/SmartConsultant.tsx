@@ -8,6 +8,7 @@ import { useI18n } from "@/components/providers/I18nProvider";
 import {
   ESTIMATE_BREAKDOWN,
   computeEstimate,
+  type EstimateCity,
   type EstimateType,
 } from "@/lib/estimate";
 import { cn } from "@/lib/utils";
@@ -43,6 +44,7 @@ const copy = {
     areaUnit: "م²",
     confirmArea: "تأكيد المساحة",
     askBudget: "وما النطاق التقريبي للميزانية؟",
+    askLocation: "أين سيُقام المشروع؟",
     thinking: "أحلّل المعطيات…",
     userArea: (area: string) => `مساحة تقريبية: ${area} م²`,
     resultTitle: "الجدوى الأولية",
@@ -90,6 +92,13 @@ const copy = {
       "200-1000": "٢٠٠ مليون – مليار",
       "1000-plus": "أكثر من مليار",
     } as Record<BudgetBand, string>,
+    cities: {
+      riyadh: "الرياض",
+      jeddah: "جدة",
+      neom: "نيوم",
+      other: "مدينة أخرى",
+      cairo: "مصر — القاهرة",
+    } as Record<EstimateCity, string>,
     budgetUnit: "ر.س",
   },
   en: {
@@ -106,6 +115,7 @@ const copy = {
     areaUnit: "m²",
     confirmArea: "Confirm area",
     askBudget: "And the approximate budget range?",
+    askLocation: "Where will the project be located?",
     thinking: "Analysing inputs…",
     userArea: (area: string) => `Approximate area: ${area} m²`,
     resultTitle: "Preliminary feasibility",
@@ -153,6 +163,13 @@ const copy = {
       "200-1000": "SAR 200M–1B",
       "1000-plus": "Above SAR 1B",
     } as Record<BudgetBand, string>,
+    cities: {
+      riyadh: "Riyadh",
+      jeddah: "Jeddah",
+      neom: "NEOM",
+      other: "Another city",
+      cairo: "Egypt — Cairo",
+    } as Record<EstimateCity, string>,
     budgetUnit: "SAR",
   },
 };
@@ -177,13 +194,16 @@ export function SmartConsultant() {
   const [thinking, setThinking] = useState(false);
   const [type, setType] = useState<EstimateType | null>(null);
   const [area, setArea] = useState(18000);
+  const [areaConfirmed, setAreaConfirmed] = useState(false);
   const [budget, setBudget] = useState<BudgetBand | null>(null);
+  const [city, setCity] = useState<EstimateCity | null>(null);
   const [showResult, setShowResult] = useState(false);
 
   const closeRef = useRef<HTMLButtonElement | null>(null);
   const logRef = useRef<HTMLDivElement | null>(null);
   const messageIdRef = useRef(0);
   const timersRef = useRef<number[]>([]);
+  const introRef = useRef(false);
 
   useEffect(() => {
     return () => {
@@ -230,7 +250,8 @@ export function SmartConsultant() {
 
   const openPanel = () => {
     setOpen(true);
-    if (messages.length === 0) {
+    if (!introRef.current) {
+      introRef.current = true;
       say(c.intro);
     }
   };
@@ -245,6 +266,8 @@ export function SmartConsultant() {
   };
 
   const confirmArea = () => {
+    if (areaConfirmed) return;
+    setAreaConfirmed(true);
     const formatted = new Intl.NumberFormat(locale === "ar" ? "ar-SA" : "en-US", {
       maximumFractionDigits: 0,
     }).format(area);
@@ -256,6 +279,7 @@ export function SmartConsultant() {
   };
 
   const chooseBudget = (value: BudgetBand) => {
+    if (!areaConfirmed) return;
     setBudget(value);
     setMessages((current) => [
       ...current,
@@ -264,6 +288,15 @@ export function SmartConsultant() {
         role: "user",
         text: `${c.budgets[value]} ${c.budgetUnit}`,
       },
+    ]);
+    say(c.askLocation);
+  };
+
+  const chooseCity = (value: EstimateCity) => {
+    setCity(value);
+    setMessages((current) => [
+      ...current,
+      { id: (messageIdRef.current += 1), role: "user", text: c.cities[value] },
     ]);
     say(c.thinking, () => setShowResult(true));
   };
@@ -275,7 +308,9 @@ export function SmartConsultant() {
     setThinking(false);
     setType(null);
     setArea(18000);
+    setAreaConfirmed(false);
     setBudget(null);
+    setCity(null);
     setShowResult(false);
     say(c.intro);
   };
@@ -286,7 +321,7 @@ export function SmartConsultant() {
           type,
           area,
           quality: "premium",
-          city: "riyadh",
+          city: city ?? "riyadh",
           pace: "standard",
         })
       : null;
@@ -402,7 +437,7 @@ export function SmartConsultant() {
                 </div>
               ) : null}
 
-              {!showResult && !thinking && type !== null && budget === null ? (
+              {!showResult && !thinking && type !== null && areaConfirmed && budget === null ? (
                 <div className="mt-1 flex flex-wrap gap-2">
                   {(Object.keys(c.budgets) as BudgetBand[]).map((value) => (
                     <button
@@ -412,6 +447,21 @@ export function SmartConsultant() {
                       className="border border-gold/35 px-3 py-2 text-[0.66rem] font-medium text-gold transition-colors hover:bg-gold hover:text-obsidian"
                     >
                       {c.budgets[value]}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+
+              {!showResult && !thinking && type !== null && budget !== null && city === null ? (
+                <div className="mt-1 flex flex-wrap gap-2">
+                  {(Object.keys(c.cities) as EstimateCity[]).map((value) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => chooseCity(value)}
+                      className="border border-gold/35 px-3 py-2 text-[0.66rem] font-medium text-gold transition-colors hover:bg-gold hover:text-obsidian"
+                    >
+                      {c.cities[value]}
                     </button>
                   ))}
                 </div>
@@ -506,9 +556,13 @@ export function SmartConsultant() {
                   {c.again}
                 </button>
               </div>
-            ) : (
+            ) : type !== null && budget === null ? (
               <div className="border-t border-white/10 bg-obsidian/60 p-4">
-                {type === null ? null : budget === null ? (
+                {areaConfirmed ? (
+                  <p className="text-[0.58rem] uppercase tracking-[0.16em] text-ivory/40">
+                    {c.userArea(nf.format(area))}
+                  </p>
+                ) : (
                   <div>
                     <div className="flex items-center justify-between gap-3">
                       <label
@@ -539,9 +593,9 @@ export function SmartConsultant() {
                       {c.confirmArea}
                     </button>
                   </div>
-                ) : null}
+                )}
               </div>
-            )}
+            ) : null}
           </motion.div>
         ) : null}
       </AnimatePresence>

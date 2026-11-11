@@ -18,7 +18,7 @@ import {
   type ProjectCategory,
   type ProjectStatus,
 } from "@/data/projects";
-import { portalProjects } from "@/data/portal";
+import { portalProjects, type PortalMilestone } from "@/data/portal";
 import { isSafeInternalPath } from "@/lib/security/validation";
 
 export type WorkspaceProject = Project & {
@@ -29,6 +29,7 @@ export type WorkspaceProject = Project & {
   contractValue: number;
   updatedAt: string;
   gallery: ArtVariant[];
+  milestones: PortalMilestone[];
 };
 
 export type ServiceOverride = {
@@ -113,6 +114,7 @@ const defaultProjects: WorkspaceProject[] = seedProjects.map((project, index) =>
     contractValue: financials.budget,
     updatedAt: "2026-10-12",
     gallery: [project.art],
+    milestones: portalProjects.find((item) => item.slug === project.slug)?.milestones ?? [],
   };
 });
 
@@ -184,6 +186,7 @@ const artVariants: ArtVariant[] = [
   "marina",
   "solar",
 ];
+const seedSlugs = new Set(seedProjects.map((project) => project.slug));
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -207,6 +210,26 @@ function normalizeLocalized(value: unknown, fallback: Localized): Localized {
     ar: ar || fallback.ar,
     en: en || fallback.en,
   };
+}
+
+function normalizeMilestones(value: unknown, fallback: PortalMilestone[]): PortalMilestone[] {
+  if (!Array.isArray(value)) return fallback;
+
+  const statuses: PortalMilestone["status"][] = ["complete", "current", "upcoming"];
+
+  return value
+    .map((item) => {
+      if (!isRecord(item)) return null;
+      const title = normalizeLocalized(item.title, L("", ""));
+      const date = normalizeLocalized(item.date, L("", ""));
+      const status = statuses.includes(item.status as PortalMilestone["status"])
+        ? (item.status as PortalMilestone["status"])
+        : "upcoming";
+      if (!title.ar && !title.en) return null;
+      return { title, date, status };
+    })
+    .filter((item): item is PortalMilestone => item !== null)
+    .slice(0, 30);
 }
 
 function normalizeProject(value: unknown): WorkspaceProject | null {
@@ -296,6 +319,7 @@ function normalizeProject(value: unknown): WorkspaceProject | null {
     contractValue,
     updatedAt,
     gallery: gallery.length ? gallery : (seedWorkspace?.gallery ?? [art]),
+    milestones: normalizeMilestones(value.milestones, seedWorkspace?.milestones ?? []),
   };
 }
 
@@ -402,13 +426,115 @@ const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<WorkspaceState>(initialState);
   const [ready, setReady] = useState(false);
+  const stateRef = useRef<WorkspaceState>(initialState);
   const replyTimers = useRef<Set<number>>(new Set());
+
+  const commit = useCallback((next: WorkspaceState) => {
+    stateRef.current = next;
+    setState(next);
+  }, []);
 
   useEffect(() => {
     // localStorage is client-only; load after hydration to avoid a mismatch.
+    const restored = loadState();
+    stateRef.current = restored;
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setState(loadState());
+    setState(restored);
     setReady(true);
+  }, []);
+
+  // Pull the persisted site content and any admin-created project overrides.
+  // The static seed remains the source of truth for untouched records, so the
+  // public site is complete even before the first database write.
+  useEffect(() => {
+    if (!ready) return;
+    let cancelled = false;
+
+    const hydrate = async () => {
+      try {
+        const [contentResponse, projectsResponse] = await Promise.all([
+          fetch("/api/content", { cache: "no-store" }),
+          fetch("/api/projects", { cache: "no-store" }),
+        ]);
+
+        if (cancelled) return;
+
+        const contentData = (await contentResponse.json().catch(() => ({}))) as {
+          content?: unknown;
+        };
+        const projectsData = (await projectsResponse.json().catch(() => ({}))) as {
+          projects?: unknown;
+        };
+
+        const current = stateRef.current;
+        let next: WorkspaceState = current;
+
+        if (contentData.content) {
+          next = { ...next, content: normalizeContent(contentData.content) };
+        }
+
+        if (Array.isArray(projectsData.projects)) {
+          const serverProjects = projectsData.projects
+            .map(normalizeProject)
+            .filter((project): project is WorkspaceProject => project !== null);
+
+          // The database is authoritative for portfolio records. Once the feed
+          // answers successfully, drop any locally cached project that no longer
+          // exists on the server (deleted from another browser), while keeping
+          // the static seed as the always-available baseline.
+          const serverSlugs = new Set(serverProjects.map((project) => project.slug));
+          const retained = projectsResponse.ok
+            ? next.projects.filter(
+                (project) => seedSlugs.has(project.slug) || serverSlugs.has(project.slug),
+              )
+            : next.projects;
+
+          const merged = [...retained];
+          for (const normalized of serverProjects) {
+            const index = merged.findIndex((item) => item.slug === normalized.slug);
+            if (index >= 0) merged[index] = { ...merged[index], ...normalized };
+            else merged.unshift(normalized);
+          }
+          next = { ...next, projects: merged.slice(0, 100) };
+        }
+
+        if (!cancelled) commit(next);
+      } catch {
+        // Offline or database-unavailable: the seeded state stays usable.
+      }
+    };
+
+    void hydrate();
+    return () => {
+      cancelled = true;
+    };
+  }, [ready, commit]);
+
+  const persistProject = useCallback((project: WorkspaceProject) => {
+    void fetch("/api/admin/projects", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ project }),
+    }).catch(() => undefined);
+  }, []);
+
+  const persistProjectPatch = useCallback((project: WorkspaceProject) => {
+    void fetch(`/api/admin/projects/${encodeURIComponent(project.slug)}`, {
+      method: "PATCH",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ project }),
+    }).catch(() => undefined);
+  }, []);
+
+  const persistContent = useCallback((content: SiteContent) => {
+    void fetch("/api/admin/content", {
+      method: "PATCH",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content }),
+    }).catch(() => undefined);
   }, []);
 
   useEffect(() => {
@@ -428,50 +554,71 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     }
   }, [ready, state]);
 
-  const addProject = useCallback((project: WorkspaceProject) => {
-    const normalized = normalizeProject(project);
-    if (!normalized) return;
+  const addProject = useCallback(
+    (project: WorkspaceProject) => {
+      const normalized = normalizeProject(project);
+      if (!normalized) return;
 
-    setState((current) => ({
-      ...current,
-      projects: [
-        normalized,
-        ...current.projects.filter((item) => item.slug !== normalized.slug),
-      ].slice(0, 100),
-    }));
-  }, []);
+      const current = stateRef.current;
+      commit({
+        ...current,
+        projects: [
+          normalized,
+          ...current.projects.filter((item) => item.slug !== normalized.slug),
+        ].slice(0, 100),
+      });
+      persistProject(normalized);
+    },
+    [commit, persistProject],
+  );
 
-  const updateProject = useCallback((slug: string, patch: Partial<WorkspaceProject>) => {
-    setState((current) => ({
-      ...current,
-      projects: current.projects.map((project) => {
+  const updateProject = useCallback(
+    (slug: string, patch: Partial<WorkspaceProject>) => {
+      const current = stateRef.current;
+      const projects = current.projects.map((project) => {
         if (project.slug !== slug) return project;
         return normalizeProject({ ...project, ...patch }) ?? project;
-      }),
-    }));
-  }, []);
+      });
+      const updated = projects.find((project) => project.slug === slug);
 
-  const deleteProject = useCallback((slug: string) => {
-    setState((current) => ({
-      ...current,
-      projects: current.projects.filter((project) => project.slug !== slug),
-    }));
-  }, []);
+      commit({ ...current, projects });
+      if (updated) persistProjectPatch(updated);
+    },
+    [commit, persistProjectPatch],
+  );
 
-  const updateContent = useCallback((patch: Partial<SiteContent>) => {
-    setState((current) => ({
-      ...current,
-      content: normalizeContent({ ...current.content, ...patch }),
-    }));
-  }, []);
+  const deleteProject = useCallback(
+    (slug: string) => {
+      const current = stateRef.current;
+      commit({
+        ...current,
+        projects: current.projects.filter((project) => project.slug !== slug),
+      });
+      void fetch(`/api/admin/projects/${encodeURIComponent(slug)}`, {
+        method: "DELETE",
+        credentials: "same-origin",
+      }).catch(() => undefined);
+    },
+    [commit],
+  );
 
-  const updateService = useCallback((slug: string, patch: Partial<ServiceOverride>) => {
-    const normalizedSlug = slug.trim().toLowerCase().slice(0, 80);
-    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(normalizedSlug)) return;
+  const updateContent = useCallback(
+    (patch: Partial<SiteContent>) => {
+      const current = stateRef.current;
+      const content = normalizeContent({ ...current.content, ...patch });
+      commit({ ...current, content });
+      persistContent(content);
+    },
+    [commit, persistContent],
+  );
 
-    setState((current) => ({
-      ...current,
-      content: {
+  const updateService = useCallback(
+    (slug: string, patch: Partial<ServiceOverride>) => {
+      const normalizedSlug = slug.trim().toLowerCase().slice(0, 80);
+      if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(normalizedSlug)) return;
+
+      const current = stateRef.current;
+      const content: SiteContent = {
         ...current.content,
         serviceOverrides: {
           ...current.content.serviceOverrides,
@@ -484,67 +631,81 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
             ...patch,
           }),
         },
-      },
-    }));
-  }, []);
+      };
 
-  const addMessage = useCallback((projectSlug: string, text: string) => {
-    const trimmed = text.trim().slice(0, 4000);
-    if (!trimmed) return;
-    const now = new Date().toISOString();
-    const id = `msg-${Date.now()}`;
+      commit({ ...current, content });
+      persistContent(content);
+    },
+    [commit, persistContent],
+  );
 
-    setState((current) => ({
-      ...current,
-      messages: [
-        ...current.messages,
-        { id, projectSlug, author: "client" as const, text: trimmed, at: now },
-      ].slice(-200),
-    }));
+  const addMessage = useCallback(
+    (projectSlug: string, text: string) => {
+      const trimmed = text.trim().slice(0, 4000);
+      if (!trimmed) return;
+      const now = new Date().toISOString();
+      const id = `msg-${Date.now()}`;
+      const current = stateRef.current;
 
-    const timer = window.setTimeout(() => {
-      replyTimers.current.delete(timer);
-      setState((current) => ({
+      commit({
+        ...current,
+        messages: [
+          ...current.messages,
+          { id, projectSlug, author: "client" as const, text: trimmed, at: now },
+        ].slice(-200),
+      });
+
+      const timer = window.setTimeout(() => {
+        replyTimers.current.delete(timer);
+        const latest = stateRef.current;
+        commit({
+          ...latest,
+          messages: [
+            ...latest.messages,
+            {
+              id: `${id}-reply`,
+              projectSlug,
+              author: "manager" as const,
+              text: "تم استلام رسالتك. سأراجع الملف وأعود إليك خلال ساعات العمل.",
+              at: new Date().toISOString(),
+            },
+          ].slice(-200),
+        });
+      }, 1400);
+
+      replyTimers.current.add(timer);
+    },
+    [commit],
+  );
+
+  const replyMessage = useCallback(
+    (projectSlug: string, text: string) => {
+      const trimmed = text.trim().slice(0, 4000);
+      if (!trimmed) return;
+      const current = stateRef.current;
+
+      commit({
         ...current,
         messages: [
           ...current.messages,
           {
-            id: `${id}-reply`,
+            id: `msg-${Date.now()}-manager`,
             projectSlug,
             author: "manager" as const,
-            text: "تم استلام رسالتك. سأراجع الملف وأعود إليك خلال ساعات العمل.",
+            text: trimmed,
             at: new Date().toISOString(),
           },
         ].slice(-200),
-      }));
-    }, 1400);
-
-    replyTimers.current.add(timer);
-  }, []);
-
-  const replyMessage = useCallback((projectSlug: string, text: string) => {
-    const trimmed = text.trim().slice(0, 4000);
-    if (!trimmed) return;
-    setState((current) => ({
-      ...current,
-      messages: [
-        ...current.messages,
-        {
-          id: `msg-${Date.now()}-manager`,
-          projectSlug,
-          author: "manager" as const,
-          text: trimmed,
-          at: new Date().toISOString(),
-        },
-      ].slice(-200),
-    }));
-  }, []);
+      });
+    },
+    [commit],
+  );
 
   const resetWorkspace = useCallback(() => {
     for (const timer of replyTimers.current) window.clearTimeout(timer);
     replyTimers.current.clear();
-    setState(initialState);
-  }, []);
+    commit(initialState);
+  }, [commit]);
 
   const value = useMemo<WorkspaceContextValue>(
     () => ({

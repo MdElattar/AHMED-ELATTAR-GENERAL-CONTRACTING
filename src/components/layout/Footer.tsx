@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ArrowUp, ArrowUpRight } from "lucide-react";
+import { isAdminUser, useAuth } from "@/components/providers/AuthProvider";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { useSmoothScroll } from "@/components/providers/SmoothScroll";
 import { Logo } from "@/components/ui/Logo";
@@ -15,7 +16,7 @@ const companyLinks = [
   { href: "/projects", key: "projects" as const },
   { href: "/services", key: "services" as const },
   { href: "/contact", key: "contact" as const },
-  { href: "/sign-in", key: "portal" as const },
+  { href: "/portal", key: "portal" as const },
 ];
 
 const socialLinks = [
@@ -62,11 +63,16 @@ const expertiseLinks = [
 
 export function Footer() {
   const { t, locale, isRTL } = useI18n();
+  const { user } = useAuth();
   const { scrollTo } = useSmoothScroll();
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
   const [subscribing, setSubscribing] = useState(false);
   const [subscribeError, setSubscribeError] = useState("");
+
+  const links = isAdminUser(user)
+    ? [...companyLinks, { href: "/admin", key: "admin" as const }]
+    : companyLinks;
 
   return (
     <footer className="relative overflow-hidden border-t border-white/10 bg-ink">
@@ -158,7 +164,7 @@ export function Footer() {
                 {t.footer.company}
               </h3>
               <ul className="mt-5 space-y-3">
-                {companyLinks.map((link) => (
+                {links.map((link) => (
                   <li key={link.href}>
                     <Link
                       href={link.href}
@@ -291,15 +297,6 @@ export function Footer() {
               <ArrowUpRight className="h-3 w-3 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
             </a>
             <span className="hidden sm:block">Riyadh · Jeddah · Dubai</span>
-          </div>
-        </div>
-
-        <div
-          aria-hidden="true"
-          className="pointer-events-none select-none overflow-hidden border-t border-white/5"
-        >
-          <div className="text-outline -mb-[0.14em] whitespace-nowrap text-center text-[clamp(3rem,10vw,10rem)] font-semibold uppercase leading-none tracking-[0.04em] opacity-40">
-            AHMED ELATTAR
           </div>
         </div>
       </div>

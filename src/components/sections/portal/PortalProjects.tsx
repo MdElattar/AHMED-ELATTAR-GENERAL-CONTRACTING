@@ -124,6 +124,10 @@ export function PortalProjects() {
     portalProjects.find((item) => item.slug === activeSlug) ?? portalProjects[0];
   const project = projects.find((item) => item.slug === activeSlug);
   const progress = project?.progress ?? portalProject.progress;
+  const milestones = project?.milestones.length ? project.milestones : portalProject.milestones;
+  const nextMilestone =
+    milestones.find((milestone) => milestone.status !== "complete")?.title ??
+    portalProject.nextMilestone;
   const projectMessages = useMemo(
     () => messages.filter((message) => message.projectSlug === activeSlug),
     [activeSlug, messages],
@@ -229,7 +233,7 @@ export function PortalProjects() {
                   { label: c.value, value: l(project?.value ?? portalProject.value) },
                   { label: c.manager, value: l(portalProject.manager) },
                   { label: c.lastUpdate, value: l(portalProject.lastUpdate) },
-                  { label: c.next, value: l(portalProject.nextMilestone) },
+                  { label: c.next, value: l(nextMilestone) },
                 ].map((fact) => (
                   <div key={fact.label}>
                     <p className="text-[0.5rem] uppercase tracking-[0.14em] text-ink/35">
@@ -277,7 +281,7 @@ export function PortalProjects() {
                 <CalendarDays className="h-4 w-4 text-gold-dark/60" />
               </div>
               <ol className="divide-y divide-ink/8">
-                {portalProject.milestones.map((milestone) => (
+                {milestones.map((milestone) => (
                   <li key={milestone.title.en} className="flex items-start gap-3 px-6 py-3.5">
                     <span
                       className={cn(

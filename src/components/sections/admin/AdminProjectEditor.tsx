@@ -310,6 +310,7 @@ export function AdminProjectEditor({
       contractValue: Math.max(0, Number(form.contractValue) || 0),
       updatedAt: new Date().toISOString().slice(0, 10),
       gallery,
+      milestones: project?.milestones ?? [],
     };
     onSave(next);
   };

@@ -9,7 +9,7 @@
 
 export type EstimateType = "residential" | "commercial" | "infrastructure" | "industrial";
 export type EstimateQuality = "essential" | "premium" | "signature";
-export type EstimateCity = "riyadh" | "jeddah" | "neom" | "other";
+export type EstimateCity = "riyadh" | "jeddah" | "neom" | "other" | "cairo";
 export type EstimatePace = "standard" | "fast" | "accelerated";
 
 export type EstimateInput = {
@@ -65,6 +65,7 @@ const cityFactor: Record<EstimateCity, number> = {
   jeddah: 1.08,
   neom: 1.22,
   other: 1.05,
+  cairo: 0.58,
 };
 
 const paceFactor: Record<EstimatePace, number> = {

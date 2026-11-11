@@ -2,15 +2,18 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowUpRight, Search, SlidersHorizontal } from "lucide-react";
+import { ArrowUpRight, MapPin, Search, SlidersHorizontal } from "lucide-react";
 import { useI18n } from "@/components/providers/I18nProvider";
-import { useWorkspace } from "@/components/providers/WorkspaceProvider";
+import {
+  useWorkspace,
+  type WorkspaceProject,
+} from "@/components/providers/WorkspaceProvider";
 import { ProjectCard } from "@/components/sections/projects/ProjectCard";
 import { CTA } from "@/components/sections/home/CTA";
 import { Modal } from "@/components/ui/Modal";
 import { ProjectArt } from "@/components/ui/ProjectArt";
 import { Reveal } from "@/components/ui/Reveal";
-import { projectCategories, type Project, type ProjectCategory } from "@/data/projects";
+import { projectCategories, type ProjectCategory } from "@/data/projects";
 import { cn } from "@/lib/utils";
 
 type Filter = "all" | ProjectCategory;
@@ -19,13 +22,25 @@ export function ProjectsExplorer() {
   const { t, l, locale, isRTL } = useI18n();
   const { projects } = useWorkspace();
   const [filter, setFilter] = useState<Filter>("all");
+  const [location, setLocation] = useState<string>("all");
   const [query, setQuery] = useState("");
-  const [selected, setSelected] = useState<Project | null>(null);
+  const [selected, setSelected] = useState<WorkspaceProject | null>(null);
+  const [activeArt, setActiveArt] = useState(0);
+
+  const locations = useMemo(() => {
+    const seen = new Map<string, string>();
+    for (const project of projects) {
+      const key = project.location.en || project.location.ar;
+      if (key && !seen.has(key)) seen.set(key, l(project.location));
+    }
+    return [...seen.entries()].sort((a, b) => a[1].localeCompare(b[1]));
+  }, [projects, l]);
 
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     return projects.filter((project) => {
       if (filter !== "all" && project.category !== filter) return false;
+      if (location !== "all" && project.location.en !== location) return false;
       if (!normalized) return true;
       return [
         project.title.ar,
@@ -41,9 +56,21 @@ export function ProjectsExplorer() {
         .toLowerCase()
         .includes(normalized);
     });
-  }, [filter, projects, query]);
+  }, [filter, location, projects, query]);
 
   const filters: Filter[] = ["all", ...projectCategories];
+
+  const openProject = (project: { slug: string }) => {
+    setSelected(projects.find((item) => item.slug === project.slug) ?? null);
+    setActiveArt(0);
+  };
+
+  const gallery = selected
+    ? selected.gallery.length
+      ? selected.gallery
+      : [selected.art]
+    : [];
+  const activeArtVariant = gallery[Math.min(activeArt, gallery.length - 1)] ?? "tower";
 
   const counts = useMemo(() => {
     const next = new Map<Filter, number>([["all", projects.length]]);
@@ -139,6 +166,25 @@ export function ProjectsExplorer() {
 
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <label className="relative block">
+                <MapPin className="pointer-events-none absolute start-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink/30" />
+                <select
+                  value={location}
+                  onChange={(event) => setLocation(event.target.value)}
+                  aria-label={t.projectsPage.locationFilter}
+                  className="h-9 w-full appearance-none border border-ink/10 bg-transparent ps-9 pe-8 text-[0.68rem] text-ink outline-none transition-colors focus:border-gold-dark/60 sm:w-44"
+                >
+                  <option value="all">{t.projectsPage.allLocations}</option>
+                  {locations.map(([key, label]) => (
+                    <option key={key} value={key}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+                <span className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-ink/30">
+                  ▾
+                </span>
+              </label>
+              <label className="relative block">
                 <Search className="pointer-events-none absolute start-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink/30" />
                 <input
                   type="search"
@@ -157,7 +203,7 @@ export function ProjectsExplorer() {
 
           {filtered.length ? (
             <div
-              key={filter}
+              key={`${filter}-${location}`}
               className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
             >
               {filtered.map((project, index) => (
@@ -165,7 +211,7 @@ export function ProjectsExplorer() {
                   <ProjectCard
                     project={project}
                     index={projects.findIndex((item) => item.slug === project.slug)}
-                    onSelect={setSelected}
+                    onSelect={openProject}
                     className="h-full"
                   />
                 </Reveal>
@@ -204,7 +250,7 @@ export function ProjectsExplorer() {
         {selected ? (
           <div>
             <div className="relative h-52 overflow-hidden sm:h-72">
-              <ProjectArt variant={selected.art} className="h-full w-full" />
+              <ProjectArt variant={activeArtVariant} className="h-full w-full" />
               <div className="absolute inset-0 bg-gradient-to-t from-coal via-coal/20 to-transparent" />
               <div className="absolute inset-x-6 bottom-5 flex flex-wrap items-center gap-3">
                 <span className="border border-gold/30 bg-obsidian/40 px-3 py-1 text-[0.52rem] uppercase tracking-[0.16em] text-gold backdrop-blur">
@@ -218,6 +264,26 @@ export function ProjectsExplorer() {
                 </span>
               </div>
             </div>
+
+            {gallery.length > 1 ? (
+              <div className="flex gap-2 border-b border-white/10 bg-obsidian/60 px-4 py-3">
+                {gallery.map((variant, index) => (
+                  <button
+                    key={`${variant}-${index}`}
+                    type="button"
+                    onClick={() => setActiveArt(index)}
+                    aria-label={`${l(selected.title)} — ${index + 1}`}
+                    aria-pressed={activeArtVariant === variant}
+                    className={cn(
+                      "relative h-12 w-16 shrink-0 overflow-hidden border transition-colors",
+                      index === activeArt ? "border-gold" : "border-white/10 opacity-60 hover:opacity-100",
+                    )}
+                  >
+                    <ProjectArt variant={variant} className="h-full w-full" />
+                  </button>
+                ))}
+              </div>
+            ) : null}
 
             <div className="p-6 sm:p-10">
               <h2

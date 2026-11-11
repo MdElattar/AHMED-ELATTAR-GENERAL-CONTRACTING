@@ -4,16 +4,25 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowUpRight, Globe2, Menu, UserRound, X } from "lucide-react";
+import {
+  ArrowUpRight,
+  Globe2,
+  LayoutDashboard,
+  Menu,
+  ShieldCheck,
+  UserRound,
+  X,
+} from "lucide-react";
+import { isAdminUser, useAuth } from "@/components/providers/AuthProvider";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { useSmoothScroll } from "@/components/providers/SmoothScroll";
 import { ProfileMenu } from "@/components/layout/ProfileMenu";
-import { LightingToggle } from "@/components/layout/LightingToggle";
 import { Logo } from "@/components/ui/Logo";
 import { acquireScrollLock, releaseScrollLock } from "@/lib/scroll/lock";
 import { cn } from "@/lib/utils";
 
-const links = [  { href: "/", key: "home" as const },
+const primaryLinks = [
+  { href: "/", key: "home" as const },
   { href: "/projects", key: "projects" as const },
   { href: "/services", key: "services" as const },
   { href: "/about", key: "about" as const },
@@ -23,13 +32,14 @@ const links = [  { href: "/", key: "home" as const },
 export function Navbar() {
   const pathname = usePathname();
   const { t, toggleLocale, isRTL, locale } = useI18n();
-  const { stop, start, scrollTo } = useSmoothScroll();
+  const { user } = useAuth();
+  const { stop, start } = useSmoothScroll();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    // Close the mobile overlay on navigation (including browser back/forward)
-    // so the scroll lock is always released with the menu.
+    // Close the drawer on navigation (including browser back/forward) so the
+    // scroll lock is always released with the menu.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setOpen(false);
   }, [pathname]);
@@ -38,7 +48,7 @@ export function Navbar() {
     let frame = 0;
     const onScroll = () => {
       cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => setScrolled(window.scrollY > 24));
+      frame = requestAnimationFrame(() => setScrolled(window.scrollY > 16));
     };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -54,91 +64,97 @@ export function Navbar() {
     return () => releaseScrollLock(start);
   }, [open, start, stop]);
 
-  const solid = scrolled || open;
-  const lightPage = [
-    "/sign-in",
-    "/sign-up",
-    "/forgot-password",
-    "/reset-password",
-  ].some((path) => pathname === path || pathname.startsWith(`${path}/`));
-  // Auth screens use an ivory canvas. Keep the navigation dark-on-light there,
-  // and flip back to the dark glass treatment while the mobile overlay is open.
-  const lightNav = lightPage && !open;
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open]);
+
+  const isActive = (href: string) =>
+    href === "/" ? pathname === "/" : pathname.startsWith(href);
+
+  const accountLinks = [
+    { href: "/portal", label: t.nav.portal, icon: LayoutDashboard },
+    ...(isAdminUser(user)
+      ? [{ href: "/admin", label: t.nav.admin, icon: ShieldCheck }]
+      : []),
+  ];
 
   return (
     <>
       <header
         className={cn(
-          "fixed inset-x-0 top-0 z-[70] border-b transition-all duration-500",
-          solid
-            ? lightNav
-              ? "border-ink/10 bg-ivory/90 shadow-[0_20px_60px_-34px_rgba(10,11,14,0.35)] backdrop-blur-xl"
-              : "glass border-white/10 shadow-[0_20px_60px_-30px_rgba(0,0,0,0.8)]"
-            : "border-transparent bg-transparent",
+          "fixed inset-x-0 top-0 z-[90] border-b transition-[background-color,border-color,box-shadow] duration-500",
+          scrolled || open
+            ? "border-white/10 bg-obsidian/88 shadow-[0_24px_70px_-36px_rgba(0,0,0,0.95)] backdrop-blur-2xl"
+            : "border-white/[0.06] bg-obsidian/55 backdrop-blur-xl",
         )}
       >
-        <div className="container-lux flex h-[84px] items-center justify-between gap-5">
+        <div className="container-lux flex h-[76px] items-center justify-between gap-4">
           <Link
             href="/"
             aria-label="Ahmed Elattar — Home"
             className="relative z-10 shrink-0"
             onClick={() => setOpen(false)}
           >
-            <Logo tone={lightNav ? "dark" : "light"} />
+            <Logo tone="light" />
           </Link>
 
-          <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary">
-            {links.map((link) => {
-              const active =
-                link.href === "/" ? pathname === "/" : pathname.startsWith(link.href);
+          <nav className="hidden items-center gap-0.5 xl:flex" aria-label="Primary">
+            {primaryLinks.map((link) => {
+              const active = isActive(link.href);
               return (
                 <Link
                   key={link.href}
                   href={link.href}
                   className={cn(
-                    "group relative px-4 py-2 text-[0.68rem] font-medium uppercase tracking-[0.18em] transition-colors duration-300",
-                    lightNav
-                      ? active
-                        ? "text-gold-dark"
-                        : "text-ink/55 hover:text-ink"
-                      : active
-                        ? "text-gold"
-                        : "text-ivory/65 hover:text-ivory",
+                    "group relative px-3.5 py-2.5 text-[0.66rem] font-medium uppercase tracking-[0.17em] transition-colors duration-300",
+                    active ? "text-gold" : "text-ivory/60 hover:text-ivory",
                   )}
                 >
                   {t.nav[link.key]}
                   <span
                     className={cn(
-                      "absolute inset-x-4 -bottom-0.5 h-px origin-left transition-transform duration-500",
-                      lightNav ? "bg-gold-dark" : "bg-gold",
+                      "absolute inset-x-3.5 bottom-0.5 h-px origin-left bg-gold transition-transform duration-500",
                       active ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100",
                     )}
                   />
                 </Link>
               );
             })}
+            <span className="mx-2 h-4 w-px bg-white/12" aria-hidden="true" />
+            {accountLinks.map(({ href, label, icon: Icon }) => (
+              <Link
+                key={href}
+                href={href}
+                className={cn(
+                  "group relative flex items-center gap-1.5 px-3 py-2.5 text-[0.66rem] font-medium uppercase tracking-[0.17em] transition-colors duration-300",
+                  isActive(href) ? "text-gold" : "text-ivory/60 hover:text-ivory",
+                )}
+              >
+                <Icon className="h-3.5 w-3.5 text-gold/80" />
+                {label}
+              </Link>
+            ))}
           </nav>
 
-          <div className="hidden items-center gap-3 lg:flex">
+          <div className="hidden items-center gap-2.5 xl:flex">
             <button
               type="button"
               onClick={toggleLocale}
               aria-label={t.nav.languageLabel}
-              className={cn(
-                "flex h-10 items-center gap-2 border px-3 text-[0.65rem] font-medium uppercase tracking-[0.16em] transition-colors",
-                lightNav
-                  ? "border-ink/15 text-ink/55 hover:border-gold-dark/60 hover:text-gold-dark"
-                  : "border-white/15 text-ivory/65 hover:border-gold/50 hover:text-gold",
-              )}
+              className="flex h-10 items-center gap-2 border border-white/12 px-3 text-[0.62rem] font-medium uppercase tracking-[0.16em] text-ivory/60 transition-colors hover:border-gold/45 hover:text-gold"
             >
               <Globe2 className="h-3.5 w-3.5" />
               {t.nav.language}
             </button>
-            <LightingToggle tone={lightNav ? "light" : "dark"} />
-            <ProfileMenu tone={lightNav ? "light" : "dark"} />
+            <ProfileMenu tone="dark" />
             <Link
               href="/contact"
-              className="btn-shine group flex h-11 items-center gap-2 bg-gold px-5 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-obsidian transition-colors hover:bg-gold-light"
+              className="btn-shine group flex h-10 items-center gap-2 bg-gold px-5 text-[0.63rem] font-semibold uppercase tracking-[0.16em] text-obsidian transition-colors hover:bg-gold-light"
             >
               {t.nav.cta}
               <ArrowUpRight
@@ -150,126 +166,158 @@ export function Navbar() {
             </Link>
           </div>
 
-          <div className="flex items-center gap-2 lg:hidden">
-            <button
-              type="button"
-              onClick={toggleLocale}
-              aria-label={t.nav.languageLabel}
-              className={cn(
-                "flex h-10 items-center gap-1.5 border px-2.5 text-[0.6rem] font-medium uppercase tracking-[0.12em]",
-                lightNav ? "border-ink/15 text-ink/65" : "border-white/15 text-ivory/70",
-              )}
-            >
-              <Globe2 className="h-3.5 w-3.5" />
-              {t.nav.language}
-            </button>
-            <ProfileMenu
-              tone={lightNav ? "light" : "dark"}
-              compact
-              onNavigate={() => setOpen(false)}
-            />
+          <div className="flex items-center gap-2 xl:hidden">
+            <ProfileMenu tone="dark" compact onNavigate={() => setOpen(false)} />
             <button
               type="button"
               onClick={() => setOpen((value) => !value)}
               aria-label={open ? t.nav.close : t.nav.menu}
               aria-expanded={open}
-              className={cn(
-                "flex h-10 w-10 items-center justify-center border",
-                lightNav ? "border-ink/15 text-ink" : "border-white/15 text-ivory",
-              )}
+              aria-controls="mobile-navigation"
+              className="flex h-11 w-11 items-center justify-center border border-white/12 text-ivory transition-colors hover:border-gold/45 hover:text-gold"
             >
-              {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+              {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
           </div>
         </div>
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-gold/30 to-transparent"
+        />
       </header>
 
       <AnimatePresence>
         {open ? (
-          <motion.div
-            className="fixed inset-0 z-[60] flex flex-col bg-obsidian/97 pt-[84px] lg:hidden"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.35 }}
-          >
-            <div className="blueprint-grid pointer-events-none absolute inset-0 opacity-40" />
-            <nav
-              className="container-lux relative flex flex-1 flex-col justify-center gap-1 py-8"
-              aria-label="Mobile"
+          <>
+            <motion.button
+              type="button"
+              aria-label={t.nav.close}
+              onClick={() => setOpen(false)}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              className="fixed inset-0 z-[80] cursor-default bg-obsidian/70 backdrop-blur-sm xl:hidden"
+            />
+            <motion.aside
+              id="mobile-navigation"
+              initial={{ x: isRTL ? "-100%" : "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: isRTL ? "-100%" : "100%" }}
+              transition={{ type: "spring", stiffness: 320, damping: 34, mass: 0.9 }}
+              className="fixed bottom-0 end-0 top-[76px] z-[85] flex w-[min(88vw,420px)] flex-col overflow-y-auto overscroll-contain border-s border-white/10 bg-obsidian/97 backdrop-blur-2xl xl:hidden"
             >
-              {links.map((link, index) => (
+              <div className="blueprint-grid pointer-events-none absolute inset-0 opacity-25" />
+              <div className="pointer-events-none absolute -end-16 top-10 h-64 w-64 rounded-full bg-gold/[0.06] blur-[100px]" />
+
+              <nav className="relative flex flex-1 flex-col px-6 py-6" aria-label="Mobile">
+                <p className="text-[0.55rem] font-semibold uppercase tracking-[0.24em] text-gold/70">
+                  {locale === "ar" ? "التنقل" : "Navigation"}
+                </p>
+
+                <div className="mt-3 flex flex-col">
+                  {primaryLinks.map((link, index) => {
+                    const active = isActive(link.href);
+                    return (
+                      <motion.div
+                        key={link.href}
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.04 + index * 0.045, duration: 0.35 }}
+                      >
+                        <Link
+                          href={link.href}
+                          onClick={() => setOpen(false)}
+                          className={cn(
+                            "group flex min-h-[56px] items-center justify-between gap-4 border-b border-white/[0.07] transition-colors",
+                            active ? "text-gold" : "text-ivory hover:text-gold",
+                          )}
+                        >
+                          <span className="flex items-baseline gap-4">
+                            <span className="tabular text-[0.55rem] text-gold/45">
+                              0{index + 1}
+                            </span>
+                            <span className="text-[1.05rem] font-medium tracking-wide">
+                              {t.nav[link.key]}
+                            </span>
+                          </span>
+                          <ArrowUpRight
+                            className={cn(
+                              "h-4 w-4 shrink-0 text-ivory/25 transition-all group-hover:text-gold",
+                              isRTL && "-scale-x-100",
+                            )}
+                          />
+                        </Link>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+
                 <motion.div
-                  key={link.href}
-                  initial={{ opacity: 0, y: 18 }}
+                  initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.08 + index * 0.06, duration: 0.5 }}
+                  transition={{ delay: 0.3, duration: 0.35 }}
+                  className="mt-6 flex flex-col gap-2"
                 >
+                  {accountLinks.map(({ href, label, icon: Icon }) => (
+                    <Link
+                      key={href}
+                      href={href}
+                      onClick={() => setOpen(false)}
+                      className="flex min-h-[48px] items-center gap-3 border border-white/12 px-4 text-[0.68rem] font-medium uppercase tracking-[0.16em] text-ivory/75 transition-colors hover:border-gold/45 hover:text-gold"
+                    >
+                      <Icon className="h-4 w-4 text-gold" />
+                      {label}
+                    </Link>
+                  ))}
+                  {!user ? (
+                    <Link
+                      href="/sign-in"
+                      onClick={() => setOpen(false)}
+                      className="flex min-h-[48px] items-center gap-3 border border-white/12 px-4 text-[0.68rem] font-medium uppercase tracking-[0.16em] text-ivory/75 transition-colors hover:border-gold/45 hover:text-gold"
+                    >
+                      <UserRound className="h-4 w-4 text-gold" />
+                      {t.nav.signIn}
+                    </Link>
+                  ) : null}
                   <Link
-                    href={link.href}
+                    href="/contact"
                     onClick={() => setOpen(false)}
-                    className="group flex items-center justify-between border-b border-white/8 py-5"
+                    className="mt-1 flex min-h-[50px] items-center justify-center gap-2 bg-gold px-5 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-obsidian transition-colors hover:bg-gold-light"
                   >
-                    <span className="flex items-baseline gap-4">
-                      <span className="text-[0.6rem] tabular text-gold/60">
-                        0{index + 1}
-                      </span>
-                      <span className="display-title text-[clamp(1.9rem,8vw,3rem)] text-ivory transition-colors group-hover:text-gold">
-                        {t.nav[link.key]}
-                      </span>
-                    </span>
-                    <ArrowUpRight className="h-5 w-5 text-ivory/30 transition-colors group-hover:text-gold" />
+                    {t.nav.cta}
+                    <ArrowUpRight className={cn("h-4 w-4", isRTL && "-scale-x-100")} />
                   </Link>
                 </motion.div>
-              ))}
+              </nav>
 
-              <motion.div
-                initial={{ opacity: 0, y: 18 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.42, duration: 0.5 }}
-                className="mt-8 flex flex-col gap-3"
-              >
-                <div className="flex items-center justify-between border border-white/15 px-4 py-3">
-                  <span className="text-[0.6rem] font-medium uppercase tracking-[0.16em] text-ivory/45">
-                    {locale === "ar" ? "إضاءة المشهد" : "Scene lighting"}
-                  </span>
-                  <LightingToggle tone="dark" />
+              <div className="relative border-t border-white/10 px-6 py-5">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-[0.55rem] uppercase tracking-[0.18em] text-ivory/30">
+                      {locale === "ar" ? "الرياض · جدة · دبي" : "Riyadh · Jeddah · Dubai"}
+                    </p>
+                    <a
+                      href="tel:+966114821987"
+                      dir="ltr"
+                      className="mt-2 block tabular text-[0.78rem] text-ivory/55 transition-colors hover:text-gold"
+                    >
+                      +966 11 482 1987
+                    </a>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={toggleLocale}
+                    aria-label={t.nav.languageLabel}
+                    className="flex h-11 shrink-0 items-center gap-2 border border-white/12 px-3 text-[0.62rem] font-medium uppercase tracking-[0.14em] text-ivory/65 transition-colors hover:border-gold/45 hover:text-gold"
+                  >
+                    <Globe2 className="h-3.5 w-3.5" />
+                    {t.nav.language}
+                  </button>
                 </div>
-                <Link
-                  href="/sign-in"
-                  onClick={() => setOpen(false)}
-                  className="flex h-12 items-center justify-center gap-2 border border-white/20 text-[0.7rem] uppercase tracking-[0.16em] text-ivory"
-                >
-                  <UserRound className="h-4 w-4" />
-                  {t.nav.portal}
-                </Link>
-                <Link
-                  href="/contact"
-                  onClick={() => setOpen(false)}
-                  className="flex h-12 items-center justify-center gap-2 bg-gold text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-obsidian"
-                >
-                  {t.nav.cta}
-                  <ArrowUpRight className="h-4 w-4" />
-                </Link>
-              </motion.div>
-            </nav>
-
-            <div className="container-lux relative flex items-center justify-between border-t border-white/10 py-5 text-[0.65rem] text-ivory/40">
-              <button
-                type="button"
-                onClick={() => {
-                  setOpen(false);
-                  scrollTo(0);
-                }}
-                className="uppercase tracking-[0.16em] hover:text-gold"
-              >
-                {t.common.location}
-              </button>
-              <a href="tel:+966114821987" className="tabular hover:text-gold">
-                +966 11 482 1987
-              </a>
-            </div>
-          </motion.div>
+              </div>
+            </motion.aside>
+          </>
         ) : null}
       </AnimatePresence>
     </>
