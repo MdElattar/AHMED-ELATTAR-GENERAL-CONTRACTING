@@ -12,6 +12,9 @@ type CounterProps = {
   className?: string;
 };
 
+/** Commit at ~20fps instead of every animation frame. */
+const COMMIT_INTERVAL = 50;
+
 export function Counter({
   value,
   decimals = 0,
@@ -28,6 +31,8 @@ export function Counter({
     const node = ref.current;
     if (!node) return;
 
+    if (typeof window === "undefined") return;
+
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       // Reduced motion is only knowable after mount.
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -35,15 +40,26 @@ export function Counter({
       return;
     }
 
+    if (typeof IntersectionObserver === "undefined") {
+      setDisplay(value);
+      return;
+    }
+
     let frame = 0;
     let startTime = 0;
+    let lastCommit = 0;
     started.current = false;
 
     const tick = (now: number) => {
       if (!startTime) startTime = now;
       const progress = Math.min((now - startTime) / duration, 1);
       const eased = 1 - Math.pow(1 - progress, 4);
-      setDisplay(value * eased);
+
+      if (progress >= 1 || now - lastCommit >= COMMIT_INTERVAL) {
+        lastCommit = now;
+        setDisplay(progress >= 1 ? value : value * eased);
+      }
+
       if (progress < 1) frame = requestAnimationFrame(tick);
     };
 

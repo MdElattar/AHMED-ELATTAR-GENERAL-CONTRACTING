@@ -17,6 +17,7 @@ export function Process() {
   useEffect(() => {
     const nodes = stepRefs.current.filter(Boolean) as HTMLDivElement[];
     if (!nodes.length) return;
+    if (typeof IntersectionObserver === "undefined") return;
 
     const observer = new IntersectionObserver(
       (entries) => {

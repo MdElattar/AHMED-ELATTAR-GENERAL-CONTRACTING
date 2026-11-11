@@ -9,6 +9,7 @@ import { useI18n } from "@/components/providers/I18nProvider";
 import { useSmoothScroll } from "@/components/providers/SmoothScroll";
 import { ProfileMenu } from "@/components/layout/ProfileMenu";
 import { Logo } from "@/components/ui/Logo";
+import { acquireScrollLock, releaseScrollLock } from "@/lib/scroll/lock";
 import { cn } from "@/lib/utils";
 
 const links = [  { href: "/", key: "home" as const },
@@ -26,6 +27,13 @@ export function Navbar() {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
+    // Close the mobile overlay on navigation (including browser back/forward)
+    // so the scroll lock is always released with the menu.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
     let frame = 0;
     const onScroll = () => {
       cancelAnimationFrame(frame);
@@ -40,12 +48,9 @@ export function Navbar() {
   }, []);
 
   useEffect(() => {
-    if (open) {
-      stop();
-    } else {
-      start();
-    }
-    return () => start();
+    if (!open) return;
+    acquireScrollLock(stop);
+    return () => releaseScrollLock(start);
   }, [open, start, stop]);
 
   const solid = scrolled || open;

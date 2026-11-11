@@ -32,6 +32,18 @@ const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 const FALLBACK_SECRET = "alattar-demo-session-secret-change-in-production";
 
+/**
+ * Thrown when the deployment is missing a valid signing secret. Route handlers
+ * translate this into a 503 JSON response instead of an unhandled 500 so the
+ * client can show an actionable message.
+ */
+export class AuthConfigError extends Error {
+  constructor() {
+    super("AUTH_SECRET must be set to at least 32 characters in production.");
+    this.name = "AuthConfigError";
+  }
+}
+
 let keyPromise: Promise<CryptoKey> | null = null;
 
 function sessionSecret() {
@@ -42,7 +54,7 @@ function sessionSecret() {
   // well-known fallback. Development keeps a predictable local secret so the
   // demo remains runnable without extra setup.
   if (process.env.NODE_ENV === "production") {
-    throw new Error("AUTH_SECRET must be set to at least 32 characters in production.");
+    throw new AuthConfigError();
   }
 
   return FALLBACK_SECRET;
@@ -50,13 +62,22 @@ function sessionSecret() {
 
 function getKey() {
   if (!keyPromise) {
-    keyPromise = crypto.subtle.importKey(
-      "raw",
-      encoder.encode(sessionSecret()),
-      { name: "HMAC", hash: "SHA-256" },
-      false,
-      ["sign", "verify"],
-    );
+    keyPromise = Promise.resolve()
+      .then(() =>
+        crypto.subtle.importKey(
+          "raw",
+          encoder.encode(sessionSecret()),
+          { name: "HMAC", hash: "SHA-256" },
+          false,
+          ["sign", "verify"],
+        ),
+      )
+      .catch((error: unknown) => {
+        // Do not cache a rejected key: a later deploy/restart with the env var
+        // present must be able to recover without a new process.
+        keyPromise = null;
+        throw error;
+      });
   }
   return keyPromise;
 }

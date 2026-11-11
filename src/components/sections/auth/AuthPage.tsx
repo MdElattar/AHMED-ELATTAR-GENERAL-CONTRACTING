@@ -4,7 +4,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, ArrowUpRight, Check, Eye, EyeOff } from "lucide-react";
-import { useAuth } from "@/components/providers/AuthProvider";
+import { AuthRequestError, useAuth } from "@/components/providers/AuthProvider";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { Field, TextInput } from "@/components/ui/Field";
 import { Logo } from "@/components/ui/Logo";
@@ -25,8 +25,24 @@ function nextPath() {
     : "/portal";
 }
 
+function authErrorMessage(error: unknown, locale: string, fallback: string) {
+  if (error instanceof AuthRequestError) {
+    if (error.code === "unavailable") {
+      return locale === "ar"
+        ? "خدمة الدخول غير مهيأة مؤقتاً. حاول لاحقاً أو تواصل معنا."
+        : "Sign-in is temporarily unavailable. Please try again later.";
+    }
+    if (error.code === "rate_limited") {
+      return locale === "ar"
+        ? "محاولات كثيرة. انتظر قليلاً ثم أعد المحاولة."
+        : "Too many attempts. Please wait a moment and try again.";
+    }
+  }
+  return fallback;
+}
+
 export function AuthPage({ mode }: AuthPageProps) {
-  const { t, isRTL } = useI18n();
+  const { t, isRTL, locale } = useI18n();
   const { signIn, signUp, user, ready } = useAuth();
   const router = useRouter();
 
@@ -83,8 +99,8 @@ export function AuthPage({ mode }: AuthPageProps) {
         await signUp({ name, email, company, phone, password });
       }
       router.push(nextPath());
-    } catch {
-      setError(t.auth.invalid);
+    } catch (error) {
+      setError(authErrorMessage(error, locale, t.auth.invalid));
     } finally {
       setLoading(false);
     }
@@ -98,8 +114,8 @@ export function AuthPage({ mode }: AuthPageProps) {
     try {
       await signIn("demo@alattar.sa", "demo1234", true);
       router.push(nextPath());
-    } catch {
-      setError(t.auth.invalid);
+    } catch (error) {
+      setError(authErrorMessage(error, locale, t.auth.invalid));
     } finally {
       setLoading(false);
     }

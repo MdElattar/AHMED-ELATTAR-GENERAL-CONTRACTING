@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import { useSmoothScroll } from "@/components/providers/SmoothScroll";
+import { acquireScrollLock, releaseScrollLock } from "@/lib/scroll/lock";
 import { cn } from "@/lib/utils";
 
 type ModalProps = {
@@ -26,6 +27,7 @@ export function Modal({
 }: ModalProps) {
   const [mounted, setMounted] = useState(false);
   const closeRef = useRef<HTMLButtonElement | null>(null);
+  const onCloseRef = useRef(onClose);
   const { stop, start } = useSmoothScroll();
 
   useEffect(() => {
@@ -34,24 +36,32 @@ export function Modal({
     setMounted(true);
   }, []);
 
+  // Keep the latest callback without re-running the lock/keydown effect on
+  // every parent render (an unstable onClose used to unlock and re-lock the
+  // page, which could fight with the mobile menu's own lock).
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
   useEffect(() => {
     if (!open) return;
-    stop();
+
+    acquireScrollLock(stop);
     const timer = window.setTimeout(() => closeRef.current?.focus(), 80);
 
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") onCloseRef.current();
     };
     document.addEventListener("keydown", onKeyDown);
 
     return () => {
       window.clearTimeout(timer);
       document.removeEventListener("keydown", onKeyDown);
-      start();
+      releaseScrollLock(start);
     };
-  }, [open, onClose, start, stop]);
+  }, [open, start, stop]);
 
-  if (!mounted) return null;
+  if (!mounted || typeof document === "undefined") return null;
 
   return createPortal(
     <AnimatePresence>

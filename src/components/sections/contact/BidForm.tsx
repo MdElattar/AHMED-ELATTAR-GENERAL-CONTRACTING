@@ -63,6 +63,13 @@ export function BidForm() {
   const [reference, setReference] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const successRef = useRef<HTMLDivElement | null>(null);
+  const scrollTimer = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (scrollTimer.current) window.clearTimeout(scrollTimer.current);
+    };
+  }, []);
 
   useEffect(() => {
     const requested = new URLSearchParams(window.location.search).get("service");
@@ -183,7 +190,7 @@ export function BidForm() {
       if (!response.ok || !code) throw new Error("submit_failed");
 
       setReference(code);
-      window.setTimeout(
+      scrollTimer.current = window.setTimeout(
         () => successRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }),
         80,
       );

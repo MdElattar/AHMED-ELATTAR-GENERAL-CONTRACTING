@@ -21,7 +21,9 @@ export function CraneExperience() {
     progressRef,
     fillRef,
     stepCount: t.crane.steps.length,
-    end: "+=520%",
+    // ~40vh of scroll per step: enough room for each card/camera beat to land,
+    // short enough that the pin never feels like it has trapped the page.
+    end: "+=200%",
     onActive: setActive,
   });
 

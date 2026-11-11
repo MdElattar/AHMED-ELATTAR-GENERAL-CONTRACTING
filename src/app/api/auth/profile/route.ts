@@ -7,6 +7,7 @@ import {
   verifySession,
 } from "@/lib/auth/token";
 import { setSessionCookie } from "@/lib/auth/cookie";
+import { authUnavailable, isAuthConfigError } from "@/lib/auth/response";
 import {
   NO_STORE_HEADERS,
   clientIp,
@@ -65,15 +66,28 @@ export async function PATCH(request: NextRequest) {
 
   // Email, role, and accountId are intentionally immutable here. Letting a
   // client change them would allow privilege escalation or account takeover.
-  const { token: nextToken, session: nextSession } = await createSession({
-    sub: session.sub,
-    email: session.email,
-    name,
-    company: company || session.company,
-    accountId: session.accountId,
-    ...(phone ? { phone } : {}),
-    role: session.role,
-  });
+  let created: Awaited<ReturnType<typeof createSession>>;
+  try {
+    created = await createSession({
+      sub: session.sub,
+      email: session.email,
+      name,
+      company: company || session.company,
+      accountId: session.accountId,
+      ...(phone ? { phone } : {}),
+      role: session.role,
+    });
+  } catch (error) {
+    if (isAuthConfigError(error)) {
+      console.error(
+        "[auth] AUTH_SECRET is missing or shorter than 32 characters; refusing to sign sessions.",
+      );
+      return authUnavailable();
+    }
+    throw error;
+  }
+
+  const { token: nextToken, session: nextSession } = created;
 
   const response = NextResponse.json(
     { user: publicSessionUser(nextSession) },

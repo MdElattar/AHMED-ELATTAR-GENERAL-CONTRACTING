@@ -108,4 +108,19 @@ AHMED-ELATTAR-GENERAL-CONTRACTING/
 │   └── lib/                    # Dictionary Core (`dictionary.ts`) & Utilities
 ├── public/                     # Static Brand Icons & Manifest Files
 ├── package.json
+
 └── tsconfig.json
+```
+
+---
+
+## 🔐 Deployment & Environment (Vercel)
+
+| Variable | Required | Notes |
+| :--- | :---: | :--- |
+| `AUTH_SECRET` | **Production: yes** | At least 32 characters. Generate with `openssl rand -base64 48` and add it under **Project → Settings → Environment Variables** for Production/Preview. |
+
+* Sessions are signed with HMAC-SHA256 into the `alattar_session` cookie (`httpOnly`, `SameSite=Strict`, `Secure` in production).
+* `src/proxy.ts` gates `/portal` and `/admin` on the server; the admin role is re-verified server-side on every request.
+* If `AUTH_SECRET` is missing or too short in production, auth endpoints fail closed with `503 {"error":"auth_unavailable"}` (a JSON response, not an unhandled 500). The sign-in UI shows a localized “temporarily unavailable” message instead of “Something went wrong”.
+* All mutating API routes reject cross-origin requests (CSRF) and validate/sanitize input server-side.

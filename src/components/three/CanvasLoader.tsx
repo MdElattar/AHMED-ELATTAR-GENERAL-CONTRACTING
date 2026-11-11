@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { Suspense, useEffect, useRef, useState, type MutableRefObject } from "react";
+import { SceneErrorBoundary } from "@/components/three/SceneErrorBoundary";
 
 const HeroScene = dynamic(() => import("@/components/three/HeroScene"), {
   ssr: false,
@@ -36,10 +37,51 @@ export function SceneFallback() {
   );
 }
 
+function detectWebGL() {
+  try {
+    const canvas = document.createElement("canvas");
+    return Boolean(
+      canvas.getContext("webgl2") ||
+        canvas.getContext("webgl") ||
+        canvas.getContext("experimental-webgl"),
+    );
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Skips mounting a renderer on devices where WebGL is unavailable (hardware
+ * acceleration disabled, driver blocklist, locked-down webviews). Creating the
+ * context eagerly and letting three.js throw is what used to take the pinned
+ * section down with it.
+ */
+function useWebGLSupport() {
+  const [supported, setSupported] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    // WebGL availability is only knowable in the browser; keeping this in an
+    // effect avoids a hydration mismatch between the static fallback and the
+    // renderer.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSupported(detectWebGL());
+  }, []);
+
+  return supported;
+}
+
 export function HeroCanvas() {
+  const webgl = useWebGLSupport();
+
   return (
     <Suspense fallback={<SceneFallback />}>
-      <HeroScene />
+      {webgl ? (
+        <SceneErrorBoundary fallback={<SceneFallback />}>
+          <HeroScene />
+        </SceneErrorBoundary>
+      ) : (
+        <SceneFallback />
+      )}
     </Suspense>
   );
 }
@@ -51,6 +93,7 @@ export function ScrollCraneCanvas({
 }) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const [mounted, setMounted] = useState(false);
+  const webgl = useWebGLSupport();
 
   useEffect(() => {
     if (mounted) return;
@@ -78,9 +121,11 @@ export function ScrollCraneCanvas({
 
   return (
     <div ref={hostRef} className="absolute inset-0">
-      {mounted ? (
+      {mounted && webgl ? (
         <Suspense fallback={<SceneFallback />}>
-          <ScrollScene progressRef={progressRef} />
+          <SceneErrorBoundary fallback={<SceneFallback />}>
+            <ScrollScene progressRef={progressRef} />
+          </SceneErrorBoundary>
         </Suspense>
       ) : (
         <SceneFallback />
@@ -96,6 +141,7 @@ export function FleetCanvas({
 }) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const [mounted, setMounted] = useState(false);
+  const webgl = useWebGLSupport();
 
   useEffect(() => {
     if (mounted) return;
@@ -123,9 +169,11 @@ export function FleetCanvas({
 
   return (
     <div ref={hostRef} className="absolute inset-0">
-      {mounted ? (
+      {mounted && webgl ? (
         <Suspense fallback={<SceneFallback />}>
-          <FleetScene progressRef={progressRef} />
+          <SceneErrorBoundary fallback={<SceneFallback />}>
+            <FleetScene progressRef={progressRef} />
+          </SceneErrorBoundary>
         </Suspense>
       ) : (
         <SceneFallback />

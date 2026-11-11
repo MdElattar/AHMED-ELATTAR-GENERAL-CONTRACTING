@@ -48,9 +48,23 @@ body {
   color: var(--foreground);
   font-family: var(--font-body), var(--font-arabic), ui-sans-serif, sans-serif;
   font-feature-settings: "ss01", "cv11";
-  overflow-x: hidden;
+  /*
+   * `clip` (not `hidden`) is deliberate. `overflow-x: hidden` makes the other
+   * axis compute to `auto`, turning <body> into a scroll container. ScrollTrigger
+   * pins with `position: fixed`, so a scrolling <body> fights the window scroller
+   * and produces the classic "pinned section traps / overlaps / replays" bug,
+   * most visibly in Safari. `clip` trims horizontal overflow without creating a
+   * scroll container.
+   */
+  overflow-x: clip;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+}
+
+@supports not (overflow: clip) {
+  body {
+    overflow-x: hidden;
+  }
 }
 
 html[lang="ar"] body {
@@ -103,7 +117,9 @@ html.lenis body {
   overscroll-behavior: contain;
 }
 .lenis.lenis-stopped {
-  overflow: hidden;
+  /* `clip` locks scrolling without turning <html> into a scroll container,
+     which would break ScrollTrigger's fixed-position pins. */
+  overflow: clip;
 }
 
 /* ---------- Locale visibility ---------- */

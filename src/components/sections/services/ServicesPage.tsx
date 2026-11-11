@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { ArrowUpRight, Building2, Check, Compass, PenTool, Truck } from "lucide-react";
 import { useI18n } from "@/components/providers/I18nProvider";
+import { useSmoothScroll } from "@/components/providers/SmoothScroll";
 import { useWorkspace } from "@/components/providers/WorkspaceProvider";
 import { CTA } from "@/components/sections/home/CTA";
 import { ProjectArt } from "@/components/ui/ProjectArt";
@@ -52,6 +53,7 @@ const approach = [
 export function ServicesPage() {
   const { t, l, locale, isRTL } = useI18n();
   const { content } = useWorkspace();
+  const { scrollTo } = useSmoothScroll();
   const resolvedServices = services.map((service) => {
     const override = content.serviceOverrides[service.slug];
     return {
@@ -103,11 +105,9 @@ export function ServicesPage() {
                     onClick={(event) => {
                       event.preventDefault();
                       setActiveService(service.slug);
-                      window.setTimeout(() => {
-                        document
-                          .getElementById(service.slug)
-                          ?.scrollIntoView({ behavior: "smooth", block: "start" });
-                      }, 0);
+                      // Route anchor scrolling through Lenis so it does not
+                      // fight the smooth-scroll engine with a native scroll.
+                      scrollTo(`#${service.slug}`, -96);
                     }}
                     className="group flex h-full flex-col justify-between gap-8 bg-obsidian p-6 transition-colors duration-500 hover:bg-coal"
                   >

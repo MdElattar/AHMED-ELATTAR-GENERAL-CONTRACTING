@@ -14,6 +14,10 @@ export function useCanvasVisibility(ref: RefObject<HTMLElement | null>) {
     const element = ref.current;
     if (!element) return;
 
+    // Older browsers (and some embedded webviews) have no
+    // IntersectionObserver. Keep the canvas rendering rather than hiding it.
+    if (typeof IntersectionObserver === "undefined") return;
+
     const observer = new IntersectionObserver(
       ([entry]) => setVisible(entry.isIntersecting),
       { rootMargin: "240px 0px" },

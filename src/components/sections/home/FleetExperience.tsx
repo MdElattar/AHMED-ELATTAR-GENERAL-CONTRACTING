@@ -65,7 +65,8 @@ export function FleetExperience() {
     progressRef,
     fillRef,
     stepCount: featured.length,
-    end: "+=300%",
+    // Three featured machines × ~40vh of scroll.
+    end: "+=120%",
     onActive: setActive,
   });
 

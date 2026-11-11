@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, type MutableRefObject, type RefObject } from "react";
+import { loadGsap, scheduleScrollRefresh } from "@/lib/scroll/gsap";
 
 type PinBounds = {
   start: number;
@@ -20,6 +21,11 @@ type PinnedScrollOptions = {
  * Creates a pinned GSAP ScrollTrigger without pulling GSAP into the initial
  * client bundle. GSAP is imported dynamically once the section mounts, so the
  * server render and first paint stay light.
+ *
+ * Cleanup is deliberately scoped to the context created by this hook. A global
+ * `ScrollTrigger.getAll().forEach(kill)` on every mount would destroy the pins
+ * owned by the other sections on the same page, which is exactly how sections
+ * end up unpinned, stacked, or replayed.
  */
 export function usePinnedScroll({
   sectionRef,
@@ -39,18 +45,15 @@ export function usePinnedScroll({
   }, [onActive, stepCount]);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
     let cancelled = false;
     let cleanup: (() => void) | undefined;
 
     const boot = async () => {
-      const [{ gsap }, { ScrollTrigger }] = await Promise.all([
-        import("gsap"),
-        import("gsap/ScrollTrigger"),
-      ]);
+      const { gsap, ScrollTrigger } = await loadGsap();
 
       if (cancelled) return;
-
-      gsap.registerPlugin(ScrollTrigger);
 
       const section = sectionRef.current;
       if (!section) return;
@@ -68,6 +71,10 @@ export function usePinnedScroll({
           invalidateOnRefresh: true,
           onRefresh: (self) => {
             triggerRef.current = { start: self.start, end: self.end };
+
+            if (fillRef.current) {
+              fillRef.current.style.width = `${self.progress * 100}%`;
+            }
           },
           onUpdate: (self) => {
             progressRef.current = self.progress;
@@ -90,15 +97,23 @@ export function usePinnedScroll({
         });
 
         triggerRef.current = { start: trigger.start, end: trigger.end };
+
+        cleanup = () => {
+          // Reset shared state so a remount starts from a clean slate instead
+          // of inheriting the previous pin's progress.
+          progressRef.current = 0;
+          if (fillRef.current) fillRef.current.style.width = "0%";
+          triggerRef.current = null;
+
+          trigger.kill();
+          context.revert();
+        };
       }, section);
 
-      const refreshTimer = window.setTimeout(() => ScrollTrigger.refresh(), 400);
-
-      cleanup = () => {
-        window.clearTimeout(refreshTimer);
-        triggerRef.current = null;
-        context.revert();
-      };
+      // Fonts and the WebGL canvases settle after the first paint; re-measure
+      // once so the pin distance matches the final layout. The scheduler is
+      // shared so several pinned sections coalesce into one refresh.
+      scheduleScrollRefresh(400);
     };
 
     boot().catch(() => {
@@ -109,6 +124,7 @@ export function usePinnedScroll({
     return () => {
       cancelled = true;
       cleanup?.();
+      cleanup = undefined;
     };
   }, [end, fillRef, progressRef, sectionRef]);
 

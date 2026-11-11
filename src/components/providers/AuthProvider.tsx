@@ -41,6 +41,28 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | null>(null);
 const STORAGE_KEY = "alattar-portal-user";
 
+export type AuthRequestErrorCode = "invalid" | "rate_limited" | "unavailable";
+
+/**
+ * Typed auth failure so the UI can distinguish bad credentials from a
+ * deployment that cannot sign sessions (missing AUTH_SECRET) or a rate limit.
+ */
+export class AuthRequestError extends Error {
+  readonly code: AuthRequestErrorCode;
+
+  constructor(code: AuthRequestErrorCode) {
+    super(code);
+    this.name = "AuthRequestError";
+    this.code = code;
+  }
+}
+
+function authErrorFrom(response: Response) {
+  if (response.status === 503) return new AuthRequestError("unavailable");
+  if (response.status === 429) return new AuthRequestError("rate_limited");
+  return new AuthRequestError("invalid");
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -170,7 +192,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await responseJson(response);
       const next = parseUser(data?.user, true);
 
-      if (!response.ok || !next) throw new Error("invalid");
+      if (!response.ok || !next) throw authErrorFrom(response);
 
       persist(next);
       return next;
@@ -195,7 +217,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await responseJson(response);
       const next = parseUser(data?.user, true);
 
-      if (!response.ok || !next) throw new Error("invalid");
+      if (!response.ok || !next) throw authErrorFrom(response);
 
       persist(next);
       return next;
@@ -227,7 +249,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await responseJson(response);
       const next = parseUser(data?.user, true);
 
-      if (!response.ok || !next) throw new Error("profile");
+      if (!response.ok || !next) throw authErrorFrom(response);
 
       persist(next);
     },

@@ -7,6 +7,7 @@ import {
   randomAccountId,
 } from "@/lib/auth/token";
 import { setSessionCookie } from "@/lib/auth/cookie";
+import { authUnavailable, isAuthConfigError } from "@/lib/auth/response";
 import {
   NO_STORE_HEADERS,
   clientIp,
@@ -72,18 +73,32 @@ export async function POST(request: NextRequest) {
 
   const accountId = isDemo ? "ALT-2048" : randomAccountId();
   const ttl = remember ? REMEMBERED_SESSION_TTL_SECONDS : SESSION_TTL_SECONDS;
-  const { token, session } = await createSession(
-    {
-      sub: accountId,
-      email,
-      name: isDemo ? "Mohammed Alabdullah" : titleFromEmail(email),
-      company: isDemo ? "Riyadh Development Holding" : "Ahmed Elattar Client",
-      accountId,
-      ...(isDemo ? { phone: "+966 55 214 8890" } : {}),
-      role: isDemo ? "admin" : "client",
-    },
-    ttl,
-  );
+
+  let created: Awaited<ReturnType<typeof createSession>>;
+  try {
+    created = await createSession(
+      {
+        sub: accountId,
+        email,
+        name: isDemo ? "Mohammed Alabdullah" : titleFromEmail(email),
+        company: isDemo ? "Riyadh Development Holding" : "Ahmed Elattar Client",
+        accountId,
+        ...(isDemo ? { phone: "+966 55 214 8890" } : {}),
+        role: isDemo ? "admin" : "client",
+      },
+      ttl,
+    );
+  } catch (error) {
+    if (isAuthConfigError(error)) {
+      console.error(
+        "[auth] AUTH_SECRET is missing or shorter than 32 characters; refusing to sign sessions.",
+      );
+      return authUnavailable();
+    }
+    throw error;
+  }
+
+  const { token, session } = created;
 
   const response = NextResponse.json(
     { user: publicSessionUser(session) },

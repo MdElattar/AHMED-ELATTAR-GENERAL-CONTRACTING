@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -1073,6 +1073,20 @@ function ContentSection() {
     promoVisible: content.promoVisible,
   });
   const [saved, setSaved] = useState(false);
+  const savedTimer = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (savedTimer.current) window.clearTimeout(savedTimer.current);
+    };
+  }, []);
+
+  const flashSaved = () => {
+    setSaved(true);
+    if (savedTimer.current) window.clearTimeout(savedTimer.current);
+    savedTimer.current = window.setTimeout(() => setSaved(false), 2400);
+  };
+
   const buildServiceForm = (slug: string) => {
     const service = services.find((item) => item.slug === slug) ?? services[0];
     const override = content.serviceOverrides[slug];
@@ -1105,8 +1119,7 @@ function ContentSection() {
       promoHref: hero.promoHref,
       promoVisible: hero.promoVisible,
     });
-    setSaved(true);
-    window.setTimeout(() => setSaved(false), 2400);
+    flashSaved();
   };
 
   const saveService = (event: React.FormEvent) => {
@@ -1116,8 +1129,7 @@ function ContentSection() {
       tagline: L(serviceForm.taglineAr, serviceForm.taglineEn),
       description: L(serviceForm.descriptionAr, serviceForm.descriptionEn),
     });
-    setSaved(true);
-    window.setTimeout(() => setSaved(false), 2400);
+    flashSaved();
   };
 
   return (
