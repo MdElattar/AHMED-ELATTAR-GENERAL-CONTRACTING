@@ -3,22 +3,38 @@
 import Link from "next/link";
 import { ArrowDown, ArrowUpRight, MoveDown } from "lucide-react";
 import { useI18n } from "@/components/providers/I18nProvider";
+import { useSmoothScroll } from "@/components/providers/SmoothScroll";
 import { useWorkspace } from "@/components/providers/WorkspaceProvider";
+import { PhotoLayer } from "@/components/media/PhotoLayer";
 import { HeroCanvas } from "@/components/three/CanvasLoader";
+import { heroPhoto } from "@/data/media";
 import { cn } from "@/lib/utils";
 
 export function Hero() {
-  const { t, l, isRTL } = useI18n();
+  const { t, l, isRTL, locale } = useI18n();
   const { content } = useWorkspace();
+  const { scrollTo } = useSmoothScroll();
 
   return (
     <section className="relative min-h-[100svh] overflow-hidden bg-obsidian">
-      <div className="absolute inset-0 z-0">
+      <PhotoLayer
+        images={[heroPhoto]}
+        preloadFirst
+        overlay="none"
+        sizes="100vw"
+        className="z-0"
+        imageClassName="brightness-[0.82]"
+      />
+
+      <div className="pointer-events-none absolute inset-0 z-[1] opacity-90">
         <HeroCanvas />
       </div>
 
-      <div className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-b from-obsidian/70 via-obsidian/10 to-obsidian" />
-      <div className="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(ellipse_at_20%_45%,rgba(6,7,8,0.78),transparent_60%)]" />
+      <div className="hero-aurora pointer-events-none absolute inset-0 z-[2] opacity-80" aria-hidden="true" />
+      <div className="atmo-glow pointer-events-none absolute inset-0 z-[2] opacity-60" aria-hidden="true" />
+      <div className="pointer-events-none absolute inset-0 z-[2] bg-gradient-to-b from-obsidian/78 via-obsidian/18 to-obsidian" />
+      <div className="pointer-events-none absolute inset-0 z-[2] bg-[radial-gradient(ellipse_at_18%_42%,rgba(6,7,8,0.82),transparent_62%)]" />
+      <div className="pointer-events-none absolute inset-0 z-[2] bg-[radial-gradient(ellipse_at_78%_28%,rgba(212,175,55,0.14),transparent_55%)]" />
 
       <div className="relative z-10 flex min-h-[100svh] flex-col">
         <div className="container-lux flex flex-1 flex-col justify-center pb-36 pt-32 sm:pb-40 sm:pt-36">
@@ -30,7 +46,7 @@ export function Hero() {
               </span>
             </div>
 
-            <h1 className="display-title mt-7 text-[clamp(3.4rem,10vw,8.4rem)] text-ivory">
+            <h1 className="display-title text-shadow-lux mt-7 text-[clamp(3.4rem,10vw,8.4rem)] text-ivory">
               <span className="hero-line">
                 <span style={{ animationDelay: "180ms" }}>{l(content.heroTitleTop)}</span>
               </span>
@@ -42,14 +58,14 @@ export function Hero() {
             </h1>
 
             <p
-              className="hero-fade mt-7 max-w-lg text-[0.95rem] leading-[1.95] text-ivory/55 sm:text-base"
+              className="hero-fade text-shadow-lux mt-7 max-w-lg text-[0.95rem] leading-[1.95] text-ivory/62 sm:text-base"
               style={{ animationDelay: "460ms" }}
             >
               {l(content.heroDescription)}
             </p>
 
             <div
-              className="hero-fade mt-9 flex flex-col gap-3 sm:flex-row sm:items-center"
+              className="hero-fade mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center"
               style={{ animationDelay: "580ms" }}
             >
               <Link
@@ -73,19 +89,37 @@ export function Hero() {
                   <ArrowUpRight className="h-2.5 w-2.5" />
                 </span>
               </Link>
+
+              <button
+                type="button"
+                onClick={() => scrollTo("#live-sites", -84)}
+                className="group inline-flex h-13 items-center gap-2.5 px-1 text-[0.62rem] font-medium uppercase tracking-[0.16em] text-ivory/55 transition-colors hover:text-gold"
+              >
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-gold/60" />
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-gold" />
+                </span>
+                {locale === "ar" ? "٣ مواقع حية" : "3 live sites"}
+                <ArrowUpRight
+                  className={cn(
+                    "h-3.5 w-3.5 transition-transform duration-500 group-hover:-translate-y-0.5 group-hover:translate-x-0.5",
+                    isRTL && "-scale-x-100",
+                  )}
+                />
+              </button>
             </div>
           </div>
         </div>
 
         <div className="container-lux relative z-10">
-          <div className="flex flex-col gap-6 border-t border-white/[0.06] py-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-6 border-t border-white/[0.1] py-6 sm:flex-row sm:items-center sm:justify-between">
             <div className="grid grid-cols-3 gap-6 sm:gap-10">
               {t.hero.stats.map((stat, index) => (
                 <div
                   key={stat.label}
                   className={cn(
                     "flex flex-col gap-1",
-                    index !== 0 && "border-s border-white/[0.07] ps-6 sm:ps-10",
+                    index !== 0 && "border-s border-white/[0.1] ps-6 sm:ps-10",
                   )}
                 >
                   <span className="tabular text-xl font-light text-ivory sm:text-2xl">

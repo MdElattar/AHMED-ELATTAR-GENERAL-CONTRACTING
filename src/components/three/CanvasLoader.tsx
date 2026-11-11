@@ -11,7 +11,6 @@ import {
 } from "react";
 import { SceneErrorBoundary } from "@/components/three/SceneErrorBoundary";
 import { SCENE_READY_TIMEOUT } from "@/components/three/config";
-import { WireframeCraneMark } from "@/components/three/WireframeCrane";
 
 // The procedural fallback is rendered by `SceneGate` while these chunks load,
 // so the dynamic `loading` slot can stay empty instead of stacking two
@@ -32,24 +31,25 @@ const FleetScene = dynamic(() => import("@/components/three/FleetScene"), {
 });
 
 /**
- * Static, always-available artwork. It ships as HTML/SVG (no WebGL, no
- * texture, no network asset) and includes a wireframe crane so the section
- * still reads as a construction scene while the renderer initialises.
+ * Static, always-available artwork.
+ *
+ * It is intentionally transparent: the section's photographic layer lives
+ * behind the canvas, so while the renderer initialises (or if WebGL is
+ * unavailable) the visitor still sees the golden-hour site photography rather
+ * than a dark wireframe placeholder. Only a warm horizon glow and a progress
+ * hairline are painted on top.
  */
 export function SceneFallback() {
   return (
-    <div className="absolute inset-0 overflow-hidden bg-obsidian">
-      <div className="blueprint-grid absolute inset-0 opacity-50" />
+    <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
       <div
         className="absolute inset-0"
         style={{
           background:
-            "radial-gradient(circle at 65% 45%, rgba(201,164,92,0.14), transparent 55%)",
+            "radial-gradient(ellipse at 65% 45%, rgb(var(--atmo-glow) / 0.16), transparent 58%)",
         }}
       />
-      <div className="absolute inset-0 flex items-center justify-center">
-        <WireframeCraneMark className="h-[62%] w-auto max-w-[82%] text-gold/40" />
-      </div>
+      <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-obsidian/80 to-transparent" />
       <div className="absolute bottom-8 left-1/2 h-px w-40 -translate-x-1/2 overflow-hidden bg-white/10">
         <div className="h-full w-1/2 animate-pulse bg-gold" />
       </div>

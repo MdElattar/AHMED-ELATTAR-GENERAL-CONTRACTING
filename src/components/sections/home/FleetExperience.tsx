@@ -1,11 +1,18 @@
 "use client";
 
+import Image from "next/image";
+import Link from "next/link";
 import { startTransition, useCallback, useRef, useState } from "react";
 import { Gauge, MoveDown } from "lucide-react";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { useSmoothScroll } from "@/components/providers/SmoothScroll";
+import { PhotoLayer } from "@/components/media/PhotoLayer";
 import { FleetCanvas } from "@/components/three/CanvasLoader";
+import { SpotlightCard } from "@/components/ui/SpotlightCard";
+import { TimelineTracker } from "@/components/ui/TimelineTracker";
+import { fleetPhotos } from "@/data/media";
 import { fleet } from "@/data/fleet";
+import { pinEndForSteps } from "@/lib/scroll/pin";
 import { usePinnedScroll } from "@/lib/scroll/usePinnedScroll";
 import { cn } from "@/lib/utils";
 
@@ -16,7 +23,9 @@ const copy = {
     description:
       "لا نستأجر المعدات. نملكها، ونشغّلها بفرقنا، ونصونها بمعايير المصنّع — لضمان السيطرة الكاملة على الجدول والجودة.",
     hint: "مرّر لاستكشاف الأسطول",
-    machine: "المعدة",
+    stepLabel: "المعدة",
+    ready: "جاهزة للتشغيل",
+    liveNote: "مواقع الأسطول وساعات التشغيل تُتابع من غرفة العمليات",
     capacity: "قدرة الرفع",
     reach: "الوصول",
     units: "عدد الوحدات",
@@ -34,7 +43,9 @@ const copy = {
     description:
       "We do not rent equipment. We own it, operate it with our own crews, and maintain it to manufacturer standards — keeping complete control of schedule and quality.",
     hint: "Scroll to explore the fleet",
-    machine: "Machine",
+    stepLabel: "Machine",
+    ready: "Deployment ready",
+    liveNote: "Fleet locations and operating hours are tracked from the operations room",
     capacity: "Lifting capacity",
     reach: "Reach",
     units: "Units",
@@ -48,12 +59,15 @@ const copy = {
   },
 };
 
-const featured = fleet.filter((machine) => machine.featured).slice(0, 4);
+const featured = fleet.filter((machine) => machine.featured).slice(0, 3);
+const featuredPhotos = featured.map((machine) => fleetPhotos[machine.art]);
 
 export function FleetExperience() {
   const sectionRef = useRef<HTMLElement | null>(null);
   const progressRef = useRef(0);
   const fillRef = useRef<HTMLDivElement | null>(null);
+  const timelineFillRef = useRef<HTMLDivElement | null>(null);
+  const mobileTimelineFillRef = useRef<HTMLDivElement | null>(null);
   const [active, setActive] = useState(0);
   const { locale, l } = useI18n();
   const { scrollTo } = useSmoothScroll();
@@ -66,23 +80,41 @@ export function FleetExperience() {
     startTransition(() => setActive(index));
   }, []);
 
+  // The rails and the bottom bar are written imperatively by the same scrubbed
+  // tween that drives the 3D scene, so all four stay in perfect sync.
+  const handleProgress = useCallback((value: number) => {
+    if (timelineFillRef.current) {
+      timelineFillRef.current.style.transform = `scaleY(${value})`;
+    }
+    if (mobileTimelineFillRef.current) {
+      mobileTimelineFillRef.current.style.transform = `scaleX(${value})`;
+    }
+  }, []);
+
   const triggerRef = usePinnedScroll({
     sectionRef,
     progressRef,
     fillRef,
     stepCount: featured.length,
-    // Three featured machines × ~40vh of scroll.
-    end: "+=120%",
+    // Three featured machines → `+=180%`. The helper keeps the scroll budget
+    // proportional to the number of cards instead of a fixed distance.
+    end: pinEndForSteps(featured.length),
     onActive: handleActive,
+    onProgress: handleProgress,
   });
 
   const jumpTo = (index: number) => {
     const trigger = triggerRef.current;
     if (!trigger) return;
     const span = trigger.end - trigger.start;
-    const ratio = 0.1 + (index / Math.max(1, featured.length - 1)) * 0.8;
+    const ratio = 0.12 + (index / Math.max(1, featured.length - 1)) * 0.76;
     scrollTo(trigger.start + span * ratio, 0);
   };
+
+  const trackerSteps = featured.map((item) => ({
+    title: item.name,
+    subtitle: l(item.category),
+  }));
 
   return (
     <section
@@ -90,30 +122,39 @@ export function FleetExperience() {
       id="fleet-experience"
       className="relative h-[100svh] overflow-hidden bg-obsidian"
     >
-      <div className="absolute inset-0 z-0">
+      <PhotoLayer
+        images={featuredPhotos}
+        active={active}
+        sizes="100vw"
+        className="z-0"
+        imageClassName="brightness-[0.72]"
+      />
+
+      <div className="pointer-events-none absolute inset-0 z-[1] opacity-90">
         <FleetCanvas progressRef={progressRef} />
       </div>
 
-      <div className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-b from-obsidian/85 via-transparent to-obsidian" />
-      <div className="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(ellipse_at_28%_50%,rgba(6,7,8,0.76),transparent_66%)]" />
+      <div className="atmo-glow pointer-events-none absolute inset-0 z-[2] opacity-60" aria-hidden="true" />
+      <div className="pointer-events-none absolute inset-0 z-[2] bg-gradient-to-b from-obsidian/85 via-transparent to-obsidian" />
+      <div className="pointer-events-none absolute inset-0 z-[2] bg-[radial-gradient(ellipse_at_28%_50%,rgba(6,7,8,0.74),transparent_66%)]" />
 
       <div className="relative z-10 flex h-full flex-col justify-between pb-6 pt-28 sm:pb-8 sm:pt-32">
         <div className="container-lux grid gap-6 lg:grid-cols-[1fr_auto] lg:items-start">
           <div className="max-w-xl">
             <span className="eyebrow">{c.eyebrow}</span>
-            <h2 className="display-title mt-5 text-[clamp(2.3rem,4.6vw,4.4rem)] text-ivory">
+            <h2 className="display-title text-shadow-lux mt-5 text-[clamp(2.3rem,4.6vw,4.4rem)] text-ivory">
               {c.title}
             </h2>
-            <p className="mt-4 max-w-md text-sm leading-relaxed text-ivory/50">
+            <p className="text-shadow-lux mt-4 hidden max-w-md text-sm leading-relaxed text-ivory/55 sm:block">
               {c.description}
             </p>
           </div>
           <div className="hidden items-end gap-5 md:flex">
-            <div className="flex flex-col items-end gap-2">
-              <span className="text-[0.58rem] uppercase tracking-[0.2em] text-ivory/30">
+            <div className="glass-panel-soft flex flex-col items-end gap-2 px-4 py-3">
+              <span className="text-[0.55rem] uppercase tracking-[0.2em] text-ivory/35">
                 {c.hint}
               </span>
-              <div className="h-14 w-px overflow-hidden bg-white/15">
+              <div className="h-12 w-px overflow-hidden bg-white/15">
                 <div className="scroll-dot h-3 w-px bg-gold" />
               </div>
             </div>
@@ -122,51 +163,16 @@ export function FleetExperience() {
         </div>
 
         <div className="container-lux grid items-end gap-7 lg:grid-cols-[1fr_470px]">
-          <div className="hidden flex-col gap-4 pb-2 lg:flex">
-            <div className="flex items-center gap-3">
-              <span className="tabular text-[0.6rem] uppercase tracking-[0.2em] text-gold">
-                {c.machine}
-              </span>
-              <span className="h-px w-8 bg-gold/40" />
-              <span className="tabular text-[0.6rem] text-ivory/30">
-                {String(active + 1).padStart(2, "0")} / 0{featured.length}
-              </span>
-            </div>
-            {featured.map((item, index) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => jumpTo(index)}
-                aria-current={active === index}
-                className={cn(
-                  "group flex items-center gap-4 py-1.5 text-start transition-colors duration-300",
-                  active === index ? "text-ivory" : "text-ivory/35 hover:text-ivory/65",
-                )}
-              >
-                <span
-                  className={cn(
-                    "tabular text-[0.58rem] transition-colors",
-                    active === index ? "text-gold" : "text-ivory/25",
-                  )}
-                >
-                  0{index + 1}
-                </span>
-                <span className="flex flex-col gap-0.5">
-                  <span className="text-sm font-medium tracking-wide">{item.name}</span>
-                  <span className="text-[0.5rem] uppercase tracking-[0.14em] text-ivory/25">
-                    {l(item.category)}
-                  </span>
-                </span>
-                <span
-                  className={cn(
-                    "h-px max-w-14 flex-1 bg-gold/50 transition-opacity duration-500",
-                    active === index ? "opacity-100" : "opacity-0",
-                  )}
-                />
-              </button>
-            ))}
+          <div className="hidden flex-col gap-5 pb-2 lg:flex">
+            <TimelineTracker
+              steps={trackerSteps}
+              active={active}
+              onSelect={jumpTo}
+              label={c.stepLabel}
+              fillRef={timelineFillRef}
+            />
 
-            <div className="mt-3 flex flex-wrap gap-6 border-t border-white/10 pt-5">
+            <div className="flex flex-wrap gap-x-8 gap-y-4 border-t border-white/10 pt-5">
               {c.stats.map((stat) => (
                 <div key={stat.label} className="flex flex-col gap-0.5">
                   <span className="tabular text-lg font-light text-gold">
@@ -179,78 +185,122 @@ export function FleetExperience() {
                 </div>
               ))}
             </div>
+
+            <div className="glass-panel-soft flex items-center gap-3 px-4 py-3">
+              <span className="relative flex h-2 w-2 shrink-0">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-gold/60" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-gold" />
+              </span>
+              <p className="text-[0.55rem] uppercase leading-relaxed tracking-[0.14em] text-ivory/40">
+                {c.liveNote}
+              </p>
+            </div>
           </div>
 
           <div className="relative">
-            <div className="mb-4 flex items-center justify-between lg:hidden">
-              <div className="flex items-center gap-2">
-                {featured.map((item, index) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => jumpTo(index)}
-                    aria-label={item.name}
-                    aria-current={active === index}
-                    className={cn(
-                      "h-1.5 transition-all duration-500",
-                      active === index ? "w-8 bg-gold" : "w-3 bg-white/20",
-                    )}
-                  />
-                ))}
-              </div>
-              <span className="tabular text-[0.58rem] text-ivory/35">
-                {String(active + 1).padStart(2, "0")} / 0{featured.length}
-              </span>
+            <div className="mb-4 lg:hidden">
+              <TimelineTracker
+                steps={trackerSteps}
+                active={active}
+                onSelect={jumpTo}
+                label={c.stepLabel}
+                orientation="horizontal"
+                fillRef={mobileTimelineFillRef}
+              />
             </div>
 
-            <article className="relative border border-white/12 bg-obsidian/72 p-6 backdrop-blur-xl sm:p-7">
-              <span className="absolute -top-px start-0 h-px w-16 bg-gold" />
-              <span className="absolute -start-px top-0 h-16 w-px bg-gold/50" />
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <span className="text-[0.55rem] uppercase tracking-[0.2em] text-gold/80">
-                    {l(machine.category)}
-                  </span>
-                  <h3 className="mt-3 font-display text-[2rem] leading-none text-ivory">
-                    {machine.name}
-                  </h3>
-                </div>
-                <span className="flex h-9 w-9 items-center justify-center rounded-full border border-gold/30 text-gold">
-                  <Gauge className="h-4 w-4" />
-                </span>
-              </div>
-              <p className="mt-4 text-[0.82rem] leading-[1.8] text-ivory/50">
-                {l(machine.description)}
-              </p>
-              <div className="mt-6 grid grid-cols-2 gap-px overflow-hidden border border-white/10 bg-white/10">
-                {[
-                  { label: c.capacity, value: machine.capacity },
-                  { label: c.reach, value: machine.reach },
-                  { label: c.units, value: machine.units },
-                  { label: c.year, value: machine.year },
-                ].map((spec) => (
-                  <div key={spec.label} className="bg-coal p-3.5">
-                    <span className="tabular text-base font-light text-ivory">{spec.value}</span>
-                    <p className="mt-1 text-[0.48rem] uppercase tracking-[0.14em] text-ivory/30">
-                      {spec.label}
-                    </p>
+            <div className="relative min-h-[320px] sm:min-h-[340px]">
+              {featured.map((item, index) => (
+                <SpotlightCard
+                  as="article"
+                  key={item.id}
+                  aria-hidden={active !== index}
+                  className={cn(
+                    "spotlight-card--media absolute inset-0 overflow-hidden border border-white/12 bg-coal transition-all duration-700",
+                    active === index
+                      ? "pointer-events-auto translate-y-0 opacity-100"
+                      : "pointer-events-none translate-y-5 opacity-0",
+                  )}
+                >
+                  <Image
+                    src={featuredPhotos[index].src}
+                    alt=""
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 470px"
+                    className="object-cover opacity-55 photo-grade"
+                  />
+                  <div className="absolute inset-0 z-[1] bg-gradient-to-b from-obsidian/25 via-obsidian/78 to-obsidian/96" />
+                  <div className="absolute inset-0 z-[1] bg-[radial-gradient(ellipse_at_80%_10%,rgb(var(--atmo-glow)/0.14),transparent_55%)]" />
+
+                  <div className="relative z-10 flex h-full flex-col justify-between p-6 sm:p-7">
+                    <div>
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <span className="live-pill">{c.ready}</span>
+                          <span className="mt-4 block text-[0.55rem] uppercase tracking-[0.2em] text-gold/80">
+                            {l(item.category)}
+                          </span>
+                          <h3 className="mt-2 font-display text-[1.9rem] leading-none text-ivory sm:text-[2.1rem]">
+                            {item.name}
+                          </h3>
+                        </div>
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-gold/30 text-gold">
+                          <Gauge className="h-4 w-4" />
+                        </span>
+                      </div>
+                      <p className="mt-4 text-[0.82rem] leading-[1.8] text-ivory/58">
+                        {l(item.description)}
+                      </p>
+                    </div>
+
+                    <div className="mt-6">
+                      <div className="grid grid-cols-2 gap-px overflow-hidden border border-white/10 bg-white/10">
+                        {[
+                          { label: c.capacity, value: item.capacity },
+                          { label: c.reach, value: item.reach },
+                          { label: c.units, value: item.units },
+                          { label: c.year, value: item.year },
+                        ].map((spec) => (
+                          <div key={spec.label} className="bg-coal p-3.5">
+                            <span className="tabular text-base font-light text-ivory">
+                              {spec.value}
+                            </span>
+                            <p className="mt-1 text-[0.48rem] uppercase tracking-[0.14em] text-ivory/30">
+                              {spec.label}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="mt-4 h-px w-full overflow-hidden bg-white/10">
+                        <div
+                          className="h-full bg-gradient-to-r from-gold-dark via-gold to-gold-light transition-[width] duration-700"
+                          style={{ width: `${((index + 1) / featured.length) * 100}%` }}
+                        />
+                      </div>
+                      <Link
+                        href="/contact"
+                        className="mt-4 inline-flex text-[0.6rem] font-semibold uppercase tracking-[0.14em] text-gold transition-colors hover:text-gold-light"
+                      >
+                        {c.cta}
+                      </Link>
+                    </div>
                   </div>
-                ))}
-              </div>
-              <a
-                href="/contact"
-                className="mt-5 inline-flex text-[0.6rem] font-semibold uppercase tracking-[0.14em] text-gold transition-colors hover:text-gold-light"
-              >
-                {c.cta}
-              </a>
-            </article>
+
+                  <span className="absolute -top-px start-0 z-10 h-px w-16 bg-gold" />
+                  <span className="absolute -start-px top-0 z-10 h-16 w-px bg-gold/50" />
+                </SpotlightCard>
+              ))}
+            </div>
           </div>
         </div>
       </div>
 
       <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] h-16 bg-gradient-to-t from-obsidian to-transparent" />
       <div className="absolute inset-x-0 bottom-0 z-20 h-[2px] bg-white/10">
-        <div ref={fillRef} className="h-full w-0 bg-gradient-to-r from-gold-dark via-gold to-gold-light" />
+        <div
+          ref={fillRef}
+          className="h-full w-0 bg-gradient-to-r from-gold-dark via-gold to-gold-light shadow-[0_0_18px_rgb(var(--atmo-glow)/0.6)]"
+        />
       </div>
       <span className="sr-only" aria-live="polite">
         {machine.name}

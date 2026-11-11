@@ -14,7 +14,6 @@ import {
   revealAfterFirstFrame,
 } from "@/components/three/config";
 import { useCanvasVisibility } from "@/components/three/useCanvasVisibility";
-import { WireframeCrane3D } from "@/components/three/WireframeCrane";
 
 function Rig({ reduced }: { reduced: boolean }) {
   const { camera } = useThree();
@@ -151,7 +150,7 @@ export default function HeroScene({ onReady }: { onReady?: () => void }) {
         <pointLight position={[9, 2, -6]} intensity={48} color="#5f8394" distance={30} />
         <pointLight position={[1, -3, 7]} intensity={20} color="#c9a45c" distance={18} />
 
-        <Suspense fallback={<WireframeCrane3D />}>
+        <Suspense fallback={null}>
           <Environment resolution={64} frames={1}>
             <Lightformer
               form="rect"

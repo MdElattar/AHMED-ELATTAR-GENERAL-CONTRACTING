@@ -109,13 +109,13 @@ export function CraftsmanshipCanvas({
         height * 0.5,
         Math.max(width, height) * 0.55,
       );
-      glow.addColorStop(0, "rgba(201,164,92,0.10)");
-      glow.addColorStop(1, "rgba(201,164,92,0)");
+      glow.addColorStop(0, "rgba(212,175,55,0.10)");
+      glow.addColorStop(1, "rgba(212,175,55,0)");
 
       scan = ctx.createLinearGradient(0, -40, 0, 40);
-      scan.addColorStop(0, "rgba(201,164,92,0)");
-      scan.addColorStop(0.5, "rgba(201,164,92,0.045)");
-      scan.addColorStop(1, "rgba(201,164,92,0)");
+      scan.addColorStop(0, "rgba(212,175,55,0)");
+      scan.addColorStop(0.5, "rgba(212,175,55,0.045)");
+      scan.addColorStop(1, "rgba(212,175,55,0)");
     };
 
     const resizeObserver =
@@ -149,7 +149,7 @@ export function CraftsmanshipCanvas({
       a: Point,
       b: Point,
       progress: number,
-      color = "201,164,92",
+      color = "212,175,55",
       lineWidth = 1,
     ) => {
       if (progress <= 0) return;
@@ -199,8 +199,8 @@ export function CraftsmanshipCanvas({
         const b = project(2.35, 0, -0.35);
         const c1 = project(2.35, 0, 2.35);
         const d = project(-0.35, 0, 2.35);
-        ctx.fillStyle = `rgba(201,164,92,${0.07 * slabP})`;
-        ctx.strokeStyle = `rgba(201,164,92,${0.28 * slabP})`;
+        ctx.fillStyle = `rgba(212,175,55,${0.07 * slabP})`;
+        ctx.strokeStyle = `rgba(212,175,55,${0.28 * slabP})`;
         ctx.beginPath();
         ctx.moveTo(a.x, a.y);
         ctx.lineTo(b.x, b.y);
@@ -219,10 +219,10 @@ export function CraftsmanshipCanvas({
         const base = project(x, 0, z);
         const top = project(x, 3, z);
         line(base, top, columnP, "226,216,198", 2.2);
-        line(base, top, columnP * 0.8, "201,164,92", 0.7);
+        line(base, top, columnP * 0.8, "212,175,55", 0.7);
         for (let level = 0; level < 3; level += 1) {
           const joint = project(x, level + 1, z);
-          ctx.fillStyle = `rgba(201,164,92,${0.55 * columnP})`;
+          ctx.fillStyle = `rgba(212,175,55,${0.55 * columnP})`;
           ctx.beginPath();
           ctx.arc(joint.x, joint.y, 2.2, 0, Math.PI * 2);
           ctx.fill();
@@ -244,7 +244,7 @@ export function CraftsmanshipCanvas({
           const c1 = project(2.1, y, 2.1);
           const d = project(-0.1, y, 2.1);
           ctx.fillStyle = `rgba(255,255,255,${0.018 * beamP})`;
-          ctx.strokeStyle = `rgba(201,164,92,${0.13 * beamP})`;
+          ctx.strokeStyle = `rgba(212,175,55,${0.13 * beamP})`;
           ctx.beginPath();
           ctx.moveTo(a.x, a.y);
           ctx.lineTo(b.x, b.y);
@@ -262,7 +262,7 @@ export function CraftsmanshipCanvas({
         const start = project(0.35, 0.02, 0.35);
         const end = project(1.65, 0.02, 0.35);
         const bend = Math.sin(p * Math.PI * 2) * 22 * rebarP;
-        ctx.strokeStyle = `rgba(201,164,92,${0.55 * rebarP})`;
+        ctx.strokeStyle = `rgba(212,175,55,${0.55 * rebarP})`;
         ctx.lineWidth = 1.3;
         for (let index = 0; index < 5; index += 1) {
           const offset = index * 5;
@@ -276,7 +276,7 @@ export function CraftsmanshipCanvas({
           );
           ctx.stroke();
         }
-        ctx.fillStyle = `rgba(201,164,92,${0.6 * rebarP})`;
+        ctx.fillStyle = `rgba(212,175,55,${0.6 * rebarP})`;
         ctx.font = "10px ui-monospace, monospace";
         ctx.fillText("Ø 32 · B500B", start.x, start.y - 14);
       }
@@ -289,7 +289,7 @@ export function CraftsmanshipCanvas({
         COLUMN_HIGHLIGHTS.forEach(([x, z]) => {
           const point = project(x, 2, z);
           const radius = 14 + Math.sin(performance.now() * 0.002 + x) * 3;
-          ctx.strokeStyle = `rgba(201,164,92,${0.22 * highlight})`;
+          ctx.strokeStyle = `rgba(212,175,55,${0.22 * highlight})`;
           ctx.lineWidth = 1;
           ctx.beginPath();
           ctx.arc(point.x, point.y, radius, 0, Math.PI * 2);
@@ -302,7 +302,7 @@ export function CraftsmanshipCanvas({
       if (measureP > 0) {
         const a = project(-0.35, 0, 2.35);
         const b = project(2.35, 0, 2.35);
-        ctx.strokeStyle = `rgba(201,164,92,${0.42 * measureP})`;
+        ctx.strokeStyle = `rgba(212,175,55,${0.42 * measureP})`;
         ctx.lineWidth = 1;
         ctx.setLineDash([4, 4]);
         ctx.beginPath();

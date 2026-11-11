@@ -63,6 +63,16 @@ const nextConfig: NextConfig = {
     minimumCacheTTL: 60 * 60 * 24 * 30,
     dangerouslyAllowSVG: false,
     contentDispositionType: "inline",
+    // All photography is delivered through the optimiser. The browser still
+    // requests `/_next/image` on the same origin, so the strict `img-src
+    // 'self'` CSP does not need a remote-image exception.
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+        pathname: "/**",
+      },
+    ],
   },
   experimental: {
     // Lucide is optimized by default; these two barrels are not and would

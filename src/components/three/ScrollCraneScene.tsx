@@ -14,7 +14,6 @@ import {
   revealAfterFirstFrame,
 } from "@/components/three/config";
 import { useCanvasVisibility } from "@/components/three/useCanvasVisibility";
-import { WireframeCrane3D } from "@/components/three/WireframeCrane";
 import { smoothstep } from "@/lib/utils";
 
 const CAMERA_KEYS = [
@@ -232,7 +231,7 @@ export default function ScrollCraneScene({
         <pointLight position={[8, 1, -5]} intensity={42} color="#5f8394" distance={28} />
         <pointLight position={[1.5, 4.5, 2]} intensity={14} color="#e7cf99" distance={12} />
 
-        <Suspense fallback={<WireframeCrane3D />}>
+        <Suspense fallback={null}>
           <Environment resolution={64} frames={1}>
             <Lightformer
               form="rect"

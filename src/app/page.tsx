@@ -5,6 +5,7 @@ import { PromoBanner } from "@/components/sections/home/PromoBanner";
 import { CraneExperience } from "@/components/sections/home/CraneExperience";
 import { CraftsmanshipExperience } from "@/components/sections/home/CraftsmanshipExperience";
 import { FeaturedProjects } from "@/components/sections/home/FeaturedProjects";
+import { LiveSiteGallery } from "@/components/sections/home/LiveSiteGallery";
 import { ServicesGrid } from "@/components/sections/home/ServicesGrid";
 import { FleetExperience } from "@/components/sections/home/FleetExperience";
 import { FleetShowcase } from "@/components/sections/home/FleetShowcase";
@@ -25,6 +26,7 @@ export default function HomePage() {
       <CraneExperience />
       <CraftsmanshipExperience />
       <FeaturedProjects />
+      <LiveSiteGallery />
       <ServicesGrid />
       <FleetExperience />
       <FleetShowcase />

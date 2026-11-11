@@ -12,7 +12,6 @@ import {
   configureRenderer,
   revealAfterFirstFrame,
 } from "@/components/three/config";
-import { WireframeCrane3D } from "@/components/three/WireframeCrane";
 import { smoothstep } from "@/lib/utils";
 
 function FleetRig({ progressRef }: { progressRef: MutableRefObject<number> }) {
@@ -264,7 +263,7 @@ export default function FleetScene({
         />
         <pointLight position={[7, 2, -6]} intensity={36} color="#5f8394" distance={26} />
 
-        <Suspense fallback={<WireframeCrane3D />}>
+        <Suspense fallback={null}>
           <Environment resolution={64} frames={1}>
             <Lightformer form="rect" intensity={2.2} color="#ffd7a0" position={[0, 14, -18]} scale={[22, 8, 1]} />
             <Lightformer form="rect" intensity={1} color="#5f8394" position={[-18, 5, 8]} scale={[12, 12, 1]} />

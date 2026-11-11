@@ -1,10 +1,11 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { useI18n } from "@/components/providers/I18nProvider";
-import { ProjectArt } from "@/components/ui/ProjectArt";
 import type { Project } from "@/data/projects";
+import { projectPhotos } from "@/data/media";
 import { cn } from "@/lib/utils";
 
 type ProjectCardProps = {
@@ -25,12 +26,20 @@ export function ProjectCard({
   compact = false,
 }: ProjectCardProps) {
   const { t, l, isRTL } = useI18n();
+  const photo = projectPhotos[project.art];
 
   const inner = (
     <>
       <div className={cn("relative aspect-[4/3] overflow-hidden bg-coal", artClassName)}>
-        <ProjectArt variant={project.art} className="h-full w-full" />
+        <Image
+          src={photo.src}
+          alt={photo.alt}
+          fill
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          className="object-cover photo-grade transition-transform duration-[1.4s] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.05]"
+        />
         <div className="absolute inset-0 bg-gradient-to-t from-obsidian/85 via-obsidian/5 to-transparent" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_72%_24%,rgb(var(--atmo-glow)/0.12),transparent_55%)]" />
         <div className="absolute inset-x-4 top-4 flex items-center justify-between gap-3">
           <span className="border border-white/15 bg-obsidian/40 px-2.5 py-1 text-[0.52rem] font-medium uppercase tracking-[0.16em] text-ivory/80 backdrop-blur-md">
             {t.projectsPage.categories[project.category]}

@@ -8,6 +8,7 @@ import { ArrowUpRight, Globe2, Menu, UserRound, X } from "lucide-react";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { useSmoothScroll } from "@/components/providers/SmoothScroll";
 import { ProfileMenu } from "@/components/layout/ProfileMenu";
+import { LightingToggle } from "@/components/layout/LightingToggle";
 import { Logo } from "@/components/ui/Logo";
 import { acquireScrollLock, releaseScrollLock } from "@/lib/scroll/lock";
 import { cn } from "@/lib/utils";
@@ -21,7 +22,7 @@ const links = [  { href: "/", key: "home" as const },
 
 export function Navbar() {
   const pathname = usePathname();
-  const { t, toggleLocale, isRTL } = useI18n();
+  const { t, toggleLocale, isRTL, locale } = useI18n();
   const { stop, start, scrollTo } = useSmoothScroll();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
@@ -133,6 +134,7 @@ export function Navbar() {
               <Globe2 className="h-3.5 w-3.5" />
               {t.nav.language}
             </button>
+            <LightingToggle tone={lightNav ? "light" : "dark"} />
             <ProfileMenu tone={lightNav ? "light" : "dark"} />
             <Link
               href="/contact"
@@ -227,6 +229,12 @@ export function Navbar() {
                 transition={{ delay: 0.42, duration: 0.5 }}
                 className="mt-8 flex flex-col gap-3"
               >
+                <div className="flex items-center justify-between border border-white/15 px-4 py-3">
+                  <span className="text-[0.6rem] font-medium uppercase tracking-[0.16em] text-ivory/45">
+                    {locale === "ar" ? "إضاءة المشهد" : "Scene lighting"}
+                  </span>
+                  <LightingToggle tone="dark" />
+                </div>
                 <Link
                   href="/sign-in"
                   onClick={() => setOpen(false)}
