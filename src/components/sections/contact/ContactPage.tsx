@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ArrowUpRight, Clock, Mail, MapPin, Phone } from "lucide-react";
+import { SmartConsultant } from "@/components/ai/SmartConsultant";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { BidForm } from "@/components/sections/contact/BidForm";
 import { Reveal } from "@/components/ui/Reveal";
@@ -224,6 +225,10 @@ export function ContactPage() {
           </div>
         </div>
       </section>
+
+      {/* "Elattar AI" floating consultant — structured feasibility guidance
+          before the visitor commits to the full RFQ form. */}
+      <SmartConsultant />
     </>
   );
 }

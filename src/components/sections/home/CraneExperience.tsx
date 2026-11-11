@@ -6,7 +6,6 @@ import { MoveDown } from "lucide-react";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { useSmoothScroll } from "@/components/providers/SmoothScroll";
 import { PhotoLayer } from "@/components/media/PhotoLayer";
-import { ScrollCraneCanvas } from "@/components/three/CanvasLoader";
 import { SpotlightCard } from "@/components/ui/SpotlightCard";
 import { TimelineTracker } from "@/components/ui/TimelineTracker";
 import { cranePhotos } from "@/data/media";
@@ -14,32 +13,55 @@ import { pinEndForSteps } from "@/lib/scroll/pin";
 import { usePinnedScroll } from "@/lib/scroll/usePinnedScroll";
 import { cn } from "@/lib/utils";
 
+/**
+ * The crane sequence — a fully pinned, scroll-scrubbed mega-project reel.
+ *
+ * The stage is pinned for `+=300%` (five milestones × 60vh) with
+ * `scrub: 0.5`, so the visitor advances naturally through Precision → Power
+ * → Commitment → Assembly → Handover and can never be trapped inside a
+ * single frame: the pin spacing reserves the scroll budget up front and the
+ * smoothed tween guarantees every milestone resolves before the section
+ * releases.
+ *
+ * All imagery is high-resolution site photography. The background slowly
+ * zooms with the scrubbed progress (an imperative transform — React never
+ * re-renders on scroll) while the step cards, the timeline rail, and the
+ * bottom progress hairline all consume the same inertial value.
+ */
 export function CraneExperience() {
   const sectionRef = useRef<HTMLElement | null>(null);
   const progressRef = useRef(0);
   const fillRef = useRef<HTMLDivElement | null>(null);
+  const photoWrapRef = useRef<HTMLDivElement | null>(null);
   const timelineFillRef = useRef<HTMLDivElement | null>(null);
   const mobileTimelineFillRef = useRef<HTMLDivElement | null>(null);
   const [active, setActive] = useState(0);
   const { t, locale } = useI18n();
   const { scrollTo } = useSmoothScroll();
 
-  // The 3D scene consumes `progressRef` directly inside `useFrame`, so the
-  // scroll never re-renders React. Only the discrete step index crosses the
-  // boundary, and it is a transition so it cannot interrupt the paint loop.
+  // Only the discrete step index crosses the React boundary (it changes four
+  // times per section), wrapped in a transition so it can never interrupt the
+  // paint loop mid-scrub.
   const handleActive = useCallback((index: number) => {
     startTransition(() => setActive(index));
   }, []);
 
-  // The timeline rails are also imperative. They are driven by the same
-  // scrubbed tween as the 3D scene, so the fill, the bottom bar, and the
-  // active card are always showing the same moment.
+  // The rails and the cinematic background drift are also imperative. They
+  // are driven by the same scrubbed tween, so the fill, the zoom, and the
+  // active card always show the same moment.
   const handleProgress = useCallback((value: number) => {
     if (timelineFillRef.current) {
       timelineFillRef.current.style.transform = `scaleY(${value})`;
     }
     if (mobileTimelineFillRef.current) {
       mobileTimelineFillRef.current.style.transform = `scaleX(${value})`;
+    }
+    if (photoWrapRef.current) {
+      // Golden-hour documentary zoom: the frame breathes 1.045 → 1.14 while
+      // the section is pinned, adding depth without a single re-render.
+      const scale = 1.045 + value * 0.095;
+      const drift = (value - 0.5) * 2.2;
+      photoWrapRef.current.style.transform = `scale(${scale}) translate3d(${drift}%, ${-drift * 0.6}%, 0)`;
     }
   }, []);
 
@@ -77,30 +99,32 @@ export function CraneExperience() {
       id="crane"
       className="relative h-[100svh] overflow-hidden bg-obsidian"
     >
-      <PhotoLayer
-        images={cranePhotos}
-        active={active}
-        sizes="100vw"
-        className="z-0"
-        imageClassName="brightness-[0.72]"
-      />
-
-      <div className="pointer-events-none absolute inset-0 z-[1] opacity-90">
-        <ScrollCraneCanvas progressRef={progressRef} />
+      <div ref={photoWrapRef} className="absolute inset-0 will-change-transform">
+        <PhotoLayer
+          images={cranePhotos}
+          active={active}
+          sizes="100vw"
+          overlay="none"
+          imageClassName="brightness-[0.74]"
+        />
       </div>
 
       <div className="atmo-glow pointer-events-none absolute inset-0 z-[2] opacity-60" aria-hidden="true" />
-      <div className="pointer-events-none absolute inset-0 z-[2] bg-gradient-to-b from-obsidian/85 via-transparent to-obsidian" />
-      <div className="pointer-events-none absolute inset-0 z-[2] bg-[radial-gradient(ellipse_at_25%_50%,rgba(6,7,8,0.72),transparent_65%)]" />
+      <div className="pointer-events-none absolute inset-0 z-[2] bg-gradient-to-b from-obsidian/88 via-obsidian/12 to-obsidian" />
+      <div className="pointer-events-none absolute inset-0 z-[2] bg-[radial-gradient(ellipse_at_25%_50%,rgba(6,7,8,0.74),transparent_66%)]" />
+      <div className="pointer-events-none absolute inset-0 z-[2] bg-[radial-gradient(ellipse_at_82%_12%,rgba(212,175,55,0.16),transparent_55%)]" />
+      <div className="pointer-events-none absolute -start-16 top-1/3 z-[2] select-none text-[13rem] font-semibold leading-none tracking-tighter text-white/[0.022] sm:text-[19rem]">
+        {locale === "ar" ? "رفع" : "LIFT"}
+      </div>
 
       <div className="relative z-10 flex h-full flex-col justify-between pb-6 pt-28 sm:pb-8 sm:pt-32">
         <div className="container-lux grid gap-6 lg:grid-cols-[1fr_auto] lg:items-start">
           <div className="max-w-xl">
             <span className="eyebrow">{t.crane.eyebrow}</span>
-            <h2 className="display-title text-shadow-lux mt-5 text-[clamp(2.3rem,4.6vw,4.4rem)] text-ivory">
+            <h2 className="display-title text-shadow-lux mt-5 text-[clamp(1.9rem,4.6vw,4.4rem)] text-ivory">
               {t.crane.title}
             </h2>
-            <p className="text-shadow-lux mt-4 max-w-md text-sm leading-relaxed text-ivory/55">
+            <p className="text-shadow-lux mt-4 hidden max-w-md text-sm leading-relaxed text-ivory/55 sm:block">
               {t.crane.description}
             </p>
           </div>
@@ -153,7 +177,14 @@ export function CraneExperience() {
               />
             </div>
 
-            <div className="relative min-h-[350px] sm:min-h-[340px]">
+            <div className="relative min-h-[280px] sm:min-h-[330px] lg:min-h-[340px]">
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute -top-10 end-2 z-0 select-none font-display text-[7rem] italic leading-none text-gold/10 sm:text-[9rem]"
+              >
+                {steps[active]?.index}
+              </span>
+
               {steps.map((step, index) => (
                 <SpotlightCard
                   as="article"
@@ -171,10 +202,10 @@ export function CraneExperience() {
                     alt=""
                     fill
                     sizes="(max-width: 1024px) 100vw, 430px"
-                    className="object-cover opacity-55 photo-grade"
+                    className="object-cover opacity-60 photo-grade"
                   />
                   <div className="absolute inset-0 z-[1] bg-gradient-to-b from-obsidian/25 via-obsidian/78 to-obsidian/96" />
-                  <div className="absolute inset-0 z-[1] bg-[radial-gradient(ellipse_at_80%_10%,rgb(var(--atmo-glow)/0.14),transparent_55%)]" />
+                  <div className="absolute inset-0 z-[1] bg-[radial-gradient(ellipse_at_80%_10%,rgb(var(--atmo-glow)/0.16),transparent_55%)]" />
 
                   <div className="relative z-10 flex h-full flex-col justify-between p-6 sm:p-7">
                     <div>

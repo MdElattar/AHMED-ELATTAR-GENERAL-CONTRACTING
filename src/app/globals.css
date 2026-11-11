@@ -194,6 +194,19 @@ html:not([data-locale="en"]) .i18n-en {
   background: linear-gradient(90deg, transparent, rgb(212 175 55 / 0.45), transparent);
 }
 
+/* Phase description (pinned stages) — visible only where the viewport gives
+   the editorial column enough vertical room: portrait tablets and taller
+   landscape screens. Short laptop heights hide it to protect the pin budget. */
+.phase-description {
+  display: none;
+}
+
+@media (min-width: 768px) and ((min-height: 800px) or (max-width: 1023px)) {
+  .phase-description {
+    display: block;
+  }
+}
+
 .eyebrow {
   display: inline-flex;
   align-items: center;
@@ -722,6 +735,53 @@ html[dir="rtl"] .timeline-fill-x {
   background:
     radial-gradient(ellipse at 70% 0%, rgb(var(--atmo-glow) / 0.08), transparent 48%),
     #0b0c0f;
+}
+
+/* ---------- Cinematic carousel ---------- */
+
+/*
+ * Slow documentary zoom for the photographic carousel. Applied to the photo
+ * stack wrapper (not the page), so the crossfading frames all breathe
+ * together and a mid-animation switch still lands on a composed frame.
+ */
+@keyframes kenburns {
+  from {
+    transform: scale(1) translate3d(0, 0, 0);
+  }
+  to {
+    transform: scale(1.075) translate3d(0.9%, -0.9%, 0);
+  }
+}
+
+.kenburns {
+  animation: kenburns 26s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+/* Autoplay hairline on the carousel stage. Restarted per slide via `key`. */
+@keyframes slide-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.carousel-progress {
+  transform-origin: left;
+  animation: slide-progress var(--slide-duration, 7s) linear forwards;
+}
+
+html[dir="rtl"] .carousel-progress {
+  transform-origin: right;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kenburns,
+  .carousel-progress {
+    animation: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

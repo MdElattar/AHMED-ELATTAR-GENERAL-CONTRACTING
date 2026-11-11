@@ -5,12 +5,20 @@ import Link from "next/link";
 import { ArrowUpRight, Calculator, Clock3, Ruler, Wallet } from "lucide-react";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { SectionHeading } from "@/components/ui/SectionHeading";
+import {
+  ESTIMATE_BREAKDOWN,
+  computeEstimate,
+  type EstimateCity,
+  type EstimatePace,
+  type EstimateQuality,
+  type EstimateType,
+} from "@/lib/estimate";
 import { cn } from "@/lib/utils";
 
-type ProjectType = "residential" | "commercial" | "infrastructure" | "industrial";
-type Quality = "essential" | "premium" | "signature";
-type City = "riyadh" | "jeddah" | "neom" | "other";
-type Pace = "standard" | "fast" | "accelerated";
+type ProjectType = EstimateType;
+type Quality = EstimateQuality;
+type City = EstimateCity;
+type Pace = EstimatePace;
 
 const copy = {
   ar: {
@@ -111,74 +119,19 @@ const copy = {
   },
 };
 
-const typeRate: Record<ProjectType, number> = {
-  residential: 3200,
-  commercial: 4200,
-  infrastructure: 1800,
-  industrial: 2800,
-};
-
-const typeProductivity: Record<ProjectType, number> = {
-  residential: 1800,
-  commercial: 1400,
-  infrastructure: 2200,
-  industrial: 2500,
-};
-
-const qualityFactor: Record<Quality, number> = {
-  essential: 0.85,
-  premium: 1,
-  signature: 1.35,
-};
-
-const cityFactor: Record<City, number> = {
-  riyadh: 1,
-  jeddah: 1.08,
-  neom: 1.22,
-  other: 1.05,
-};
-
-const paceFactor: Record<Pace, number> = {
-  standard: 1,
-  fast: 1.12,
-  accelerated: 1.25,
-};
-
-const paceDuration: Record<Pace, number> = {
-  standard: 1,
-  fast: 0.82,
-  accelerated: 0.66,
-};
-
 export function Estimator() {
   const { locale, isRTL } = useI18n();
   const c = copy[locale];
-  const [type, setType] = useState<ProjectType>("commercial");
+  const [type, setType] = useState<EstimateType>("commercial");
   const [area, setArea] = useState(18000);
-  const [quality, setQuality] = useState<Quality>("premium");
-  const [city, setCity] = useState<City>("riyadh");
-  const [pace, setPace] = useState<Pace>("standard");
+  const [quality, setQuality] = useState<EstimateQuality>("premium");
+  const [city, setCity] = useState<EstimateCity>("riyadh");
+  const [pace, setPace] = useState<EstimatePace>("standard");
 
-  const result = useMemo(() => {
-    const safeArea = Math.max(200, Math.min(500000, Number.isFinite(area) ? area : 200));
-    const total =
-      safeArea *
-      typeRate[type] *
-      qualityFactor[quality] *
-      cityFactor[city] *
-      paceFactor[pace];
-    const months = Math.max(
-      4,
-      Math.ceil((safeArea / typeProductivity[type]) * paceDuration[pace]),
-    );
-    return {
-      low: total * 0.92,
-      high: total * 1.08,
-      total,
-      months,
-      perM2: total / safeArea,
-    };
-  }, [area, city, pace, quality, type]);
+  const result = useMemo(
+    () => computeEstimate({ type, area, quality, city, pace }),
+    [area, city, pace, quality, type],
+  );
 
   // Formatters are expensive to construct and this panel re-renders on every
   // slider tick, so build them once per locale.
@@ -190,12 +143,7 @@ export function Estimator() {
     };
   }, [locale]);
 
-  const breakdown = [
-    { key: "structure" as const, pct: 38 },
-    { key: "finishes" as const, pct: 27 },
-    { key: "mep" as const, pct: 22 },
-    { key: "management" as const, pct: 13 },
-  ];
+  const breakdown = ESTIMATE_BREAKDOWN;
 
   const optionClass = (active: boolean) =>
     cn(

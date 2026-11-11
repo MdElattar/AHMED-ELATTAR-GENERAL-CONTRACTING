@@ -6,7 +6,6 @@ import { useI18n } from "@/components/providers/I18nProvider";
 import { useSmoothScroll } from "@/components/providers/SmoothScroll";
 import { useWorkspace } from "@/components/providers/WorkspaceProvider";
 import { PhotoLayer } from "@/components/media/PhotoLayer";
-import { HeroCanvas } from "@/components/three/CanvasLoader";
 import { heroPhoto } from "@/data/media";
 import { cn } from "@/lib/utils";
 
@@ -22,13 +21,9 @@ export function Hero() {
         preloadFirst
         overlay="none"
         sizes="100vw"
-        className="z-0"
+        className="kenburns z-0"
         imageClassName="brightness-[0.82]"
       />
-
-      <div className="pointer-events-none absolute inset-0 z-[1] opacity-90">
-        <HeroCanvas />
-      </div>
 
       <div className="hero-aurora pointer-events-none absolute inset-0 z-[2] opacity-80" aria-hidden="true" />
       <div className="atmo-glow pointer-events-none absolute inset-0 z-[2] opacity-60" aria-hidden="true" />

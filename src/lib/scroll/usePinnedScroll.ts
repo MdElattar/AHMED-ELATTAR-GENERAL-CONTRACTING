@@ -18,12 +18,13 @@ type PinnedScrollOptions = {
   end: string;
   /**
    * Smoothed scrub time, in seconds. A real tween is scrubbed by the trigger
-   * so the progress consumed by the 3D scenes, the DOM fills, and the step
+   * so the progress consumed by the photography, the DOM fills, and the step
    * index all share one inertial value instead of jumping with raw scroll.
+   * Reduced-motion visitors get a direct scrub (`true`) with no inertia.
    */
-  scrub?: number;
+  scrub?: number | boolean;
   onActive?: (index: number) => void;
-  /** Imperative per-frame progress sink (timeline rails, counters, etc.). */
+  /** Imperative per-frame progress sink (timeline rails, drift, counters). */
   onProgress?: (progress: number) => void;
 };
 
@@ -35,8 +36,10 @@ type PinnedScrollOptions = {
  * The pin is attached to a tween (`{ value: 0 } → 1`) rather than a bare
  * ScrollTrigger. With `scrub`, the tween becomes the single source of truth:
  * its smoothed `onUpdate` writes the progress ref, the bottom fill, and the
- * timeline rail, while the discrete step index is derived from the same value.
- * That keeps the 3D scenes, the progress bar, and the cards perfectly in sync.
+ * timeline rail, while the discrete step index is derived from the same
+ * value. That keeps the photography, the progress bar, and the cards perfectly
+ * in sync — and because Lenis drives `ScrollTrigger.update()` on every frame
+ * from the shared ticker, the pin can never render behind the gesture.
  *
  * Cleanup is deliberately scoped to the context created by this hook. A global
  * `ScrollTrigger.getAll().forEach(kill)` on every mount would destroy the pins
@@ -77,6 +80,15 @@ export function usePinnedScroll({
 
       const section = sectionRef.current;
       if (!section) return;
+
+      const reducedMotion =
+        typeof window.matchMedia === "function" &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      // Reduced motion: keep the pin functional (the layout depends on it)
+      // but map progress directly to the scrollbar with zero inertia.
+      const resolvedScrub: number | boolean =
+        typeof scrub === "number" && reducedMotion ? true : scrub;
 
       let lastActive = -1;
       let trigger: ScrollTriggerInstance | null = null;
@@ -119,7 +131,7 @@ export function usePinnedScroll({
             end,
             // Inertial scrub: the section follows the gesture with a 0.5s
             // settle instead of snapping to the raw scroll position.
-            scrub,
+            scrub: resolvedScrub,
             pin: true,
             pinSpacing: true,
             anticipatePin: 1,
@@ -168,7 +180,7 @@ export function usePinnedScroll({
         };
       }, section);
 
-      // Fonts and the WebGL canvases settle after the first paint; re-measure
+      // Fonts and the photography settle after the first paint; re-measure
       // once so the pin distance matches the final layout. The scheduler is
       // shared so several pinned sections coalesce into one refresh.
       scheduleScrollRefresh(400);

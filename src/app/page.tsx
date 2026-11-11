@@ -8,7 +8,6 @@ import { FeaturedProjects } from "@/components/sections/home/FeaturedProjects";
 import { LiveSiteGallery } from "@/components/sections/home/LiveSiteGallery";
 import { ServicesGrid } from "@/components/sections/home/ServicesGrid";
 import { FleetExperience } from "@/components/sections/home/FleetExperience";
-import { FleetShowcase } from "@/components/sections/home/FleetShowcase";
 import { Certifications } from "@/components/sections/home/Certifications";
 import { RegionalMap } from "@/components/sections/home/RegionalMap";
 import { Estimator } from "@/components/sections/home/Estimator";
@@ -29,7 +28,6 @@ export default function HomePage() {
       <LiveSiteGallery />
       <ServicesGrid />
       <FleetExperience />
-      <FleetShowcase />
       <Certifications />
       <RegionalMap />
       <Estimator />

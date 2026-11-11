@@ -1,13 +1,14 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight, Check } from "lucide-react";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { useWorkspace } from "@/components/providers/WorkspaceProvider";
-import { ProjectArt } from "@/components/ui/ProjectArt";
 import { Reveal } from "@/components/ui/Reveal";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { services } from "@/data/services";
+import { projectPhotos } from "@/data/media";
 import { cn } from "@/lib/utils";
 
 const copy = {
@@ -66,6 +67,7 @@ export function ServicesGrid() {
             const title = override?.title ?? service.title;
             const description = override?.description ?? service.description;
             const tagline = override?.tagline ?? service.tagline;
+            const photo = projectPhotos[service.art];
             return (
               <Reveal key={service.slug} delay={(index % 2) * 80}>
                 <Link
@@ -86,12 +88,20 @@ export function ServicesGrid() {
                     </span>
                   </div>
 
-                  <div className="relative mt-7 aspect-[16/8] overflow-hidden border border-ink/10">
-                    <ProjectArt variant={service.art} className="h-full w-full" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-ink/55 via-transparent to-transparent" />
-                    <span className="absolute inset-x-4 bottom-3 text-[0.55rem] uppercase tracking-[0.18em] text-ivory/70">
+                  <div className="relative mt-7 aspect-[16/8] overflow-hidden border border-ink/10 bg-sand/40">
+                    <Image
+                      src={photo.src}
+                      alt={photo.alt}
+                      fill
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                      className="object-cover photo-grade transition-transform duration-[1.4s] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.05]"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-ink/70 via-ink/10 to-transparent" />
+                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_74%_18%,rgb(var(--atmo-glow)/0.16),transparent_55%)]" />
+                    <span className="absolute inset-x-4 bottom-3 text-[0.55rem] uppercase tracking-[0.18em] text-ivory/80">
                       {l(tagline)}
                     </span>
+                    <span className="absolute -top-px start-0 h-px w-14 bg-gold-dark/70" />
                   </div>
 
                   <h3 className="mt-6 font-display text-[clamp(1.7rem,3vw,2.5rem)] leading-tight text-ink">
