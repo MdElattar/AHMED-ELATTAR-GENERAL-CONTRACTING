@@ -83,7 +83,7 @@ export function PortalDashboard() {
             <h1 className="display-title mt-6 text-[clamp(2.6rem,5vw,4.4rem)] text-ivory">
               {t.portal.noAccessTitle}
             </h1>
-            <p className="mt-5 max-w-md text-[0.9rem] leading-[1.9] text-ivory/50">
+            <p className="mt-5 max-w-md text-[0.9rem] leading-[1.9] text-ivory/60">
               {t.portal.noAccessText}
             </p>
             <Link
@@ -93,7 +93,7 @@ export function PortalDashboard() {
               {t.portal.signIn}
               <ArrowUpRight className={cn("h-4 w-4", isRTL && "-scale-x-100")} />
             </Link>
-            <p className="mt-6 text-[0.62rem] text-ivory/30">{t.auth.secureNote}</p>
+            <p className="mt-6 text-[0.62rem] text-ivory/40">{t.auth.secureNote}</p>
           </div>
         </div>
       </section>
@@ -110,7 +110,7 @@ export function PortalDashboard() {
             <h1 className="display-title mt-6 text-[clamp(2.4rem,5vw,4.2rem)] text-ivory">
               {locale === "ar" ? "لا يوجد مشروع بعد." : "No project yet."}
             </h1>
-            <p className="mt-5 max-w-md text-[0.9rem] leading-[1.9] text-ivory/50">
+            <p className="mt-5 max-w-md text-[0.9rem] leading-[1.9] text-ivory/60">
               {locale === "ar"
                 ? "سيظهر مشروعك هنا بمجرد إسناده من فريق المشاريع."
                 : "Your project will appear here as soon as it is assigned by our project team."}
@@ -169,7 +169,7 @@ export function PortalDashboard() {
                 </h1>
               </Reveal>
               <Reveal delay={130}>
-                <p className="mt-3 text-[0.85rem] leading-relaxed text-ivory/45">
+                <p className="mt-3 text-[0.85rem] leading-relaxed text-ivory/55">
                   {t.portal.subtitle}
                 </p>
               </Reveal>
@@ -178,7 +178,7 @@ export function PortalDashboard() {
             <Reveal delay={150}>
               <div className="flex items-center gap-3">
                 <span className="hidden text-end sm:block">
-                  <span className="block text-[0.62rem] text-ivory/55">{user.company}</span>
+                  <span className="block text-[0.62rem] text-ivory/65">{user.company}</span>
                   <span className="mt-0.5 block tabular text-[0.55rem] uppercase tracking-[0.14em] text-gold/70">
                     {user.accountId}
                   </span>
@@ -189,7 +189,7 @@ export function PortalDashboard() {
                     signOut();
                     router.push("/");
                   }}
-                  className="inline-flex h-10 items-center gap-2 border border-white/15 px-4 text-[0.58rem] font-semibold uppercase tracking-[0.14em] text-ivory/55 transition-colors hover:border-gold/50 hover:text-gold"
+                  className="inline-flex h-10 items-center gap-2 border border-white/15 px-4 text-[0.58rem] font-semibold uppercase tracking-[0.14em] text-ivory/65 transition-colors hover:border-gold/50 hover:text-gold"
                 >
                   <LogOut className="h-3.5 w-3.5" />
                   {t.portal.signOut}
@@ -209,7 +209,7 @@ export function PortalDashboard() {
               },
             ].map((stat) => (
               <div key={stat.label} className="bg-obsidian px-5 py-5">
-                <span className="text-[0.5rem] uppercase tracking-[0.16em] text-ivory/30">
+                <span className="text-[0.5rem] uppercase tracking-[0.16em] text-ivory/40">
                   {stat.label}
                 </span>
                 <p className="mt-2 text-[0.82rem] leading-snug text-ivory/80">{stat.value}</p>
@@ -220,21 +220,21 @@ export function PortalDashboard() {
           <div className="mt-5 flex flex-wrap gap-2">
             <Link
               href="/portal/projects"
-              className="inline-flex h-9 items-center gap-2 border border-white/12 px-3.5 text-[0.56rem] font-semibold uppercase tracking-[0.12em] text-ivory/50 transition-colors hover:border-gold/40 hover:text-gold"
+              className="inline-flex h-9 items-center gap-2 border border-white/12 px-3.5 text-[0.56rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
             >
               <FolderKanban className="h-3.5 w-3.5" />
               {t.nav.portalProjects}
             </Link>
             <Link
               href="/portal/financials"
-              className="inline-flex h-9 items-center gap-2 border border-white/12 px-3.5 text-[0.56rem] font-semibold uppercase tracking-[0.12em] text-ivory/50 transition-colors hover:border-gold/40 hover:text-gold"
+              className="inline-flex h-9 items-center gap-2 border border-white/12 px-3.5 text-[0.56rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
             >
               <Wallet className="h-3.5 w-3.5" />
               {t.nav.financials}
             </Link>
             <Link
               href="/portal/settings"
-              className="inline-flex h-9 items-center gap-2 border border-white/12 px-3.5 text-[0.56rem] font-semibold uppercase tracking-[0.12em] text-ivory/50 transition-colors hover:border-gold/40 hover:text-gold"
+              className="inline-flex h-9 items-center gap-2 border border-white/12 px-3.5 text-[0.56rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
             >
               <Settings className="h-3.5 w-3.5" />
               {t.nav.settings}
@@ -285,7 +285,7 @@ export function PortalDashboard() {
                 <span
                   className={cn(
                     "text-[0.55rem] uppercase tracking-[0.12em]",
-                    item.slug === project.slug ? "text-ivory/40" : "text-ivory/30",
+                    item.slug === project.slug ? "text-ivory/50" : "text-ivory/40",
                   )}
                 >
                   {l(item.location)}
@@ -298,13 +298,13 @@ export function PortalDashboard() {
             <div className="border border-white/10 bg-coal">
               <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 px-6 py-5">
                 <div>
-                  <span className="text-[0.52rem] uppercase tracking-[0.16em] text-ivory/35">
+                  <span className="text-[0.52rem] uppercase tracking-[0.16em] text-ivory/45">
                     {t.portal.project}
                   </span>
                   <h2 className="mt-1 font-display text-2xl leading-tight text-ivory">
                     {l(project.title)}
                   </h2>
-                  <p className="mt-1 flex items-center gap-1.5 text-[0.62rem] text-ivory/40">
+                  <p className="mt-1 flex items-center gap-1.5 text-[0.62rem] text-ivory/50">
                     <MapPin className="h-3 w-3 text-gold" />
                     {l(project.location)}
                   </p>
@@ -316,7 +316,7 @@ export function PortalDashboard() {
 
               <div className="p-6">
                 <div className="flex items-end justify-between gap-4">
-                  <span className="text-[0.55rem] uppercase tracking-[0.16em] text-ivory/40">
+                  <span className="text-[0.55rem] uppercase tracking-[0.16em] text-ivory/50">
                     {t.portal.progress}
                   </span>
                   <span className="tabular font-display text-3xl leading-none text-ivory">
@@ -338,7 +338,7 @@ export function PortalDashboard() {
                     { label: t.portal.lastUpdate, value: l(project.lastUpdate) },
                   ].map((fact) => (
                     <div key={fact.label}>
-                      <dt className="text-[0.5rem] uppercase tracking-[0.14em] text-ivory/35">
+                      <dt className="text-[0.5rem] uppercase tracking-[0.14em] text-ivory/45">
                         {fact.label}
                       </dt>
                       <dd className="mt-1 text-[0.76rem] leading-snug text-ivory/70">
@@ -359,7 +359,7 @@ export function PortalDashboard() {
                       "flex-1 px-3 py-2.5 text-[0.58rem] font-semibold uppercase tracking-[0.12em] transition-colors",
                       tab === item.id
                         ? "bg-gold text-obsidian"
-                        : "text-ivory/40 hover:text-ivory/70",
+                        : "text-ivory/50 hover:text-ivory/70",
                     )}
                   >
                     {item.label}
@@ -386,7 +386,7 @@ export function PortalDashboard() {
                               ? "border-gold bg-gold text-obsidian"
                               : milestone.status === "current"
                                 ? "border-gold text-gold"
-                                : "border-white/15 text-ivory/25",
+                                : "border-white/15 text-ivory/35",
                           )}
                         >
                           {milestone.status === "complete" ? (
@@ -401,19 +401,19 @@ export function PortalDashboard() {
                           <p
                             className={cn(
                               "text-[0.75rem] leading-snug",
-                              milestone.status === "upcoming" ? "text-ivory/40" : "text-ivory/75",
+                              milestone.status === "upcoming" ? "text-ivory/50" : "text-ivory/75",
                             )}
                           >
                             {l(milestone.title)}
                           </p>
-                          <span className="text-[0.58rem] text-ivory/35">
+                          <span className="text-[0.58rem] text-ivory/45">
                             {l(milestone.date)}
                           </span>
                         </div>
                       </li>
                     ))}
                     {project.milestones.length === 0 ? (
-                      <li className="px-6 py-6 text-center text-[0.68rem] text-ivory/35">
+                      <li className="px-6 py-6 text-center text-[0.68rem] text-ivory/45">
                         {locale === "ar" ? "لا توجد مراحل مجدولة بعد." : "No milestones yet."}
                       </li>
                     ) : null}
@@ -434,14 +434,14 @@ export function PortalDashboard() {
                         <FileText className="h-4 w-4 shrink-0 text-gold" />
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-[0.75rem] text-ivory/75">{l(doc.name)}</p>
-                          <span className="text-[0.56rem] text-ivory/35">
+                          <span className="text-[0.56rem] text-ivory/45">
                             {t.portal.documentTypes[doc.type]} · {doc.size} · {doc.date}
                           </span>
                         </div>
                         <button
                           type="button"
                           onClick={() => downloadRecord(doc, l(project.title))}
-                          className="flex h-8 w-8 shrink-0 items-center justify-center border border-white/12 text-ivory/45 transition-colors hover:border-gold hover:text-gold"
+                          className="flex h-8 w-8 shrink-0 items-center justify-center border border-white/12 text-ivory/55 transition-colors hover:border-gold hover:text-gold"
                           aria-label={t.portal.download}
                         >
                           <Download className="h-3.5 w-3.5" />
@@ -449,7 +449,7 @@ export function PortalDashboard() {
                       </li>
                     ))}
                     {project.documents.length === 0 ? (
-                      <li className="px-6 py-6 text-center text-[0.68rem] text-ivory/35">
+                      <li className="px-6 py-6 text-center text-[0.68rem] text-ivory/45">
                         {locale === "ar" ? "لا توجد مستندات بعد." : "No documents yet."}
                       </li>
                     ) : null}
@@ -472,7 +472,7 @@ export function PortalDashboard() {
                           <p className="truncate text-[0.75rem] text-ivory/75">
                             {l(invoice.title)}
                           </p>
-                          <span className="tabular text-[0.56rem] text-ivory/35">
+                          <span className="tabular text-[0.56rem] text-ivory/45">
                             {invoice.number} · {invoice.date}
                           </span>
                         </div>
@@ -485,7 +485,7 @@ export function PortalDashboard() {
                                 ? "text-emerald-300/80"
                                 : invoice.status === "due"
                                   ? "text-gold"
-                                  : "text-ivory/35",
+                                  : "text-ivory/45",
                             )}
                           >
                             {t.portal.invoiceStatus[invoice.status]}
@@ -494,7 +494,7 @@ export function PortalDashboard() {
                       </li>
                     ))}
                     {project.invoices.length === 0 ? (
-                      <li className="px-6 py-6 text-center text-[0.68rem] text-ivory/35">
+                      <li className="px-6 py-6 text-center text-[0.68rem] text-ivory/45">
                         {locale === "ar" ? "لا توجد فواتير بعد." : "No invoices yet."}
                       </li>
                     ) : null}
@@ -509,14 +509,14 @@ export function PortalDashboard() {
                   </span>
                   <div>
                     <p className="text-[0.72rem] font-medium text-ivory">{l(project.manager)}</p>
-                    <p className="text-[0.55rem] uppercase tracking-[0.12em] text-ivory/35">
+                    <p className="text-[0.55rem] uppercase tracking-[0.12em] text-ivory/45">
                       {t.portal.siteManager}
                     </p>
                   </div>
                 </div>
                 <Link
                   href="/portal/projects"
-                  className="flex h-8 w-8 items-center justify-center border border-white/12 text-ivory/45 transition-colors hover:border-gold hover:text-gold"
+                  className="flex h-8 w-8 items-center justify-center border border-white/12 text-ivory/55 transition-colors hover:border-gold hover:text-gold"
                   aria-label={t.nav.portalProjects}
                 >
                   <ArrowUpRight className="h-3.5 w-3.5" />
@@ -525,7 +525,7 @@ export function PortalDashboard() {
             </div>
           </div>
 
-          <div className="mt-8 flex flex-col items-start justify-between gap-3 border-t border-white/10 pt-5 text-[0.6rem] text-ivory/35 sm:flex-row sm:items-center">
+          <div className="mt-8 flex flex-col items-start justify-between gap-3 border-t border-white/10 pt-5 text-[0.6rem] text-ivory/45 sm:flex-row sm:items-center">
             <span>{t.auth.secureNote}</span>
             <Link
               href="/contact"

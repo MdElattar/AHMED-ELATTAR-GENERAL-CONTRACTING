@@ -174,7 +174,7 @@ export function ProjectCinema({
               aria-label={c.drag}
               className="absolute inset-0 z-20 h-full w-full cursor-ew-resize opacity-0"
             />
-            <span className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 text-[0.48rem] uppercase tracking-[0.16em] text-ivory/50">
+            <span className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 text-[0.48rem] uppercase tracking-[0.16em] text-ivory/60">
               {c.drag}
             </span>
           </div>
@@ -184,7 +184,7 @@ export function ProjectCinema({
               <Sparkles className="h-3.5 w-3.5" />
               {c.cinemaLabel}
             </span>
-            <p className="text-[0.72rem] leading-relaxed text-ivory/45">
+            <p className="text-[0.72rem] leading-relaxed text-ivory/55">
               {l(project.title)} · {l(project.location)}
             </p>
             <button
@@ -195,7 +195,7 @@ export function ProjectCinema({
               <Play className="h-3.5 w-3.5" />
               {c.cinema}
             </button>
-            <p className="text-[0.54rem] leading-relaxed text-ivory/25">
+            <p className="text-[0.54rem] leading-relaxed text-ivory/35">
               {images.length} {c.slide} · {c.gallery}
             </p>
           </div>
@@ -236,7 +236,7 @@ export function ProjectCinema({
               <span className="border border-gold/40 bg-obsidian/55 px-3 py-1.5 text-[0.48rem] uppercase tracking-[0.18em] text-gold backdrop-blur">
                 {c.cinemaLabel}
               </span>
-              <span className="font-mono text-[0.55rem] text-ivory/45">
+              <span className="font-mono text-[0.55rem] text-ivory/55">
                 {String(index + 1).padStart(2, "0")} / {String(images.length).padStart(2, "0")}
               </span>
             </div>

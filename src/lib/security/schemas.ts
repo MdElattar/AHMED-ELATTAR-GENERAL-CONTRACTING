@@ -76,6 +76,67 @@ export const resetPasswordSchema = z.object({
   password: passwordField,
 });
 
+export const adminGrantRequestSchema = z
+  .object({
+    primaryPassword: z.string().min(8).max(128),
+    mode: z.enum(["promote", "create"]),
+    email: emailField,
+    name: z
+      .string()
+      .max(120)
+      .optional()
+      .default("")
+      .transform((value) => cleanString(value, 120)),
+    company: z
+      .string()
+      .max(160)
+      .optional()
+      .default("")
+      .transform((value) => cleanString(value, 160)),
+    phone: z
+      .string()
+      .max(40)
+      .optional()
+      .default("")
+      .transform((value) => cleanString(value, 40))
+      .refine((value) => value.length === 0 || isPhone(value), { message: "invalid_phone" }),
+    password: passwordField.optional(),
+  })
+  .superRefine((value, context) => {
+    if (value.mode !== "create") return;
+    if (!isDisplayName(value.name)) {
+      context.addIssue({
+        code: "custom",
+        path: ["name"],
+        message: "invalid_name",
+      });
+    }
+    if (!value.password) {
+      context.addIssue({
+        code: "custom",
+        path: ["password"],
+        message: "weak_password",
+      });
+    }
+  });
+
+export const adminGrantConfirmSchema = z.object({
+  grantId: z
+    .string()
+    .min(16)
+    .max(80)
+    .regex(/^[a-zA-Z0-9-]+$/, { message: "invalid_grant" }),
+  code: z
+    .string()
+    .max(32)
+    .transform((value) => cleanString(value, 32).replace(/\D/g, "").slice(0, 6))
+    .refine((value) => value.length === 6, { message: "invalid_code" }),
+});
+
+export const adminRevokeSchema = z.object({
+  email: emailField,
+});
+
 export const contactSchema = z.object({
   name: z
     .string()

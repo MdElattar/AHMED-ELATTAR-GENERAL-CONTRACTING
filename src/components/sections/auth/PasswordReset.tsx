@@ -193,7 +193,7 @@ export function PasswordReset({ mode }: PasswordResetProps) {
             <h2 className="display-title mt-6 max-w-md text-[clamp(2.4rem,4vw,3.8rem)] text-ivory">
               {t.auth.asideTitle}
             </h2>
-            <p className="mt-5 max-w-sm text-[0.9rem] leading-[1.9] text-ivory/50">
+            <p className="mt-5 max-w-sm text-[0.9rem] leading-[1.9] text-ivory/60">
               {t.auth.asideText}
             </p>
             <ul className="mt-8 space-y-3">
@@ -210,7 +210,7 @@ export function PasswordReset({ mode }: PasswordResetProps) {
 
           <Link
             href="/"
-            className="relative inline-flex items-center gap-2 text-[0.6rem] uppercase tracking-[0.18em] text-ivory/40 transition-colors hover:text-gold"
+            className="relative inline-flex items-center gap-2 text-[0.6rem] uppercase tracking-[0.18em] text-ivory/50 transition-colors hover:text-gold"
           >
             <BackIcon className="h-3.5 w-3.5" />
             {t.auth.backHome}
@@ -226,7 +226,7 @@ export function PasswordReset({ mode }: PasswordResetProps) {
               </span>
               <Link
                 href="/"
-                className="inline-flex items-center gap-1.5 text-[0.58rem] uppercase tracking-[0.16em] text-ivory/40 transition-colors hover:text-gold"
+                className="inline-flex items-center gap-1.5 text-[0.58rem] uppercase tracking-[0.16em] text-ivory/50 transition-colors hover:text-gold"
               >
                 <BackIcon className="h-3 w-3" />
                 {t.auth.backHome}
@@ -245,7 +245,7 @@ export function PasswordReset({ mode }: PasswordResetProps) {
                 <h1 className="display-title mt-7 text-[clamp(2.2rem,4vw,3.4rem)] text-ivory">
                   {t.auth.otpSentTitle}
                 </h1>
-                <p className="mt-4 text-[0.85rem] leading-relaxed text-ivory/55">
+                <p className="mt-4 text-[0.85rem] leading-relaxed text-ivory/65">
                   {t.auth.otpSentText}{" "}
                   <span className="font-semibold text-ivory" dir="ltr">
                     {email}
@@ -321,7 +321,7 @@ export function PasswordReset({ mode }: PasswordResetProps) {
                     type="button"
                     onClick={resend}
                     disabled={resending}
-                    className="inline-flex items-center gap-2 text-ivory/45 transition-colors hover:text-gold disabled:opacity-50"
+                    className="inline-flex items-center gap-2 text-ivory/55 transition-colors hover:text-gold disabled:opacity-50"
                   >
                     {resending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
                     {resending ? t.auth.otpResending : t.auth.otpResend}
@@ -334,7 +334,7 @@ export function PasswordReset({ mode }: PasswordResetProps) {
                       setDevCode("");
                       setCode("");
                     }}
-                    className="text-ivory/45 transition-colors hover:text-gold"
+                    className="text-ivory/55 transition-colors hover:text-gold"
                   >
                     {t.auth.otpChangeEmail}
                   </button>
@@ -348,7 +348,7 @@ export function PasswordReset({ mode }: PasswordResetProps) {
                 <h1 className="display-title mt-7 text-[clamp(2.2rem,4vw,3.4rem)] text-ivory">
                   {t.auth.resetSuccessTitle}
                 </h1>
-                <p className="mt-4 text-[0.85rem] leading-relaxed text-ivory/55">
+                <p className="mt-4 text-[0.85rem] leading-relaxed text-ivory/65">
                   {t.auth.resetSuccessText}
                 </p>
                 <Link
@@ -364,7 +364,7 @@ export function PasswordReset({ mode }: PasswordResetProps) {
                 <h1 className="display-title mt-4 text-[clamp(2.2rem,4vw,3.4rem)] text-ivory">
                   {step === "email" ? t.auth.forgotTitle : t.auth.resetTitle}
                 </h1>
-                <p className="mt-3 text-[0.82rem] leading-relaxed text-ivory/50">
+                <p className="mt-3 text-[0.82rem] leading-relaxed text-ivory/60">
                   {step === "email" ? t.auth.forgotSubtitle : t.auth.resetSubtitle}
                 </p>
 
@@ -439,7 +439,7 @@ export function PasswordReset({ mode }: PasswordResetProps) {
                           type="button"
                           onClick={() => setShowPassword((current) => !current)}
                           aria-label={showPassword ? "Hide password" : "Show password"}
-                          className="absolute end-3 top-1/2 -translate-y-1/2 text-ivory/35 transition-colors hover:text-ivory/70"
+                          className="absolute end-3 top-1/2 -translate-y-1/2 text-ivory/45 transition-colors hover:text-ivory/70"
                         >
                           {showPassword ? (
                             <EyeOff className="h-4 w-4" />
@@ -508,7 +508,7 @@ export function PasswordReset({ mode }: PasswordResetProps) {
 
                 <Link
                   href="/sign-in"
-                  className="mt-6 flex items-center justify-center gap-2 text-[0.72rem] text-ivory/45 transition-colors hover:text-gold"
+                  className="mt-6 flex items-center justify-center gap-2 text-[0.72rem] text-ivory/55 transition-colors hover:text-gold"
                 >
                   <BackIcon className="h-3.5 w-3.5" />
                   {t.auth.backToSignIn}
@@ -517,7 +517,7 @@ export function PasswordReset({ mode }: PasswordResetProps) {
             )}
 
             {step === "email" ? (
-              <p className="mt-4 text-center text-[0.72rem] text-ivory/45">
+              <p className="mt-4 text-center text-[0.72rem] text-ivory/55">
                 {t.auth.haveAccount}{" "}
                 <Link
                   href="/sign-in"

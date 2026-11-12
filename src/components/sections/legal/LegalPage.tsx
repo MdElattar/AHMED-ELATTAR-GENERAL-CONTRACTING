@@ -19,7 +19,7 @@ export function LegalPage({ kind }: { kind: LegalKind }) {
       <div className="container-lux relative max-w-4xl">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-[0.6rem] uppercase tracking-[0.18em] text-ivory/40 transition-colors hover:text-gold"
+          className="inline-flex items-center gap-2 text-[0.6rem] uppercase tracking-[0.18em] text-ivory/50 transition-colors hover:text-gold"
         >
           <BackIcon className="h-3.5 w-3.5" />
           {back}
@@ -40,7 +40,7 @@ export function LegalPage({ kind }: { kind: LegalKind }) {
               </span>
               <div>
                 <h2 className="font-display text-xl text-ivory">{section.title}</h2>
-                <p className="mt-2 text-[0.86rem] leading-[1.9] text-ivory/50">
+                <p className="mt-2 text-[0.86rem] leading-[1.9] text-ivory/60">
                   {section.text}
                 </p>
               </div>

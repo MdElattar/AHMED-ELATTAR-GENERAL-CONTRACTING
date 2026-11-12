@@ -19,11 +19,47 @@ export type StoredUser = {
   passwordHash: string;
   role: UserRole;
   accountId: string;
+  /** Invalidates every previously issued session when incremented. */
+  sessionVersion: number;
   resetTokenHash?: string;
   resetTokenExpiry?: string;
   createdAt: string;
   updatedAt: string;
   lastLoginAt?: string;
+};
+
+export type StoredPasskey = {
+  id: string;
+  userId: string;
+  email: string;
+  credentialId: string;
+  publicKey: string;
+  counter: number;
+  transports: string[];
+  deviceType?: string;
+  backedUp?: boolean;
+  createdAt: string;
+  lastUsedAt?: string;
+};
+
+export type NewPasskey = Omit<StoredPasskey, "id" | "createdAt" | "lastUsedAt">;
+
+export type AdminGrantMode = "promote" | "create";
+
+export type StoredAdminGrant = {
+  id: string;
+  requestedBy: string;
+  targetEmail: string;
+  mode: AdminGrantMode;
+  name?: string;
+  company?: string;
+  phone?: string;
+  passwordHash?: string;
+  codeHash: string;
+  expiresAt: string;
+  attempts: number;
+  consumedAt?: string;
+  createdAt: string;
 };
 
 export type StoredProject = {
@@ -128,6 +164,7 @@ export type NewUser = {
   passwordHash: string;
   role: UserRole;
   accountId: string;
+  sessionVersion?: number;
 };
 
 export type NewInquiry = Omit<StoredInquiry, "id" | "status" | "createdAt" | "updatedAt"> & {
@@ -136,6 +173,8 @@ export type NewInquiry = Omit<StoredInquiry, "id" | "status" | "createdAt" | "up
 
 type MemoryDb = {
   users: Map<string, StoredUser>;
+  passkeys: Map<string, StoredPasskey>;
+  adminGrants: Map<string, StoredAdminGrant>;
   projects: Map<string, StoredProject>;
   inquiries: Map<string, StoredInquiry>;
   audit: StoredAudit[];
@@ -156,6 +195,8 @@ type LeanModel = Model<LeanDoc>;
 
 type MongoModels = {
   User: LeanModel;
+  Passkey: LeanModel;
+  AdminGrant: LeanModel;
   Project: LeanModel;
   Inquiry: LeanModel;
   AuditLog: LeanModel;
@@ -175,6 +216,8 @@ function memory(): MemoryDb {
   if (!globalForDb.__alattarMemoryDb) {
     globalForDb.__alattarMemoryDb = {
       users: new Map(),
+      passkeys: new Map(),
+      adminGrants: new Map(),
       projects: new Map(),
       inquiries: new Map(),
       audit: [],
@@ -258,6 +301,7 @@ async function seedMemory() {
         passwordHash,
         role: "admin",
         accountId: `ALT-${String(Math.floor(Math.random() * 9000) + 1000)}`,
+        sessionVersion: 0,
         createdAt: timestamp,
         updatedAt: timestamp,
       });
@@ -330,7 +374,14 @@ async function mongoModels(): Promise<MongoModels> {
     globalForDb.__alattarMongoose ??
     (globalForDb.__alattarMongoose = { conn: null, promise: null, models: null });
 
-  if (cached.models) return cached.models;
+  if (cached.models) {
+    const models = await cached.models;
+    // During development a hot reload can retain an older model cache. Rebuild
+    // it when a newly added collection is missing instead of throwing at the
+    // first passkey or delegation request.
+    if (models.Passkey && models.AdminGrant) return models;
+    cached.models = null;
+  }
 
   cached.models = (async () => {
     await connectMongo();
@@ -345,9 +396,43 @@ async function mongoModels(): Promise<MongoModels> {
         passwordHash: { type: String, required: true },
         role: { type: String, enum: ["client", "admin"], default: "client", index: true },
         accountId: { type: String, required: true, index: true },
+        sessionVersion: { type: Number, default: 0 },
         resetTokenHash: { type: String, index: true },
         resetTokenExpiry: { type: Date },
         lastLoginAt: { type: Date },
+      },
+      { timestamps: true, versionKey: false },
+    );
+
+    const passkeySchema = new mongoose.Schema(
+      {
+        userId: { type: String, required: true, index: true },
+        email: { type: String, required: true, index: true, lowercase: true },
+        credentialId: { type: String, required: true, unique: true, index: true },
+        publicKey: { type: String, required: true },
+        counter: { type: Number, default: 0 },
+        transports: [{ type: String }],
+        deviceType: String,
+        backedUp: Boolean,
+        lastUsedAt: Date,
+      },
+      { timestamps: true, versionKey: false },
+    );
+
+    const adminGrantSchema = new mongoose.Schema(
+      {
+        grantId: { type: String, required: true, unique: true, index: true },
+        requestedBy: { type: String, required: true, index: true, lowercase: true },
+        targetEmail: { type: String, required: true, index: true, lowercase: true },
+        mode: { type: String, enum: ["promote", "create"], required: true },
+        name: String,
+        company: String,
+        phone: String,
+        passwordHash: String,
+        codeHash: { type: String, required: true },
+        expiresAt: { type: Date, required: true, index: { expires: 0 } },
+        attempts: { type: Number, default: 0 },
+        consumedAt: Date,
       },
       { timestamps: true, versionKey: false },
     );
@@ -463,6 +548,10 @@ async function mongoModels(): Promise<MongoModels> {
 
     const User = (mongoose.models.User ??
       mongoose.model("User", userSchema)) as unknown as LeanModel;
+    const Passkey = (mongoose.models.Passkey ??
+      mongoose.model("Passkey", passkeySchema)) as unknown as LeanModel;
+    const AdminGrant = (mongoose.models.AdminGrant ??
+      mongoose.model("AdminGrant", adminGrantSchema)) as unknown as LeanModel;
     const Project = (mongoose.models.Project ??
       mongoose.model("Project", projectSchema)) as unknown as LeanModel;
     const Inquiry = (mongoose.models.Inquiry ??
@@ -476,7 +565,17 @@ async function mongoModels(): Promise<MongoModels> {
     const Signoff = (mongoose.models.Signoff ??
       mongoose.model("Signoff", signoffSchema)) as unknown as LeanModel;
 
-    return { User, Project, Inquiry, AuditLog, OtpToken, Consultation, Signoff };
+    return {
+      User,
+      Passkey,
+      AdminGrant,
+      Project,
+      Inquiry,
+      AuditLog,
+      OtpToken,
+      Consultation,
+      Signoff,
+    };
   })();
 
   try {
@@ -518,11 +617,53 @@ function mapUser(doc: LeanDoc): StoredUser {
     passwordHash: str(doc.passwordHash),
     role: doc.role === "admin" ? "admin" : "client",
     accountId: str(doc.accountId),
+    sessionVersion:
+      typeof doc.sessionVersion === "number" && doc.sessionVersion >= 0
+        ? Math.floor(doc.sessionVersion)
+        : 0,
     ...(str(doc.resetTokenHash) ? { resetTokenHash: str(doc.resetTokenHash) } : {}),
     ...(doc.resetTokenExpiry ? { resetTokenExpiry: iso(doc.resetTokenExpiry) } : {}),
     createdAt: iso(doc.createdAt),
     updatedAt: iso(doc.updatedAt),
     ...(doc.lastLoginAt ? { lastLoginAt: iso(doc.lastLoginAt) } : {}),
+  };
+}
+
+function mapPasskey(doc: LeanDoc): StoredPasskey {
+  const transports = Array.isArray(doc.transports)
+    ? (doc.transports as unknown[]).filter((value): value is string => typeof value === "string")
+    : [];
+
+  return {
+    id: docId(doc),
+    userId: str(doc.userId),
+    email: str(doc.email),
+    credentialId: str(doc.credentialId),
+    publicKey: str(doc.publicKey),
+    counter: typeof doc.counter === "number" ? doc.counter : 0,
+    transports,
+    ...(str(doc.deviceType) ? { deviceType: str(doc.deviceType) } : {}),
+    ...(typeof doc.backedUp === "boolean" ? { backedUp: doc.backedUp } : {}),
+    createdAt: iso(doc.createdAt),
+    ...(doc.lastUsedAt ? { lastUsedAt: iso(doc.lastUsedAt) } : {}),
+  };
+}
+
+function mapAdminGrant(doc: LeanDoc): StoredAdminGrant {
+  return {
+    id: str(doc.grantId) || docId(doc),
+    requestedBy: str(doc.requestedBy),
+    targetEmail: str(doc.targetEmail),
+    mode: doc.mode === "create" ? "create" : "promote",
+    ...(str(doc.name) ? { name: str(doc.name) } : {}),
+    ...(str(doc.company) ? { company: str(doc.company) } : {}),
+    ...(str(doc.phone) ? { phone: str(doc.phone) } : {}),
+    ...(str(doc.passwordHash) ? { passwordHash: str(doc.passwordHash) } : {}),
+    codeHash: str(doc.codeHash),
+    expiresAt: iso(doc.expiresAt),
+    attempts: typeof doc.attempts === "number" ? doc.attempts : 0,
+    ...(doc.consumedAt ? { consumedAt: iso(doc.consumedAt) } : {}),
+    createdAt: iso(doc.createdAt),
   };
 }
 
@@ -683,6 +824,257 @@ export async function getUserById(userId: string): Promise<StoredUser | null> {
   return doc ? mapUser(doc) : null;
 }
 
+/** Primary-admin only directory used by the delegation screen. */
+export async function listUsers(limit = 250): Promise<StoredUser[]> {
+  const safeLimit = Math.min(Math.max(limit, 1), 500);
+
+  if ((await activeMode()) === "memory") {
+    await seedMemory();
+    return [...memory().users.values()]
+      .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
+      .slice(0, safeLimit);
+  }
+
+  const { User } = await mongoModels();
+  const docs = (await User.find({})
+    .sort({ createdAt: -1 })
+    .limit(safeLimit)
+    .lean()) as LeanDoc[];
+  return docs.map(mapUser);
+}
+
+export async function revokeAdminRole(email: string): Promise<StoredUser | null> {
+  const normalized = email.trim().toLowerCase();
+
+  if ((await activeMode()) === "memory") {
+    await seedMemory();
+    const db = memory();
+    const existing = db.users.get(normalized);
+    if (!existing || existing.role !== "admin") return null;
+    const next: StoredUser = {
+      ...existing,
+      role: "client",
+      sessionVersion: (existing.sessionVersion ?? 0) + 1,
+      updatedAt: now(),
+    };
+    db.users.set(normalized, next);
+    return next;
+  }
+
+  const { User } = await mongoModels();
+  const doc = (await User.findOneAndUpdate(
+    { email: normalized, role: "admin" },
+    { $set: { role: "client", updatedAt: new Date() }, $inc: { sessionVersion: 1 } },
+    { new: true },
+  ).lean()) as LeanDoc | null;
+  return doc ? mapUser(doc) : null;
+}
+
+export async function promoteToAdmin(email: string): Promise<StoredUser | null> {
+  const normalized = email.trim().toLowerCase();
+
+  if ((await activeMode()) === "memory") {
+    await seedMemory();
+    const db = memory();
+    const existing = db.users.get(normalized);
+    if (!existing) return null;
+    const next: StoredUser = {
+      ...existing,
+      role: "admin",
+      sessionVersion: (existing.sessionVersion ?? 0) + 1,
+      updatedAt: now(),
+    };
+    db.users.set(normalized, next);
+    return next;
+  }
+
+  const { User } = await mongoModels();
+  const doc = (await User.findOneAndUpdate(
+    { email: normalized },
+    { $set: { role: "admin", updatedAt: new Date() }, $inc: { sessionVersion: 1 } },
+    { new: true },
+  ).lean()) as LeanDoc | null;
+  return doc ? mapUser(doc) : null;
+}
+
+/* --------------------------------------------------------------- passkeys */
+
+export async function createPasskey(input: NewPasskey): Promise<StoredPasskey> {
+  const passkey: StoredPasskey = {
+    ...input,
+    id: id(),
+    createdAt: now(),
+  };
+
+  if ((await activeMode()) === "memory") {
+    const db = memory();
+    for (const existing of db.passkeys.values()) {
+      if (existing.credentialId === passkey.credentialId) {
+        throw new Error("passkey_exists");
+      }
+    }
+    db.passkeys.set(passkey.credentialId, passkey);
+    return passkey;
+  }
+
+  const { Passkey } = await mongoModels();
+  const created = await Passkey.create(passkey);
+  return mapPasskey((created as unknown as { toObject: () => LeanDoc }).toObject());
+}
+
+export async function listPasskeys(email: string): Promise<StoredPasskey[]> {
+  const normalized = email.trim().toLowerCase();
+
+  if ((await activeMode()) === "memory") {
+    return [...memory().passkeys.values()]
+      .filter((passkey) => passkey.email === normalized)
+      .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+  }
+
+  const { Passkey } = await mongoModels();
+  const docs = (await Passkey.find({ email: normalized })
+    .sort({ createdAt: -1 })
+    .lean()) as LeanDoc[];
+  return docs.map(mapPasskey);
+}
+
+export async function getPasskeyByCredentialId(
+  credentialId: string,
+): Promise<StoredPasskey | null> {
+  if (!credentialId) return null;
+
+  if ((await activeMode()) === "memory") {
+    return memory().passkeys.get(credentialId) ?? null;
+  }
+
+  const { Passkey } = await mongoModels();
+  const doc = (await Passkey.findOne({ credentialId }).lean()) as LeanDoc | null;
+  return doc ? mapPasskey(doc) : null;
+}
+
+export async function touchPasskey(credentialId: string, counter: number): Promise<void> {
+  if ((await activeMode()) === "memory") {
+    const existing = memory().passkeys.get(credentialId);
+    if (existing) {
+      memory().passkeys.set(credentialId, {
+        ...existing,
+        counter,
+        lastUsedAt: now(),
+      });
+    }
+    return;
+  }
+
+  const { Passkey } = await mongoModels();
+  await Passkey.updateOne(
+    { credentialId },
+    { $set: { counter, lastUsedAt: new Date() } },
+  );
+}
+
+export async function deletePasskey(email: string, credentialId: string): Promise<boolean> {
+  const normalized = email.trim().toLowerCase();
+
+  if ((await activeMode()) === "memory") {
+    const existing = memory().passkeys.get(credentialId);
+    if (!existing || existing.email !== normalized) return false;
+    return memory().passkeys.delete(credentialId);
+  }
+
+  const { Passkey } = await mongoModels();
+  const result = (await Passkey.deleteOne({
+    email: normalized,
+    credentialId,
+  })) as { deletedCount?: number };
+  return Boolean(result.deletedCount);
+}
+
+/* ---------------------------------------------------------- admin grants */
+
+export async function saveAdminGrant(
+  input: Omit<StoredAdminGrant, "id" | "attempts" | "createdAt" | "consumedAt">,
+): Promise<StoredAdminGrant> {
+  const requestedBy = input.requestedBy.trim().toLowerCase();
+  const grant: StoredAdminGrant = {
+    ...input,
+    requestedBy,
+    targetEmail: input.targetEmail.trim().toLowerCase(),
+    id: crypto.randomUUID(),
+    attempts: 0,
+    createdAt: now(),
+  };
+
+  if ((await activeMode()) === "memory") {
+    const db = memory();
+    for (const [key, existing] of db.adminGrants) {
+      if (existing.requestedBy === requestedBy) db.adminGrants.delete(key);
+    }
+    db.adminGrants.set(grant.id, grant);
+    return grant;
+  }
+
+  const { AdminGrant } = await mongoModels();
+  await AdminGrant.deleteMany({ requestedBy });
+  await AdminGrant.create({ ...grant, grantId: grant.id });
+  return grant;
+}
+
+export async function getAdminGrant(grantId: string): Promise<StoredAdminGrant | null> {
+  if (!grantId) return null;
+
+  if ((await activeMode()) === "memory") {
+    return memory().adminGrants.get(grantId) ?? null;
+  }
+
+  const { AdminGrant } = await mongoModels();
+  const doc = (await AdminGrant.findOne({ grantId }).lean()) as LeanDoc | null;
+  return doc ? mapAdminGrant(doc) : null;
+}
+
+export async function incrementAdminGrantAttempts(grantId: string): Promise<void> {
+  if ((await activeMode()) === "memory") {
+    const existing = memory().adminGrants.get(grantId);
+    if (existing) {
+      memory().adminGrants.set(grantId, { ...existing, attempts: existing.attempts + 1 });
+    }
+    return;
+  }
+
+  const { AdminGrant } = await mongoModels();
+  await AdminGrant.updateOne({ grantId }, { $inc: { attempts: 1 } });
+}
+
+export async function consumeAdminGrant(grantId: string): Promise<boolean> {
+  if ((await activeMode()) === "memory") {
+    const existing = memory().adminGrants.get(grantId);
+    if (!existing || existing.consumedAt || Date.parse(existing.expiresAt) <= Date.now()) {
+      return false;
+    }
+    memory().adminGrants.set(grantId, { ...existing, consumedAt: now() });
+    return true;
+  }
+
+  const { AdminGrant } = await mongoModels();
+  // The conditional update makes confirmation one-time even if two requests
+  // race each other with the same valid code.
+  const doc = (await AdminGrant.findOneAndUpdate(
+    { grantId, consumedAt: { $exists: false }, expiresAt: { $gt: new Date() } },
+    { $set: { consumedAt: new Date() } },
+    { new: true },
+  ).lean()) as LeanDoc | null;
+  return Boolean(doc);
+}
+
+export async function deleteAdminGrant(grantId: string): Promise<void> {
+  if ((await activeMode()) === "memory") {
+    memory().adminGrants.delete(grantId);
+    return;
+  }
+
+  const { AdminGrant } = await mongoModels();
+  await AdminGrant.deleteOne({ grantId });
+}
+
 export async function createUser(input: NewUser): Promise<StoredUser> {
   const timestamp = now();
   const user: StoredUser = {
@@ -694,6 +1086,7 @@ export async function createUser(input: NewUser): Promise<StoredUser> {
     passwordHash: input.passwordHash,
     role: input.role,
     accountId: input.accountId,
+    sessionVersion: input.sessionVersion ?? 0,
     createdAt: timestamp,
     updatedAt: timestamp,
   };
@@ -715,6 +1108,7 @@ export async function createUser(input: NewUser): Promise<StoredUser> {
     passwordHash: user.passwordHash,
     role: user.role,
     accountId: user.accountId,
+    sessionVersion: user.sessionVersion,
   });
   const doc = (created as unknown as { toObject: () => LeanDoc }).toObject();
   return mapUser(doc);
@@ -731,6 +1125,7 @@ export async function updateUser(
       | "passwordHash"
       | "lastLoginAt"
       | "role"
+      | "sessionVersion"
       | "resetTokenHash"
       | "resetTokenExpiry"
     >

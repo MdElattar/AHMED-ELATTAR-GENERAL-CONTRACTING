@@ -76,6 +76,7 @@ export async function POST(request: NextRequest) {
       accountId: user.accountId,
       ...(user.phone ? { phone: user.phone } : {}),
       role: user.role,
+      sessionVersion: user.sessionVersion ?? 0,
     });
 
     await recordAudit({

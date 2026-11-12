@@ -54,7 +54,7 @@ export function SectionHeading({
           <p
             className={cn(
               "max-w-2xl text-[0.95rem] leading-[1.9]",
-              light ? "text-ink/60" : "text-ivory/55",
+              light ? "text-ink/60" : "text-ivory/65",
               align === "center" && "mx-auto",
             )}
           >

@@ -155,7 +155,7 @@ export function PortalProjects() {
           <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-gold/30 text-gold">
             <CalendarDays className="h-5 w-5" />
           </span>
-          <p className="mx-auto mt-5 max-w-md text-[0.8rem] leading-relaxed text-ivory/45">
+          <p className="mx-auto mt-5 max-w-md text-[0.8rem] leading-relaxed text-ivory/55">
             {c.empty}
           </p>
         </div>
@@ -196,7 +196,7 @@ export function PortalProjects() {
             <span
               className={cn(
                 "text-[0.54rem] uppercase tracking-[0.12em]",
-                item.slug === activeSlug ? "text-ivory/40" : "text-ivory/30",
+                item.slug === activeSlug ? "text-ivory/50" : "text-ivory/40",
               )}
             >
               {l(item.location)}
@@ -211,13 +211,13 @@ export function PortalProjects() {
             <div className="border border-white/10 bg-coal">
               <div className="flex flex-wrap items-start justify-between gap-4 border-b border-white/10 px-6 py-5">
                 <div>
-                  <span className="text-[0.52rem] uppercase tracking-[0.16em] text-ivory/35">
+                  <span className="text-[0.52rem] uppercase tracking-[0.16em] text-ivory/45">
                     {c.select}
                   </span>
                   <h2 className="mt-1 font-display text-2xl leading-tight text-ivory">
                     {l(project.title)}
                   </h2>
-                  <p className="mt-1 text-[0.62rem] text-ivory/40">{l(project.location)}</p>
+                  <p className="mt-1 text-[0.62rem] text-ivory/50">{l(project.location)}</p>
                 </div>
                 <span className="border border-gold/30 px-3 py-1 text-[0.55rem] uppercase tracking-[0.14em] text-gold">
                   {tStatus(project.status, c)}
@@ -227,7 +227,7 @@ export function PortalProjects() {
               <div className="grid gap-5 p-6 sm:grid-cols-2">
                 <div className="sm:col-span-2">
                   <div className="flex items-end justify-between gap-4">
-                    <span className="text-[0.55rem] uppercase tracking-[0.16em] text-ivory/40">
+                    <span className="text-[0.55rem] uppercase tracking-[0.16em] text-ivory/50">
                       {c.progress}
                     </span>
                     <span className="tabular font-display text-3xl leading-none text-ivory">
@@ -249,7 +249,7 @@ export function PortalProjects() {
                   { label: c.next, value: l(nextMilestone) },
                 ].map((fact) => (
                   <div key={fact.label}>
-                    <p className="text-[0.5rem] uppercase tracking-[0.14em] text-ivory/35">
+                    <p className="text-[0.5rem] uppercase tracking-[0.14em] text-ivory/45">
                       {fact.label}
                     </p>
                     <p className="mt-1 text-[0.76rem] leading-snug text-ivory/70">{fact.value}</p>
@@ -259,7 +259,7 @@ export function PortalProjects() {
 
               {project.gallery.length ? (
                 <div className="border-t border-white/10 p-4">
-                  <p className="mb-3 text-[0.5rem] uppercase tracking-[0.14em] text-ivory/35">
+                  <p className="mb-3 text-[0.5rem] uppercase tracking-[0.14em] text-ivory/45">
                     {c.gallery}
                   </p>
                   <div className="grid grid-cols-3 gap-2">
@@ -307,7 +307,7 @@ export function PortalProjects() {
                             ? "border-gold bg-gold text-obsidian"
                             : milestone.status === "current"
                               ? "border-gold text-gold"
-                              : "border-white/15 text-ivory/25",
+                              : "border-white/15 text-ivory/35",
                         )}
                       >
                         {milestone.status === "complete" ? (
@@ -322,17 +322,17 @@ export function PortalProjects() {
                         <p
                           className={cn(
                             "text-[0.75rem] leading-snug",
-                            milestone.status === "upcoming" ? "text-ivory/40" : "text-ivory/75",
+                            milestone.status === "upcoming" ? "text-ivory/50" : "text-ivory/75",
                           )}
                         >
                           {l(milestone.title)}
                         </p>
-                        <span className="text-[0.58rem] text-ivory/35">{l(milestone.date)}</span>
+                        <span className="text-[0.58rem] text-ivory/45">{l(milestone.date)}</span>
                       </div>
                     </li>
                   ))
                 ) : (
-                  <li className="px-6 py-6 text-center text-[0.68rem] text-ivory/35">
+                  <li className="px-6 py-6 text-center text-[0.68rem] text-ivory/45">
                     {c.noMilestones}
                   </li>
                 )}
@@ -358,14 +358,14 @@ export function PortalProjects() {
                     <FileText className="h-4 w-4 shrink-0 text-gold" />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-[0.74rem] text-ivory/75">{l(doc.name)}</p>
-                      <span className="text-[0.55rem] text-ivory/35">
+                      <span className="text-[0.55rem] text-ivory/45">
                         {c.docTypes[doc.type]} · {doc.size} · {doc.date}
                       </span>
                     </div>
                     <button
                       type="button"
                       onClick={() => downloadDocument(doc, l(project.title))}
-                      className="flex h-8 w-8 shrink-0 items-center justify-center border border-white/12 text-ivory/45 transition-colors hover:border-gold hover:text-gold"
+                      className="flex h-8 w-8 shrink-0 items-center justify-center border border-white/12 text-ivory/55 transition-colors hover:border-gold hover:text-gold"
                       aria-label={`${c.download} ${l(doc.name)}`}
                     >
                       <Download className="h-3.5 w-3.5" />
@@ -373,7 +373,7 @@ export function PortalProjects() {
                   </li>
                 ))}
                 {project.documents.length === 0 ? (
-                  <li className="px-6 py-6 text-center text-[0.68rem] text-ivory/35">
+                  <li className="px-6 py-6 text-center text-[0.68rem] text-ivory/45">
                     {locale === "ar" ? "لا توجد مستندات بعد." : "No documents yet."}
                   </li>
                 ) : null}
@@ -400,14 +400,14 @@ export function PortalProjects() {
                         message.author === "client" ? "items-end" : "items-start",
                       )}
                     >
-                      <span className="flex items-center gap-1.5 text-[0.5rem] uppercase tracking-[0.12em] text-ivory/35">
+                      <span className="flex items-center gap-1.5 text-[0.5rem] uppercase tracking-[0.12em] text-ivory/45">
                         {message.author === "client" ? (
                           <UserRound className="h-3 w-3" />
                         ) : (
                           <MessageSquare className="h-3 w-3 text-gold" />
                         )}
                         {message.author === "client" ? c.client : c.managerRole}
-                        <span className="text-ivory/25">
+                        <span className="text-ivory/35">
                           {dateFormat.format(new Date(message.at))}
                         </span>
                       </span>
@@ -424,7 +424,7 @@ export function PortalProjects() {
                     </div>
                   ))
                 ) : (
-                  <p className="py-6 text-center text-[0.68rem] text-ivory/35">{c.noMessages}</p>
+                  <p className="py-6 text-center text-[0.68rem] text-ivory/45">{c.noMessages}</p>
                 )}
               </div>
 
@@ -433,7 +433,7 @@ export function PortalProjects() {
                   value={draft}
                   onChange={(event) => setDraft(event.target.value)}
                   placeholder={c.messagePlaceholder}
-                  className="h-10 min-w-0 flex-1 border border-white/12 bg-transparent px-3 text-[0.7rem] text-ivory outline-none placeholder:text-ivory/30 focus:border-gold/60"
+                  className="h-10 min-w-0 flex-1 border border-white/12 bg-transparent px-3 text-[0.7rem] text-ivory outline-none placeholder:text-ivory/40 focus:border-gold/60"
                 />
                 <button
                   type="submit"
@@ -454,7 +454,7 @@ export function PortalProjects() {
                 </span>
                 <div>
                   <p className="text-[0.72rem] font-medium text-ivory">{l(project.manager)}</p>
-                  <p className="text-[0.55rem] uppercase tracking-[0.12em] text-ivory/35">
+                  <p className="text-[0.55rem] uppercase tracking-[0.12em] text-ivory/45">
                     {c.managerRole}
                   </p>
                 </div>

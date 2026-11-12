@@ -69,7 +69,7 @@ export function ProjectDetail({ project }: { project: DetailProject }) {
           <Reveal>
             <Link
               href="/projects"
-              className="group inline-flex items-center gap-2 text-[0.62rem] uppercase tracking-[0.18em] text-ivory/50 transition-colors hover:text-gold"
+              className="group inline-flex items-center gap-2 text-[0.62rem] uppercase tracking-[0.18em] text-ivory/60 transition-colors hover:text-gold"
             >
               <ArrowLeft
                 className={cn(
@@ -85,11 +85,11 @@ export function ProjectDetail({ project }: { project: DetailProject }) {
             <span className="border border-gold/30 bg-obsidian/40 px-3 py-1 text-[0.52rem] uppercase tracking-[0.16em] text-gold backdrop-blur">
               {t.projectsPage.categories[project.category]}
             </span>
-            <span className="text-[0.55rem] uppercase tracking-[0.16em] text-ivory/50">
+            <span className="text-[0.55rem] uppercase tracking-[0.16em] text-ivory/60">
               {t.projectsPage.status[project.status]}
             </span>
             <span className="h-3 w-px bg-white/15" />
-            <span className="flex items-center gap-1.5 text-[0.55rem] uppercase tracking-[0.14em] text-ivory/50">
+            <span className="flex items-center gap-1.5 text-[0.55rem] uppercase tracking-[0.14em] text-ivory/60">
               <MapPin className="h-3 w-3 text-gold/70" />
               {l(project.location)}
             </span>
@@ -101,7 +101,7 @@ export function ProjectDetail({ project }: { project: DetailProject }) {
             </h1>
           </Reveal>
           <Reveal delay={160}>
-            <p className="mt-5 max-w-2xl text-[0.95rem] leading-[1.95] text-ivory/55">
+            <p className="mt-5 max-w-2xl text-[0.95rem] leading-[1.95] text-ivory/65">
               {l(project.summary)}
             </p>
           </Reveal>
@@ -113,7 +113,7 @@ export function ProjectDetail({ project }: { project: DetailProject }) {
           <div className="grid grid-cols-2 gap-px bg-white/10 sm:grid-cols-4">
             {facts.slice(0, 4).map((fact) => (
               <div key={fact.label} className="bg-coal px-5 py-6">
-                <span className="text-[0.5rem] uppercase tracking-[0.16em] text-ivory/30">
+                <span className="text-[0.5rem] uppercase tracking-[0.16em] text-ivory/40">
                   {fact.label}
                 </span>
                 <p className="mt-2 text-[0.8rem] leading-snug text-ivory/75">{fact.value}</p>
@@ -130,7 +130,7 @@ export function ProjectDetail({ project }: { project: DetailProject }) {
               <span className="text-[0.55rem] font-semibold uppercase tracking-[0.18em] text-gold">
                 {t.sections.inline.projectGallery}
               </span>
-              <span className="tabular text-[0.52rem] text-ivory/25">
+              <span className="tabular text-[0.52rem] text-ivory/35">
                 {String(gallery.length).padStart(2, "0")}
               </span>
             </div>
@@ -240,7 +240,7 @@ export function ProjectDetail({ project }: { project: DetailProject }) {
             </div>
             <Link
               href="/projects"
-              className="group inline-flex items-center gap-2 text-[0.62rem] uppercase tracking-[0.16em] text-ivory/45 transition-colors hover:text-gold"
+              className="group inline-flex items-center gap-2 text-[0.62rem] uppercase tracking-[0.16em] text-ivory/55 transition-colors hover:text-gold"
             >
               {t.projectDetail.back}
               <ArrowUpRight className={cn("h-3.5 w-3.5", isRTL && "-scale-x-100")} />
@@ -293,7 +293,7 @@ export function ProjectDetailLive({
           <h1 className="display-title mt-5 text-[clamp(2.4rem,5vw,4.6rem)] text-ivory">
             {t.sections.inline.projectNotFoundTitle}
           </h1>
-          <p className="mx-auto mt-4 max-w-md text-[0.85rem] leading-relaxed text-ivory/45">
+          <p className="mx-auto mt-4 max-w-md text-[0.85rem] leading-relaxed text-ivory/55">
             {t.sections.inline.projectNotFoundText}
           </p>
           <Link

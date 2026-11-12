@@ -10,7 +10,7 @@ type MarqueeProps = {
 
 export function Marquee({
   items,
-  speed = 38,
+  speed = 54,
   reverse = false,
   className,
   itemClassName,
@@ -34,7 +34,7 @@ export function Marquee({
           <span key={`${item}-${index}`} className="flex items-center">
             <span
               className={cn(
-                "whitespace-nowrap text-sm font-medium tracking-wide text-ivory/45",
+                "whitespace-nowrap text-sm font-medium tracking-wide text-ivory/55",
                 itemClassName,
               )}
             >

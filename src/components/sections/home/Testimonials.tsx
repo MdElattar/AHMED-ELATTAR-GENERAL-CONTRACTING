@@ -91,7 +91,7 @@ export function Testimonials() {
                     </span>
                     <div className="flex flex-col">
                       <span className="text-sm font-semibold text-ivory">{l(current.name)}</span>
-                      <span className="mt-0.5 text-[0.58rem] uppercase tracking-[0.16em] text-ivory/35">
+                      <span className="mt-0.5 text-[0.58rem] uppercase tracking-[0.16em] text-ivory/45">
                         {l(current.role)} — {l(current.company)}
                       </span>
                     </div>
@@ -102,7 +102,7 @@ export function Testimonials() {
 
             <div className="flex flex-col justify-between gap-6 border-t border-white/10 pt-6 lg:border-s lg:border-t-0 lg:ps-8 lg:pt-0">
               <div>
-                <span className="text-[0.55rem] uppercase tracking-[0.2em] text-ivory/30">
+                <span className="text-[0.55rem] uppercase tracking-[0.2em] text-ivory/40">
                   {t.common.project}
                 </span>
                 <Link
@@ -137,7 +137,7 @@ export function Testimonials() {
                     />
                   ))}
                 </div>
-                <div className="mt-4 flex items-center gap-2 text-[0.6rem] uppercase tracking-[0.16em] text-ivory/25">
+                <div className="mt-4 flex items-center gap-2 text-[0.6rem] uppercase tracking-[0.16em] text-ivory/35">
                   <span className="tabular text-gold">
                     {String(index + 1).padStart(2, "0")}
                   </span>
@@ -152,7 +152,7 @@ export function Testimonials() {
 
       <div className="relative border-t border-white/10 py-7">
         <div className="container-lux mb-5 flex items-center gap-4">
-          <span className="text-[0.55rem] uppercase tracking-[0.22em] text-ivory/25">
+          <span className="text-[0.55rem] uppercase tracking-[0.22em] text-ivory/35">
             {t.clients.label}
           </span>
           <span className="h-px flex-1 bg-white/8" />
@@ -160,7 +160,7 @@ export function Testimonials() {
         <Marquee
           items={clients.map((client) => l(client))}
           speed={46}
-          itemClassName="text-ivory/35 text-[0.8rem]"
+          itemClassName="text-ivory/45 text-[0.8rem]"
         />
       </div>
     </section>

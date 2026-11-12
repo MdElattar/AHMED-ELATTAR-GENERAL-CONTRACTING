@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/components/providers/I18nProvider";
 import type { Locale } from "@/lib/dictionary";
@@ -18,28 +19,17 @@ export function Logo({ className, compact = false, tone = "light", locale: local
 
   return (
     <span className={cn("flex items-center gap-3.5", className)}>
-      <svg
-        viewBox="0 0 48 48"
-        aria-hidden="true"
-        className="h-10 w-10 shrink-0"
-        fill="none"
-      >
-        <path
-          d="M24 2.5 45.5 24 24 45.5 2.5 24 24 2.5Z"
-          stroke="#c9a45c"
-          strokeWidth="1"
-          opacity="0.55"
+      <span className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-amber-500/30 bg-zinc-950/90 p-1.5 shadow-[0_0_15px_rgba(245,158,11,0.12)] sm:h-10 sm:w-10">
+        <Image
+          src="/aa-logo-v5.svg"
+          alt={compact ? (isArabic ? "أحمد العطار" : "Ahmed Elattar") : ""}
+          width={64}
+          height={64}
+          unoptimized
+          priority
+          className="h-full w-full object-contain"
         />
-        <path
-          d="M13.5 34.5 24 11.5l10.5 23"
-          stroke={tone === "light" ? "#f3eee4" : "#0a0b0e"}
-          strokeWidth="1.6"
-          strokeLinecap="square"
-        />
-        <path d="M18.2 27.4h11.6" stroke="#c9a45c" strokeWidth="1.2" />
-        <path d="M24 11.5V5.8h9.2" stroke="#c9a45c" strokeWidth="1" />
-        <circle cx="33.4" cy="5.8" r="1.6" fill="#c9a45c" />
-      </svg>
+      </span>
 
       {!compact ? (
         <span className="flex flex-col leading-none">
@@ -58,7 +48,7 @@ export function Logo({ className, compact = false, tone = "light", locale: local
             className={cn(
               "mt-1.5 text-[0.47rem] font-medium uppercase tracking-[0.24em]",
               "hidden sm:block",
-              tone === "light" ? "text-ivory/45" : "text-ink/45",
+              tone === "light" ? "text-ivory/55" : "text-ink/45",
               isArabic && "tracking-[0.02em] text-[0.56rem]",
             )}
           >

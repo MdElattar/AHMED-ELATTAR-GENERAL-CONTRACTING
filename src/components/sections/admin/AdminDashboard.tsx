@@ -42,6 +42,7 @@ import {
   useWorkspace,
   type WorkspaceProject,
 } from "@/components/providers/WorkspaceProvider";
+import { AdminAccess } from "@/components/sections/admin/AdminAccess";
 import { AdminProjectEditor } from "@/components/sections/admin/AdminProjectEditor";
 import {
   AuditPanel,
@@ -52,6 +53,7 @@ import {
   NotificationsPanel,
 } from "@/components/sections/admin/AdminOperations";
 import { Field, TextInput, Textarea } from "@/components/ui/Field";
+import { Logo } from "@/components/ui/Logo";
 import { ProjectArt } from "@/components/ui/ProjectArt";
 import type { ArtVariant } from "@/data/projects";
 import { dictionary, L, type Localized } from "@/lib/dictionary";
@@ -78,7 +80,8 @@ export type AdminSection =
   | "content"
   | "media"
   | "messages"
-  | "audit";
+  | "audit"
+  | "access";
 
 type Section = AdminSection;
 
@@ -95,6 +98,7 @@ const sectionHrefs: Record<Section, string> = {
   media: "/admin/media",
   messages: "/admin/messages",
   audit: "/admin/audit",
+  access: "/admin/access",
 };
 
 const copy = {
@@ -113,6 +117,9 @@ const copy = {
     consultations: "الاستشارات",
     contracts: "العقود",
     notifications: "التنبيهات",
+    access: "تفويض الصلاحيات",
+    accessNavHint: "للمسؤول الرئيسي فقط",
+    primaryAdmin: "المسؤول الرئيسي",
     back: "العودة للموقع",
     portal: "بوابة العملاء",
     signOut: "تسجيل الخروج",
@@ -242,6 +249,9 @@ const copy = {
     consultations: "Consultations",
     contracts: "Contracts",
     notifications: "Alerts",
+    access: "Admin delegation",
+    accessNavHint: "Primary admin only",
+    primaryAdmin: "Primary admin",
     back: "Back to site",
     portal: "Client portal",
     signOut: "Sign out",
@@ -411,7 +421,7 @@ export function AdminDashboard({
             <h1 className="display-title mt-6 text-[clamp(2.6rem,5vw,4.4rem)] text-ivory">
               {c.accessTitle}
             </h1>
-            <p className="mt-5 max-w-md text-[0.9rem] leading-[1.9] text-ivory/50">
+            <p className="mt-5 max-w-md text-[0.9rem] leading-[1.9] text-ivory/60">
               {c.accessText}
             </p>
             <Link
@@ -421,7 +431,7 @@ export function AdminDashboard({
               {c.signIn}
               <ArrowUpRight className="h-4 w-4" />
             </Link>
-            <p className="mt-6 text-[0.62rem] text-ivory/30">{c.secureNote}</p>
+            <p className="mt-6 text-[0.62rem] text-ivory/40">{c.secureNote}</p>
           </div>
         </div>
       </section>
@@ -441,6 +451,13 @@ export function AdminDashboard({
     { id: "media", label: c.media, icon: ImageIcon },
     { id: "messages", label: c.messages, icon: MessageSquare },
     { id: "audit", label: c.audit, icon: Activity },
+    ...(user.primaryAdmin
+      ? ([{ id: "access", label: c.access, icon: ShieldCheck }] satisfies {
+          id: Section;
+          label: string;
+          icon: typeof LayoutDashboard;
+        }[])
+      : []),
   ];
 
   const navigateToSection = (next: Section) => {
@@ -476,6 +493,7 @@ export function AdminDashboard({
           <div className="grid gap-6 lg:grid-cols-[220px_1fr]">
             <aside className="h-fit border border-white/10 bg-coal/80 p-4 backdrop-blur transition-[border-color,box-shadow,transform] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:border-gold/20 hover:shadow-[0_34px_90px_-46px_rgba(212,175,55,0.45)]">
               <div className="border-b border-white/10 pb-4">
+                <Logo className="mb-4" />
                 <span className="text-[0.52rem] uppercase tracking-[0.18em] text-gold">
                   {c.admin}
                 </span>
@@ -491,12 +509,12 @@ export function AdminDashboard({
                       onClick={() => setSection(id)}
                       aria-current={active ? "page" : undefined}
                       className={cn(
-                        "group relative flex items-center gap-2.5 overflow-hidden px-3 py-2.5 text-start text-[0.66rem] font-medium",
-                        "transition-[padding,background-color,color,box-shadow,transform] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
-                        "hover:ps-4 active:scale-[0.985] active:duration-150",
+                        "group relative flex min-h-11 items-center gap-2.5 overflow-hidden px-3 py-2.5 text-start text-[0.66rem] font-medium",
+                        "transition-[background-color,color,box-shadow,transform] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
+                        "active:scale-[0.99] active:duration-150",
                         active
                           ? "bg-gold text-obsidian shadow-[0_10px_30px_-16px_rgba(212,175,55,0.85)]"
-                          : "text-ivory/50 hover:bg-white/[0.055] hover:text-ivory",
+                          : "text-ivory/60 hover:bg-white/[0.055] hover:text-ivory",
                       )}
                     >
                       <span
@@ -517,17 +535,17 @@ export function AdminDashboard({
                       />
                       <span
                         className={cn(
-                          "relative flex h-7 w-7 shrink-0 items-center justify-center rounded-sm transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:-translate-y-0.5 group-hover:scale-105",
+                          "relative flex h-8 w-8 shrink-0 items-center justify-center rounded-sm transition-colors duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
                           active
                             ? "bg-obsidian/12 text-obsidian"
-                            : "bg-white/[0.035] text-ivory/55 group-hover:bg-gold/12 group-hover:text-gold",
+                            : "bg-white/[0.035] text-ivory/65 group-hover:bg-gold/12 group-hover:text-gold",
                         )}
                       >
-                        <Icon className="h-4 w-4 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:rotate-[-6deg] group-hover:scale-110" />
+                        <Icon className="h-4 w-4" />
                       </span>
                       <span
                         className={cn(
-                          "relative flex-1 truncate transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5",
+                          "relative flex-1 truncate",
                           active && "tracking-[0.01em]",
                         )}
                       >
@@ -536,10 +554,10 @@ export function AdminDashboard({
                       {id === "messages" ? (
                         <span
                           className={cn(
-                            "relative tabular text-[0.55rem] transition-all duration-300",
+                            "relative tabular text-[0.55rem] transition-colors duration-300",
                             active
                               ? "text-obsidian/60"
-                              : "text-ivory/40 group-hover:scale-110 group-hover:text-gold",
+                              : "text-ivory/50 group-hover:text-gold",
                           )}
                         >
                           {messages.length}
@@ -563,14 +581,14 @@ export function AdminDashboard({
               <div className="mt-4 space-y-1 border-t border-white/10 pt-3">
                 <Link
                   href="/portal"
-                  className="flex items-center gap-2.5 px-3 py-2 text-[0.64rem] text-ivory/45 transition-colors hover:text-gold"
+                  className="flex min-h-10 items-center gap-2.5 px-3 py-2 text-[0.64rem] text-ivory/55 transition-colors hover:text-gold"
                 >
                   <LayoutDashboard className="h-3.5 w-3.5" />
                   {c.portal}
                 </Link>
                 <Link
                   href="/"
-                  className="flex items-center gap-2.5 px-3 py-2 text-[0.64rem] text-ivory/45 transition-colors hover:text-gold"
+                  className="flex min-h-10 items-center gap-2.5 px-3 py-2 text-[0.64rem] text-ivory/55 transition-colors hover:text-gold"
                 >
                   <ArrowUpRight className="h-3.5 w-3.5" />
                   {c.back}
@@ -581,7 +599,7 @@ export function AdminDashboard({
                     signOut();
                     router.push("/");
                   }}
-                  className="flex w-full items-center gap-2.5 px-3 py-2 text-start text-[0.64rem] text-ivory/45 transition-colors hover:text-gold"
+                  className="flex min-h-10 w-full items-center gap-2.5 px-3 py-2 text-start text-[0.64rem] text-ivory/55 transition-colors hover:text-gold"
                 >
                   <LogOut className="h-3.5 w-3.5" />
                   {c.signOut}
@@ -598,14 +616,21 @@ export function AdminDashboard({
                   <h1 className="mt-1 font-display text-2xl leading-none text-ivory sm:text-3xl">
                     {user.name}
                   </h1>
-                  <p className="mt-1 text-[0.6rem] text-ivory/35">
-                    {user.email} · {c.secureNote}
+                  <p className="mt-1 flex flex-wrap items-center gap-2 text-[0.6rem] text-ivory/45">
+                    <span dir="ltr">{user.email}</span>
+                    <span aria-hidden="true">·</span>
+                    <span>{c.secureNote}</span>
+                    {user.primaryAdmin ? (
+                      <span className="border border-gold/25 px-1.5 py-0.5 text-[0.48rem] uppercase tracking-[0.1em] text-gold">
+                        {c.primaryAdmin}
+                      </span>
+                    ) : null}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <Link
                     href="/portal"
-                    className="inline-flex h-9 items-center gap-2 border border-white/12 px-3.5 text-[0.56rem] font-semibold uppercase tracking-[0.12em] text-ivory/50 transition-colors hover:border-gold/40 hover:text-gold"
+                    className="inline-flex h-9 items-center gap-2 border border-white/12 px-3.5 text-[0.56rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
                   >
                     {c.portal}
                     <ArrowUpRight className="h-3.5 w-3.5" />
@@ -643,6 +668,7 @@ export function AdminDashboard({
                 {section === "inquiries" ? <InquiriesPanel /> : null}
                 {section === "financials" ? <FinancialsSection projects={projects} /> : null}
                 {section === "content" ? <ContentSection /> : null}
+                {section === "access" ? <AdminAccess /> : null}
                 {section === "media" ? (
                   <MediaSection projects={projects} />
                 ) : null}
@@ -706,7 +732,7 @@ function OverviewSection({
               <p className="mt-3 tabular font-display text-2xl leading-none text-ivory">
                 {stat.value}
               </p>
-              <p className="mt-2 text-[0.48rem] uppercase tracking-[0.14em] text-ivory/30">
+              <p className="mt-2 text-[0.48rem] uppercase tracking-[0.14em] text-ivory/40">
                 {stat.label}
               </p>
             </div>
@@ -720,7 +746,7 @@ function OverviewSection({
             <span className="text-[0.55rem] font-semibold uppercase tracking-[0.16em] text-gold">
               {c.budgetVsSpent}
             </span>
-            <span className="tabular text-[0.55rem] text-ivory/30">
+            <span className="tabular text-[0.55rem] text-ivory/40">
               {c.avgMargin} {avgMargin.toFixed(1)}%
             </span>
           </div>
@@ -729,7 +755,7 @@ function OverviewSection({
               <div key={project.slug}>
                 <div className="flex items-center justify-between gap-3 text-[0.6rem]">
                   <span className="truncate text-ivory/60">{l(project.title)}</span>
-                  <span className="tabular shrink-0 text-ivory/35">
+                  <span className="tabular shrink-0 text-ivory/45">
                     {formatM(project.spent, locale)} / {formatM(project.budget, locale)}
                   </span>
                 </div>
@@ -759,7 +785,7 @@ function OverviewSection({
                 <Plus className="h-4 w-4 text-gold" />
                 {c.addProject}
               </p>
-              <p className="mt-1 text-[0.6rem] text-ivory/40">{c.projects}</p>
+              <p className="mt-1 text-[0.6rem] text-ivory/50">{c.projects}</p>
             </div>
             <ArrowUpRight className="h-4 w-4 text-gold transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
           </button>
@@ -773,7 +799,7 @@ function OverviewSection({
                 <BarChart3 className="h-4 w-4 text-gold" />
                 {c.financials}
               </p>
-              <p className="mt-1 text-[0.6rem] text-ivory/40">{c.paymentStages}</p>
+              <p className="mt-1 text-[0.6rem] text-ivory/50">{c.paymentStages}</p>
             </div>
             <ArrowUpRight className="h-4 w-4 text-gold transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
           </button>
@@ -787,7 +813,7 @@ function OverviewSection({
                 <MessageSquare className="h-4 w-4 text-gold" />
                 {c.messages}
               </p>
-              <p className="mt-1 text-[0.6rem] text-ivory/40">
+              <p className="mt-1 text-[0.6rem] text-ivory/50">
                 {messages.length} {c.messages}
               </p>
             </div>
@@ -804,7 +830,7 @@ function OverviewSection({
           <button
             type="button"
             onClick={() => onNavigate("projects")}
-            className="text-[0.55rem] font-semibold uppercase tracking-[0.12em] text-ivory/35 transition-colors hover:text-gold"
+            className="text-[0.55rem] font-semibold uppercase tracking-[0.12em] text-ivory/45 transition-colors hover:text-gold"
           >
             {c.viewAll}
           </button>
@@ -812,7 +838,7 @@ function OverviewSection({
         <div className="overflow-x-auto">
           <table className="w-full min-w-[620px] text-start">
             <thead>
-              <tr className="border-b border-white/8 text-[0.48rem] uppercase tracking-[0.14em] text-ivory/30">
+              <tr className="border-b border-white/8 text-[0.48rem] uppercase tracking-[0.14em] text-ivory/40">
                 <th className="px-5 py-3 text-start font-medium">{c.project}</th>
                 <th className="px-3 py-3 text-start font-medium">{c.category}</th>
                 <th className="px-3 py-3 text-start font-medium">{c.status}</th>
@@ -826,7 +852,7 @@ function OverviewSection({
                   <td className="px-5 py-3">
                     <span className="text-[0.68rem] text-ivory/75">{l(project.title)}</span>
                   </td>
-                  <td className="px-3 py-3 text-[0.58rem] text-ivory/40">
+                  <td className="px-3 py-3 text-[0.58rem] text-ivory/50">
                     {c.categoryLabels[project.category]}
                   </td>
                   <td className="px-3 py-3">
@@ -851,12 +877,12 @@ function OverviewSection({
                           style={{ width: `${project.progress}%` }}
                         />
                       </span>
-                      <span className="tabular text-[0.55rem] text-ivory/35">
+                      <span className="tabular text-[0.55rem] text-ivory/45">
                         {project.progress}%
                       </span>
                     </span>
                   </td>
-                  <td className="px-5 py-3 text-end text-[0.6rem] text-ivory/45">
+                  <td className="px-5 py-3 text-end text-[0.6rem] text-ivory/55">
                     {l(project.value)}
                   </td>
                 </tr>
@@ -900,7 +926,7 @@ function ProjectsSection({
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div>
           <h2 className="font-display text-2xl text-ivory">{c.projects}</h2>
-          <p className="mt-1 text-[0.62rem] text-ivory/35">
+          <p className="mt-1 text-[0.62rem] text-ivory/45">
             {filtered.length} / {projects.length}
           </p>
         </div>
@@ -909,7 +935,7 @@ function ProjectsSection({
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder={c.search}
-            className="h-9 w-full border border-white/12 bg-transparent px-3 text-[0.65rem] text-ivory outline-none placeholder:text-ivory/25 focus:border-gold/50 sm:w-56"
+            className="h-9 w-full border border-white/12 bg-transparent px-3 text-[0.65rem] text-ivory outline-none placeholder:text-ivory/35 focus:border-gold/50 sm:w-56"
           />
           <button
             type="button"
@@ -925,7 +951,7 @@ function ProjectsSection({
       <div className="overflow-x-auto border border-white/10 bg-coal">
         <table className="w-full min-w-[760px]">
           <thead>
-            <tr className="border-b border-white/8 text-[0.48rem] uppercase tracking-[0.14em] text-ivory/30">
+            <tr className="border-b border-white/8 text-[0.48rem] uppercase tracking-[0.14em] text-ivory/40">
               <th className="px-4 py-3 text-start font-medium">{c.project}</th>
               <th className="px-3 py-3 text-start font-medium">{c.category}</th>
               <th className="px-3 py-3 text-start font-medium">{c.status}</th>
@@ -946,13 +972,13 @@ function ProjectsSection({
                       <span className="truncate text-[0.68rem] text-ivory/75">
                         {l(project.title)}
                       </span>
-                      <span className="truncate text-[0.5rem] text-ivory/30">
+                      <span className="truncate text-[0.5rem] text-ivory/40">
                         {l(project.location)}
                       </span>
                     </span>
                   </span>
                 </td>
-                <td className="px-3 py-3 text-[0.58rem] text-ivory/40">
+                <td className="px-3 py-3 text-[0.58rem] text-ivory/50">
                   {c.categoryLabels[project.category]}
                 </td>
                 <td className="px-3 py-3">
@@ -977,12 +1003,12 @@ function ProjectsSection({
                         style={{ width: `${project.progress}%` }}
                       />
                     </span>
-                    <span className="tabular text-[0.55rem] text-ivory/35">
+                    <span className="tabular text-[0.55rem] text-ivory/45">
                       {project.progress}%
                     </span>
                   </span>
                 </td>
-                <td className="px-3 py-3 text-end text-[0.58rem] text-ivory/45">
+                <td className="px-3 py-3 text-end text-[0.58rem] text-ivory/55">
                   {l(project.value)}
                 </td>
                 <td className="px-4 py-3">
@@ -990,7 +1016,7 @@ function ProjectsSection({
                     <button
                       type="button"
                       onClick={() => onEdit(project)}
-                      className="flex h-7 w-7 items-center justify-center border border-white/12 text-ivory/45 transition-colors hover:border-gold/50 hover:text-gold"
+                      className="flex h-7 w-7 items-center justify-center border border-white/12 text-ivory/55 transition-colors hover:border-gold/50 hover:text-gold"
                       aria-label={`${c.edit} ${l(project.title)}`}
                     >
                       <Pencil className="h-3 w-3" />
@@ -998,7 +1024,7 @@ function ProjectsSection({
                     <button
                       type="button"
                       onClick={() => onDelete(project)}
-                      className="flex h-7 w-7 items-center justify-center border border-white/12 text-ivory/45 transition-colors hover:border-red-400/50 hover:text-red-300"
+                      className="flex h-7 w-7 items-center justify-center border border-white/12 text-ivory/55 transition-colors hover:border-red-400/50 hover:text-red-300"
                       aria-label={`${c.delete} ${l(project.title)}`}
                     >
                       <Trash2 className="h-3 w-3" />
@@ -1010,7 +1036,7 @@ function ProjectsSection({
           </tbody>
         </table>
         {!filtered.length ? (
-          <p className="p-8 text-center text-[0.68rem] text-ivory/35">{c.noProjects}</p>
+          <p className="p-8 text-center text-[0.68rem] text-ivory/45">{c.noProjects}</p>
         ) : null}
       </div>
     </div>
@@ -1067,7 +1093,7 @@ function FinancialsSection({ projects }: { projects: WorkspaceProject[] }) {
         ].map((stat) => (
           <div key={stat.label} className="bg-coal p-4">
             <p className="tabular font-display text-2xl leading-none text-ivory">{stat.value}</p>
-            <p className="mt-2 text-[0.48rem] uppercase tracking-[0.14em] text-ivory/30">
+            <p className="mt-2 text-[0.48rem] uppercase tracking-[0.14em] text-ivory/40">
               {stat.label}
             </p>
           </div>
@@ -1082,7 +1108,7 @@ function FinancialsSection({ projects }: { projects: WorkspaceProject[] }) {
           <button
             type="button"
             onClick={exportCsv}
-            className="inline-flex h-8 items-center gap-2 border border-white/12 px-3 text-[0.52rem] font-semibold uppercase tracking-[0.12em] text-ivory/45 transition-colors hover:border-gold/40 hover:text-gold"
+            className="inline-flex h-8 items-center gap-2 border border-white/12 px-3 text-[0.52rem] font-semibold uppercase tracking-[0.12em] text-ivory/55 transition-colors hover:border-gold/40 hover:text-gold"
           >
             <FileText className="h-3 w-3" />
             {c.export}
@@ -1091,7 +1117,7 @@ function FinancialsSection({ projects }: { projects: WorkspaceProject[] }) {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[760px]">
             <thead>
-              <tr className="border-b border-white/8 text-[0.48rem] uppercase tracking-[0.14em] text-ivory/30">
+              <tr className="border-b border-white/8 text-[0.48rem] uppercase tracking-[0.14em] text-ivory/40">
                 <th className="px-5 py-3 text-start font-medium">{c.project}</th>
                 <th className="px-3 py-3 text-start font-medium">{c.budget}</th>
                 <th className="px-3 py-3 text-start font-medium">{c.spent}</th>
@@ -1151,7 +1177,7 @@ function FinancialsSection({ projects }: { projects: WorkspaceProject[] }) {
                 <div key={project.slug}>
                   <div className="flex items-center justify-between gap-3 text-[0.6rem]">
                     <span className="truncate text-ivory/60">{l(project.title)}</span>
-                    <span className="tabular shrink-0 text-ivory/35">
+                    <span className="tabular shrink-0 text-ivory/45">
                       {formatM(project.spent, locale)} / {formatM(project.budget, locale)}
                     </span>
                   </div>
@@ -1191,12 +1217,12 @@ function FinancialsSection({ projects }: { projects: WorkspaceProject[] }) {
                   <FileText className="h-3.5 w-3.5 shrink-0 text-gold" />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[0.65rem] text-ivory/65">{l(invoice.title)}</p>
-                    <span className="text-[0.5rem] text-ivory/30">
+                    <span className="text-[0.5rem] text-ivory/40">
                       {invoice.number} · {invoice.date}
                     </span>
                   </div>
                   <div className="text-end">
-                    <p className="tabular text-[0.62rem] text-ivory/55">{invoice.amount}</p>
+                    <p className="tabular text-[0.62rem] text-ivory/65">{invoice.amount}</p>
                     <span
                       className={cn(
                         "text-[0.48rem] uppercase tracking-[0.1em]",
@@ -1204,7 +1230,7 @@ function FinancialsSection({ projects }: { projects: WorkspaceProject[] }) {
                           ? "text-emerald-300/80"
                           : invoice.status === "due"
                             ? "text-gold"
-                            : "text-ivory/30",
+                            : "text-ivory/40",
                       )}
                     >
                       {c.invoiceStatus[invoice.status]}
@@ -1214,9 +1240,9 @@ function FinancialsSection({ projects }: { projects: WorkspaceProject[] }) {
               ))}
             </div>
           ) : (
-            <p className="p-6 text-center text-[0.62rem] text-ivory/30">{c.noProjects}</p>
+            <p className="p-6 text-center text-[0.62rem] text-ivory/40">{c.noProjects}</p>
           )}
-          <div className="border-t border-white/10 px-5 py-3 text-[0.55rem] text-ivory/30">
+          <div className="border-t border-white/10 px-5 py-3 text-[0.55rem] text-ivory/40">
             {selectedProject ? l(selectedProject.title) : ""}
           </div>
         </div>
@@ -1509,7 +1535,7 @@ function ContentSection() {
           <Link
             href="/"
             target="_blank"
-            className="inline-flex items-center gap-1.5 text-[0.52rem] uppercase tracking-[0.12em] text-ivory/35 transition-colors hover:text-gold"
+            className="inline-flex items-center gap-1.5 text-[0.52rem] uppercase tracking-[0.12em] text-ivory/45 transition-colors hover:text-gold"
           >
             {c.back}
             <ArrowUpRight className="h-3 w-3" />
@@ -1624,7 +1650,7 @@ function ContentSection() {
                 onChange={(event) => setHero({ ...hero, promoHref: event.target.value })}
               />
             </Field>
-            <label className="flex items-end gap-2 pb-2 text-[0.68rem] text-ivory/55">
+            <label className="flex items-end gap-2 pb-2 text-[0.68rem] text-ivory/65">
               <input
                 type="checkbox"
                 checked={hero.promoVisible}
@@ -1637,7 +1663,7 @@ function ContentSection() {
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 p-4">
-          <span className="text-[0.58rem] text-ivory/30">{saved ? c.saved : ""}</span>
+          <span className="text-[0.58rem] text-ivory/40">{saved ? c.saved : ""}</span>
           <button
             type="submit"
             className="inline-flex h-9 items-center gap-2 bg-gold px-4 text-[0.56rem] font-semibold uppercase tracking-[0.12em] text-obsidian transition-colors hover:bg-gold-light"
@@ -1736,14 +1762,14 @@ function ContentSection() {
               <Sparkles className="h-3.5 w-3.5" />
               {c.siteCopy}
             </span>
-            <p className="mt-2 max-w-2xl text-[0.6rem] leading-relaxed text-ivory/35">
+            <p className="mt-2 max-w-2xl text-[0.6rem] leading-relaxed text-ivory/45">
               {c.siteCopyText}
             </p>
           </div>
           <button
             type="button"
             onClick={resetCopy}
-            className="inline-flex h-8 items-center gap-1.5 border border-white/12 px-3 text-[0.52rem] font-semibold uppercase tracking-[0.12em] text-ivory/40 transition-all duration-300 hover:border-gold/40 hover:text-gold active:scale-[0.98]"
+            className="inline-flex h-8 items-center gap-1.5 border border-white/12 px-3 text-[0.52rem] font-semibold uppercase tracking-[0.12em] text-ivory/50 transition-all duration-300 hover:border-gold/40 hover:text-gold active:scale-[0.98]"
           >
             <RotateCcw className="h-3 w-3" />
             {c.resetCopy}
@@ -1752,7 +1778,7 @@ function ContentSection() {
 
         <div className="flex flex-col gap-3 border-b border-white/10 p-4 sm:flex-row sm:items-center">
           <label className="relative flex-1">
-            <Search className="pointer-events-none absolute start-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ivory/25" />
+            <Search className="pointer-events-none absolute start-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ivory/35" />
             <TextInput
               value={copyQuery}
               onChange={(event) => setCopyQuery(event.target.value)}
@@ -1774,14 +1800,14 @@ function ContentSection() {
               </option>
             ))}
           </select>
-          <span className="text-[0.55rem] text-ivory/30">
+          <span className="text-[0.55rem] text-ivory/40">
             {filteredCopyFields.length} / {copyFields.length}
           </span>
         </div>
 
         <div className="space-y-2 p-4">
           {filteredCopyFields.length === 0 ? (
-            <p className="py-8 text-center text-[0.62rem] text-ivory/30">{c.noCopyResults}</p>
+            <p className="py-8 text-center text-[0.62rem] text-ivory/40">{c.noCopyResults}</p>
           ) : (
             copyGroups.map((group) => {
               const groupFields = filteredCopyFields.filter((field) => field.group === group);
@@ -1793,12 +1819,12 @@ function ContentSection() {
                   open={copyQuery.trim().length > 0 ? true : undefined}
                   className="group/copy border border-white/8 bg-obsidian/25"
                 >
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-[0.58rem] font-semibold uppercase tracking-[0.14em] text-ivory/55 transition-colors hover:text-gold [&::-webkit-details-marker]:hidden">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-[0.58rem] font-semibold uppercase tracking-[0.14em] text-ivory/65 transition-colors hover:text-gold [&::-webkit-details-marker]:hidden">
                     <span className="flex items-center gap-2">
                       <ChevronDown className="h-3.5 w-3.5 text-gold/60 transition-transform duration-300 group-open/copy:rotate-180" />
                       {label[locale]}
                     </span>
-                    <span className="tabular text-[0.5rem] text-ivory/25">{groupFields.length}</span>
+                    <span className="tabular text-[0.5rem] text-ivory/35">{groupFields.length}</span>
                   </summary>
                   <div className="space-y-1 border-t border-white/8 p-3">
                     {groupFields.map((field) => {
@@ -1811,13 +1837,13 @@ function ContentSection() {
                           className="grid gap-2 rounded-sm border border-transparent px-2 py-2 transition-colors hover:border-white/8 hover:bg-white/[0.025] lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.2fr)_minmax(0,1.2fr)] lg:items-center"
                         >
                           <div className="min-w-0">
-                            <code className="block truncate text-[0.55rem] text-ivory/40" dir="ltr">
+                            <code className="block truncate text-[0.55rem] text-ivory/50" dir="ltr">
                               {field.path}
                             </code>
                             <span
                               className={cn(
                                 "mt-0.5 inline-block text-[0.44rem] uppercase tracking-[0.12em]",
-                                customised ? "text-gold/70" : "text-ivory/20",
+                                customised ? "text-gold/70" : "text-ivory/30",
                               )}
                             >
                               {customised ? c.customised : c.original}
@@ -1868,7 +1894,7 @@ function ContentSection() {
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 p-4">
-          <span className="text-[0.58rem] text-ivory/30">{copyNotice ? c.copySaved : ""}</span>
+          <span className="text-[0.58rem] text-ivory/40">{copyNotice ? c.copySaved : ""}</span>
           <button
             type="submit"
             className="inline-flex h-9 items-center gap-2 bg-gold px-4 text-[0.56rem] font-semibold uppercase tracking-[0.12em] text-obsidian transition-all duration-300 hover:bg-gold-light active:scale-[0.98]"
@@ -1886,11 +1912,11 @@ function ContentSection() {
               <ImageIcon className="h-3.5 w-3.5" />
               {c.mediaAssets}
             </span>
-            <p className="mt-2 max-w-2xl text-[0.6rem] leading-relaxed text-ivory/35">
+            <p className="mt-2 max-w-2xl text-[0.6rem] leading-relaxed text-ivory/45">
               {c.mediaAssetsText}
             </p>
           </div>
-          <span className="border border-white/10 px-2.5 py-1 text-[0.48rem] uppercase tracking-[0.12em] text-ivory/30">
+          <span className="border border-white/10 px-2.5 py-1 text-[0.48rem] uppercase tracking-[0.12em] text-ivory/40">
             {mediaCatalog.length}
           </span>
         </div>
@@ -1904,12 +1930,12 @@ function ContentSection() {
                 key={group}
                 className="group/media border border-white/8 bg-obsidian/25"
               >
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-[0.58rem] font-semibold uppercase tracking-[0.14em] text-ivory/55 transition-colors hover:text-gold [&::-webkit-details-marker]:hidden">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-[0.58rem] font-semibold uppercase tracking-[0.14em] text-ivory/65 transition-colors hover:text-gold [&::-webkit-details-marker]:hidden">
                   <span className="flex items-center gap-2">
                     <ChevronDown className="h-3.5 w-3.5 text-gold/60 transition-transform duration-300 group-open/media:rotate-180" />
                     {label[locale]}
                   </span>
-                  <span className="tabular text-[0.5rem] text-ivory/25">{assets.length}</span>
+                  <span className="tabular text-[0.5rem] text-ivory/35">{assets.length}</span>
                 </summary>
                 <div className="grid gap-3 border-t border-white/8 p-3 xl:grid-cols-2">
                   {assets.map((asset) => {
@@ -1940,14 +1966,14 @@ function ContentSection() {
                               <p className="truncate text-[0.62rem] text-ivory/65">
                                 {asset.label[locale]}
                               </p>
-                              <code className="block truncate text-[0.48rem] text-ivory/30" dir="ltr">
+                              <code className="block truncate text-[0.48rem] text-ivory/40" dir="ltr">
                                 {asset.key}
                               </code>
                             </div>
                             <button
                               type="button"
                               onClick={() => resetMedia(asset.key)}
-                              className="shrink-0 text-ivory/25 transition-colors hover:text-gold"
+                              className="shrink-0 text-ivory/35 transition-colors hover:text-gold"
                               title={c.resetAsset}
                               aria-label={`${c.resetAsset}: ${asset.key}`}
                             >
@@ -1984,10 +2010,10 @@ function ContentSection() {
                             />
                           </div>
                           <div className="flex items-center justify-between gap-2 text-[0.46rem] uppercase tracking-[0.1em]">
-                            <span className={customised ? "text-gold/70" : "text-ivory/20"}>
+                            <span className={customised ? "text-gold/70" : "text-ivory/30"}>
                               {customised ? c.customised : c.original}
                             </span>
-                            <span className="truncate text-ivory/20">{c.mediaHint}</span>
+                            <span className="truncate text-ivory/30">{c.mediaHint}</span>
                           </div>
                         </div>
                       </div>
@@ -2000,7 +2026,7 @@ function ContentSection() {
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 p-4">
-          <span className="text-[0.58rem] text-ivory/30">{mediaNotice ? c.saved : ""}</span>
+          <span className="text-[0.58rem] text-ivory/40">{mediaNotice ? c.saved : ""}</span>
           <button
             type="submit"
             className="inline-flex h-9 items-center gap-2 border border-gold/40 px-4 text-[0.56rem] font-semibold uppercase tracking-[0.12em] text-gold transition-all duration-300 hover:bg-gold hover:text-obsidian active:scale-[0.98]"
@@ -2024,7 +2050,7 @@ function MediaSection({ projects }: { projects: WorkspaceProject[] }) {
       <div className="flex flex-col justify-between gap-3 border border-white/10 bg-coal p-5 sm:flex-row sm:items-center">
         <div>
           <h2 className="font-display text-2xl text-ivory">{c.mediaTitle}</h2>
-          <p className="mt-1 max-w-2xl text-[0.62rem] leading-relaxed text-ivory/35">
+          <p className="mt-1 max-w-2xl text-[0.62rem] leading-relaxed text-ivory/45">
             {c.mediaText}
           </p>
         </div>
@@ -2035,7 +2061,7 @@ function MediaSection({ projects }: { projects: WorkspaceProject[] }) {
           <div key={project.slug} className="border border-white/10 bg-coal p-4">
             <div className="flex items-center justify-between gap-3">
               <span className="truncate text-[0.68rem] text-ivory/70">{l(project.title)}</span>
-              <span className="text-[0.5rem] uppercase tracking-[0.12em] text-ivory/30">
+              <span className="text-[0.5rem] uppercase tracking-[0.12em] text-ivory/40">
                 {c.cover}: {c.artLabels[project.art]}
               </span>
             </div>
@@ -2067,7 +2093,7 @@ function MediaSection({ projects }: { projects: WorkspaceProject[] }) {
                 </button>
               ))}
             </div>
-            <p className="mt-3 text-[0.52rem] text-ivory/30">
+            <p className="mt-3 text-[0.52rem] text-ivory/40">
               {c.gallery}: {project.gallery.length}
             </p>
           </div>
@@ -2106,7 +2132,7 @@ function MessagesSection({ projects }: { projects: WorkspaceProject[] }) {
       <div className="border border-white/10 bg-coal">
         <div className="border-b border-white/10 px-5 py-4">
           <h2 className="font-display text-2xl text-ivory">{c.messagesTitle}</h2>
-          <p className="mt-1 text-[0.6rem] leading-relaxed text-ivory/35">{c.messagesText}</p>
+          <p className="mt-1 text-[0.6rem] leading-relaxed text-ivory/45">{c.messagesText}</p>
         </div>
         <div className="divide-y divide-white/6">
           {projects.map((project) => {
@@ -2125,12 +2151,12 @@ function MessagesSection({ projects }: { projects: WorkspaceProject[] }) {
                   <span className="block truncate text-[0.66rem] text-ivory/70">
                     {l(project.title)}
                   </span>
-                  <span className="text-[0.5rem] text-ivory/30">{l(project.location)}</span>
+                  <span className="text-[0.5rem] text-ivory/40">{l(project.location)}</span>
                 </span>
                 <span
                   className={cn(
                     "tabular flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[0.5rem]",
-                    count ? "bg-gold text-obsidian" : "bg-white/10 text-ivory/30",
+                    count ? "bg-gold text-obsidian" : "bg-white/10 text-ivory/40",
                   )}
                 >
                   {count}
@@ -2146,7 +2172,7 @@ function MessagesSection({ projects }: { projects: WorkspaceProject[] }) {
           <span className="text-[0.55rem] font-semibold uppercase tracking-[0.16em] text-gold">
             {c.messagesTitle}
           </span>
-          <span className="text-[0.52rem] text-ivory/30">
+          <span className="text-[0.52rem] text-ivory/40">
             {projectMessages.length} {c.messages}
           </span>
         </div>
@@ -2160,9 +2186,9 @@ function MessagesSection({ projects }: { projects: WorkspaceProject[] }) {
                   message.author === "manager" ? "items-end" : "items-start",
                 )}
               >
-                <span className="flex items-center gap-1.5 text-[0.48rem] uppercase tracking-[0.12em] text-ivory/30">
+                <span className="flex items-center gap-1.5 text-[0.48rem] uppercase tracking-[0.12em] text-ivory/40">
                   {message.author === "manager" ? c.manager : c.client}
-                  <span className="text-ivory/20">{dateFormat.format(new Date(message.at))}</span>
+                  <span className="text-ivory/30">{dateFormat.format(new Date(message.at))}</span>
                 </span>
                 <p
                   className={cn(
@@ -2177,17 +2203,17 @@ function MessagesSection({ projects }: { projects: WorkspaceProject[] }) {
               </div>
             ))
           ) : (
-            <p className="py-10 text-center text-[0.62rem] text-ivory/30">{c.noMessages}</p>
+            <p className="py-10 text-center text-[0.62rem] text-ivory/40">{c.noMessages}</p>
           )}
         </div>
         <form onSubmit={submit} className="border-t border-white/10 p-4">
-          <p className="mb-2 text-[0.5rem] uppercase tracking-[0.14em] text-ivory/30">{c.reply}</p>
+          <p className="mb-2 text-[0.5rem] uppercase tracking-[0.14em] text-ivory/40">{c.reply}</p>
           <div className="flex gap-2">
             <input
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
               placeholder={c.replyPlaceholder}
-              className="h-10 min-w-0 flex-1 border border-white/12 bg-transparent px-3 text-[0.66rem] text-ivory outline-none placeholder:text-ivory/25 focus:border-gold/50"
+              className="h-10 min-w-0 flex-1 border border-white/12 bg-transparent px-3 text-[0.66rem] text-ivory outline-none placeholder:text-ivory/35 focus:border-gold/50"
             />
             <button
               type="submit"

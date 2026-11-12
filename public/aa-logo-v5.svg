@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="Ahmed Elattar monogram">
+  <defs>
+    <linearGradient id="aa-crimson" x1="16" y1="14" x2="52" y2="86" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f97316"/>
+      <stop offset="0.34" stop-color="#dc2626"/>
+      <stop offset="0.72" stop-color="#991b1b"/>
+      <stop offset="1" stop-color="#5f1017"/>
+    </linearGradient>
+    <linearGradient id="aa-ember" x1="34" y1="22" x2="70" y2="78" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fde68a"/>
+      <stop offset="0.3" stop-color="#f59e0b"/>
+      <stop offset="0.64" stop-color="#ea580c"/>
+      <stop offset="1" stop-color="#9a3412"/>
+    </linearGradient>
+    <linearGradient id="aa-gold" x1="44" y1="12" x2="86" y2="84" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff3c4"/>
+      <stop offset="0.28" stop-color="#f2dfa0"/>
+      <stop offset="0.62" stop-color="#d4af37"/>
+      <stop offset="1" stop-color="#8a5a16"/>
+    </linearGradient>
+    <linearGradient id="aa-edge" x1="48" y1="4" x2="48" y2="92" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f2dfa0" stop-opacity="0.9"/>
+      <stop offset="0.55" stop-color="#d4af37" stop-opacity="0.42"/>
+      <stop offset="1" stop-color="#7c5414" stop-opacity="0.75"/>
+    </linearGradient>
+    <radialGradient id="aa-glow" cx="0" cy="0" r="1" gradientTransform="translate(48 44) rotate(90) scale(44)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f59e0b" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#7f1d1d" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="aa-soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="1.1"/>
+    </filter>
+  </defs>
+
+  <circle cx="48" cy="48" r="44" fill="url(#aa-glow)"/>
+  <path d="M48 5.5 90.5 48 48 90.5 5.5 48 48 5.5Z" fill="none" stroke="url(#aa-edge)" stroke-width="1.4"/>
+  <path d="M48 10.5 85.5 48 48 85.5 10.5 48 48 10.5Z" fill="none" stroke="#f2dfa0" stroke-opacity="0.16" stroke-width="0.8"/>
+
+  <!-- Left A: warm crimson to ember facets -->
+  <path d="M43.5 17.5 19 80.5h11.2L48.1 43.4 43.5 17.5Z" fill="url(#aa-crimson)"/>
+  <path d="M43.5 17.5 48.1 43.4l9.7 37.1H68L43.5 17.5Z" fill="url(#aa-ember)" opacity="0.96"/>
+  <path d="M43.5 17.5 48.1 43.4 42.8 39.5 39.8 26.6 43.5 17.5Z" fill="#fff3c4" opacity="0.28"/>
+  <path d="M27.8 61.5h24.9l-3.1 8.8H30.4l-2.6-8.8Z" fill="url(#aa-gold)"/>
+  <path d="M30.2 80.5h-11.2l12-31.5 2.4 8.1-3.2 23.4Z" fill="#4a0c12" opacity="0.32"/>
+
+  <!-- Right A: brushed gold overlay -->
+  <path d="M60.5 24.5 39 84h10.4l16-39.4-4.9-20.1Z" fill="url(#aa-gold)" opacity="0.95"/>
+  <path d="M60.5 24.5 65.4 44.6 79.5 84H69.1L60.5 24.5Z" fill="url(#aa-ember)" opacity="0.9"/>
+  <path d="M60.5 24.5 65.4 44.6l-6.2-4.4-3.6-10.1 4.9-5.6Z" fill="#fff8dc" opacity="0.5"/>
+  <path d="M45.8 66.7h20.5l-2.7 8.2H48.5l-2.7-8.2Z" fill="url(#aa-gold)"/>
+  <path d="M69.1 84h10.4L69.4 55.5l-2.6 8.9L69.1 84Z" fill="#6b2a0c" opacity="0.34"/>
+
+  <path d="M48 8.5 87.5 48 48 87.5 8.5 48 48 8.5Z" fill="none" stroke="#fff3c4" stroke-opacity="0.1" stroke-width="0.65" filter="url(#aa-soft)"/>
+</svg>

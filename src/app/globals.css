@@ -128,8 +128,8 @@ html[lang="ar"] body {
 }
 
 :focus-visible {
-  outline: 1px solid #d4af37;
-  outline-offset: 4px;
+  outline: 2px solid #f2dfa0;
+  outline-offset: 3px;
 }
 
 a,
@@ -371,7 +371,7 @@ html[lang="ar"] .display-title {
 @keyframes hero-rise {
   from {
     opacity: 0;
-    transform: translateY(110%);
+    transform: translateY(28px);
   }
   to {
     opacity: 1;
@@ -381,7 +381,7 @@ html[lang="ar"] .display-title {
 @keyframes fade-up {
   from {
     opacity: 0;
-    transform: translateY(18px);
+    transform: translateY(12px);
   }
   to {
     opacity: 1;
@@ -403,7 +403,7 @@ html[lang="ar"] .display-title {
     opacity: 0.35;
   }
   50% {
-    transform: translateY(7px);
+    transform: translateY(5px);
     opacity: 1;
   }
 }
@@ -414,20 +414,20 @@ html[lang="ar"] .display-title {
 }
 .hero-line > span {
   display: block;
-  animation: hero-rise 1.15s var(--ease-lux) both;
+  animation: hero-rise 0.82s var(--ease-lux) both;
 }
 .hero-fade {
-  animation: fade-up 1s var(--ease-lux) both;
+  animation: fade-up 0.72s var(--ease-lux) both;
 }
 .hero-rule {
   transform-origin: left center;
-  animation: line-grow 1.4s var(--ease-lux) both;
+  animation: line-grow 0.95s var(--ease-lux) both;
 }
 html[dir="rtl"] .hero-rule {
   transform-origin: right center;
 }
 .scroll-dot {
-  animation: scroll-pulse 2.2s ease-in-out infinite;
+  animation: scroll-pulse 3.4s ease-in-out infinite;
 }
 
 /* ---------- Marquee ---------- */
@@ -468,13 +468,15 @@ html[dir="rtl"] .hero-rule {
 /* ---------- Forms ---------- */
 .field {
   width: 100%;
+  min-height: 3rem;
   background: transparent;
   border: 0;
-  border-bottom: 1px solid rgb(255 255 255 / 0.16);
-  padding: 0.9rem 0;
-  font-size: 0.95rem;
+  border-bottom: 1px solid rgb(255 255 255 / 0.2);
+  padding: 0.75rem 0;
+  font-size: 1rem;
+  line-height: 1.5;
   color: #f3eee4;
-  transition: border-color 0.35s ease;
+  transition: border-color 0.22s ease, background-color 0.22s ease;
   border-radius: 0;
 }
 .field::placeholder {
@@ -483,6 +485,7 @@ html[dir="rtl"] .hero-rule {
 .field:focus {
   outline: none;
   border-color: #d4af37;
+  box-shadow: 0 1px 0 0 #d4af37;
 }
 .field-light {
   color: #0a0b0e;
@@ -504,10 +507,10 @@ select.field option {
   width: 100%;
   height: 100%;
   display: block;
-  transition: transform 1.2s var(--ease-lux);
+  transition: transform 0.9s var(--ease-lux);
 }
 .group:hover .project-art {
-  transform: scale(1.045);
+  transform: scale(1.02);
 }
 
 /* ---------- Prose ---------- */
@@ -548,7 +551,7 @@ select.field option {
   }
 }
 .site-scan {
-  animation: site-scan 5.5s linear infinite;
+  animation: site-scan 9s linear infinite;
 }
 
 /* ---------- Utility ---------- */
@@ -599,18 +602,18 @@ select.field option {
   background:
     radial-gradient(ellipse at 68% 38%, rgb(var(--atmo-glow) / 0.28), transparent 52%),
     radial-gradient(ellipse at 28% 72%, rgb(217 142 74 / 0.16), transparent 58%);
-  animation: golden-drift 18s ease-in-out infinite;
+  animation: golden-drift 30s ease-in-out infinite;
 }
 
 @keyframes golden-drift {
   0%,
   100% {
-    transform: translate3d(-1.5%, 0, 0) scale(1);
-    opacity: 0.6;
+    transform: translate3d(-0.6%, 0, 0) scale(1);
+    opacity: 0.58;
   }
   50% {
-    transform: translate3d(1.5%, -1%, 0) scale(1.06);
-    opacity: 0.85;
+    transform: translate3d(0.6%, -0.4%, 0) scale(1.025);
+    opacity: 0.8;
   }
 }
 
@@ -694,7 +697,7 @@ select.field option {
   height: 0.34rem;
   border-radius: 999px;
   background: var(--atmo-accent);
-  animation: live-pulse 2.2s ease-out infinite;
+  animation: live-pulse 3.8s ease-out infinite;
 }
 
 @keyframes live-pulse {
@@ -749,12 +752,12 @@ html[dir="rtl"] .timeline-fill-x {
     transform: scale(1) translate3d(0, 0, 0);
   }
   to {
-    transform: scale(1.075) translate3d(0.9%, -0.9%, 0);
+    transform: scale(1.04) translate3d(0.5%, -0.5%, 0);
   }
 }
 
 .kenburns {
-  animation: kenburns 26s ease-in-out infinite alternate;
+  animation: kenburns 38s ease-in-out infinite alternate;
   will-change: transform;
 }
 

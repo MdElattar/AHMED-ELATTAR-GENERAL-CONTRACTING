@@ -335,7 +335,7 @@ export function AdminProjectEditor({
           <button
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center border border-white/12 text-ivory/50 transition-colors hover:border-gold/50 hover:text-gold"
+            className="flex h-9 w-9 items-center justify-center border border-white/12 text-ivory/60 transition-colors hover:border-gold/50 hover:text-gold"
             aria-label={c.close}
           >
             <X className="h-4 w-4" />
@@ -560,7 +560,7 @@ export function AdminProjectEditor({
                     "border px-3 py-2 text-[0.6rem] font-medium uppercase tracking-[0.1em] transition-colors",
                     form.gallery.includes(variant)
                       ? "border-gold bg-gold/15 text-gold"
-                      : "border-white/10 text-ivory/40 hover:border-gold/40 hover:text-ivory/70",
+                      : "border-white/10 text-ivory/50 hover:border-gold/40 hover:text-ivory/70",
                   )}
                 >
                   {c.arts[variant]}
@@ -605,7 +605,7 @@ export function AdminProjectEditor({
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex h-10 items-center border border-white/12 px-4 text-[0.6rem] font-semibold uppercase tracking-[0.14em] text-ivory/50 transition-colors hover:border-white/30 hover:text-ivory"
+            className="inline-flex h-10 items-center border border-white/12 px-4 text-[0.6rem] font-semibold uppercase tracking-[0.14em] text-ivory/60 transition-colors hover:border-white/30 hover:text-ivory"
           >
             {c.cancel}
           </button>

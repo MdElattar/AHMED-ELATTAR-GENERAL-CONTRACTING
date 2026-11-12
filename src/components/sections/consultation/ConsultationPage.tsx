@@ -180,12 +180,12 @@ export function ConsultationPage({ dates }: { dates: ConsultationDay[] }) {
             </h1>
           </Reveal>
           <Reveal delay={160}>
-            <p className="mt-5 max-w-2xl text-[0.95rem] leading-[1.95] text-ivory/50">
+            <p className="mt-5 max-w-2xl text-[0.95rem] leading-[1.95] text-ivory/60">
               {c.description}
             </p>
           </Reveal>
           <Reveal delay={220}>
-            <div className="mt-8 flex flex-wrap items-center gap-5 text-[0.55rem] uppercase tracking-[0.16em] text-ivory/35">
+            <div className="mt-8 flex flex-wrap items-center gap-5 text-[0.55rem] uppercase tracking-[0.16em] text-ivory/45">
               <span className="flex items-center gap-2">
                 <ShieldCheck className="h-3.5 w-3.5 text-gold" />
                 {c.concierge}
@@ -214,7 +214,7 @@ export function ConsultationPage({ dates }: { dates: ConsultationDay[] }) {
                 <h2 className="display-title mt-6 text-[clamp(2rem,4vw,3.4rem)] text-ivory">
                   {c.confirmation}
                 </h2>
-                <p className="mt-4 max-w-xl text-[0.86rem] leading-[1.9] text-ivory/50">
+                <p className="mt-4 max-w-xl text-[0.86rem] leading-[1.9] text-ivory/60">
                   {c.confirmationText}
                 </p>
                 <dl className="mt-8 grid gap-px overflow-hidden border border-white/10 bg-white/10 sm:grid-cols-2">
@@ -225,7 +225,7 @@ export function ConsultationPage({ dates }: { dates: ConsultationDay[] }) {
                     [c.mode, c[confirmation.mode]],
                   ].map(([label, value]) => (
                     <div key={label} className="bg-obsidian p-4">
-                      <dt className="text-[0.48rem] uppercase tracking-[0.14em] text-ivory/30">
+                      <dt className="text-[0.48rem] uppercase tracking-[0.14em] text-ivory/40">
                         {label}
                       </dt>
                       <dd className="mt-1.5 text-[0.78rem] text-ivory/75">{value}</dd>
@@ -261,7 +261,7 @@ export function ConsultationPage({ dates }: { dates: ConsultationDay[] }) {
             ) : (
               <form onSubmit={submit}>
                 <span className="eyebrow">{c.formTitle}</span>
-                <p className="mt-3 max-w-xl text-[0.82rem] leading-[1.9] text-ivory/45">
+                <p className="mt-3 max-w-xl text-[0.82rem] leading-[1.9] text-ivory/55">
                   {c.formText}
                 </p>
 
@@ -319,7 +319,7 @@ export function ConsultationPage({ dates }: { dates: ConsultationDay[] }) {
                 </div>
 
                 <div className="mt-7">
-                  <p className="mb-3 text-[0.58rem] font-semibold uppercase tracking-[0.16em] text-ivory/45">
+                  <p className="mb-3 text-[0.58rem] font-semibold uppercase tracking-[0.16em] text-ivory/55">
                     {c.mode}
                   </p>
                   <div className="grid gap-2 sm:grid-cols-3">
@@ -338,11 +338,11 @@ export function ConsultationPage({ dates }: { dates: ConsultationDay[] }) {
                               : "border-white/10 hover:border-white/25",
                           )}
                         >
-                          <Icon className={cn("h-4 w-4", mode === item ? "text-gold" : "text-ivory/35")} />
+                          <Icon className={cn("h-4 w-4", mode === item ? "text-gold" : "text-ivory/45")} />
                           <span className={cn("text-[0.68rem]", mode === item ? "text-ivory" : "text-ivory/60")}>
                             {c[item]}
                           </span>
-                          <span className="text-[0.5rem] leading-relaxed text-ivory/30">
+                          <span className="text-[0.5rem] leading-relaxed text-ivory/40">
                             {c[`${item}Note` as "boardroomNote" | "videoNote" | "siteNote"]}
                           </span>
                         </button>
@@ -364,7 +364,7 @@ export function ConsultationPage({ dates }: { dates: ConsultationDay[] }) {
                     />
                   </Field>
                   <div>
-                    <p className="mb-2 text-[0.65rem] font-medium uppercase tracking-[0.18em] text-ivory/45">
+                    <p className="mb-2 text-[0.65rem] font-medium uppercase tracking-[0.18em] text-ivory/55">
                       {c.slot}
                     </p>
                     <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
@@ -380,10 +380,10 @@ export function ConsultationPage({ dates }: { dates: ConsultationDay[] }) {
                             className={cn(
                               "h-9 border text-[0.58rem] tabular transition-colors",
                               isBooked
-                                ? "cursor-not-allowed border-white/5 text-ivory/20 line-through"
+                                ? "cursor-not-allowed border-white/5 text-ivory/30 line-through"
                                 : slot === item
                                   ? "border-gold bg-gold text-obsidian"
-                                  : "border-white/10 text-ivory/55 hover:border-gold/40 hover:text-gold",
+                                  : "border-white/10 text-ivory/65 hover:border-gold/40 hover:text-gold",
                             )}
                           >
                             {item}
@@ -391,7 +391,7 @@ export function ConsultationPage({ dates }: { dates: ConsultationDay[] }) {
                         );
                       })}
                     </div>
-                    <p className="mt-2 text-[0.5rem] text-ivory/25">
+                    <p className="mt-2 text-[0.5rem] text-ivory/35">
                       {loadingSlots ? "…" : mode === "boardroom" ? `${booked.length} ${c.booked}` : c.available}
                     </p>
                   </div>
@@ -442,7 +442,7 @@ export function ConsultationPage({ dates }: { dates: ConsultationDay[] }) {
                 <Building2 className="h-5 w-5" />
               </span>
               <h2 className="relative mt-5 font-display text-2xl text-ivory">{c.boardroomTitle}</h2>
-              <p className="relative mt-3 text-[0.76rem] leading-[1.9] text-ivory/45">
+              <p className="relative mt-3 text-[0.76rem] leading-[1.9] text-ivory/55">
                 {c.boardroomText}
               </p>
               <dl className="relative mt-6 space-y-3 border-t border-white/10 pt-5">
@@ -452,7 +452,7 @@ export function ConsultationPage({ dates }: { dates: ConsultationDay[] }) {
                   [c.concierge, "executive@alattar.sa"],
                 ].map(([label, value]) => (
                   <div key={label} className="flex items-center justify-between gap-4">
-                    <dt className="text-[0.52rem] uppercase tracking-[0.14em] text-ivory/30">{label}</dt>
+                    <dt className="text-[0.52rem] uppercase tracking-[0.14em] text-ivory/40">{label}</dt>
                     <dd className="text-end text-[0.68rem] text-ivory/65">{value}</dd>
                   </div>
                 ))}
@@ -469,7 +469,7 @@ export function ConsultationPage({ dates }: { dates: ConsultationDay[] }) {
                     </span>
                     <span>
                       <span className="block text-[0.72rem] text-ivory/75">{step.title}</span>
-                      <span className="mt-1 block text-[0.64rem] leading-relaxed text-ivory/35">
+                      <span className="mt-1 block text-[0.64rem] leading-relaxed text-ivory/45">
                         {step.text}
                       </span>
                     </span>

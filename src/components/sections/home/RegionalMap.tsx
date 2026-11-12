@@ -142,7 +142,7 @@ export function RegionalMap() {
                     <span
                       className={cn(
                         "absolute start-1/2 top-5 -translate-x-1/2 whitespace-nowrap text-[0.55rem] font-medium uppercase tracking-[0.14em] transition-colors",
-                        isActive ? "text-gold" : "text-ivory/35 group-hover:text-ivory/70",
+                        isActive ? "text-gold" : "text-ivory/45 group-hover:text-ivory/70",
                       )}
                     >
                       {l(marker.city)}
@@ -156,13 +156,13 @@ export function RegionalMap() {
               {Object.entries(c.status).map(([status, label]) => (
                 <span
                   key={status}
-                  className="flex items-center gap-2 text-[0.52rem] uppercase tracking-[0.14em] text-ivory/40"
+                  className="flex items-center gap-2 text-[0.52rem] uppercase tracking-[0.14em] text-ivory/50"
                 >
                   <span className={cn("h-1.5 w-1.5 rounded-full", statusTone[status as keyof typeof statusTone])} />
                   {label}
                 </span>
               ))}
-              <span className="ms-auto hidden items-center gap-2 text-[0.52rem] uppercase tracking-[0.14em] text-ivory/30 sm:flex">
+              <span className="ms-auto hidden items-center gap-2 text-[0.52rem] uppercase tracking-[0.14em] text-ivory/40 sm:flex">
                 <MapPin className="h-3 w-3 text-gold" />
                 {c.select}
               </span>
@@ -175,13 +175,13 @@ export function RegionalMap() {
               <h3 className="mt-4 font-display text-[clamp(2rem,3.5vw,3rem)] leading-tight text-ivory">
                 {l(active.city)}
               </h3>
-              <p className="mt-1 text-[0.7rem] uppercase tracking-[0.16em] text-ivory/35">
+              <p className="mt-1 text-[0.7rem] uppercase tracking-[0.16em] text-ivory/45">
                 {l(active.country)}
               </p>
 
               <div className="mt-7 border border-white/10 bg-obsidian/40 p-5">
                 <div className="flex items-center justify-between gap-4">
-                  <span className="text-[0.52rem] uppercase tracking-[0.16em] text-ivory/35">
+                  <span className="text-[0.52rem] uppercase tracking-[0.16em] text-ivory/45">
                     {c.status[active.status]}
                   </span>
                   <span className={cn("h-1.5 w-1.5 rounded-full", statusTone[active.status])} />
@@ -190,7 +190,7 @@ export function RegionalMap() {
                 <div className="mt-5 flex items-end justify-between border-t border-white/10 pt-4">
                   <div>
                     <p className="tabular text-2xl font-light text-gold">{active.projects}</p>
-                    <p className="mt-1 text-[0.5rem] uppercase tracking-[0.14em] text-ivory/30">
+                    <p className="mt-1 text-[0.5rem] uppercase tracking-[0.14em] text-ivory/40">
                       {c.projects}
                     </p>
                   </div>
@@ -209,7 +209,7 @@ export function RegionalMap() {
                 ].map((item) => (
                   <div key={item.label} className="bg-obsidian/60 p-4">
                     <p className="tabular text-lg font-light text-ivory">{item.value}</p>
-                    <p className="mt-1 text-[0.48rem] uppercase tracking-[0.14em] text-ivory/30">
+                    <p className="mt-1 text-[0.48rem] uppercase tracking-[0.14em] text-ivory/40">
                       {item.label}
                     </p>
                   </div>
@@ -217,7 +217,7 @@ export function RegionalMap() {
               </div>
               <Link
                 href="/projects"
-                className="group mt-5 inline-flex items-center gap-3 text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-ivory/55 transition-colors hover:text-gold"
+                className="group mt-5 inline-flex items-center gap-3 text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-ivory/65 transition-colors hover:text-gold"
               >
                 {c.cta}
                 <ArrowUpRight className={cn("h-3.5 w-3.5", isRTL && "-scale-x-100")} />
@@ -227,7 +227,7 @@ export function RegionalMap() {
         </div>
 
         <Reveal delay={120}>
-          <div className="mt-6 flex items-center gap-3 text-[0.58rem] uppercase tracking-[0.16em] text-ivory/25">
+          <div className="mt-6 flex items-center gap-3 text-[0.58rem] uppercase tracking-[0.16em] text-ivory/35">
             <Building2 className="h-3.5 w-3.5 text-gold/70" />
             {locale === "ar"
               ? "محفظة موثقة عبر أربع دول · بيانات محدثة ٢٠٢٦"

@@ -38,12 +38,12 @@ export function CraneExperience() {
             <h2 className="display-title mt-5 text-[clamp(2rem,4.6vw,4.2rem)] text-ivory">
               {t.crane.title}
             </h2>
-            <p className="mt-4 max-w-xl text-sm leading-[1.9] text-ivory/55">
+            <p className="mt-4 max-w-xl text-sm leading-[1.9] text-ivory/65">
               {t.crane.description}
             </p>
           </Reveal>
 
-          <Reveal delay={120} className="hidden items-center gap-3 text-ivory/35 lg:flex">
+          <Reveal delay={120} className="hidden items-center gap-3 text-ivory/45 lg:flex">
             <span className="text-[0.55rem] uppercase tracking-[0.2em]">{t.crane.hint}</span>
             <MoveDown className="h-4 w-4 text-gold/60" />
           </Reveal>
@@ -71,7 +71,7 @@ export function CraneExperience() {
                 <span className="tabular block text-2xl font-light text-gold">
                   {steps[0]?.metric}
                 </span>
-                <span className="mt-1 block text-[0.52rem] uppercase tracking-[0.18em] text-ivory/45">
+                <span className="mt-1 block text-[0.52rem] uppercase tracking-[0.18em] text-ivory/55">
                   {steps[0]?.metricLabel}
                 </span>
               </div>
@@ -120,7 +120,7 @@ export function CraneExperience() {
                   <h3 className="mt-2 font-display text-[1.45rem] leading-tight text-ivory">
                     {step.heading}
                   </h3>
-                  <p className="mt-3 flex-1 text-[0.82rem] leading-[1.85] text-ivory/55">
+                  <p className="mt-3 flex-1 text-[0.82rem] leading-[1.85] text-ivory/65">
                     {step.text}
                   </p>
                   <div className="mt-5 flex items-end justify-between gap-4 border-t border-white/10 pt-4">
@@ -128,7 +128,7 @@ export function CraneExperience() {
                       <span className="tabular block text-xl font-light text-gold">
                         {step.metric}
                       </span>
-                      <span className="mt-1 block text-[0.5rem] uppercase tracking-[0.18em] text-ivory/35">
+                      <span className="mt-1 block text-[0.5rem] uppercase tracking-[0.18em] text-ivory/45">
                         {step.metricLabel}
                       </span>
                     </div>

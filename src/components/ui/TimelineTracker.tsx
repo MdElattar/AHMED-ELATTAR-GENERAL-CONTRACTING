@@ -45,7 +45,7 @@ export function TimelineTracker({
           <span className="text-[0.55rem] font-semibold uppercase tracking-[0.2em] text-gold">
             {label}
           </span>
-          <span className="tabular text-[0.55rem] tracking-[0.12em] text-ivory/35">{counter}</span>
+          <span className="tabular text-[0.55rem] tracking-[0.12em] text-ivory/45">{counter}</span>
         </div>
 
         <div className="relative flex items-start justify-between">
@@ -79,7 +79,7 @@ export function TimelineTracker({
                 <span
                   className={cn(
                     "max-w-16 truncate text-[0.44rem] font-medium uppercase tracking-[0.08em] transition-colors",
-                    isActive ? "text-gold" : "text-ivory/30 group-hover:text-ivory/60",
+                    isActive ? "text-gold" : "text-ivory/40 group-hover:text-ivory/60",
                   )}
                 >
                   {step.title}
@@ -99,7 +99,7 @@ export function TimelineTracker({
           {label}
         </span>
         <span className="h-px w-8 bg-gold/40" />
-        <span className="tabular text-[0.55rem] tracking-[0.12em] text-ivory/35">{counter}</span>
+        <span className="tabular text-[0.55rem] tracking-[0.12em] text-ivory/45">{counter}</span>
       </div>
 
       <div className="relative mt-5">
@@ -138,13 +138,13 @@ export function TimelineTracker({
                   <span
                     className={cn(
                       "block truncate text-[0.72rem] font-medium tracking-wide transition-colors",
-                      isActive ? "text-ivory" : "text-ivory/40 group-hover:text-ivory/70",
+                      isActive ? "text-ivory" : "text-ivory/50 group-hover:text-ivory/70",
                     )}
                   >
                     {step.title}
                   </span>
                   {step.subtitle ? (
-                    <span className="mt-0.5 block truncate text-[0.48rem] uppercase tracking-[0.14em] text-ivory/25">
+                    <span className="mt-0.5 block truncate text-[0.48rem] uppercase tracking-[0.14em] text-ivory/35">
                       {step.subtitle}
                     </span>
                   ) : null}

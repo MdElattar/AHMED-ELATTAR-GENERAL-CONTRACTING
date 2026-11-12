@@ -76,11 +76,11 @@ export function SiteCamera({
           <span className="text-[0.52rem] font-semibold uppercase tracking-[0.16em] text-red-300">
             {c.live}
           </span>
-          <span className="text-[0.5rem] uppercase tracking-[0.14em] text-ivory/30">
+          <span className="text-[0.5rem] uppercase tracking-[0.14em] text-ivory/40">
             {c.camera}
           </span>
         </div>
-        <div className="flex items-center gap-2 text-[0.5rem] uppercase tracking-[0.14em] text-ivory/35">
+        <div className="flex items-center gap-2 text-[0.5rem] uppercase tracking-[0.14em] text-ivory/45">
           <Signal className="h-3 w-3 text-emerald-400/80" />
           {c.signal}
           <span className="tabular text-ivory/60">{now}</span>
@@ -104,7 +104,7 @@ export function SiteCamera({
 
         <div className="absolute inset-x-4 bottom-4">
           <p className="truncate text-sm font-medium text-ivory">{title}</p>
-          <p className="mt-0.5 truncate text-[0.58rem] text-ivory/45">{location}</p>
+          <p className="mt-0.5 truncate text-[0.58rem] text-ivory/55">{location}</p>
           <div className="mt-3 h-1 overflow-hidden bg-white/15">
             <div
               className="h-full bg-gradient-to-r from-gold-dark to-gold"
@@ -131,14 +131,14 @@ export function SiteCamera({
                 "h-7 border px-2.5 text-[0.5rem] uppercase tracking-[0.12em] transition-colors",
                 cam === index
                   ? "border-gold bg-gold text-obsidian"
-                  : "border-white/12 text-ivory/45 hover:border-gold/40 hover:text-gold",
+                  : "border-white/12 text-ivory/55 hover:border-gold/40 hover:text-gold",
               )}
             >
               {item.label}
             </button>
           ))}
         </div>
-        <span className="flex items-center gap-1.5 text-[0.5rem] uppercase tracking-[0.12em] text-ivory/25">
+        <span className="flex items-center gap-1.5 text-[0.5rem] uppercase tracking-[0.12em] text-ivory/35">
           <Radio className="h-3 w-3 text-gold/70" />
           {c.updated} {now}
         </span>

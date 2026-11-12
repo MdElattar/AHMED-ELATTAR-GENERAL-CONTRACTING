@@ -52,7 +52,7 @@ export function Certifications() {
                       <BadgeCheck className="h-5 w-5" />
                     )}
                   </span>
-                  <span className="border border-white/10 px-2.5 py-1 text-[0.52rem] uppercase tracking-[0.14em] text-ivory/35">
+                  <span className="border border-white/10 px-2.5 py-1 text-[0.52rem] uppercase tracking-[0.14em] text-ivory/45">
                     {c.year} {cert.year}
                   </span>
                 </div>
@@ -61,13 +61,13 @@ export function Certifications() {
                   {cert.code}
                 </p>
                 <h3 className="mt-2 text-xl font-medium text-ivory">{l(cert.title)}</h3>
-                <p className="mt-2 text-[0.75rem] leading-relaxed text-ivory/40">
+                <p className="mt-2 text-[0.75rem] leading-relaxed text-ivory/50">
                   {l(cert.issuer)}
                 </p>
 
                 <div className="mt-auto flex items-center justify-between gap-4 border-t border-white/10 pt-5">
-                  <span className="text-[0.62rem] text-ivory/45">{l(cert.note)}</span>
-                  <span className="flex items-center gap-1.5 text-[0.52rem] uppercase tracking-[0.12em] text-ivory/25">
+                  <span className="text-[0.62rem] text-ivory/55">{l(cert.note)}</span>
+                  <span className="flex items-center gap-1.5 text-[0.52rem] uppercase tracking-[0.12em] text-ivory/35">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-400/70" />
                     {c.audit}
                   </span>

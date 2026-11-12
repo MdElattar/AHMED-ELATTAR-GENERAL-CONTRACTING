@@ -82,6 +82,11 @@ const sectionRoutes: Record<string, SectionRoute> = {
     title: "سجل النشاط",
     description: "تتبع كل إجراء إداري على المنصة.",
   },
+  access: {
+    section: "access",
+    title: "تفويض الصلاحيات",
+    description: "منح وسحب الصلاحيات الإدارية بحماية كلمة المرور ورمز البريد.",
+  },
 };
 
 type PageProps = {

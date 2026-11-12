@@ -28,7 +28,7 @@ export function CTA() {
             </h2>
           </Reveal>
           <Reveal delay={170}>
-            <p className="mx-auto mt-6 max-w-xl text-[0.95rem] leading-[1.9] text-ivory/50">
+            <p className="mx-auto mt-6 max-w-xl text-[0.95rem] leading-[1.9] text-ivory/60">
               {t.cta.description}
             </p>
           </Reveal>
@@ -57,7 +57,7 @@ export function CTA() {
           </Reveal>
 
           <Reveal delay={320}>
-            <div className="mt-12 flex flex-col items-center gap-5 text-[0.7rem] text-ivory/40 sm:flex-row sm:gap-8">
+            <div className="mt-12 flex flex-col items-center gap-5 text-[0.7rem] text-ivory/50 sm:flex-row sm:gap-8">
               <a
                 href={`tel:${t.cta.phone.replace(/\s/g, "")}`}
                 className="flex items-center gap-2 transition-colors hover:text-gold"

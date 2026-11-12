@@ -87,7 +87,7 @@ function LiveSiteDetail({ site }: { site: LiveSite }) {
         <div className="absolute inset-x-6 bottom-6">
           <div className="flex items-center gap-3">
             <span className="live-pill">{c.live}</span>
-            <span className="tabular text-[0.55rem] tracking-[0.14em] text-ivory/55">
+            <span className="tabular text-[0.55rem] tracking-[0.14em] text-ivory/65">
               {site.coordinates}
             </span>
           </div>
@@ -100,7 +100,7 @@ function LiveSiteDetail({ site }: { site: LiveSite }) {
           >
             {l(site.project)}
           </h2>
-          <p className="mt-1 flex items-center gap-2 text-[0.65rem] uppercase tracking-[0.16em] text-ivory/45">
+          <p className="mt-1 flex items-center gap-2 text-[0.65rem] uppercase tracking-[0.16em] text-ivory/55">
             <MapPin className="h-3.5 w-3.5 text-gold/70" />
             {l(site.district)}
           </p>
@@ -111,7 +111,7 @@ function LiveSiteDetail({ site }: { site: LiveSite }) {
         <div>
           <div className="flex items-end justify-between gap-4">
             <div>
-              <p className="text-[0.55rem] font-semibold uppercase tracking-[0.2em] text-ivory/40">
+              <p className="text-[0.55rem] font-semibold uppercase tracking-[0.2em] text-ivory/50">
                 {c.progress}
               </p>
               <p className="display-title mt-1 text-5xl text-ivory">
@@ -120,7 +120,7 @@ function LiveSiteDetail({ site }: { site: LiveSite }) {
               </p>
             </div>
             <div className="text-end">
-              <p className="text-[0.55rem] uppercase tracking-[0.16em] text-ivory/35">{c.next}</p>
+              <p className="text-[0.55rem] uppercase tracking-[0.16em] text-ivory/45">{c.next}</p>
               <p className="mt-1 max-w-52 text-[0.72rem] leading-relaxed text-ivory/70">
                 {l(site.nextMilestone)}
               </p>
@@ -142,7 +142,7 @@ function LiveSiteDetail({ site }: { site: LiveSite }) {
           <dl className="grid grid-cols-2 gap-px overflow-hidden border border-white/10 bg-white/10 sm:grid-cols-3">
             {site.specs.map((spec) => (
               <div key={spec.label.en} className="bg-coal/95 p-4">
-                <dt className="text-[0.52rem] uppercase tracking-[0.12em] text-ivory/35">
+                <dt className="text-[0.52rem] uppercase tracking-[0.12em] text-ivory/45">
                   {l(spec.label)}
                 </dt>
                 <dd className="tabular mt-1.5 text-base text-ivory">{spec.value}</dd>
@@ -157,20 +157,20 @@ function LiveSiteDetail({ site }: { site: LiveSite }) {
               <Radio className="h-3.5 w-3.5" />
               {c.telemetry}
             </p>
-            <span className="flex items-center gap-2 text-[0.52rem] uppercase tracking-[0.12em] text-ivory/40">
+            <span className="flex items-center gap-2 text-[0.52rem] uppercase tracking-[0.12em] text-ivory/50">
               <span className="relative flex h-1.5 w-1.5">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-gold/60" />
                 <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-gold" />
               </span>
               {c.lastSync} {formatTime(sync.at, locale)}
-              <span className="text-ivory/25">·</span>
+              <span className="text-ivory/35">·</span>
               {syncLabel}
             </span>
           </div>
           <div className="mt-5 grid grid-cols-2 gap-5">
             {site.telemetry.map((metric) => (
               <div key={metric.label.en}>
-                <p className="text-[0.52rem] uppercase tracking-[0.12em] text-ivory/35">
+                <p className="text-[0.52rem] uppercase tracking-[0.12em] text-ivory/45">
                   {l(metric.label)}
                 </p>
                 <p className="tabular mt-1 text-lg text-ivory">
@@ -218,12 +218,12 @@ function LiveSiteDetail({ site }: { site: LiveSite }) {
                     <span
                       className={cn(
                         "text-[0.72rem]",
-                        milestone.done || isActive ? "text-ivory/80" : "text-ivory/40",
+                        milestone.done || isActive ? "text-ivory/80" : "text-ivory/50",
                       )}
                     >
                       {l(milestone.label)}
                     </span>
-                    <span className="tabular shrink-0 text-[0.55rem] uppercase tracking-[0.1em] text-ivory/30">
+                    <span className="tabular shrink-0 text-[0.55rem] uppercase tracking-[0.1em] text-ivory/40">
                       {milestone.date}
                     </span>
                   </span>
@@ -234,7 +234,7 @@ function LiveSiteDetail({ site }: { site: LiveSite }) {
         </div>
 
         <div className="flex flex-col gap-3 border-t border-white/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-4 text-[0.55rem] uppercase tracking-[0.12em] text-ivory/35">
+          <div className="flex items-center gap-4 text-[0.55rem] uppercase tracking-[0.12em] text-ivory/45">
             <span className="flex items-center gap-1.5">
               <Users className="h-3.5 w-3.5 text-gold/60" />
               {site.specs.find((spec) => spec.label.en === "Workforce")?.value ?? "—"}
@@ -302,7 +302,7 @@ export function LiveSiteGallery() {
                 <Activity className="h-3.5 w-3.5" />
                 {c.liveFeed}
               </p>
-              <p className="mt-1 text-[0.7rem] text-ivory/55">{c.sitesCount}</p>
+              <p className="mt-1 text-[0.7rem] text-ivory/65">{c.sitesCount}</p>
             </div>
           </div>
         </div>
@@ -342,7 +342,7 @@ export function LiveSiteGallery() {
                     />
                     <div className="absolute inset-x-5 top-5 flex items-center justify-between gap-3">
                       <span className="live-pill">{c.live}</span>
-                      <span className="tabular text-[0.52rem] tracking-[0.12em] text-ivory/55">
+                      <span className="tabular text-[0.52rem] tracking-[0.12em] text-ivory/65">
                         {site.coordinates}
                       </span>
                     </div>
@@ -354,7 +354,7 @@ export function LiveSiteGallery() {
                       <h3 className="display-title mt-2 text-[clamp(1.6rem,2.4vw,2.2rem)] text-ivory">
                         {l(site.project)}
                       </h3>
-                      <p className="mt-1 text-[0.62rem] uppercase tracking-[0.16em] text-ivory/45">
+                      <p className="mt-1 text-[0.62rem] uppercase tracking-[0.16em] text-ivory/55">
                         {l(site.district)}
                       </p>
 
@@ -369,7 +369,7 @@ export function LiveSiteGallery() {
                       </div>
 
                       <div className="mt-4 flex items-center justify-between gap-3 border-t border-white/10 pt-3">
-                        <span className="text-[0.52rem] uppercase leading-relaxed tracking-[0.1em] text-ivory/40">
+                        <span className="text-[0.52rem] uppercase leading-relaxed tracking-[0.1em] text-ivory/50">
                           {l(site.nextMilestone)}
                         </span>
                         <span className="inline-flex shrink-0 items-center gap-1.5 text-[0.52rem] font-semibold uppercase tracking-[0.14em] text-gold">

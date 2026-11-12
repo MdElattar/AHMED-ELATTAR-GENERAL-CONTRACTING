@@ -56,7 +56,7 @@ export function PortalShell({
             <h1 className="display-title mt-6 text-[clamp(2.6rem,5vw,4.4rem)] text-ivory">
               {t.portal.noAccessTitle}
             </h1>
-            <p className="mt-5 max-w-md text-[0.9rem] leading-[1.9] text-ivory/50">
+            <p className="mt-5 max-w-md text-[0.9rem] leading-[1.9] text-ivory/60">
               {t.portal.noAccessText}
             </p>
             <Link
@@ -66,7 +66,7 @@ export function PortalShell({
               {t.portal.signIn}
               <ArrowUpRight className={cn("h-4 w-4", isRTL && "-scale-x-100")} />
             </Link>
-            <p className="mt-6 text-[0.62rem] text-ivory/30">{t.auth.secureNote}</p>
+            <p className="mt-6 text-[0.62rem] text-ivory/40">{t.auth.secureNote}</p>
           </div>
         </div>
       </section>
@@ -89,13 +89,13 @@ export function PortalShell({
               <h1 className="display-title mt-5 text-[clamp(2.4rem,5vw,4.6rem)] text-ivory">
                 {title}
               </h1>
-              <p className="mt-3 max-w-2xl text-[0.85rem] leading-relaxed text-ivory/45">
+              <p className="mt-3 max-w-2xl text-[0.85rem] leading-relaxed text-ivory/55">
                 {description}
               </p>
             </div>
             <div className="flex items-center gap-3">
               <span className="hidden text-end sm:block">
-                <span className="block text-[0.62rem] text-ivory/55">{user.name}</span>
+                <span className="block text-[0.62rem] text-ivory/65">{user.name}</span>
                 <span className="mt-0.5 block tabular text-[0.55rem] uppercase tracking-[0.14em] text-gold/70">
                   {user.accountId}
                 </span>
@@ -105,7 +105,7 @@ export function PortalShell({
                 onClick={() => {
                   void signOut().finally(() => router.push("/"));
                 }}
-                className="inline-flex h-10 items-center gap-2 border border-white/15 px-4 text-[0.58rem] font-semibold uppercase tracking-[0.14em] text-ivory/55 transition-colors hover:border-gold/50 hover:text-gold"
+                className="inline-flex h-10 items-center gap-2 border border-white/15 px-4 text-[0.58rem] font-semibold uppercase tracking-[0.14em] text-ivory/65 transition-colors hover:border-gold/50 hover:text-gold"
               >
                 <LogOut className="h-3.5 w-3.5" />
                 {t.nav.signOut}
@@ -124,7 +124,7 @@ export function PortalShell({
                     "inline-flex h-9 items-center gap-2 border px-3.5 text-[0.58rem] font-semibold uppercase tracking-[0.14em] transition-colors",
                     active
                       ? "border-gold bg-gold text-obsidian"
-                      : "border-white/12 text-ivory/50 hover:border-gold/40 hover:text-gold",
+                      : "border-white/12 text-ivory/60 hover:border-gold/40 hover:text-gold",
                   )}
                 >
                   <Icon className="h-3.5 w-3.5" />
@@ -135,7 +135,7 @@ export function PortalShell({
             {isAdmin ? (
               <Link
                 href="/admin"
-                className="inline-flex h-9 items-center gap-2 border border-white/12 px-3.5 text-[0.58rem] font-semibold uppercase tracking-[0.14em] text-ivory/50 transition-colors hover:border-gold/40 hover:text-gold"
+                className="inline-flex h-9 items-center gap-2 border border-white/12 px-3.5 text-[0.58rem] font-semibold uppercase tracking-[0.14em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
               >
                 <ShieldCheck className="h-3.5 w-3.5" />
                 {t.nav.admin}

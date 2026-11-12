@@ -14,6 +14,8 @@ export type SessionPayload = {
   accountId: string;
   phone?: string;
   role: SessionRole;
+  /** Incremented when a role changes or an administrator is revoked. */
+  sessionVersion: number;
   iat: number;
   exp: number;
 };
@@ -27,6 +29,8 @@ export type PublicSessionUser = {
   accountId: string;
   phone?: string;
   role: SessionRole;
+  /** True only for the configured super-admin identity. */
+  primaryAdmin: boolean;
 };
 
 const encoder = new TextEncoder();
@@ -120,6 +124,20 @@ function safeText(value: unknown, max: number) {
   return typeof value === "string" ? value.trim().slice(0, max) : "";
 }
 
+/**
+ * The super-admin identity is deliberately controlled by environment, not by a
+ * mutable database role. Co-admins can manage content and operations, but only
+ * this identity can delegate or revoke administrative access.
+ */
+export function primaryAdminEmail() {
+  return process.env.ADMIN_EMAIL?.trim().toLowerCase() ?? "";
+}
+
+export function isPrimaryAdminEmail(email: string) {
+  const primary = primaryAdminEmail();
+  return Boolean(primary) && email.trim().toLowerCase() === primary;
+}
+
 export async function createSession(
   input: SessionInput,
   ttlSeconds = SESSION_TTL_SECONDS,
@@ -166,6 +184,10 @@ export async function verifySession(token: string): Promise<SessionPayload | nul
     const role = parsed.role;
     const exp = parsed.exp;
     const iat = parsed.iat;
+    const sessionVersion =
+      typeof parsed.sessionVersion === "number" && parsed.sessionVersion >= 0
+        ? Math.floor(parsed.sessionVersion)
+        : 0;
 
     if (!email || !name || !company || !accountId) return null;
     if (!isSessionRole(role)) return null;
@@ -180,6 +202,7 @@ export async function verifySession(token: string): Promise<SessionPayload | nul
       accountId,
       ...(phone ? { phone } : {}),
       role,
+      sessionVersion,
       iat,
       exp,
     };
@@ -196,6 +219,7 @@ export function publicSessionUser(session: SessionPayload): PublicSessionUser {
     accountId: session.accountId,
     ...(session.phone ? { phone: session.phone } : {}),
     role: session.role,
+    primaryAdmin: isPrimaryAdminEmail(session.email),
   };
 }
 

@@ -122,7 +122,7 @@ export function PortalFinancials() {
           <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-gold/30 text-gold">
             <Wallet className="h-5 w-5" />
           </span>
-          <p className="mx-auto mt-5 max-w-md text-[0.8rem] leading-relaxed text-ivory/45">
+          <p className="mx-auto mt-5 max-w-md text-[0.8rem] leading-relaxed text-ivory/55">
             {c.empty}
           </p>
         </div>
@@ -149,7 +149,7 @@ export function PortalFinancials() {
             <span
               className={cn(
                 "text-[0.54rem] uppercase tracking-[0.12em]",
-                item.slug === activeSlug ? "text-ivory/40" : "text-ivory/30",
+                item.slug === activeSlug ? "text-ivory/50" : "text-ivory/40",
               )}
             >
               {l(item.location)}
@@ -172,7 +172,7 @@ export function PortalFinancials() {
               <p className="mt-3 tabular font-display text-2xl leading-none text-ivory">
                 {stat.value}
               </p>
-              <p className="mt-2 text-[0.5rem] uppercase tracking-[0.14em] text-ivory/35">
+              <p className="mt-2 text-[0.5rem] uppercase tracking-[0.14em] text-ivory/45">
                 {stat.label}
               </p>
             </div>
@@ -188,11 +188,11 @@ export function PortalFinancials() {
                 <span className="text-[0.55rem] font-semibold uppercase tracking-[0.16em] text-gold">
                   {c.budget}
                 </span>
-                <span className="tabular text-[0.68rem] text-ivory/45">{formatM(contract)}</span>
+                <span className="tabular text-[0.68rem] text-ivory/55">{formatM(contract)}</span>
               </div>
               <div className="mt-5 space-y-5">
                 <div>
-                  <div className="flex items-center justify-between text-[0.62rem] text-ivory/50">
+                  <div className="flex items-center justify-between text-[0.62rem] text-ivory/60">
                     <span>{c.spent}</span>
                     <span className="tabular">{formatM(spent)}</span>
                   </div>
@@ -204,7 +204,7 @@ export function PortalFinancials() {
                   </div>
                 </div>
                 <div>
-                  <div className="flex items-center justify-between text-[0.62rem] text-ivory/50">
+                  <div className="flex items-center justify-between text-[0.62rem] text-ivory/60">
                     <span>{c.profit}</span>
                     <span className="tabular">{formatM(profit)}</span>
                   </div>
@@ -218,7 +218,7 @@ export function PortalFinancials() {
               </div>
               <div className="mt-6 grid grid-cols-2 gap-4 border-t border-white/10 pt-5">
                 <div>
-                  <p className="text-[0.5rem] uppercase tracking-[0.14em] text-ivory/35">
+                  <p className="text-[0.5rem] uppercase tracking-[0.14em] text-ivory/45">
                     {c.margin}
                   </p>
                   <p className="mt-1 tabular text-xl font-light text-ivory">
@@ -226,7 +226,7 @@ export function PortalFinancials() {
                   </p>
                 </div>
                 <div>
-                  <p className="text-[0.5rem] uppercase tracking-[0.14em] text-ivory/35">
+                  <p className="text-[0.5rem] uppercase tracking-[0.14em] text-ivory/45">
                     {c.paid}
                   </p>
                   <p className="mt-1 tabular text-xl font-light text-ivory">
@@ -253,10 +253,10 @@ export function PortalFinancials() {
                     return (
                       <div key={invoice.number}>
                         <div className="flex items-center justify-between gap-3 text-[0.65rem]">
-                          <span className={complete || current ? "text-ivory/75" : "text-ivory/40"}>
+                          <span className={complete || current ? "text-ivory/75" : "text-ivory/50"}>
                             {String(index + 1).padStart(2, "0")} · {l(invoice.title)}
                           </span>
-                          <span className="tabular text-ivory/35">{invoice.amount}</span>
+                          <span className="tabular text-ivory/45">{invoice.amount}</span>
                         </div>
                         <div className="mt-1.5 h-1.5 overflow-hidden bg-white/10">
                           <div
@@ -276,7 +276,7 @@ export function PortalFinancials() {
                   })}
                 </div>
               ) : (
-                <p className="p-6 text-center text-[0.68rem] text-ivory/35">{c.noInvoices}</p>
+                <p className="p-6 text-center text-[0.68rem] text-ivory/45">{c.noInvoices}</p>
               )}
             </div>
           </Reveal>
@@ -297,7 +297,7 @@ export function PortalFinancials() {
                     <Receipt className="h-4 w-4 shrink-0 text-gold" />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-[0.74rem] text-ivory/75">{l(invoice.title)}</p>
-                      <span className="tabular text-[0.55rem] text-ivory/35">
+                      <span className="tabular text-[0.55rem] text-ivory/45">
                         {invoice.number} · {invoice.date}
                       </span>
                     </div>
@@ -310,7 +310,7 @@ export function PortalFinancials() {
                             ? "text-emerald-300/80"
                             : invoice.status === "due"
                               ? "text-gold"
-                              : "text-ivory/35",
+                              : "text-ivory/45",
                         )}
                       >
                         {c[invoice.status]}
@@ -319,7 +319,7 @@ export function PortalFinancials() {
                     <button
                       type="button"
                       onClick={() => downloadInvoice(invoice, l(project.title))}
-                      className="flex h-8 w-8 shrink-0 items-center justify-center border border-white/12 text-ivory/45 transition-colors hover:border-gold hover:text-gold"
+                      className="flex h-8 w-8 shrink-0 items-center justify-center border border-white/12 text-ivory/55 transition-colors hover:border-gold hover:text-gold"
                       aria-label={`${c.download} ${invoice.number}`}
                     >
                       <ArrowDownToLine className="h-3.5 w-3.5" />
@@ -328,16 +328,16 @@ export function PortalFinancials() {
                 ))}
               </ul>
             ) : (
-              <p className="p-6 text-center text-[0.68rem] text-ivory/35">{c.noInvoices}</p>
+              <p className="p-6 text-center text-[0.68rem] text-ivory/45">{c.noInvoices}</p>
             )}
             <div className="border-t border-white/10 p-4">
-              <p className="text-[0.58rem] leading-relaxed text-ivory/35">{t.auth.secureNote}</p>
+              <p className="text-[0.58rem] leading-relaxed text-ivory/45">{t.auth.secureNote}</p>
             </div>
           </div>
         </Reveal>
       </div>
 
-      <div className="mt-8 flex flex-col items-start justify-between gap-3 border-t border-white/10 pt-5 text-[0.6rem] text-ivory/35 sm:flex-row sm:items-center">
+      <div className="mt-8 flex flex-col items-start justify-between gap-3 border-t border-white/10 pt-5 text-[0.6rem] text-ivory/45 sm:flex-row sm:items-center">
         <span>{l(project.title)}</span>
         <a
           href="/contact"

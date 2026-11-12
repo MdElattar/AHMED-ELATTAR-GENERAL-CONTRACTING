@@ -306,7 +306,7 @@ function StateBlock({
 }) {
   if (loading) {
     return (
-      <div className="flex items-center justify-center gap-2 py-14 text-[0.62rem] text-ivory/35">
+      <div className="flex items-center justify-center gap-2 py-14 text-[0.62rem] text-ivory/45">
         <Loader2 className="h-4 w-4 animate-spin" />
         {loadingText}
       </div>
@@ -317,7 +317,7 @@ function StateBlock({
     return (
       <div className="flex flex-col items-center gap-3 py-14 text-center">
         <AlertCircle className="h-5 w-5 text-red-300/70" />
-        <p className="text-[0.62rem] text-ivory/40">{errorText}</p>
+        <p className="text-[0.62rem] text-ivory/50">{errorText}</p>
         <button
           type="button"
           onClick={onRetry}
@@ -331,7 +331,7 @@ function StateBlock({
   }
 
   if (empty) {
-    return <p className="py-14 text-center text-[0.62rem] text-ivory/30">{emptyText}</p>;
+    return <p className="py-14 text-center text-[0.62rem] text-ivory/40">{emptyText}</p>;
   }
 
   return null;
@@ -381,12 +381,12 @@ export function InquiriesPanel() {
       <div className="flex flex-col justify-between gap-3 border-b border-white/10 px-5 py-4 sm:flex-row sm:items-center">
         <div>
           <h2 className="font-display text-2xl text-ivory">{c.inquiriesTitle}</h2>
-          <p className="mt-1 text-[0.6rem] leading-relaxed text-ivory/35">{c.inquiriesText}</p>
+          <p className="mt-1 text-[0.6rem] leading-relaxed text-ivory/45">{c.inquiriesText}</p>
         </div>
         <button
           type="button"
           onClick={() => void reload()}
-          className="inline-flex h-9 w-fit items-center gap-2 border border-white/12 px-3.5 text-[0.54rem] font-semibold uppercase tracking-[0.12em] text-ivory/50 transition-colors hover:border-gold/40 hover:text-gold"
+          className="inline-flex h-9 w-fit items-center gap-2 border border-white/12 px-3.5 text-[0.54rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
         >
           <RefreshCcw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
           {c.refresh}
@@ -425,11 +425,11 @@ export function InquiriesPanel() {
                     >
                       {c[inquiry.status]}
                     </span>
-                    <span className="text-[0.5rem] uppercase tracking-[0.14em] text-ivory/30">
+                    <span className="text-[0.5rem] uppercase tracking-[0.14em] text-ivory/40">
                       {inquiry.kind === "newsletter" ? c.newsletter : c.contact}
                     </span>
                     {inquiry.reference ? (
-                      <span className="tabular text-[0.5rem] text-ivory/25">
+                      <span className="tabular text-[0.5rem] text-ivory/35">
                         {inquiry.reference}
                       </span>
                     ) : null}
@@ -438,7 +438,7 @@ export function InquiriesPanel() {
                     <UserRound className="h-3.5 w-3.5 text-gold/60" />
                     {inquiry.name || inquiry.email}
                   </p>
-                  <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[0.56rem] text-ivory/35">
+                  <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[0.56rem] text-ivory/45">
                     <span className="inline-flex items-center gap-1.5">
                       <Mail className="h-3 w-3" />
                       {inquiry.email}
@@ -454,19 +454,19 @@ export function InquiriesPanel() {
                     {inquiry.service ? <span>{inquiry.service}</span> : null}
                   </div>
                 </div>
-                <span className="tabular shrink-0 text-[0.52rem] text-ivory/25">
+                <span className="tabular shrink-0 text-[0.52rem] text-ivory/35">
                   {dateFormat.format(new Date(inquiry.createdAt))}
                 </span>
               </div>
 
               {inquiry.message ? (
-                <p className="mt-3 border-s-2 border-gold/30 bg-white/[0.03] px-3 py-2 text-[0.62rem] leading-relaxed text-ivory/55">
+                <p className="mt-3 border-s-2 border-gold/30 bg-white/[0.03] px-3 py-2 text-[0.62rem] leading-relaxed text-ivory/65">
                   {inquiry.message}
                 </p>
               ) : null}
 
               <div className="mt-3 flex flex-wrap items-center gap-1.5">
-                <span className="me-1 text-[0.48rem] uppercase tracking-[0.14em] text-ivory/25">
+                <span className="me-1 text-[0.48rem] uppercase tracking-[0.14em] text-ivory/35">
                   {c.mark}
                 </span>
                 {statusOrder.map((status) => (
@@ -479,7 +479,7 @@ export function InquiriesPanel() {
                       "h-7 px-2.5 text-[0.5rem] font-semibold uppercase tracking-[0.1em] transition-colors disabled:opacity-40",
                       inquiry.status === status
                         ? statusStyles[status]
-                        : "border border-white/10 text-ivory/40 hover:border-gold/40 hover:text-gold",
+                        : "border border-white/10 text-ivory/50 hover:border-gold/40 hover:text-gold",
                     )}
                   >
                     {c[status]}
@@ -515,12 +515,12 @@ export function AuditPanel() {
             <Activity className="h-4 w-4 text-gold" />
             {c.auditTitle}
           </h2>
-          <p className="mt-1 text-[0.6rem] leading-relaxed text-ivory/35">{c.auditText}</p>
+          <p className="mt-1 text-[0.6rem] leading-relaxed text-ivory/45">{c.auditText}</p>
         </div>
         <button
           type="button"
           onClick={() => void reload()}
-          className="inline-flex h-9 w-fit items-center gap-2 border border-white/12 px-3.5 text-[0.54rem] font-semibold uppercase tracking-[0.12em] text-ivory/50 transition-colors hover:border-gold/40 hover:text-gold"
+          className="inline-flex h-9 w-fit items-center gap-2 border border-white/12 px-3.5 text-[0.54rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
         >
           <RefreshCcw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
           {c.refresh}
@@ -552,16 +552,16 @@ export function AuditPanel() {
                 <div className="min-w-0">
                   <p className="truncate text-[0.66rem] text-ivory/75">
                     <span className="text-gold/80">{entry.actor}</span>{" "}
-                    <span className="text-ivory/45">{entry.action}</span>
+                    <span className="text-ivory/55">{entry.action}</span>
                   </p>
-                  <p className="truncate text-[0.52rem] text-ivory/30">
+                  <p className="truncate text-[0.52rem] text-ivory/40">
                     {entry.entity}
                     {entry.entityId ? ` · ${entry.entityId}` : ""}
                     {entry.ip ? ` · ${entry.ip}` : ""}
                   </p>
                 </div>
               </div>
-              <span className="tabular shrink-0 text-[0.52rem] text-ivory/25">
+              <span className="tabular shrink-0 text-[0.52rem] text-ivory/35">
                 {dateFormat.format(new Date(entry.createdAt))}
               </span>
             </li>
@@ -625,12 +625,12 @@ export function ConsultationsPanel() {
             <CalendarDays className="h-4 w-4 text-gold" />
             {c.consultationsTitle}
           </h2>
-          <p className="mt-1 text-[0.6rem] leading-relaxed text-ivory/35">{c.consultationsText}</p>
+          <p className="mt-1 text-[0.6rem] leading-relaxed text-ivory/45">{c.consultationsText}</p>
         </div>
         <button
           type="button"
           onClick={() => void reload()}
-          className="inline-flex h-9 w-fit items-center gap-2 border border-white/12 px-3.5 text-[0.54rem] font-semibold uppercase tracking-[0.12em] text-ivory/50 transition-colors hover:border-gold/40 hover:text-gold"
+          className="inline-flex h-9 w-fit items-center gap-2 border border-white/12 px-3.5 text-[0.54rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
         >
           <RefreshCcw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
           {c.refresh}
@@ -664,7 +664,7 @@ export function ConsultationsPanel() {
                     >
                       {c[record.status]}
                     </span>
-                    <span className="text-[0.5rem] uppercase tracking-[0.12em] text-ivory/30">
+                    <span className="text-[0.5rem] uppercase tracking-[0.12em] text-ivory/40">
                       {c[record.mode]}
                     </span>
                   </div>
@@ -672,7 +672,7 @@ export function ConsultationsPanel() {
                     {record.name}
                     {record.company ? ` · ${record.company}` : ""}
                   </p>
-                  <p className="mt-1 flex flex-wrap items-center gap-3 text-[0.55rem] text-ivory/35">
+                  <p className="mt-1 flex flex-wrap items-center gap-3 text-[0.55rem] text-ivory/45">
                     <span className="flex items-center gap-1">
                       <CalendarDays className="h-3 w-3" />
                       {dateFormat.format(new Date(`${record.date}T12:00:00.000Z`))} · {record.slot}
@@ -686,7 +686,7 @@ export function ConsultationsPanel() {
                       {record.phone}
                     </span>
                   </p>
-                  <p className="mt-2 max-w-2xl text-[0.62rem] leading-relaxed text-ivory/45">
+                  <p className="mt-2 max-w-2xl text-[0.62rem] leading-relaxed text-ivory/55">
                     {record.topic}
                     {record.notes ? ` — ${record.notes}` : ""}
                   </p>
@@ -760,12 +760,12 @@ export function ContractsPanel() {
             <FileSignature className="h-4 w-4 text-gold" />
             {c.contractsTitle}
           </h2>
-          <p className="mt-1 text-[0.6rem] leading-relaxed text-ivory/35">{c.contractsText}</p>
+          <p className="mt-1 text-[0.6rem] leading-relaxed text-ivory/45">{c.contractsText}</p>
         </div>
         <button
           type="button"
           onClick={() => void reload()}
-          className="inline-flex h-9 w-fit items-center gap-2 border border-white/12 px-3.5 text-[0.54rem] font-semibold uppercase tracking-[0.12em] text-ivory/50 transition-colors hover:border-gold/40 hover:text-gold"
+          className="inline-flex h-9 w-fit items-center gap-2 border border-white/12 px-3.5 text-[0.54rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
         >
           <RefreshCcw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
           {c.refresh}
@@ -793,20 +793,20 @@ export function ContractsPanel() {
                     <ShieldCheck className="h-3.5 w-3.5 text-gold" />
                     {record.projectSlug}
                   </p>
-                  <p className="mt-1 text-[0.58rem] text-ivory/40">
+                  <p className="mt-1 text-[0.58rem] text-ivory/50">
                     {c.signedBy}: {record.signerName} · {record.email}
                   </p>
-                  <p className="mt-1 font-mono text-[0.5rem] text-ivory/25">
+                  <p className="mt-1 font-mono text-[0.5rem] text-ivory/35">
                     {c.digest}: {record.contractHash.slice(0, 24)}…
                   </p>
-                  <p className="mt-1.5 text-[0.54rem] text-ivory/35">
+                  <p className="mt-1.5 text-[0.54rem] text-ivory/45">
                     {c.verifiedMilestones}: {record.milestones.length}
                     {record.milestones.length
                       ? ` · ${record.milestones.map((item) => item.titleEn).join(" · ")}`
                       : ` · ${c.noVerifiedMilestones}`}
                   </p>
                 </div>
-                <span className="tabular shrink-0 text-[0.52rem] text-ivory/25">
+                <span className="tabular shrink-0 text-[0.52rem] text-ivory/35">
                   {dateFormat.format(new Date(record.signedAt))}
                 </span>
               </div>
@@ -899,7 +899,7 @@ export function NotificationsPanel() {
             <BellRing className="h-4 w-4 text-gold" />
             {c.notificationsTitle}
           </h2>
-          <p className="mt-1 text-[0.6rem] leading-relaxed text-ivory/35">{c.notificationsText}</p>
+          <p className="mt-1 text-[0.6rem] leading-relaxed text-ivory/45">{c.notificationsText}</p>
         </div>
         <button
           type="button"
@@ -913,14 +913,14 @@ export function NotificationsPanel() {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center gap-2 py-14 text-[0.62rem] text-ivory/35">
+        <div className="flex items-center justify-center gap-2 py-14 text-[0.62rem] text-ivory/45">
           <Loader2 className="h-4 w-4 animate-spin" />
           {c.loading}
         </div>
       ) : error ? (
         <div className="flex flex-col items-center gap-3 py-14 text-center">
           <AlertCircle className="h-5 w-5 text-red-300/70" />
-          <p className="text-[0.62rem] text-ivory/40">{c.error}</p>
+          <p className="text-[0.62rem] text-ivory/50">{c.error}</p>
           <button
             type="button"
             onClick={() => void load()}
@@ -944,16 +944,16 @@ export function NotificationsPanel() {
                     "px-2 py-0.5 text-[0.46rem] font-semibold uppercase tracking-[0.12em]",
                     configured
                       ? "bg-emerald-400/12 text-emerald-300"
-                      : "bg-white/8 text-ivory/35",
+                      : "bg-white/8 text-ivory/45",
                   )}
                 >
                   {configured ? c.configured : c.notConfigured}
                 </span>
               </div>
-              <p className="mt-3 text-[0.52rem] uppercase tracking-[0.12em] text-ivory/30">
+              <p className="mt-3 text-[0.52rem] uppercase tracking-[0.12em] text-ivory/40">
                 {key === "email" ? c.recipient : c.transport}
               </p>
-              <p className="mt-1 truncate text-[0.64rem] text-ivory/55">{detail}</p>
+              <p className="mt-1 truncate text-[0.64rem] text-ivory/65">{detail}</p>
             </div>
           ))}
         </div>
@@ -1036,7 +1036,7 @@ export function MilestonesPanel() {
             <Flag className="h-4 w-4 text-gold" />
             {c.milestonesTitle}
           </h2>
-          <p className="mt-1 text-[0.6rem] leading-relaxed text-ivory/35">{c.milestonesText}</p>
+          <p className="mt-1 text-[0.6rem] leading-relaxed text-ivory/45">{c.milestonesText}</p>
         </div>
         <div className="flex flex-wrap items-end gap-2">
           <label className="block">
@@ -1085,28 +1085,28 @@ export function MilestonesPanel() {
               onChange={(event) => setDraft((current) => ({ ...current, titleAr: event.target.value }))}
               placeholder={c.titleAr}
               dir="rtl"
-              className="h-9 w-full border border-white/12 bg-transparent px-3 text-[0.64rem] text-ivory outline-none placeholder:text-ivory/25 focus:border-gold/50"
+              className="h-9 w-full border border-white/12 bg-transparent px-3 text-[0.64rem] text-ivory outline-none placeholder:text-ivory/35 focus:border-gold/50"
             />
             <input
               value={draft.titleEn}
               onChange={(event) => setDraft((current) => ({ ...current, titleEn: event.target.value }))}
               placeholder={c.titleEn}
               dir="ltr"
-              className="h-9 w-full border border-white/12 bg-transparent px-3 text-[0.64rem] text-ivory outline-none placeholder:text-ivory/25 focus:border-gold/50"
+              className="h-9 w-full border border-white/12 bg-transparent px-3 text-[0.64rem] text-ivory outline-none placeholder:text-ivory/35 focus:border-gold/50"
             />
             <input
               value={draft.dateAr}
               onChange={(event) => setDraft((current) => ({ ...current, dateAr: event.target.value }))}
               placeholder={c.dateAr}
               dir="rtl"
-              className="h-9 w-full border border-white/12 bg-transparent px-3 text-[0.64rem] text-ivory outline-none placeholder:text-ivory/25 focus:border-gold/50"
+              className="h-9 w-full border border-white/12 bg-transparent px-3 text-[0.64rem] text-ivory outline-none placeholder:text-ivory/35 focus:border-gold/50"
             />
             <input
               value={draft.dateEn}
               onChange={(event) => setDraft((current) => ({ ...current, dateEn: event.target.value }))}
               placeholder={c.dateEn}
               dir="ltr"
-              className="h-9 w-full border border-white/12 bg-transparent px-3 text-[0.64rem] text-ivory outline-none placeholder:text-ivory/25 focus:border-gold/50"
+              className="h-9 w-full border border-white/12 bg-transparent px-3 text-[0.64rem] text-ivory outline-none placeholder:text-ivory/35 focus:border-gold/50"
             />
           </div>
           {formError ? (
@@ -1127,7 +1127,7 @@ export function MilestonesPanel() {
                 setDraft(emptyMilestoneDraft);
                 setFormError("");
               }}
-              className="inline-flex h-8 items-center border border-white/12 px-3.5 text-[0.52rem] font-semibold uppercase tracking-[0.12em] text-ivory/50 transition-colors hover:border-gold/40 hover:text-gold"
+              className="inline-flex h-8 items-center border border-white/12 px-3.5 text-[0.52rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
             >
               {c.cancel}
             </button>
@@ -1148,7 +1148,7 @@ export function MilestonesPanel() {
                         ? "border-gold bg-gold text-obsidian"
                         : milestone.status === "current"
                           ? "border-gold text-gold"
-                          : "border-white/15 text-ivory/30",
+                          : "border-white/15 text-ivory/40",
                     )}
                   >
                     {milestone.status === "complete" ? (
@@ -1163,7 +1163,7 @@ export function MilestonesPanel() {
                     <p className="text-[0.72rem] leading-snug text-ivory/80">
                       {l(milestone.title)}
                     </p>
-                    <span className="text-[0.55rem] text-ivory/30">
+                    <span className="text-[0.55rem] text-ivory/40">
                       {l(milestone.date)}
                     </span>
                   </div>
@@ -1178,7 +1178,7 @@ export function MilestonesPanel() {
                         "h-7 px-2.5 text-[0.5rem] font-semibold uppercase tracking-[0.1em] transition-colors",
                         milestone.status === status
                           ? "bg-gold text-obsidian"
-                          : "border border-white/10 text-ivory/40 hover:border-gold/40 hover:text-gold",
+                          : "border border-white/10 text-ivory/50 hover:border-gold/40 hover:text-gold",
                       )}
                     >
                       {c[status]}
@@ -1188,7 +1188,7 @@ export function MilestonesPanel() {
                     type="button"
                     onClick={() => removeMilestone(index)}
                     aria-label={`${c.remove} — ${l(milestone.title)}`}
-                    className="flex h-7 w-7 items-center justify-center border border-white/10 text-ivory/35 transition-colors hover:border-red-400/50 hover:text-red-300"
+                    className="flex h-7 w-7 items-center justify-center border border-white/10 text-ivory/45 transition-colors hover:border-red-400/50 hover:text-red-300"
                   >
                     <Trash2 className="h-3 w-3" />
                   </button>
@@ -1198,10 +1198,10 @@ export function MilestonesPanel() {
           ))}
         </ol>
       ) : (
-        <p className="py-14 text-center text-[0.62rem] text-ivory/30">{c.noMilestones}</p>
+        <p className="py-14 text-center text-[0.62rem] text-ivory/40">{c.noMilestones}</p>
       )}
 
-      <p className="border-t border-white/8 px-5 py-3 text-[0.52rem] text-ivory/25">
+      <p className="border-t border-white/8 px-5 py-3 text-[0.52rem] text-ivory/35">
         {c.milestoneHint}
       </p>
     </div>

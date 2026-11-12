@@ -3,10 +3,11 @@
 import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Check, Eye, EyeOff, ShieldCheck } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Eye, EyeOff, Fingerprint, ShieldCheck } from "lucide-react";
 import { AuthRequestError, useAuth } from "@/components/providers/AuthProvider";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { Field, TextInput } from "@/components/ui/Field";
+import { Logo } from "@/components/ui/Logo";
 import { isSafeInternalPath } from "@/lib/security/validation";
 
 type AuthMode = "sign-in" | "sign-up";
@@ -41,7 +42,7 @@ function authErrorMessage(error: unknown, locale: string, fallback: string) {
 
 export function AuthPage({ mode }: AuthPageProps) {
   const { t, isRTL, locale } = useI18n();
-  const { signIn, signUp, user, ready } = useAuth();
+  const { signIn, signInWithPasskey, signUp, user, ready } = useAuth();
   const router = useRouter();
 
   const [name, setName] = useState("");
@@ -54,6 +55,7 @@ export function AuthPage({ mode }: AuthPageProps) {
   const [terms, setTerms] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [passkeyLoading, setPasskeyLoading] = useState(false);
   const [error, setError] = useState("");
 
   const isSignIn = mode === "sign-in";
@@ -104,6 +106,27 @@ export function AuthPage({ mode }: AuthPageProps) {
     }
   };
 
+  const passkeySignIn = async () => {
+    setError("");
+    setPasskeyLoading(true);
+    try {
+      await signInWithPasskey(email.trim() || undefined, remember);
+      router.push(nextPath());
+    } catch (error) {
+      if (error instanceof AuthRequestError) {
+        setError(authErrorMessage(error, locale, t.auth.invalid));
+      } else {
+        setError(
+          locale === "ar"
+            ? "تعذر إكمال الدخول بالبصمة. تأكد من وجود مفتاح مرور مسجل لهذا الحساب أو استخدم كلمة المرور."
+            : "Passkey sign-in could not be completed. Make sure a passkey is registered for this account, or use your password.",
+        );
+      }
+    } finally {
+      setPasskeyLoading(false);
+    }
+  };
+
   const BackIcon = isRTL ? ArrowRight : ArrowLeft;
   const ForwardIcon = isRTL ? ArrowLeft : ArrowRight;
 
@@ -117,7 +140,8 @@ export function AuthPage({ mode }: AuthPageProps) {
           <div className="pointer-events-none absolute -start-20 bottom-10 h-[420px] w-[420px] rounded-full bg-gold/[0.07] blur-[130px]" />
 
           <div className="relative">
-            <span className="inline-flex items-center gap-2 border border-white/10 px-3 py-1.5 text-[0.52rem] uppercase tracking-[0.18em] text-gold/80">
+            <Logo tone="light" />
+            <span className="mt-5 inline-flex items-center gap-2 border border-white/10 px-3 py-1.5 text-[0.52rem] uppercase tracking-[0.18em] text-gold/80">
               <ShieldCheck className="h-3 w-3" />
               {locale === "ar" ? "بوابة العملاء" : "Client portal"}
             </span>
@@ -128,7 +152,7 @@ export function AuthPage({ mode }: AuthPageProps) {
             <h2 className="display-title mt-6 max-w-md text-[clamp(2.4rem,4vw,3.8rem)] text-ivory">
               {t.auth.asideTitle}
             </h2>
-            <p className="mt-5 max-w-sm text-[0.9rem] leading-[1.9] text-ivory/50">
+            <p className="mt-5 max-w-sm text-[0.9rem] leading-[1.9] text-ivory/60">
               {t.auth.asideText}
             </p>
             <ul className="mt-8 space-y-3">
@@ -145,7 +169,7 @@ export function AuthPage({ mode }: AuthPageProps) {
 
           <Link
             href="/"
-            className="relative inline-flex items-center gap-2 text-[0.6rem] uppercase tracking-[0.18em] text-ivory/40 transition-colors hover:text-gold"
+            className="relative inline-flex items-center gap-2 text-[0.6rem] uppercase tracking-[0.18em] text-ivory/50 transition-colors hover:text-gold"
           >
             <BackIcon className="h-3.5 w-3.5" />
             {t.auth.backHome}
@@ -155,12 +179,10 @@ export function AuthPage({ mode }: AuthPageProps) {
         <div className="relative flex items-center justify-center px-5 py-16 sm:px-10 lg:py-20">
           <div className="relative w-full max-w-md">
             <div className="flex items-center justify-between gap-4 lg:hidden">
-              <span className="text-[0.55rem] uppercase tracking-[0.18em] text-gold/70">
-                {t.portal.eyebrow}
-              </span>
+              <Logo tone="light" />
               <Link
                 href="/"
-                className="inline-flex items-center gap-1.5 text-[0.58rem] uppercase tracking-[0.16em] text-ivory/40 transition-colors hover:text-gold"
+                className="inline-flex items-center gap-1.5 text-[0.58rem] uppercase tracking-[0.16em] text-ivory/50 transition-colors hover:text-gold"
               >
                 <BackIcon className="h-3 w-3" />
                 {t.auth.backHome}
@@ -173,7 +195,7 @@ export function AuthPage({ mode }: AuthPageProps) {
             <h1 className="display-title mt-4 text-[clamp(2.2rem,4vw,3.4rem)] text-ivory">
               {isSignIn ? t.auth.signInTitle : t.auth.signUpTitle}
             </h1>
-            <p className="mt-3 text-[0.82rem] leading-relaxed text-ivory/45">
+            <p className="mt-3 text-[0.82rem] leading-relaxed text-ivory/55">
               {isSignIn ? t.auth.signInSubtitle : t.auth.signUpSubtitle}
             </p>
 
@@ -241,7 +263,7 @@ export function AuthPage({ mode }: AuthPageProps) {
                     type="button"
                     onClick={() => setShowPassword((current) => !current)}
                     aria-label={showPassword ? "Hide password" : "Show password"}
-                    className="absolute end-3 top-1/2 -translate-y-1/2 text-ivory/35 transition-colors hover:text-gold"
+                    className="absolute end-3 top-1/2 -translate-y-1/2 text-ivory/45 transition-colors hover:text-gold"
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
@@ -264,7 +286,7 @@ export function AuthPage({ mode }: AuthPageProps) {
 
               {isSignIn ? (
                 <div className="flex items-center justify-between gap-4">
-                  <label className="flex cursor-pointer items-center gap-2 text-[0.72rem] text-ivory/55">
+                  <label className="flex cursor-pointer items-center gap-2 text-[0.72rem] text-ivory/65">
                     <input
                       type="checkbox"
                       checked={remember}
@@ -275,13 +297,13 @@ export function AuthPage({ mode }: AuthPageProps) {
                   </label>
                   <Link
                     href="/forgot-password"
-                    className="text-[0.68rem] text-ivory/40 underline-offset-4 transition-colors hover:text-gold hover:underline"
+                    className="text-[0.68rem] text-ivory/50 underline-offset-4 transition-colors hover:text-gold hover:underline"
                   >
                     {t.auth.forgot}
                   </Link>
                 </div>
               ) : (
-                <label className="flex cursor-pointer items-start gap-2.5 text-[0.72rem] leading-relaxed text-ivory/55">
+                <label className="flex cursor-pointer items-start gap-2.5 text-[0.72rem] leading-relaxed text-ivory/65">
                   <input
                     type="checkbox"
                     checked={terms}
@@ -317,7 +339,37 @@ export function AuthPage({ mode }: AuthPageProps) {
               </button>
             </form>
 
-            <p className="mt-7 text-center text-[0.75rem] text-ivory/45">
+            {isSignIn ? (
+              <div className="mt-5">
+                <div className="flex items-center gap-3 text-[0.52rem] uppercase tracking-[0.18em] text-ivory/35">
+                  <span className="h-px flex-1 bg-white/10" />
+                  {locale === "ar" ? "أو" : "or"}
+                  <span className="h-px flex-1 bg-white/10" />
+                </div>
+                <button
+                  type="button"
+                  onClick={passkeySignIn}
+                  disabled={passkeyLoading || loading}
+                  className="mt-4 inline-flex h-12 w-full items-center justify-center gap-2.5 border border-gold/30 bg-gold/[0.06] px-6 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-gold transition-colors hover:border-gold/60 hover:bg-gold/[0.1] disabled:cursor-wait disabled:opacity-60"
+                >
+                  <Fingerprint className="h-4 w-4" />
+                  {passkeyLoading
+                    ? locale === "ar"
+                      ? "جارٍ التحقق..."
+                      : "Verifying..."
+                    : locale === "ar"
+                      ? "الدخول بالبصمة أو مفتاح المرور"
+                      : "Sign in with passkey"}
+                </button>
+                <p className="mt-3 text-center text-[0.6rem] leading-relaxed text-ivory/40">
+                  {locale === "ar"
+                    ? "استخدم Face ID أو Touch ID أو مفتاح الأمان المسجل لحسابك."
+                    : "Use Face ID, Touch ID, or the security key registered to your account."}
+                </p>
+              </div>
+            ) : null}
+
+            <p className="mt-7 text-center text-[0.75rem] text-ivory/55">
               {isSignIn ? t.auth.noAccount : t.auth.haveAccount}{" "}
               <Link
                 href={isSignIn ? "/sign-up" : "/sign-in"}

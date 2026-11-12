@@ -21,7 +21,7 @@ export function Stats() {
             titleClassName="max-w-2xl"
           />
           <Reveal delay={200}>
-            <p className="max-w-lg text-[0.92rem] leading-[1.95] text-ivory/50 lg:ms-auto">
+            <p className="max-w-lg text-[0.92rem] leading-[1.95] text-ivory/60 lg:ms-auto">
               {t.stats.description}
             </p>
           </Reveal>
@@ -50,7 +50,7 @@ export function Stats() {
                 <p className="mt-4 max-w-[180px] text-sm leading-relaxed text-ivory/60">
                   {item.label}
                 </p>
-                <p className="mt-2 text-[0.6rem] uppercase tracking-[0.16em] text-ivory/25">
+                <p className="mt-2 text-[0.6rem] uppercase tracking-[0.16em] text-ivory/35">
                   {item.note}
                 </p>
                 <span className="absolute bottom-0 start-0 h-px w-0 bg-gold transition-all duration-700 group-hover:w-full" />
@@ -64,7 +64,7 @@ export function Stats() {
             <Reveal key={item.label} delay={index * 80}>
               <div className="flex items-baseline gap-3">
                 <span className="tabular text-lg text-gold">{item.value}</span>
-                <span className="text-[0.6rem] uppercase tracking-[0.18em] text-ivory/35">
+                <span className="text-[0.6rem] uppercase tracking-[0.18em] text-ivory/45">
                   {item.label}
                 </span>
               </div>

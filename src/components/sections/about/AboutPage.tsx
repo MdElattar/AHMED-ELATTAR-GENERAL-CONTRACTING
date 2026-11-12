@@ -32,7 +32,7 @@ export function AboutPage() {
               </h1>
             </Reveal>
             <Reveal delay={160}>
-              <p className="max-w-lg text-[0.95rem] leading-[1.95] text-ivory/50 lg:ms-auto">
+              <p className="max-w-lg text-[0.95rem] leading-[1.95] text-ivory/60 lg:ms-auto">
                 {t.aboutPage.description}
               </p>
             </Reveal>
@@ -49,7 +49,7 @@ export function AboutPage() {
                 <span className="tabular font-display text-2xl text-ivory sm:text-3xl">
                   {stat.value}
                 </span>
-                <p className="mt-1.5 text-[0.55rem] uppercase tracking-[0.14em] text-ivory/35">
+                <p className="mt-1.5 text-[0.55rem] uppercase tracking-[0.14em] text-ivory/45">
                   {isRTL ? stat.ar : stat.en}
                 </p>
               </div>
@@ -71,12 +71,12 @@ export function AboutPage() {
                   <span className="font-display text-[clamp(5rem,12vw,9rem)] leading-none text-gold/90">
                     ع
                   </span>
-                  <span className="mt-4 text-[0.55rem] uppercase tracking-[0.3em] text-ivory/40">
+                  <span className="mt-4 text-[0.55rem] uppercase tracking-[0.3em] text-ivory/50">
                     Ahmed Elattar · 1987
                   </span>
                 </div>
                 <div className="absolute inset-x-6 bottom-6 flex items-end justify-between gap-4">
-                  <span className="text-[0.52rem] uppercase tracking-[0.16em] text-ivory/30">
+                  <span className="text-[0.52rem] uppercase tracking-[0.16em] text-ivory/40">
                     Riyadh · Saudi Arabia
                   </span>
                   <span className="h-10 w-px bg-gold/40" />
@@ -149,7 +149,7 @@ export function AboutPage() {
                       <span className="h-px flex-1 bg-white/10 transition-colors group-hover:bg-gold/30" />
                     </div>
                     <h3 className="mt-6 font-display text-2xl text-ivory">{value.title}</h3>
-                    <p className="mt-3 text-[0.78rem] leading-relaxed text-ivory/40">
+                    <p className="mt-3 text-[0.78rem] leading-relaxed text-ivory/50">
                       {value.text}
                     </p>
                   </div>
@@ -233,7 +233,7 @@ export function AboutPage() {
                     {milestone.year}
                   </span>
                   <h3 className="mt-5 text-sm font-semibold text-ivory">{l(milestone.title)}</h3>
-                  <p className="mt-2 text-[0.72rem] leading-relaxed text-ivory/40">
+                  <p className="mt-2 text-[0.72rem] leading-relaxed text-ivory/50">
                     {l(milestone.text)}
                   </p>
                 </div>

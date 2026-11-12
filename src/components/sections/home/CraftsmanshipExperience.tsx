@@ -36,11 +36,11 @@ export function CraftsmanshipExperience() {
             <h2 className="display-title mt-5 text-[clamp(2rem,4.4vw,4rem)] text-ivory">
               {c.title}
             </h2>
-            <p className="mt-4 max-w-xl text-sm leading-[1.9] text-ivory/55">
+            <p className="mt-4 max-w-xl text-sm leading-[1.9] text-ivory/65">
               {c.description}
             </p>
           </Reveal>
-          <Reveal delay={120} className="hidden items-center gap-3 text-ivory/35 lg:flex">
+          <Reveal delay={120} className="hidden items-center gap-3 text-ivory/45 lg:flex">
             <span className="text-[0.55rem] uppercase tracking-[0.2em]">{c.hint}</span>
             <MoveDown className="h-4 w-4 text-gold/60" />
           </Reveal>
@@ -94,7 +94,7 @@ export function CraftsmanshipExperience() {
                   <h3 className="mt-3 font-display text-[clamp(1.6rem,3vw,2.5rem)] leading-tight text-ivory">
                     {step.heading}
                   </h3>
-                  <p className="mt-4 max-w-md text-[0.86rem] leading-[1.9] text-ivory/55">
+                  <p className="mt-4 max-w-md text-[0.86rem] leading-[1.9] text-ivory/65">
                     {step.text}
                   </p>
                   <div className="mt-7 flex items-end justify-between gap-6 border-t border-white/10 pt-5">
@@ -102,11 +102,11 @@ export function CraftsmanshipExperience() {
                       <span className="tabular block text-2xl font-light text-gold">
                         {step.metric}
                       </span>
-                      <span className="mt-1 block text-[0.52rem] uppercase tracking-[0.18em] text-ivory/35">
+                      <span className="mt-1 block text-[0.52rem] uppercase tracking-[0.18em] text-ivory/45">
                         {step.metricLabel}
                       </span>
                     </div>
-                    <span className="hidden items-center gap-2 text-[0.52rem] uppercase tracking-[0.14em] text-ivory/30 sm:flex">
+                    <span className="hidden items-center gap-2 text-[0.52rem] uppercase tracking-[0.14em] text-ivory/40 sm:flex">
                       <span className="relative flex h-2 w-2">
                         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-gold/50" />
                         <span className="relative inline-flex h-2 w-2 rounded-full bg-gold" />

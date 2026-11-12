@@ -106,7 +106,7 @@ export function ProjectsExplorer() {
               </h1>
             </Reveal>
             <Reveal delay={180}>
-              <p className="max-w-lg text-[0.95rem] leading-[1.95] text-ivory/50 lg:ms-auto">
+              <p className="max-w-lg text-[0.95rem] leading-[1.95] text-ivory/60 lg:ms-auto">
                 {t.projectsPage.description}
               </p>
             </Reveal>
@@ -120,7 +120,7 @@ export function ProjectsExplorer() {
             ].map((item) => (
               <div key={item.label} className="flex flex-col gap-1">
                 <span className="tabular text-2xl font-light text-ivory">{item.value}</span>
-                <span className="text-[0.55rem] uppercase tracking-[0.16em] text-ivory/30">
+                <span className="text-[0.55rem] uppercase tracking-[0.16em] text-ivory/40">
                   {item.label}
                 </span>
               </div>
@@ -256,10 +256,10 @@ export function ProjectsExplorer() {
                 <span className="border border-gold/30 bg-obsidian/40 px-3 py-1 text-[0.52rem] uppercase tracking-[0.16em] text-gold backdrop-blur">
                   {t.projectsPage.categories[selected.category]}
                 </span>
-                <span className="text-[0.55rem] uppercase tracking-[0.16em] text-ivory/50">
+                <span className="text-[0.55rem] uppercase tracking-[0.16em] text-ivory/60">
                   {selected.year}
                 </span>
-                <span className="text-[0.55rem] uppercase tracking-[0.16em] text-ivory/50">
+                <span className="text-[0.55rem] uppercase tracking-[0.16em] text-ivory/60">
                   {l(selected.location)}
                 </span>
               </div>
@@ -292,7 +292,7 @@ export function ProjectsExplorer() {
               >
                 {l(selected.title)}
               </h2>
-              <p className="mt-4 max-w-3xl text-[0.9rem] leading-[1.9] text-ivory/55">
+              <p className="mt-4 max-w-3xl text-[0.9rem] leading-[1.9] text-ivory/65">
                 {l(selected.summary)}
               </p>
 
@@ -307,7 +307,7 @@ export function ProjectsExplorer() {
                   },
                 ].map((fact) => (
                   <div key={fact.label} className="bg-coal p-4">
-                    <span className="text-[0.5rem] uppercase tracking-[0.16em] text-ivory/30">
+                    <span className="text-[0.5rem] uppercase tracking-[0.16em] text-ivory/40">
                       {fact.label}
                     </span>
                     <p className="mt-1.5 text-[0.78rem] leading-snug text-ivory/75">{fact.value}</p>
@@ -323,7 +323,7 @@ export function ProjectsExplorer() {
                   {selected.scope.map((item) => (
                     <span
                       key={item.en}
-                      className="border border-white/10 px-3 py-1.5 text-[0.62rem] text-ivory/55"
+                      className="border border-white/10 px-3 py-1.5 text-[0.62rem] text-ivory/65"
                     >
                       {l(item)}
                     </span>
@@ -342,7 +342,7 @@ export function ProjectsExplorer() {
                 <button
                   type="button"
                   onClick={() => setSelected(null)}
-                  className="text-[0.6rem] uppercase tracking-[0.16em] text-ivory/40 transition-colors hover:text-gold"
+                  className="text-[0.6rem] uppercase tracking-[0.16em] text-ivory/50 transition-colors hover:text-gold"
                 >
                   {t.common.close}
                 </button>

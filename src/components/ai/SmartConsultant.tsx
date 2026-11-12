@@ -229,7 +229,7 @@ export function SmartConsultant() {
               </span>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[0.8rem] font-semibold leading-tight">{c.name}</p>
-                <p className="flex items-center gap-1.5 text-[0.52rem] uppercase tracking-[0.14em] text-ivory/40">
+                <p className="flex items-center gap-1.5 text-[0.52rem] uppercase tracking-[0.14em] text-ivory/50">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
                   {c.role} · {c.online}
                 </p>
@@ -239,7 +239,7 @@ export function SmartConsultant() {
                 type="button"
                 onClick={() => setOpen(false)}
                 aria-label={c.close}
-                className="flex h-8 w-8 items-center justify-center border border-white/12 text-ivory/50 transition-colors hover:border-gold/50 hover:text-gold"
+                className="flex h-8 w-8 items-center justify-center border border-white/12 text-ivory/60 transition-colors hover:border-gold/50 hover:text-gold"
               >
                 <X className="h-3.5 w-3.5" />
               </button>
@@ -331,14 +331,14 @@ export function SmartConsultant() {
                 </span>
                 <p className="mt-2 font-display text-[clamp(1.35rem,4vw,1.9rem)] leading-none text-ivory">
                   <span className="tabular text-gold">{df.format(result.low / 1_000_000)}</span>
-                  <span className="mx-1.5 text-ivory/25">–</span>
+                  <span className="mx-1.5 text-ivory/35">–</span>
                   <span className="tabular text-gold">{df.format(result.high / 1_000_000)}</span>
-                  <span className="ms-1.5 text-[0.42em] font-sans uppercase tracking-[0.14em] text-ivory/40">
+                  <span className="ms-1.5 text-[0.42em] font-sans uppercase tracking-[0.14em] text-ivory/50">
                     {t.sections.inline.smartMillionSuffix}
                   </span>
                 </p>
 
-                <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-[0.6rem] text-ivory/55">
+                <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-[0.6rem] text-ivory/65">
                   <span>
                     {c.months}: <span className="tabular text-ivory">{nf.format(result.months)}</span>{" "}
                     {c.monthsUnit}
@@ -350,13 +350,13 @@ export function SmartConsultant() {
                 </div>
 
                 <div className="mt-3 border border-gold/25 bg-gold/[0.06] px-3 py-2.5">
-                  <span className="text-[0.5rem] uppercase tracking-[0.16em] text-ivory/40">
+                  <span className="text-[0.5rem] uppercase tracking-[0.16em] text-ivory/50">
                     {c.verdict.label}
                   </span>
                   <p className="mt-0.5 text-[0.72rem] font-semibold text-gold">
                     {c.verdict[verdict]}
                   </p>
-                  <p className="mt-1 text-[0.6rem] leading-relaxed text-ivory/50">
+                  <p className="mt-1 text-[0.6rem] leading-relaxed text-ivory/60">
                     {c.verdictNote[verdict]}
                   </p>
                 </div>
@@ -365,8 +365,8 @@ export function SmartConsultant() {
                   {ESTIMATE_BREAKDOWN.map((part) => (
                     <div key={part.key}>
                       <div className="flex items-center justify-between text-[0.56rem]">
-                        <span className="text-ivory/55">{c.parts[part.key]}</span>
-                        <span className="tabular text-ivory/35">{part.pct}%</span>
+                        <span className="text-ivory/65">{c.parts[part.key]}</span>
+                        <span className="tabular text-ivory/45">{part.pct}%</span>
                       </div>
                       <div className="mt-1 h-[3px] overflow-hidden bg-white/10">
                         <div
@@ -379,7 +379,7 @@ export function SmartConsultant() {
                 </div>
 
                 <div className="mt-4">
-                  <span className="text-[0.5rem] uppercase tracking-[0.18em] text-ivory/40">
+                  <span className="text-[0.5rem] uppercase tracking-[0.18em] text-ivory/50">
                     {c.nextSteps}
                   </span>
                   <ol className="mt-2 space-y-1.5">
@@ -400,12 +400,12 @@ export function SmartConsultant() {
                   <ArrowUpRight className={cn("h-3.5 w-3.5", isRTL && "-scale-x-100")} />
                 </Link>
 
-                <p className="mt-3 text-[0.52rem] leading-relaxed text-ivory/30">{c.disclaimer}</p>
+                <p className="mt-3 text-[0.52rem] leading-relaxed text-ivory/40">{c.disclaimer}</p>
 
                 <button
                   type="button"
                   onClick={reset}
-                  className="mt-2 flex items-center gap-1.5 text-[0.56rem] font-semibold uppercase tracking-[0.14em] text-ivory/40 transition-colors hover:text-gold"
+                  className="mt-2 flex items-center gap-1.5 text-[0.56rem] font-semibold uppercase tracking-[0.14em] text-ivory/50 transition-colors hover:text-gold"
                 >
                   <RefreshCcw className="h-3 w-3" />
                   {c.again}
@@ -414,7 +414,7 @@ export function SmartConsultant() {
             ) : type !== null && budget === null ? (
               <div className="border-t border-white/10 bg-obsidian/60 p-4">
                 {areaConfirmed ? (
-                  <p className="text-[0.58rem] uppercase tracking-[0.16em] text-ivory/40">
+                  <p className="text-[0.58rem] uppercase tracking-[0.16em] text-ivory/50">
                     {c.userArea.replace("{area}", nf.format(area))}
                   </p>
                 ) : (
@@ -422,7 +422,7 @@ export function SmartConsultant() {
                     <div className="flex items-center justify-between gap-3">
                       <label
                         htmlFor="smart-area"
-                        className="text-[0.58rem] font-semibold uppercase tracking-[0.16em] text-ivory/45"
+                        className="text-[0.58rem] font-semibold uppercase tracking-[0.16em] text-ivory/55"
                       >
                         {c.areaHint}
                       </label>

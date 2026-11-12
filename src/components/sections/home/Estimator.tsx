@@ -91,7 +91,7 @@ export function Estimator() {
       "px-3 py-2 text-[0.62rem] font-medium transition-colors",
       active
         ? "bg-gold text-obsidian"
-        : "border border-white/10 text-ivory/45 hover:border-gold/40 hover:text-ivory",
+        : "border border-white/10 text-ivory/55 hover:border-gold/40 hover:text-ivory",
     );
 
   return (
@@ -221,7 +221,7 @@ export function Estimator() {
             <div>
               <span className="eyebrow">{c.estimate}</span>
               <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                <p className="text-[0.58rem] uppercase tracking-[0.16em] text-ivory/35">
+                <p className="text-[0.58rem] uppercase tracking-[0.16em] text-ivory/45">
                   {c.range}
                 </p>
                 <div className="flex items-center gap-1" aria-label={c.currency}>
@@ -235,7 +235,7 @@ export function Estimator() {
                         "h-7 px-2.5 text-[0.5rem] font-semibold uppercase tracking-[0.12em] transition-colors",
                         currency === code
                           ? "bg-gold text-obsidian"
-                          : "border border-white/10 text-ivory/40 hover:border-gold/40 hover:text-gold",
+                          : "border border-white/10 text-ivory/50 hover:border-gold/40 hover:text-gold",
                       )}
                     >
                       {CURRENCY_META[code][locale]}
@@ -245,10 +245,10 @@ export function Estimator() {
               </div>
               <p className="mt-2 font-display text-[clamp(1.9rem,4.4vw,3.6rem)] leading-none text-ivory">
                 <span className="tabular text-gold">{money(result.low, true)}</span>
-                <span className="mx-2 text-ivory/25">–</span>
+                <span className="mx-2 text-ivory/35">–</span>
                 <span className="tabular text-gold">{money(result.high, true)}</span>
               </p>
-              <p className="mt-2 text-[0.5rem] uppercase tracking-[0.14em] text-ivory/25">
+              <p className="mt-2 text-[0.5rem] uppercase tracking-[0.14em] text-ivory/35">
                 {activeRates.source === "live" ? c.liveRates : c.fallbackRates} ·{" "}
                 {formatRateLine(activeRates, locale)}
               </p>
@@ -259,7 +259,7 @@ export function Estimator() {
                   <p className="mt-3 tabular text-xl font-light text-ivory">
                     {nf.format(result.months)}
                   </p>
-                  <p className="mt-1 text-[0.48rem] uppercase tracking-[0.14em] text-ivory/30">
+                  <p className="mt-1 text-[0.48rem] uppercase tracking-[0.14em] text-ivory/40">
                     {c.months}
                   </p>
                 </div>
@@ -268,25 +268,25 @@ export function Estimator() {
                   <p className="mt-3 tabular text-xl font-light text-ivory">
                     {money(result.perM2)}
                   </p>
-                  <p className="mt-1 text-[0.48rem] uppercase tracking-[0.14em] text-ivory/30">
+                  <p className="mt-1 text-[0.48rem] uppercase tracking-[0.14em] text-ivory/40">
                     {c.perM2}
                   </p>
                 </div>
               </div>
 
               <div className="mt-7">
-                <p className="text-[0.55rem] uppercase tracking-[0.16em] text-ivory/35">
+                <p className="text-[0.55rem] uppercase tracking-[0.16em] text-ivory/45">
                   {c.breakdown}
                 </p>
                 <div className="mt-4 space-y-3">
                   {breakdown.map((part) => (
                     <div key={part.key}>
                       <div className="flex items-center justify-between gap-3 text-[0.58rem]">
-                        <span className="text-ivory/55">{c.parts[part.key]}</span>
-                        <span className="ms-auto tabular text-ivory/30">
+                        <span className="text-ivory/65">{c.parts[part.key]}</span>
+                        <span className="ms-auto tabular text-ivory/40">
                           {money((result.total * part.pct) / 100, true)}
                         </span>
-                        <span className="tabular text-ivory/45">{part.pct}%</span>
+                        <span className="tabular text-ivory/55">{part.pct}%</span>
                       </div>
                       <div className="mt-1.5 h-1 overflow-hidden bg-white/10">
                         <div
@@ -301,7 +301,7 @@ export function Estimator() {
             </div>
 
             <div className="mt-8">
-              <p className="text-[0.6rem] leading-relaxed text-ivory/30">{c.disclaimer}</p>
+              <p className="text-[0.6rem] leading-relaxed text-ivory/40">{c.disclaimer}</p>
               <div className="mt-4 flex flex-wrap gap-2">
                 <button
                   type="button"

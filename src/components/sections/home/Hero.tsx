@@ -55,7 +55,7 @@ export function Hero() {
             </h1>
 
             <p
-              className="hero-fade text-shadow-lux mt-7 max-w-lg text-[0.95rem] leading-[1.95] text-ivory/62 sm:text-base"
+              className="hero-fade text-shadow-lux mt-7 max-w-lg text-[0.95rem] leading-[1.95] text-ivory/70 sm:text-base"
               style={{ animationDelay: "460ms" }}
             >
               {t.hero.description}
@@ -90,7 +90,7 @@ export function Hero() {
               <button
                 type="button"
                 onClick={() => scrollTo("#live-sites", -84)}
-                className="group inline-flex h-13 items-center gap-2.5 px-1 text-[0.62rem] font-medium uppercase tracking-[0.16em] text-ivory/55 transition-colors hover:text-gold"
+                className="group inline-flex h-13 items-center gap-2.5 px-1 text-[0.62rem] font-medium uppercase tracking-[0.16em] text-ivory/65 transition-colors hover:text-gold"
               >
                 <span className="relative flex h-1.5 w-1.5">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-gold/60" />
@@ -122,7 +122,7 @@ export function Hero() {
                   <span className="tabular text-xl font-light text-ivory sm:text-2xl">
                     {stat.value}
                   </span>
-                  <span className="text-[0.58rem] uppercase leading-relaxed tracking-[0.14em] text-ivory/35 sm:text-[0.62rem]">
+                  <span className="text-[0.58rem] uppercase leading-relaxed tracking-[0.14em] text-ivory/45 sm:text-[0.62rem]">
                     {stat.label}
                   </span>
                 </div>
@@ -130,13 +130,13 @@ export function Hero() {
             </div>
 
             <div className="flex items-center gap-4 sm:gap-6">
-              <div className="flex items-center gap-3 text-[0.6rem] uppercase tracking-[0.2em] text-ivory/35">
+              <div className="flex items-center gap-3 text-[0.6rem] uppercase tracking-[0.2em] text-ivory/45">
                 <span>{t.hero.scroll}</span>
                 <span className="relative flex h-9 w-5 items-start justify-center rounded-full border border-white/20 p-1">
                   <span className="scroll-dot h-1.5 w-1.5 rounded-full bg-gold" />
                 </span>
               </div>
-              <div className="hidden items-center gap-2 text-[0.58rem] uppercase tracking-[0.18em] text-ivory/25 md:flex">
+              <div className="hidden items-center gap-2 text-[0.58rem] uppercase tracking-[0.18em] text-ivory/35 md:flex">
                 <MoveDown className="h-3 w-3" />
                 24.7136° N · 46.6753° E
               </div>
@@ -146,14 +146,14 @@ export function Hero() {
       </div>
 
       <div className="pointer-events-none absolute end-5 top-1/2 z-10 hidden -translate-y-1/2 items-center gap-3 xl:flex">
-        <span className="vertical-text text-[0.55rem] uppercase tracking-[0.28em] text-ivory/25">
+        <span className="vertical-text text-[0.55rem] uppercase tracking-[0.28em] text-ivory/35">
           {t.hero.vertical}
         </span>
         <span className="h-16 w-px bg-gradient-to-b from-gold/60 to-transparent" />
       </div>
 
       <div className="pointer-events-none absolute start-5 top-1/2 z-10 hidden -translate-y-1/2 xl:flex">
-        <span className="vertical-text text-[0.55rem] uppercase tracking-[0.3em] text-ivory/20">
+        <span className="vertical-text text-[0.55rem] uppercase tracking-[0.3em] text-ivory/30">
           EST. 1987 — RIYADH
         </span>
       </div>

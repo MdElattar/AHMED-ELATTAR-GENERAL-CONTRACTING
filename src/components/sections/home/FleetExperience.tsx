@@ -39,7 +39,7 @@ export function FleetExperience() {
             <h2 className="display-title mt-5 text-[clamp(2rem,4.6vw,4.2rem)] text-ivory">
               {t.fleet.title}
             </h2>
-            <p className="mt-4 max-w-xl text-sm leading-[1.9] text-ivory/55">
+            <p className="mt-4 max-w-xl text-sm leading-[1.9] text-ivory/65">
               {t.fleet.description}
             </p>
           </Reveal>
@@ -51,7 +51,7 @@ export function FleetExperience() {
                   {stat.value}
                   <span className="ms-1 text-[0.65rem] text-gold/60">{stat.suffix}</span>
                 </span>
-                <span className="text-[0.52rem] uppercase tracking-[0.16em] text-ivory/35">
+                <span className="text-[0.52rem] uppercase tracking-[0.16em] text-ivory/45">
                   {stat.label}
                 </span>
               </div>
@@ -98,12 +98,12 @@ export function FleetExperience() {
                     <h3 className="font-display text-[clamp(1.5rem,2.4vw,2rem)] leading-none text-ivory">
                       {machine.name}
                     </h3>
-                    <span className="tabular text-[0.55rem] text-ivory/45">0{index + 1}</span>
+                    <span className="tabular text-[0.55rem] text-ivory/55">0{index + 1}</span>
                   </div>
                 </div>
 
                 <div className="flex flex-1 flex-col p-5 sm:p-6">
-                  <p className="flex-1 text-[0.82rem] leading-[1.85] text-ivory/55">
+                  <p className="flex-1 text-[0.82rem] leading-[1.85] text-ivory/65">
                     {l(machine.description)}
                   </p>
 
@@ -121,7 +121,7 @@ export function FleetExperience() {
                         <span className="tabular text-base font-light text-ivory">
                           {spec.value}
                         </span>
-                        <span className="text-[0.48rem] uppercase tracking-[0.16em] text-ivory/30">
+                        <span className="text-[0.48rem] uppercase tracking-[0.16em] text-ivory/40">
                           {spec.label}
                         </span>
                       </div>
@@ -134,7 +134,7 @@ export function FleetExperience() {
         </div>
 
         <Reveal delay={80} className="mt-10 flex flex-wrap items-center justify-between gap-5 border-t border-white/10 pt-6">
-          <span className="flex items-center gap-3 text-[0.55rem] uppercase tracking-[0.14em] text-ivory/35">
+          <span className="flex items-center gap-3 text-[0.55rem] uppercase tracking-[0.14em] text-ivory/45">
             <Gauge className="h-4 w-4 text-gold" />
             {c.liveNote}
           </span>

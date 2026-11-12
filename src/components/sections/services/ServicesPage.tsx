@@ -59,7 +59,7 @@ export function ServicesPage() {
               </h1>
             </Reveal>
             <Reveal delay={160}>
-              <p className="max-w-lg text-[0.95rem] leading-[1.95] text-ivory/50 lg:ms-auto">
+              <p className="max-w-lg text-[0.95rem] leading-[1.95] text-ivory/60 lg:ms-auto">
                 {t.servicesPage.description}
               </p>
             </Reveal>
@@ -90,7 +90,7 @@ export function ServicesPage() {
                       >
                         <div className="flex items-start justify-between gap-4">
                           <Icon className="h-5 w-5 text-gold/70" />
-                          <span className="tabular text-[0.55rem] text-ivory/25">
+                          <span className="tabular text-[0.55rem] text-ivory/35">
                             {service.number}
                           </span>
                         </div>
@@ -98,7 +98,7 @@ export function ServicesPage() {
                           <h2 className="font-display text-[1.35rem] leading-tight text-ivory transition-colors group-hover:text-gold">
                             {l(service.title)}
                           </h2>
-                          <p className="mt-2 text-[0.68rem] leading-relaxed text-ivory/35">
+                          <p className="mt-2 text-[0.68rem] leading-relaxed text-ivory/45">
                             {l(service.tagline)}
                           </p>
                         </div>
@@ -170,7 +170,7 @@ export function ServicesPage() {
                     <div className="relative aspect-[4/3] overflow-hidden bg-obsidian">
                       <ProjectArt variant={service.art} className="h-full w-full" />
                       <div className="absolute inset-0 bg-gradient-to-t from-obsidian/90 via-obsidian/10 to-transparent" />
-                      <span className="absolute start-5 top-4 tabular font-display text-[clamp(3rem,6vw,5.5rem)] leading-none text-ivory/25">
+                      <span className="absolute start-5 top-4 tabular font-display text-[clamp(3rem,6vw,5.5rem)] leading-none text-ivory/35">
                         {service.number}
                       </span>
                       <div className="absolute inset-x-5 bottom-5 flex items-end justify-between gap-4">
@@ -280,7 +280,7 @@ export function ServicesPage() {
                 </h2>
               </Reveal>
               <Reveal delay={160}>
-                <p className="mt-5 max-w-md text-[0.9rem] leading-[1.9] text-ivory/45">
+                <p className="mt-5 max-w-md text-[0.9rem] leading-[1.9] text-ivory/55">
                   {t.sections.inline.servicesMethodText}
                 </p>
               </Reveal>
@@ -294,7 +294,7 @@ export function ServicesPage() {
                     <h3 className="mt-5 font-display text-xl text-ivory">
                       {step.title[locale]}
                     </h3>
-                    <p className="mt-2 text-[0.75rem] leading-relaxed text-ivory/40">
+                    <p className="mt-2 text-[0.75rem] leading-relaxed text-ivory/50">
                       {step.text[locale]}
                     </p>
                   </div>

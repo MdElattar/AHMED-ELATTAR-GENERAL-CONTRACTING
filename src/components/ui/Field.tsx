@@ -35,7 +35,7 @@ export function Field({
         htmlFor={htmlFor}
         className={cn(
           "flex items-center gap-1.5 text-[0.65rem] font-medium uppercase tracking-[0.18em]",
-          tone === "light" ? "text-ink/55" : "text-ivory/45",
+          tone === "light" ? "text-ink/55" : "text-ivory/55",
         )}
       >
         {label}
@@ -47,7 +47,7 @@ export function Field({
           {error}
         </p>
       ) : hint ? (
-        <p className={cn("text-[0.68rem]", tone === "light" ? "text-ink/40" : "text-ivory/30")}>
+        <p className={cn("text-[0.68rem]", tone === "light" ? "text-ink/40" : "text-ivory/40")}>
           {hint}
         </p>
       ) : null}

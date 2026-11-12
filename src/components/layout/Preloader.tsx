@@ -94,7 +94,7 @@ export function Preloader() {
             style={{ width: `${progress}%` }}
           />
         </div>
-        <div className="mt-4 flex w-[180px] items-center justify-between text-[0.58rem] uppercase tracking-[0.24em] text-ivory/35">
+        <div className="mt-4 flex w-[180px] items-center justify-between text-[0.58rem] uppercase tracking-[0.24em] text-ivory/45">
           {ready ? (
             <span>{t.common.loading}</span>
           ) : (

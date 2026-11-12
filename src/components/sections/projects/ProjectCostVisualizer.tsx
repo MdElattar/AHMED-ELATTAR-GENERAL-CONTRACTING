@@ -128,11 +128,11 @@ export function ProjectCostVisualizer({
                 ))}
               </svg>
               <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
-                <span className="max-w-[8rem] text-[0.5rem] uppercase tracking-[0.16em] text-ivory/35">
+                <span className="max-w-[8rem] text-[0.5rem] uppercase tracking-[0.16em] text-ivory/45">
                   {c.parts[active.key]}
                 </span>
                 <span className="mt-1 font-display text-4xl text-gold">{active.pct}%</span>
-                <span className="mt-1 text-[0.62rem] text-ivory/55">{money(activeAmount)}</span>
+                <span className="mt-1 text-[0.62rem] text-ivory/65">{money(activeAmount)}</span>
               </div>
             </div>
 
@@ -143,7 +143,7 @@ export function ProjectCostVisualizer({
                 { label: c.perM2, value: areaSqm ? money(totalSar / areaSqm) : "—" },
               ].map((fact) => (
                 <div key={fact.label} className="bg-obsidian p-3">
-                  <p className="text-[0.44rem] uppercase tracking-[0.12em] text-ivory/30">
+                  <p className="text-[0.44rem] uppercase tracking-[0.12em] text-ivory/40">
                     {fact.label}
                   </p>
                   <p className="mt-1 text-[0.64rem] text-ivory/70">{fact.value}</p>
@@ -153,7 +153,7 @@ export function ProjectCostVisualizer({
           </div>
 
           <div className="bg-obsidian p-6 sm:p-10">
-            <div className="flex items-center gap-2 text-[0.55rem] uppercase tracking-[0.16em] text-ivory/35">
+            <div className="flex items-center gap-2 text-[0.55rem] uppercase tracking-[0.16em] text-ivory/45">
               <Layers3 className="h-3.5 w-3.5 text-gold" />
               {c.selected}
             </div>
@@ -193,7 +193,7 @@ export function ProjectCostVisualizer({
                       </span>
                     </span>
                     <span className="shrink-0 text-end">
-                      <span className="block text-[0.66rem] text-ivory/45">{money((totalSar * part.pct) / 100)}</span>
+                      <span className="block text-[0.66rem] text-ivory/55">{money((totalSar * part.pct) / 100)}</span>
                       <span className="block font-display text-xl text-gold">{part.pct}%</span>
                     </span>
                   </button>
@@ -202,7 +202,7 @@ export function ProjectCostVisualizer({
             </div>
 
             <div className="mt-6 flex flex-col gap-4 border-t border-white/10 pt-5 sm:flex-row sm:items-center sm:justify-between">
-              <p className="max-w-sm text-[0.58rem] leading-relaxed text-ivory/30">{c.note}</p>
+              <p className="max-w-sm text-[0.58rem] leading-relaxed text-ivory/40">{c.note}</p>
               <button
                 type="button"
                 onClick={() => setProposalOpen(true)}

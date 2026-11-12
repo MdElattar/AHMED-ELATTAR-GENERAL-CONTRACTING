@@ -6,13 +6,17 @@ import {
   ArrowUpRight,
   Bell,
   Check,
+  Fingerprint,
   Globe2,
   KeyRound,
+  Loader2,
+  Plus,
   Save,
   ShieldCheck,
+  Trash2,
   UserRound,
 } from "lucide-react";
-import { isAdminUser, useAuth } from "@/components/providers/AuthProvider";
+import { isAdminUser, useAuth, type PortalPasskey } from "@/components/providers/AuthProvider";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { PortalShell } from "@/components/sections/portal/PortalShell";
 import { Field, TextInput } from "@/components/ui/Field";
@@ -58,6 +62,19 @@ const copy = {
     rateLimited: "محاولات كثيرة. انتظر قليلاً ثم أعد المحاولة.",
     admin: "لوحة الإدارة",
     adminText: "لديك صلاحية إدارية على مساحة العمل.",
+    passkeys: "مفاتيح المرور والبصمة",
+    passkeysText: "ادخل دون كلمة مرور باستخدام Face ID أو Touch ID أو مفتاح أمان. يمكنك تسجيل أكثر من جهاز.",
+    addPasskey: "إضافة مفتاح مرور",
+    addingPasskey: "جارٍ التسجيل...",
+    noPasskeys: "لا توجد مفاتيح مرور مسجلة بعد.",
+    passkeyAdded: "تم تسجيل مفتاح المرور بنجاح.",
+    passkeyRemoved: "تم حذف مفتاح المرور.",
+    passkeyError: "تعذر إكمال العملية. حاول مرة أخرى.",
+    passkeyRemoveConfirm: "حذف مفتاح المرور هذا؟ لن تتمكن من استخدامه لتسجيل الدخول.",
+    passkeyDevice: "جهاز موثوق",
+    passkeyLastUsed: "آخر استخدام",
+    passkeyNeverUsed: "لم يُستخدم بعد",
+    passkeyCreated: "تاريخ التسجيل",
   },
   en: {
     title: "Account settings",
@@ -97,6 +114,19 @@ const copy = {
     rateLimited: "Too many attempts. Please wait and try again.",
     admin: "Admin panel",
     adminText: "You have administrative access to the workspace.",
+    passkeys: "Passkeys & biometrics",
+    passkeysText: "Sign in without a password using Face ID, Touch ID, or a security key. You can register more than one device.",
+    addPasskey: "Add passkey",
+    addingPasskey: "Registering...",
+    noPasskeys: "No passkeys registered yet.",
+    passkeyAdded: "Passkey registered successfully.",
+    passkeyRemoved: "Passkey removed.",
+    passkeyError: "The operation could not be completed. Please try again.",
+    passkeyRemoveConfirm: "Remove this passkey? You will no longer be able to use it to sign in.",
+    passkeyDevice: "Trusted device",
+    passkeyLastUsed: "Last used",
+    passkeyNeverUsed: "Not used yet",
+    passkeyCreated: "Registered",
   },
 };
 
@@ -104,7 +134,13 @@ const PREFERENCES_KEY = "ahmed-elattar-portal-preferences";
 
 export function PortalSettings() {
   const { locale, toggleLocale } = useI18n();
-  const { user, updateProfile } = useAuth();
+  const {
+    user,
+    updateProfile,
+    listPasskeys,
+    registerPasskey,
+    removePasskey,
+  } = useAuth();
   const c = copy[locale];
   const [name, setName] = useState(user?.name ?? "");
   const [email, setEmail] = useState(user?.email ?? "");
@@ -124,6 +160,11 @@ export function PortalSettings() {
   const [passwordMessage, setPasswordMessage] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [passwordSaving, setPasswordSaving] = useState(false);
+  const [passkeys, setPasskeys] = useState<PortalPasskey[]>([]);
+  const [passkeysLoading, setPasskeysLoading] = useState(true);
+  const [passkeyBusy, setPasskeyBusy] = useState(false);
+  const [passkeyMessage, setPasskeyMessage] = useState("");
+  const [passkeyError, setPasskeyError] = useState("");
 
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
@@ -153,6 +194,26 @@ export function PortalSettings() {
     setPhone(user.phone ?? "");
   }, [user]);
   /* eslint-enable react-hooks/set-state-in-effect */
+
+  useEffect(() => {
+    if (!user?.email) return;
+    let cancelled = false;
+
+    listPasskeys()
+      .then((items) => {
+        if (!cancelled) setPasskeys(items);
+      })
+      .catch(() => {
+        if (!cancelled) setPasskeyError(c.passkeyError);
+      })
+      .finally(() => {
+        if (!cancelled) setPasskeysLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [c.passkeyError, listPasskeys, user?.email]);
 
   useEffect(() => {
     return () => {
@@ -253,6 +314,49 @@ export function PortalSettings() {
 
   const isAdmin = isAdminUser(user);
 
+  const addPasskey = async () => {
+    setPasskeyMessage("");
+    setPasskeyError("");
+    setPasskeyBusy(true);
+
+    try {
+      const passkey = await registerPasskey();
+      setPasskeys((current) => [
+        passkey,
+        ...current.filter((item) => item.credentialId !== passkey.credentialId),
+      ]);
+      setPasskeyMessage(c.passkeyAdded);
+    } catch {
+      setPasskeyError(c.passkeyError);
+    } finally {
+      setPasskeyBusy(false);
+    }
+  };
+
+  const deletePasskey = async (credentialId: string) => {
+    if (!window.confirm(c.passkeyRemoveConfirm)) return;
+    setPasskeyMessage("");
+    setPasskeyError("");
+
+    try {
+      await removePasskey(credentialId);
+      setPasskeys((current) =>
+        current.filter((item) => item.credentialId !== credentialId),
+      );
+      setPasskeyMessage(c.passkeyRemoved);
+    } catch {
+      setPasskeyError(c.passkeyError);
+    }
+  };
+
+  const formatPasskeyDate = (value: string) => {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return new Intl.DateTimeFormat(locale === "ar" ? "ar-SA" : "en-US", {
+      dateStyle: "medium",
+    }).format(date);
+  };
+
   return (
     <PortalShell title={c.title} description={c.description}>
       <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
@@ -263,7 +367,7 @@ export function PortalSettings() {
                 <UserRound className="h-4 w-4" />
                 {c.profile}
               </span>
-              <span className="tabular text-[0.55rem] uppercase tracking-[0.14em] text-ivory/30">
+              <span className="tabular text-[0.55rem] uppercase tracking-[0.14em] text-ivory/40">
                 {c.accountId} · {user?.accountId}
               </span>
             </div>
@@ -285,7 +389,7 @@ export function PortalSettings() {
                   readOnly
                   aria-readonly="true"
                   title={c.emailLocked}
-                  className="cursor-not-allowed bg-white/[0.03] text-ivory/45"
+                  className="cursor-not-allowed bg-white/[0.03] text-ivory/55"
                   required
                 />
               </Field>
@@ -309,7 +413,7 @@ export function PortalSettings() {
               <span
                 role={saveError ? "alert" : "status"}
                 aria-live="polite"
-                className={cn("text-[0.58rem]", saveError ? "text-red-300" : "text-ivory/35")}
+                className={cn("text-[0.58rem]", saveError ? "text-red-300" : "text-ivory/45")}
               >
                 {saveError || (saved ? c.saved : c.preferencesNotice)}
               </span>
@@ -370,7 +474,7 @@ export function PortalSettings() {
                 <Globe2 className="h-4 w-4" />
                 {c.language}
               </div>
-              <p className="mt-3 text-[0.7rem] leading-relaxed text-ivory/45">{c.languageText}</p>
+              <p className="mt-3 text-[0.7rem] leading-relaxed text-ivory/55">{c.languageText}</p>
               <div className="mt-4 flex items-center justify-between gap-3">
                 <span className="text-[0.72rem] font-medium text-ivory">
                   {locale === "ar" ? "العربية" : "English"}
@@ -378,7 +482,7 @@ export function PortalSettings() {
                 <button
                   type="button"
                   onClick={toggleLocale}
-                  className="inline-flex h-9 items-center gap-2 border border-white/12 px-3 text-[0.58rem] font-semibold uppercase tracking-[0.12em] text-ivory/55 transition-colors hover:border-gold/50 hover:text-gold"
+                  className="inline-flex h-9 items-center gap-2 border border-white/12 px-3 text-[0.58rem] font-semibold uppercase tracking-[0.12em] text-ivory/65 transition-colors hover:border-gold/50 hover:text-gold"
                 >
                   {c.switchLanguage}
                   <Globe2 className="h-3.5 w-3.5" />
@@ -398,7 +502,7 @@ export function PortalSettings() {
                     <ShieldCheck className="h-4 w-4 text-gold" />
                     {c.admin}
                   </p>
-                  <p className="mt-1 text-[0.62rem] text-ivory/45">{c.adminText}</p>
+                  <p className="mt-1 text-[0.62rem] text-ivory/55">{c.adminText}</p>
                 </div>
                 <ArrowUpRight className="h-4 w-4 text-gold transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
               </Link>
@@ -455,7 +559,7 @@ export function PortalSettings() {
               aria-live="polite"
               className={cn(
                 "text-[0.58rem]",
-                passwordError ? "text-red-300" : "text-ivory/35",
+                passwordError ? "text-red-300" : "text-ivory/45",
               )}
             >
               {passwordError || passwordMessage || c.preferencesNotice}
@@ -470,6 +574,99 @@ export function PortalSettings() {
             </button>
           </div>
         </form>
+      </Reveal>
+
+      <Reveal delay={140}>
+        <section className="mt-6 border border-white/10 bg-coal">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-6 py-4">
+            <div className="flex items-center gap-2 text-[0.55rem] font-semibold uppercase tracking-[0.16em] text-gold">
+              <Fingerprint className="h-4 w-4" />
+              {c.passkeys}
+            </div>
+            <button
+              type="button"
+              onClick={addPasskey}
+              disabled={passkeyBusy}
+              className="inline-flex h-10 items-center gap-2 border border-gold/35 bg-gold/[0.07] px-4 text-[0.6rem] font-semibold uppercase tracking-[0.14em] text-gold transition-colors hover:border-gold/60 hover:bg-gold/[0.12] disabled:cursor-wait disabled:opacity-60"
+            >
+              {passkeyBusy ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Plus className="h-3.5 w-3.5" />
+              )}
+              {passkeyBusy ? c.addingPasskey : c.addPasskey}
+            </button>
+          </div>
+
+          <div className="p-6">
+            <p className="max-w-2xl text-[0.72rem] leading-relaxed text-ivory/55">
+              {c.passkeysText}
+            </p>
+
+            {passkeysLoading ? (
+              <div className="mt-5 flex items-center gap-2 text-[0.65rem] text-ivory/45">
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-gold" />
+                {locale === "ar" ? "جارٍ التحميل..." : "Loading..."}
+              </div>
+            ) : passkeys.length === 0 ? (
+              <div className="mt-5 flex items-center gap-3 border border-dashed border-white/10 px-4 py-5 text-[0.68rem] text-ivory/45">
+                <Fingerprint className="h-5 w-5 text-white/20" />
+                {c.noPasskeys}
+              </div>
+            ) : (
+              <ul className="mt-5 divide-y divide-white/8 border border-white/10">
+                {passkeys.map((passkey) => (
+                  <li
+                    key={passkey.credentialId}
+                    className="flex flex-wrap items-center justify-between gap-4 px-4 py-4"
+                  >
+                    <div className="flex min-w-0 items-center gap-3">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center border border-gold/20 bg-gold/[0.05] text-gold">
+                        <Fingerprint className="h-4 w-4" />
+                      </span>
+                      <div className="min-w-0">
+                        <p className="truncate text-[0.72rem] font-medium text-ivory">
+                          {passkey.deviceType === "multiDevice"
+                            ? locale === "ar"
+                              ? "مفتاح مرور متزامن"
+                              : "Synced passkey"
+                            : c.passkeyDevice}
+                        </p>
+                        <p className="mt-1 text-[0.58rem] text-ivory/45">
+                          {c.passkeyCreated}: {formatPasskeyDate(passkey.createdAt)}
+                          {" · "}
+                          {c.passkeyLastUsed}:{" "}
+                          {passkey.lastUsedAt
+                            ? formatPasskeyDate(passkey.lastUsedAt)
+                            : c.passkeyNeverUsed}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => deletePasskey(passkey.credentialId)}
+                      className="inline-flex h-9 items-center gap-1.5 border border-white/10 px-3 text-[0.56rem] uppercase tracking-[0.12em] text-ivory/45 transition-colors hover:border-red-400/35 hover:text-red-300"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      {locale === "ar" ? "حذف" : "Remove"}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <p
+              role={passkeyError ? "alert" : "status"}
+              aria-live="polite"
+              className={cn(
+                "mt-4 text-[0.6rem]",
+                passkeyError ? "text-red-300" : "text-ivory/45",
+              )}
+            >
+              {passkeyError || passkeyMessage || "\u00A0"}
+            </p>
+          </div>
+        </section>
       </Reveal>
     </PortalShell>
   );

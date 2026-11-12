@@ -22,7 +22,7 @@ export function PromoBanner() {
           </span>
           <div>
             <p className="text-sm font-medium text-ivory">{l(content.promoTitle)}</p>
-            <p className="mt-1 max-w-2xl text-[0.72rem] leading-relaxed text-ivory/45">
+            <p className="mt-1 max-w-2xl text-[0.72rem] leading-relaxed text-ivory/55">
               {l(content.promoText)}
             </p>
           </div>

@@ -30,7 +30,7 @@ export function RouteError({
           <h1 className="display-title mt-7 text-[clamp(2.6rem,5.4vw,5rem)] text-ivory">
             {t.errors.generic}
           </h1>
-          <p className="mt-5 max-w-md text-[0.9rem] leading-[1.9] text-ivory/45">
+          <p className="mt-5 max-w-md text-[0.9rem] leading-[1.9] text-ivory/55">
             {locale === "ar"
               ? "لم نفقد بياناتك. أعد المحاولة أو عد إلى الصفحة الرئيسية."
               : "Your data is safe. Try again or return to the homepage."}

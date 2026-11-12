@@ -90,7 +90,7 @@ export function ProposalDialog({
         >
           {c.title}
         </h2>
-        <p className="mt-3 max-w-2xl text-[0.82rem] leading-[1.9] text-ivory/50">{c.description}</p>
+        <p className="mt-3 max-w-2xl text-[0.82rem] leading-[1.9] text-ivory/60">{c.description}</p>
         {projectTitle ? (
           <p className="mt-3 text-[0.62rem] uppercase tracking-[0.16em] text-gold/80">
             {projectTitle}
@@ -171,7 +171,7 @@ export function ProposalDialog({
         ) : null}
 
         <div className="mt-8 flex flex-col gap-4 border-t border-white/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
-          <p className="flex max-w-sm items-start gap-2 text-[0.62rem] leading-relaxed text-ivory/35">
+          <p className="flex max-w-sm items-start gap-2 text-[0.62rem] leading-relaxed text-ivory/45">
             <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gold/60" />
             {c.note}
           </p>

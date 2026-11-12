@@ -243,15 +243,15 @@ export function PortalContract({ project }: { project: WorkspaceProject }) {
       </div>
 
       <div className="p-6">
-        <p className="text-[0.68rem] leading-relaxed text-ivory/40">{c.text}</p>
+        <p className="text-[0.68rem] leading-relaxed text-ivory/50">{c.text}</p>
 
         <dl className="mt-4 grid gap-px overflow-hidden border border-white/10 bg-white/10 sm:grid-cols-2">
           <div className="bg-obsidian p-3">
-            <dt className="text-[0.46rem] uppercase tracking-[0.12em] text-ivory/30">{c.value}</dt>
+            <dt className="text-[0.46rem] uppercase tracking-[0.12em] text-ivory/40">{c.value}</dt>
             <dd className="mt-1 text-[0.68rem] text-ivory/70">{l(project.value)}</dd>
           </div>
           <div className="bg-obsidian p-3">
-            <dt className="text-[0.46rem] uppercase tracking-[0.12em] text-ivory/30">
+            <dt className="text-[0.46rem] uppercase tracking-[0.12em] text-ivory/40">
               {c.milestones}
             </dt>
             <dd className="mt-1 text-[0.68rem] text-ivory/70">
@@ -263,7 +263,7 @@ export function PortalContract({ project }: { project: WorkspaceProject }) {
         </dl>
 
         {!loaded ? (
-          <div className="mt-5 flex items-center gap-2 text-[0.6rem] text-ivory/30">
+          <div className="mt-5 flex items-center gap-2 text-[0.6rem] text-ivory/40">
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
             {locale === "ar" ? "جارٍ التحقق…" : "Checking…"}
           </div>
@@ -274,10 +274,10 @@ export function PortalContract({ project }: { project: WorkspaceProject }) {
                 <ShieldCheck className="h-3.5 w-3.5" />
                 {c.signedBy}: {signoff.signerName}
               </p>
-              <p className="mt-1 text-[0.52rem] text-ivory/35">
+              <p className="mt-1 text-[0.52rem] text-ivory/45">
                 {c.signedAt}: {dateFormat.format(new Date(signoff.signedAt))}
               </p>
-              <p className="mt-1 truncate font-mono text-[0.48rem] text-ivory/25">
+              <p className="mt-1 truncate font-mono text-[0.48rem] text-ivory/35">
                 {c.digest}: {signoff.contractHash}
               </p>
             </div>
@@ -295,7 +295,7 @@ export function PortalContract({ project }: { project: WorkspaceProject }) {
                   >
                     <div className="min-w-0">
                       <p className="truncate text-[0.66rem] text-ivory/70">{l(milestone.title)}</p>
-                      <p className="text-[0.5rem] text-ivory/30">
+                      <p className="text-[0.5rem] text-ivory/40">
                         {l(milestone.date)} ·{" "}
                         {milestone.status === "complete" ? c.complete : c.locked}
                       </p>
@@ -320,7 +320,7 @@ export function PortalContract({ project }: { project: WorkspaceProject }) {
                         {verifying === milestone.title.en ? c.verifying : c.verify}
                       </button>
                     ) : (
-                      <span className="flex shrink-0 items-center gap-1 text-[0.46rem] uppercase tracking-[0.1em] text-ivory/25">
+                      <span className="flex shrink-0 items-center gap-1 text-[0.46rem] uppercase tracking-[0.1em] text-ivory/35">
                         <Lock className="h-3 w-3" />
                         {c.locked}
                       </span>
@@ -329,7 +329,7 @@ export function PortalContract({ project }: { project: WorkspaceProject }) {
                 );
               })}
               {completed.length === 0 ? (
-                <li className="px-3 py-4 text-center text-[0.6rem] text-ivory/30">
+                <li className="px-3 py-4 text-center text-[0.6rem] text-ivory/40">
                   {c.noMilestones}
                 </li>
               ) : null}
@@ -342,7 +342,7 @@ export function PortalContract({ project }: { project: WorkspaceProject }) {
                 {c.outdated}
               </p>
             ) : null}
-            <label className="flex items-start gap-2.5 text-[0.6rem] leading-relaxed text-ivory/45">
+            <label className="flex items-start gap-2.5 text-[0.6rem] leading-relaxed text-ivory/55">
               <input
                 type="checkbox"
                 checked={consent}
@@ -355,7 +355,7 @@ export function PortalContract({ project }: { project: WorkspaceProject }) {
             <div>
               <label
                 htmlFor="contract-signature"
-                className="mb-2 block text-[0.52rem] uppercase tracking-[0.14em] text-ivory/40"
+                className="mb-2 block text-[0.52rem] uppercase tracking-[0.14em] text-ivory/50"
               >
                 {c.signer}
               </label>
@@ -367,7 +367,7 @@ export function PortalContract({ project }: { project: WorkspaceProject }) {
                 minLength={2}
                 maxLength={120}
                 autoComplete="name"
-                className="h-10 w-full border border-white/12 bg-transparent px-3 text-[0.7rem] text-ivory outline-none placeholder:text-ivory/30 focus:border-gold/60"
+                className="h-10 w-full border border-white/12 bg-transparent px-3 text-[0.7rem] text-ivory outline-none placeholder:text-ivory/40 focus:border-gold/60"
               />
             </div>
             <button
@@ -379,7 +379,7 @@ export function PortalContract({ project }: { project: WorkspaceProject }) {
               {busy ? c.signing : outdated ? c.resign : c.sign}
             </button>
             {completed.length ? (
-              <p className="flex items-center gap-1.5 text-[0.5rem] text-ivory/30">
+              <p className="flex items-center gap-1.5 text-[0.5rem] text-ivory/40">
                 <Lock className="h-3 w-3" />
                 {c.signFirst}
               </p>

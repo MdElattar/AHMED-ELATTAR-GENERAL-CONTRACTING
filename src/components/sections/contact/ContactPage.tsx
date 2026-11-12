@@ -59,7 +59,7 @@ export function ContactPage() {
               </h1>
             </Reveal>
             <Reveal delay={160}>
-              <p className="max-w-lg text-[0.95rem] leading-[1.95] text-ivory/50 lg:ms-auto">
+              <p className="max-w-lg text-[0.95rem] leading-[1.95] text-ivory/60 lg:ms-auto">
                 {t.contactPage.description}
               </p>
             </Reveal>
@@ -72,7 +72,7 @@ export function ContactPage() {
               { label: t.contactPage.hours, value: t.contactPage.hours },
             ].map((item) => (
               <div key={item.label} className="bg-obsidian px-5 py-6">
-                <span className="text-[0.52rem] uppercase tracking-[0.18em] text-ivory/30">
+                <span className="text-[0.52rem] uppercase tracking-[0.18em] text-ivory/40">
                   {item.label}
                 </span>
                 {item.href ? (
@@ -197,7 +197,7 @@ export function ContactPage() {
                 </h2>
               </Reveal>
               <Reveal delay={140}>
-                <p className="mt-5 max-w-xl text-[0.9rem] leading-[1.9] text-ivory/45">
+                <p className="mt-5 max-w-xl text-[0.9rem] leading-[1.9] text-ivory/55">
                   {t.contactPage.procurementText}
                 </p>
               </Reveal>
@@ -215,7 +215,7 @@ export function ContactPage() {
                 </a>
                 <Link
                   href="/contact"
-                  className="group inline-flex items-center gap-2 text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-ivory/50 transition-colors hover:text-gold"
+                  className="group inline-flex items-center gap-2 text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-ivory/60 transition-colors hover:text-gold"
                 >
                   {t.contactPage.form.title}
                   <ArrowUpRight className={cn("h-3.5 w-3.5", isRTL && "-scale-x-100")} />

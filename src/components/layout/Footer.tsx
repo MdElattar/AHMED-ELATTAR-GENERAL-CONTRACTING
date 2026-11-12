@@ -86,7 +86,7 @@ export function Footer() {
             <h2 className="display-title mt-6 max-w-xl text-[clamp(2.1rem,4vw,3.8rem)] text-ivory">
               {t.footer.tagline}
             </h2>
-            <p className="mt-5 max-w-md text-sm leading-relaxed text-ivory/45">
+            <p className="mt-5 max-w-md text-sm leading-relaxed text-ivory/55">
               {t.footer.newsletterText}
             </p>
             <form
@@ -152,7 +152,7 @@ export function Footer() {
 
           <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:justify-items-end">
             <div>
-              <h3 className="text-[0.62rem] font-medium uppercase tracking-[0.22em] text-ivory/35">
+              <h3 className="text-[0.62rem] font-medium uppercase tracking-[0.22em] text-ivory/45">
                 {t.footer.company}
               </h3>
               <ul className="mt-5 space-y-3">
@@ -170,7 +170,7 @@ export function Footer() {
             </div>
 
             <div>
-              <h3 className="text-[0.62rem] font-medium uppercase tracking-[0.22em] text-ivory/35">
+              <h3 className="text-[0.62rem] font-medium uppercase tracking-[0.22em] text-ivory/45">
                 {t.footer.expertise}
               </h3>
               <ul className="mt-5 space-y-3">
@@ -188,7 +188,7 @@ export function Footer() {
             </div>
 
             <div className="col-span-2 sm:col-span-1">
-              <h3 className="text-[0.62rem] font-medium uppercase tracking-[0.22em] text-ivory/35">
+              <h3 className="text-[0.62rem] font-medium uppercase tracking-[0.22em] text-ivory/45">
                 {t.footer.contact}
               </h3>
               <ul className="mt-5 space-y-3 text-sm text-ivory/60">
@@ -212,7 +212,7 @@ export function Footer() {
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={label}
-                    className="flex h-9 w-9 items-center justify-center border border-white/12 text-ivory/45 transition-colors hover:border-gold/50 hover:text-gold"
+                    className="flex h-10 w-10 items-center justify-center border border-white/12 text-ivory/55 transition-colors hover:border-gold/50 hover:text-gold"
                   >
                     <svg
                       viewBox="0 0 24 24"
@@ -243,7 +243,7 @@ export function Footer() {
               <span className="text-[0.62rem] font-medium uppercase tracking-[0.2em] text-gold/80">
                 {office.city}
               </span>
-              <span className="text-xs leading-relaxed text-ivory/35">{office.detail}</span>
+              <span className="text-xs leading-relaxed text-ivory/45">{office.detail}</span>
             </div>
           ))}
         </div>
@@ -251,25 +251,25 @@ export function Footer() {
         <div className="relative flex flex-col gap-6 py-10">
           <div className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
             <Logo />
-            <div className="flex flex-wrap items-center gap-5 text-[0.65rem] text-ivory/35">
+            <div className="flex flex-wrap items-center gap-5 text-[0.65rem] text-ivory/45">
               <span>{t.footer.license}</span>
-              <Link href="/privacy" className="hover:text-gold">
+              <Link href="/privacy" className="inline-flex min-h-10 items-center hover:text-gold">
                 {t.footer.privacy}
               </Link>
-              <Link href="/terms" className="hover:text-gold">
+              <Link href="/terms" className="inline-flex min-h-10 items-center hover:text-gold">
                 {t.footer.terms}
               </Link>
               <button
                 type="button"
                 onClick={() => scrollTo(0)}
-                className="flex items-center gap-1.5 uppercase tracking-[0.14em] hover:text-gold"
+                className="inline-flex min-h-10 items-center gap-1.5 uppercase tracking-[0.14em] hover:text-gold"
               >
                 {t.footer.backToTop}
                 <ArrowUp className="h-3 w-3" />
               </button>
             </div>
           </div>
-          <div className="flex flex-col items-start justify-between gap-4 text-[0.62rem] text-ivory/25 sm:flex-row sm:items-center">
+          <div className="flex flex-col items-start justify-between gap-4 text-[0.62rem] text-ivory/45 sm:flex-row sm:items-center">
             <span suppressHydrationWarning>
               © {CURRENT_YEAR} Ahmed Elattar General Contracting Co. {t.footer.rights}
             </span>
@@ -278,12 +278,12 @@ export function Footer() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Developed by Mohamed Elattar"
-              className="group inline-flex items-center gap-1.5 text-ivory/35 transition-colors hover:text-gold"
+              className="group inline-flex min-h-10 items-center gap-1.5 text-ivory/45 transition-colors hover:text-gold"
             >
-              <span className="text-ivory/20 transition-colors group-hover:text-gold/50">
+              <span className="text-ivory/40 transition-colors group-hover:text-gold/50">
                 Developed by
               </span>{" "}
-              <span className="font-medium tracking-[0.04em] text-ivory/55 transition-colors group-hover:text-gold">
+              <span className="font-medium tracking-[0.04em] text-ivory/65 transition-colors group-hover:text-gold">
                 Mohamed Elattar
               </span>
               <ArrowUpRight className="h-3 w-3 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />

@@ -1,11 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { cookies } from "next/headers";
-import {
-  SESSION_COOKIE,
-  createSession,
-  publicSessionUser,
-  verifySession,
-} from "@/lib/auth/token";
+import { activeSession } from "@/lib/auth/guard";
+import { createSession, publicSessionUser } from "@/lib/auth/token";
 import { setSessionCookie } from "@/lib/auth/cookie";
 import { authUnavailable, isAuthConfigError } from "@/lib/auth/response";
 import { getUserByEmail, recordAudit, updateUser } from "@/lib/db";
@@ -39,8 +34,7 @@ export async function PATCH(request: NextRequest) {
     );
   }
 
-  const token = (await cookies()).get(SESSION_COOKIE)?.value;
-  const session = token ? await verifySession(token) : null;
+  const session = await activeSession();
 
   if (!session) {
     return NextResponse.json(
@@ -94,6 +88,7 @@ export async function PATCH(request: NextRequest) {
       accountId: session.accountId,
       ...(phone ? { phone } : {}),
       role: session.role,
+      sessionVersion: session.sessionVersion,
     });
   } catch (error) {
     if (isAuthConfigError(error)) {

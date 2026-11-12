@@ -80,7 +80,7 @@ export function ProfileMenu({ tone = "dark", compact = false, onNavigate }: Prof
         aria-expanded={open}
         className={cn(
           "group flex items-center gap-2 border transition-colors",
-          compact ? "h-10 w-10 justify-center" : "h-10 px-2.5",
+          compact ? "h-11 w-11 justify-center" : "h-11 px-2.5",
           light
             ? "border-ink/15 text-ink hover:border-gold-dark/60"
             : "border-white/15 text-ivory hover:border-gold/50",
@@ -132,7 +132,7 @@ export function ProfileMenu({ tone = "dark", compact = false, onNavigate }: Prof
               <p className="mt-2 truncate text-sm font-semibold">
                 {user ? user.name : t.nav.portal}
               </p>
-              <p className={cn("mt-0.5 truncate text-[0.68rem]", light ? "text-ink/45" : "text-ivory/40")}>
+              <p className={cn("mt-0.5 truncate text-[0.68rem]", light ? "text-ink/45" : "text-ivory/50")}>
                 {user ? user.email : t.nav.signIn}
               </p>
             </div>
@@ -145,7 +145,7 @@ export function ProfileMenu({ tone = "dark", compact = false, onNavigate }: Prof
                   role="menuitem"
                   onClick={close}
                   className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 text-[0.7rem] font-medium transition-colors",
+                    "flex min-h-10 items-center gap-3 px-3 py-2.5 text-[0.7rem] font-medium transition-colors",
                     light ? "text-ink/65 hover:bg-ink/5 hover:text-ink" : "text-ivory/65 hover:bg-white/6 hover:text-ivory",
                   )}
                 >
@@ -165,8 +165,8 @@ export function ProfileMenu({ tone = "dark", compact = false, onNavigate }: Prof
                     close();
                   }}
                   className={cn(
-                    "flex w-full items-center gap-3 px-3 py-2.5 text-start text-[0.7rem] font-medium transition-colors",
-                    light ? "text-ink/55 hover:bg-ink/5 hover:text-ink" : "text-ivory/55 hover:bg-white/6 hover:text-ivory",
+                    "flex min-h-10 w-full items-center gap-3 px-3 py-2.5 text-start text-[0.7rem] font-medium transition-colors",
+                    light ? "text-ink/55 hover:bg-ink/5 hover:text-ink" : "text-ivory/65 hover:bg-white/6 hover:text-ivory",
                   )}
                 >
                   <LogOut className="h-4 w-4 text-gold" />

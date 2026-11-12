@@ -62,7 +62,7 @@ export function ProjectCard({
             <span className="text-[0.52rem] uppercase tracking-[0.18em] text-gold">
               {l(project.location)}
             </span>
-            <span className="text-[0.55rem] uppercase tracking-[0.14em] text-ivory/40">
+            <span className="text-[0.55rem] uppercase tracking-[0.14em] text-ivory/50">
               {l(project.value)}
             </span>
           </div>
@@ -76,7 +76,7 @@ export function ProjectCard({
       <div className="flex flex-1 flex-col border-x border-b border-white/10 bg-coal/70 p-5 transition-colors duration-500 group-hover:bg-coal">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <span className="text-[0.52rem] uppercase tracking-[0.18em] text-ivory/25">
+            <span className="text-[0.52rem] uppercase tracking-[0.18em] text-ivory/35">
               0{index + 1}
             </span>
             <h3 className="mt-2 font-display text-[1.35rem] leading-tight text-ivory transition-colors duration-500 group-hover:text-gold sm:text-[1.5rem]">
@@ -89,14 +89,14 @@ export function ProjectCard({
         </div>
 
         {!compact ? (
-          <p className="mt-3 line-clamp-2 text-[0.78rem] leading-relaxed text-ivory/40">
+          <p className="mt-3 line-clamp-2 text-[0.78rem] leading-relaxed text-ivory/50">
             {l(project.summary)}
           </p>
         ) : null}
 
-        <div className="mt-auto flex items-center justify-between gap-4 border-t border-white/8 pt-4 text-[0.52rem] uppercase tracking-[0.14em] text-ivory/30">
+        <div className="mt-auto flex items-center justify-between gap-4 border-t border-white/8 pt-4 text-[0.52rem] uppercase tracking-[0.14em] text-ivory/40">
           <span>{l(project.area)}</span>
-          <span className="flex items-center gap-1.5 text-ivory/50 transition-colors group-hover:text-gold">
+          <span className="flex items-center gap-1.5 text-ivory/60 transition-colors group-hover:text-gold">
             {t.common.viewProject}
             <ArrowUpRight className={cn("h-3 w-3", isRTL && "-scale-x-100")} />
           </span>
