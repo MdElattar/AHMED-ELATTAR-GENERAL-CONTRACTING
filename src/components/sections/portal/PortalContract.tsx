@@ -347,7 +347,7 @@ export function PortalContract({ project }: { project: WorkspaceProject }) {
                 type="checkbox"
                 checked={consent}
                 onChange={(event) => setConsent(event.target.checked)}
-                className="mt-0.5 h-3.5 w-3.5 accent-[#d4af37]"
+                className="mt-0.5 h-3.5 w-3.5 accent-[#b8860b]"
                 required
               />
               {c.consent}

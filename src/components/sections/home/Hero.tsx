@@ -31,7 +31,7 @@ export function Hero() {
       <div className="atmo-glow pointer-events-none absolute inset-0 z-[2] opacity-60" aria-hidden="true" />
       <div className="pointer-events-none absolute inset-0 z-[2] bg-gradient-to-b from-obsidian/78 via-obsidian/18 to-obsidian" />
       <div className="pointer-events-none absolute inset-0 z-[2] bg-[radial-gradient(ellipse_at_18%_42%,rgba(6,7,8,0.82),transparent_62%)]" />
-      <div className="pointer-events-none absolute inset-0 z-[2] bg-[radial-gradient(ellipse_at_78%_28%,rgba(212,175,55,0.14),transparent_55%)]" />
+      <div className="pointer-events-none absolute inset-0 z-[2] bg-[radial-gradient(ellipse_at_78%_28%,rgba(184,134,11,0.14),transparent_55%)]" />
 
       <div className="relative z-10 flex min-h-[100svh] flex-col">
         <div className="container-lux flex flex-1 flex-col justify-center pb-36 pt-32 sm:pb-40 sm:pt-36">

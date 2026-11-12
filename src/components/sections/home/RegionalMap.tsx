@@ -35,7 +35,7 @@ export function RegionalMap() {
 
         <div className="mt-12 grid gap-px overflow-hidden border border-white/10 bg-white/10 lg:grid-cols-[1.45fr_0.55fr]">
           <div className="relative min-h-[420px] overflow-hidden bg-coal p-4 sm:min-h-[520px] sm:p-6">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_55%_48%,rgba(201,164,92,0.10),transparent_55%)]" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_55%_48%,rgba(166,124,26,0.10),transparent_55%)]" />
             <svg
               viewBox="0 0 1000 600"
               className="absolute inset-0 h-full w-full"
@@ -47,8 +47,8 @@ export function RegionalMap() {
                   <stop offset="100%" stopColor="#101317" />
                 </linearGradient>
                 <linearGradient id="map-glow" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stopColor="#c9a45c" stopOpacity="0.5" />
-                  <stop offset="100%" stopColor="#c9a45c" stopOpacity="0" />
+                  <stop offset="0%" stopColor="#a67c1a" stopOpacity="0.5" />
+                  <stop offset="100%" stopColor="#a67c1a" stopOpacity="0" />
                 </linearGradient>
               </defs>
               <g opacity="0.5">
@@ -81,7 +81,7 @@ export function RegionalMap() {
               <path
                 d="M 292 86 L 402 62 L 500 88 L 588 68 L 672 102 L 756 138 L 826 208 L 888 294 L 900 384 L 860 462 L 792 526 L 690 556 L 590 532 L 500 482 L 430 436 L 356 396 L 296 336 L 260 248 L 268 158 Z"
                 fill="url(#map-land)"
-                stroke="#c9a45c"
+                stroke="#a67c1a"
                 strokeOpacity="0.28"
                 strokeWidth="1.4"
               />
@@ -94,7 +94,7 @@ export function RegionalMap() {
               <path
                 d="M 672 102 L 720 180 L 756 260 L 792 340 L 826 430 L 792 526"
                 fill="none"
-                stroke="#c9a45c"
+                stroke="#a67c1a"
                 strokeOpacity="0.16"
                 strokeWidth="1"
                 strokeDasharray="5 7"
@@ -102,7 +102,7 @@ export function RegionalMap() {
               <path
                 d="M 548 328 C 620 300, 700 312, 766 362"
                 fill="none"
-                stroke="#c9a45c"
+                stroke="#a67c1a"
                 strokeOpacity="0.2"
                 strokeWidth="1"
                 strokeDasharray="4 8"

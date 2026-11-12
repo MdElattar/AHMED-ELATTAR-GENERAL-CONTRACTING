@@ -1,12 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { useI18n } from "@/components/providers/I18nProvider";
+import { useSmoothScroll } from "@/components/providers/SmoothScroll";
 import type { WorkspaceProject } from "@/components/providers/WorkspaceProvider";
 import { Field, Select, TextInput, Textarea } from "@/components/ui/Field";
 import type { ArtVariant, ProjectCategory, ProjectStatus } from "@/data/projects";
 import { L } from "@/lib/dictionary";
+import { acquireScrollLock, releaseScrollLock } from "@/lib/scroll/lock";
 import { cn } from "@/lib/utils";
 
 const copy = {
@@ -255,8 +257,30 @@ export function AdminProjectEditor({
 }) {
   const { locale } = useI18n();
   const c = copy[locale];
+  const { stop, start } = useSmoothScroll();
+  const closeRef = useRef<HTMLButtonElement | null>(null);
+  const onCloseRef = useRef(onClose);
   const [form, setForm] = useState<FormState>(() => initialForm(project));
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  useEffect(() => {
+    acquireScrollLock(stop);
+    const focusTimer = window.setTimeout(() => closeRef.current?.focus(), 80);
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onCloseRef.current();
+    };
+    document.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      window.clearTimeout(focusTimer);
+      document.removeEventListener("keydown", onKeyDown);
+      releaseScrollLock(start);
+    };
+  }, [start, stop]);
 
   const title = useMemo(() => (project ? c.edit : c.add), [c.add, c.edit, project]);
 
@@ -322,20 +346,30 @@ export function AdminProjectEditor({
   };
 
   return (
-    <div className="fixed inset-0 z-[220] flex items-start justify-center overflow-y-auto bg-obsidian/80 p-3 backdrop-blur-md sm:p-6">
+    <div className="fixed inset-0 z-[220] flex items-center justify-center bg-obsidian/85 p-3 backdrop-blur-md sm:p-6">
       <form
         onSubmit={submit}
-        className="relative my-4 w-full max-w-4xl border border-white/12 bg-coal text-ivory shadow-[0_40px_120px_-30px_rgba(0,0,0,0.9)]"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="admin-project-dialog-title"
+        data-lenis-prevent
+        className="relative max-h-[85vh] w-full max-w-4xl overflow-y-auto overscroll-contain border border-white/12 bg-coal text-ivory shadow-[0_40px_120px_-30px_rgba(0,0,0,0.9)]"
       >
         <div className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-white/10 bg-coal/95 px-5 py-4 backdrop-blur sm:px-7">
           <div>
-            <span className="text-[0.52rem] uppercase tracking-[0.18em] text-gold">Admin</span>
-            <h2 className="mt-1 font-display text-2xl leading-none text-ivory">{title}</h2>
+            <span className="text-[0.68rem] uppercase tracking-[0.18em] text-gold">Admin</span>
+            <h2
+              id="admin-project-dialog-title"
+              className="mt-1 font-display text-2xl leading-none text-ivory"
+            >
+              {title}
+            </h2>
           </div>
           <button
+            ref={closeRef}
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center border border-white/12 text-ivory/60 transition-colors hover:border-gold/50 hover:text-gold"
+            className="flex h-11 w-11 items-center justify-center border border-white/12 text-ivory/60 transition-colors hover:border-gold/50 hover:text-gold"
             aria-label={c.close}
           >
             <X className="h-4 w-4" />
@@ -344,7 +378,7 @@ export function AdminProjectEditor({
 
         <div className="space-y-7 p-5 sm:p-7">
           <div>
-            <p className="mb-4 text-[0.55rem] font-semibold uppercase tracking-[0.16em] text-gold/80">
+            <p className="mb-4 text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-gold/80">
               {c.identity}
             </p>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -412,7 +446,7 @@ export function AdminProjectEditor({
           </div>
 
           <div>
-            <p className="mb-4 text-[0.55rem] font-semibold uppercase tracking-[0.16em] text-gold/80">
+            <p className="mb-4 text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-gold/80">
               {c.location} · {c.client} · {c.area} · {c.value}
             </p>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -480,7 +514,7 @@ export function AdminProjectEditor({
           </div>
 
           <div>
-            <p className="mb-4 text-[0.55rem] font-semibold uppercase tracking-[0.16em] text-gold/80">
+            <p className="mb-4 text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-gold/80">
               {c.summary} · {c.description}
             </p>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -522,7 +556,7 @@ export function AdminProjectEditor({
           </div>
 
           <div>
-            <p className="mb-4 text-[0.55rem] font-semibold uppercase tracking-[0.16em] text-gold/80">
+            <p className="mb-4 text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-gold/80">
               {c.financials}
             </p>
             <div className="grid gap-4 sm:grid-cols-4">
@@ -547,7 +581,7 @@ export function AdminProjectEditor({
           </div>
 
           <div>
-            <p className="mb-4 text-[0.55rem] font-semibold uppercase tracking-[0.16em] text-gold/80">
+            <p className="mb-4 text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-gold/80">
               {c.art} · {c.gallery}
             </p>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -557,7 +591,7 @@ export function AdminProjectEditor({
                   type="button"
                   onClick={() => toggleGallery(variant)}
                   className={cn(
-                    "border px-3 py-2 text-[0.6rem] font-medium uppercase tracking-[0.1em] transition-colors",
+                    "border px-3 py-2 text-[0.74rem] font-medium uppercase tracking-[0.1em] transition-colors",
                     form.gallery.includes(variant)
                       ? "border-gold bg-gold/15 text-gold"
                       : "border-white/10 text-ivory/50 hover:border-gold/40 hover:text-ivory/70",
@@ -568,7 +602,7 @@ export function AdminProjectEditor({
               ))}
             </div>
             <div className="mt-4 flex flex-wrap items-center gap-4">
-              <label className="flex items-center gap-2 text-[0.68rem] text-ivory/60">
+              <label className="flex items-center gap-2 text-[0.82rem] text-ivory/60">
                 <input
                   type="checkbox"
                   checked={form.featured}
@@ -577,12 +611,12 @@ export function AdminProjectEditor({
                 />
                 {c.featured}
               </label>
-              <label className="flex items-center gap-2 text-[0.68rem] text-ivory/60">
+              <label className="flex items-center gap-2 text-[0.82rem] text-ivory/60">
                 {c.art}
                 <select
                   value={form.art}
                   onChange={(event) => set("art", event.target.value as ArtVariant)}
-                  className="field h-8 w-36 py-0 text-[0.65rem]"
+                  className="field h-8 w-36 py-0 text-[0.8rem]"
                 >
                   {artVariants.map((variant) => (
                     <option key={variant} value={variant}>
@@ -595,7 +629,7 @@ export function AdminProjectEditor({
           </div>
 
           {error ? (
-            <p className="border border-red-400/30 bg-red-400/10 px-3 py-2 text-[0.68rem] text-red-300">
+            <p className="border border-red-400/30 bg-red-400/10 px-3 py-2 text-[0.82rem] text-red-300">
               {error}
             </p>
           ) : null}
@@ -605,13 +639,13 @@ export function AdminProjectEditor({
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex h-10 items-center border border-white/12 px-4 text-[0.6rem] font-semibold uppercase tracking-[0.14em] text-ivory/60 transition-colors hover:border-white/30 hover:text-ivory"
+            className="inline-flex h-10 items-center border border-white/12 px-4 text-[0.74rem] font-semibold uppercase tracking-[0.14em] text-ivory/60 transition-colors hover:border-white/30 hover:text-ivory"
           >
             {c.cancel}
           </button>
           <button
             type="submit"
-            className="inline-flex h-10 items-center bg-gold px-5 text-[0.6rem] font-semibold uppercase tracking-[0.14em] text-obsidian transition-colors hover:bg-gold-light"
+            className="inline-flex h-10 items-center bg-gold px-5 text-[0.74rem] font-semibold uppercase tracking-[0.14em] text-obsidian transition-colors hover:bg-gold-light"
           >
             {c.save}
           </button>

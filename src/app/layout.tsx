@@ -3,6 +3,7 @@ import { Cormorant_Garamond, Manrope, Tajawal } from "next/font/google";
 import "./globals.css";
 import { I18nProvider } from "@/components/providers/I18nProvider";
 import { AtmosphereProvider } from "@/components/providers/AtmosphereProvider";
+import { RouteScrollReset } from "@/components/providers/RouteScrollReset";
 import { SmoothScrollProvider } from "@/components/providers/SmoothScroll";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { WorkspaceProvider } from "@/components/providers/WorkspaceProvider";
@@ -111,6 +112,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <AtmosphereProvider>
               <SmoothScrollProvider>
                 <AuthProvider>
+                  <RouteScrollReset />
                   <ScrollProgress />
                   <a
                     href="#main"

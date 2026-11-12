@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
@@ -34,8 +34,9 @@ export function Navbar() {
   const pathname = usePathname();
   const { t, toggleLocale, isRTL } = useI18n();
   const { user } = useAuth();
-  const { stop, start } = useSmoothScroll();
+  const { stop, start, scrollToTop } = useSmoothScroll();
   const [open, setOpen] = useState(false);
+  const pendingScrollTop = useRef(false);
 
   useEffect(() => {
     // Close the drawer on navigation (including browser back/forward) so the
@@ -51,6 +52,12 @@ export function Navbar() {
   }, [open, start, stop]);
 
   useEffect(() => {
+    if (open || !pendingScrollTop.current) return;
+    pendingScrollTop.current = false;
+    scrollToTop();
+  }, [open, scrollToTop]);
+
+  useEffect(() => {
     if (!open) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") setOpen(false);
@@ -61,6 +68,24 @@ export function Navbar() {
 
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
+
+  const handleNavigation = (
+    event: React.MouseEvent<HTMLAnchorElement>,
+    href: string,
+  ) => {
+    if (pathname === href) {
+      event.preventDefault();
+      if (open) {
+        // The drawer's cleanup releases the lock before this effect animates.
+        pendingScrollTop.current = true;
+        setOpen(false);
+      } else {
+        scrollToTop();
+      }
+      return;
+    }
+    setOpen(false);
+  };
 
   const accountLinks = [
     { href: "/portal", label: t.nav.portal, icon: LayoutDashboard },
@@ -77,9 +102,9 @@ export function Navbar() {
             href="/"
             aria-label="Ahmed Elattar — Home"
             className="relative z-10 shrink-0"
-            onClick={() => setOpen(false)}
+            onClick={(event) => handleNavigation(event, "/")}
           >
-            <Logo tone="light" />
+            <Logo tone="light" priority />
           </Link>
 
           <nav className="hidden items-center gap-0.5 xl:flex" aria-label="Primary">
@@ -89,6 +114,7 @@ export function Navbar() {
                 <Link
                   key={link.href}
                   href={link.href}
+                  onClick={(event) => handleNavigation(event, link.href)}
                   className={cn(
                     "group relative inline-flex min-h-11 items-center px-3.5 py-2.5 text-[0.66rem] font-medium uppercase tracking-[0.17em] transition-colors duration-300",
                     active ? "text-gold" : "text-ivory/60 hover:text-ivory",
@@ -109,6 +135,7 @@ export function Navbar() {
               <Link
                 key={href}
                 href={href}
+                onClick={(event) => handleNavigation(event, href)}
                 className={cn(
                   "group relative flex min-h-11 items-center gap-1.5 px-3 py-2.5 text-[0.66rem] font-medium uppercase tracking-[0.17em] transition-colors duration-300",
                   isActive(href) ? "text-gold" : "text-ivory/60 hover:text-ivory",
@@ -133,6 +160,7 @@ export function Navbar() {
             <ProfileMenu tone="dark" />
             <Link
               href="/consultation"
+              onClick={(event) => handleNavigation(event, "/consultation")}
               className="btn-shine group flex h-11 items-center gap-2 bg-gold px-5 text-[0.63rem] font-semibold uppercase tracking-[0.16em] text-obsidian transition-colors hover:bg-gold-light"
             >
               {t.nav.cta}
@@ -206,7 +234,7 @@ export function Navbar() {
                       >
                         <Link
                           href={link.href}
-                          onClick={() => setOpen(false)}
+                          onClick={(event) => handleNavigation(event, link.href)}
                           className={cn(
                             "group flex min-h-[56px] items-center justify-between gap-4 border-b border-white/[0.07] transition-colors",
                             active ? "text-gold" : "text-ivory hover:text-gold",
@@ -242,7 +270,7 @@ export function Navbar() {
                     <Link
                       key={href}
                       href={href}
-                      onClick={() => setOpen(false)}
+                      onClick={(event) => handleNavigation(event, href)}
                       className="flex min-h-[48px] items-center gap-3 border border-white/12 px-4 text-[0.68rem] font-medium uppercase tracking-[0.16em] text-ivory/75 transition-colors hover:border-gold/45 hover:text-gold"
                     >
                       <Icon className="h-4 w-4 text-gold" />
@@ -252,7 +280,7 @@ export function Navbar() {
                   {!user ? (
                     <Link
                       href="/sign-in"
-                      onClick={() => setOpen(false)}
+                      onClick={(event) => handleNavigation(event, "/sign-in")}
                       className="flex min-h-[48px] items-center gap-3 border border-white/12 px-4 text-[0.68rem] font-medium uppercase tracking-[0.16em] text-ivory/75 transition-colors hover:border-gold/45 hover:text-gold"
                     >
                       <UserRound className="h-4 w-4 text-gold" />
@@ -261,7 +289,7 @@ export function Navbar() {
                   ) : null}
                   <Link
                     href="/consultation"
-                    onClick={() => setOpen(false)}
+                    onClick={(event) => handleNavigation(event, "/consultation")}
                     className="mt-1 flex min-h-[50px] items-center justify-center gap-2 bg-gold px-5 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-obsidian transition-colors hover:bg-gold-light"
                   >
                     {t.nav.cta}

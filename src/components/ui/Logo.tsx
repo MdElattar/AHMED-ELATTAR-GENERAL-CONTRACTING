@@ -10,23 +10,30 @@ type LogoProps = {
   compact?: boolean;
   tone?: "light" | "dark";
   locale?: Locale;
+  priority?: boolean;
 };
 
-export function Logo({ className, compact = false, tone = "light", locale: localeOverride }: LogoProps) {
+export function Logo({
+  className,
+  compact = false,
+  tone = "light",
+  locale: localeOverride,
+  priority = false,
+}: LogoProps) {
   const { locale: contextLocale } = useI18n();
   const locale = localeOverride ?? contextLocale;
   const isArabic = locale === "ar";
 
   return (
     <span className={cn("flex items-center gap-3.5", className)}>
-      <span className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-amber-500/30 bg-zinc-950/90 p-1.5 shadow-[0_0_15px_rgba(245,158,11,0.12)] sm:h-10 sm:w-10">
+      <span className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[#B8860B]/40 bg-obsidian/90 p-1.5 shadow-[0_12px_30px_-16px_rgba(0,0,0,0.9)] ring-1 ring-inset ring-white/[0.06] backdrop-blur-md sm:h-10 sm:w-10">
         <Image
           src="/aa-logo-v5.svg"
           alt={compact ? (isArabic ? "أحمد العطار" : "Ahmed Elattar") : ""}
           width={64}
           height={64}
           unoptimized
-          priority
+          priority={priority}
           className="h-full w-full object-contain"
         />
       </span>

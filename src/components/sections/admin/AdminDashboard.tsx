@@ -9,11 +9,9 @@ import {
   ArrowUpRight,
   BarChart3,
   BellRing,
-  Building2,
   CalendarDays,
   Check,
   ChevronDown,
-  CircleDollarSign,
   FileSignature,
   FileText,
   Flag,
@@ -21,6 +19,7 @@ import {
   Image as ImageIcon,
   Inbox,
   LayoutDashboard,
+  Loader2,
   LogOut,
   MessageSquare,
   Pencil,
@@ -33,17 +32,19 @@ import {
   ShieldCheck,
   Sparkles,
   Trash2,
-  TrendingUp,
   Wallet,
 } from "lucide-react";
 import { isAdminUser, useAuth } from "@/components/providers/AuthProvider";
 import { useI18n } from "@/components/providers/I18nProvider";
+import { useSmoothScroll } from "@/components/providers/SmoothScroll";
 import {
   useWorkspace,
   type WorkspaceProject,
 } from "@/components/providers/WorkspaceProvider";
 import { AdminAccess } from "@/components/sections/admin/AdminAccess";
+import { AdminCommandPalette } from "@/components/sections/admin/AdminCommandPalette";
 import { AdminProjectEditor } from "@/components/sections/admin/AdminProjectEditor";
+import { ExecutiveKpiBar } from "@/components/sections/admin/ExecutiveKpiBar";
 import {
   AuditPanel,
   ConsultationsPanel,
@@ -124,6 +125,8 @@ const copy = {
     portal: "بوابة العملاء",
     signOut: "تسجيل الخروج",
     welcome: "مرحباً",
+    commandSearch: "بحث سريع",
+    commandHint: "الأوامر",
     totalProjects: "إجمالي المشاريع",
     activeProjects: "مشاريع قيد التنفيذ",
     portfolioValue: "قيمة المحفظة",
@@ -144,6 +147,24 @@ const copy = {
     delete: "حذف",
     deleteConfirm: "هل أنت متأكد من حذف هذا المشروع؟",
     noProjects: "لا توجد مشاريع مطابقة.",
+    selected: "محدد",
+    selectAll: "تحديد الكل",
+    clearSelection: "إلغاء التحديد",
+    bulkStatus: "تغيير حالة المحدد",
+    setOngoing: "قيد التنفيذ",
+    setCompleted: "مكتمل",
+    setUpcoming: "قادم",
+    quickStatus: "اضغط لتغيير الحالة",
+    exportInquiries: "تصدير الاستفسارات",
+    exportAudit: "تصدير السجل",
+    exportMilestones: "تصدير المراحل المالية",
+    invalidMedia: "رابط غير صالح. استخدم مساراً داخلياً أو رابط HTTPS لصورة مدعومة.",
+    validatingMedia: "جارٍ التحقق من الصور...",
+    mediaTooLarge: "حجم الصورة يتجاوز 8 ميجابايت.",
+    mediaDimensions: "يجب أن يكون كل ضلع في الصورة بين 300 و8000 بكسل.",
+    mediaFormat: "الصيغة غير مدعومة. استخدم JPEG أو PNG أو WebP أو AVIF أو GIF.",
+    mediaUnreachable: "تعذر الوصول إلى الصورة للتحقق منها.",
+    mediaNotImage: "الرابط لا يشير إلى صورة صالحة.",
     budget: "الميزانية",
     spent: "المنفق",
     profit: "الربح",
@@ -256,6 +277,8 @@ const copy = {
     portal: "Client portal",
     signOut: "Sign out",
     welcome: "Welcome",
+    commandSearch: "Quick search",
+    commandHint: "Commands",
     totalProjects: "Total projects",
     activeProjects: "Active projects",
     portfolioValue: "Portfolio value",
@@ -276,6 +299,24 @@ const copy = {
     delete: "Delete",
     deleteConfirm: "Delete this project?",
     noProjects: "No matching projects.",
+    selected: "selected",
+    selectAll: "Select all",
+    clearSelection: "Clear selection",
+    bulkStatus: "Bulk status",
+    setOngoing: "Ongoing",
+    setCompleted: "Completed",
+    setUpcoming: "Upcoming",
+    quickStatus: "Click to change status",
+    exportInquiries: "Export inquiries",
+    exportAudit: "Export log",
+    exportMilestones: "Export milestones",
+    invalidMedia: "Invalid link. Use a local path or an HTTPS URL for a supported image.",
+    validatingMedia: "Validating images...",
+    mediaTooLarge: "Image file is larger than 8 MB.",
+    mediaDimensions: "Image edges must be between 300 and 8000 pixels.",
+    mediaFormat: "Unsupported format. Use JPEG, PNG, WebP, AVIF, or GIF.",
+    mediaUnreachable: "The image could not be reached for validation.",
+    mediaNotImage: "The link is not a valid image.",
     budget: "Budget",
     spent: "Spent",
     profit: "Profit",
@@ -393,11 +434,34 @@ export function AdminDashboard({
   const { user, ready, signOut } = useAuth();
   const { projects, messages, addProject, updateProject, deleteProject } =
     useWorkspace();
+  const { scrollToTop } = useSmoothScroll();
   const router = useRouter();
   const c = copy[locale];
   const [section, setSection] = useState<Section>(initialSection);
   const [editing, setEditing] = useState<WorkspaceProject | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const activeNavRef = useRef<HTMLAnchorElement | null>(null);
+
+  useEffect(() => {
+    activeNavRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+      inline: "nearest",
+    });
+  }, [section]);
+
+  useEffect(() => {
+    if (paletteOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setPaletteOpen(true);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [paletteOpen]);
 
   if (!ready) {
     return (
@@ -426,12 +490,12 @@ export function AdminDashboard({
             </p>
             <Link
               href="/sign-in"
-              className="btn-shine mt-9 inline-flex h-12 items-center gap-2.5 bg-gold px-7 text-[0.66rem] font-semibold uppercase tracking-[0.16em] text-obsidian transition-colors hover:bg-gold-light"
+              className="btn-shine mt-9 inline-flex h-12 items-center gap-2.5 bg-gold px-7 text-[0.8rem] font-semibold uppercase tracking-[0.16em] text-obsidian transition-colors hover:bg-gold-light"
             >
               {c.signIn}
               <ArrowUpRight className="h-4 w-4" />
             </Link>
-            <p className="mt-6 text-[0.62rem] text-ivory/40">{c.secureNote}</p>
+            <p className="mt-6 text-[0.76rem] text-ivory/40">{c.secureNote}</p>
           </div>
         </div>
       </section>
@@ -460,10 +524,15 @@ export function AdminDashboard({
       : []),
   ];
 
-  const navigateToSection = (next: Section) => {
+  const navigateToSection = (next: Section, focusId?: string) => {
     setSection(next);
-    router.push(sectionHrefs[next]);
+    const href = sectionHrefs[next];
+    router.push(
+      focusId ? `${href}?focus=${encodeURIComponent(focusId)}` : href,
+    );
   };
+
+  const paletteSections = navItems.map(({ id, label }) => ({ id, label }));
 
   const openNew = () => {
     setEditing(null);
@@ -490,11 +559,11 @@ export function AdminDashboard({
           ADMIN
         </div>
         <div className="container-lux relative">
-          <div className="grid gap-6 lg:grid-cols-[220px_1fr]">
-            <aside className="h-fit border border-white/10 bg-coal/80 p-4 backdrop-blur transition-[border-color,box-shadow,transform] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:border-gold/20 hover:shadow-[0_34px_90px_-46px_rgba(212,175,55,0.45)]">
+          <div className="grid gap-7 lg:grid-cols-[248px_1fr]">
+            <aside className="h-fit border border-white/10 bg-coal/80 p-4 backdrop-blur transition-[border-color,box-shadow,transform] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:border-gold/20 hover:shadow-[0_34px_90px_-46px_rgba(184,134,11,0.45)] lg:sticky lg:top-24 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto lg:overscroll-contain">
               <div className="border-b border-white/10 pb-4">
                 <Logo className="mb-4" />
-                <span className="text-[0.52rem] uppercase tracking-[0.18em] text-gold">
+                <span className="text-[0.68rem] uppercase tracking-[0.18em] text-gold">
                   {c.admin}
                 </span>
                 <p className="mt-1 font-display text-2xl leading-none text-ivory">{c.control}</p>
@@ -505,15 +574,19 @@ export function AdminDashboard({
                   return (
                     <Link
                       key={id}
+                      ref={active ? activeNavRef : undefined}
                       href={sectionHrefs[id]}
-                      onClick={() => setSection(id)}
+                      onClick={() => {
+                        setSection(id);
+                        if (active) scrollToTop();
+                      }}
                       aria-current={active ? "page" : undefined}
                       className={cn(
-                        "group relative flex min-h-11 items-center gap-2.5 overflow-hidden px-3 py-2.5 text-start text-[0.66rem] font-medium",
+                        "group relative flex min-h-11 items-center gap-2.5 overflow-hidden px-3 py-2.5 text-start text-[0.8rem] font-medium",
                         "transition-[background-color,color,box-shadow,transform] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
                         "active:scale-[0.99] active:duration-150",
                         active
-                          ? "bg-gold text-obsidian shadow-[0_10px_30px_-16px_rgba(212,175,55,0.85)]"
+                          ? "bg-gold text-obsidian shadow-[0_10px_30px_-16px_rgba(184,134,11,0.85)]"
                           : "text-ivory/60 hover:bg-white/[0.055] hover:text-ivory",
                       )}
                     >
@@ -554,7 +627,7 @@ export function AdminDashboard({
                       {id === "messages" ? (
                         <span
                           className={cn(
-                            "relative tabular text-[0.55rem] transition-colors duration-300",
+                            "relative tabular text-[0.7rem] transition-colors duration-300",
                             active
                               ? "text-obsidian/60"
                               : "text-ivory/50 group-hover:text-gold",
@@ -581,14 +654,14 @@ export function AdminDashboard({
               <div className="mt-4 space-y-1 border-t border-white/10 pt-3">
                 <Link
                   href="/portal"
-                  className="flex min-h-10 items-center gap-2.5 px-3 py-2 text-[0.64rem] text-ivory/55 transition-colors hover:text-gold"
+                  className="flex min-h-10 items-center gap-2.5 px-3 py-2 text-[0.78rem] text-ivory/55 transition-colors hover:text-gold"
                 >
                   <LayoutDashboard className="h-3.5 w-3.5" />
                   {c.portal}
                 </Link>
                 <Link
                   href="/"
-                  className="flex min-h-10 items-center gap-2.5 px-3 py-2 text-[0.64rem] text-ivory/55 transition-colors hover:text-gold"
+                  className="flex min-h-10 items-center gap-2.5 px-3 py-2 text-[0.78rem] text-ivory/55 transition-colors hover:text-gold"
                 >
                   <ArrowUpRight className="h-3.5 w-3.5" />
                   {c.back}
@@ -599,7 +672,7 @@ export function AdminDashboard({
                     signOut();
                     router.push("/");
                   }}
-                  className="flex min-h-10 w-full items-center gap-2.5 px-3 py-2 text-start text-[0.64rem] text-ivory/55 transition-colors hover:text-gold"
+                  className="flex min-h-10 w-full items-center gap-2.5 px-3 py-2 text-start text-[0.78rem] text-ivory/55 transition-colors hover:text-gold"
                 >
                   <LogOut className="h-3.5 w-3.5" />
                   {c.signOut}
@@ -608,34 +681,45 @@ export function AdminDashboard({
             </aside>
 
             <div className="min-w-0">
-              <div className="flex flex-col justify-between gap-4 border border-white/10 bg-coal/60 p-5 backdrop-blur sm:flex-row sm:items-center">
-                <div>
-                  <span className="text-[0.52rem] uppercase tracking-[0.16em] text-gold/80">
+              <div className="flex flex-col justify-between gap-4 border border-white/10 bg-coal/60 p-6 backdrop-blur sm:flex-row sm:items-center">
+                <div className="min-w-0">
+                  <span className="text-[0.7rem] uppercase tracking-[0.16em] text-gold/80">
                     {c.welcome}
                   </span>
-                  <h1 className="mt-1 font-display text-2xl leading-none text-ivory sm:text-3xl">
+                  <h1 className="mt-1.5 font-display text-2xl leading-tight text-ivory sm:text-3xl">
                     {user.name}
                   </h1>
-                  <p className="mt-1 flex flex-wrap items-center gap-2 text-[0.6rem] text-ivory/45">
-                    <span dir="ltr">{user.email}</span>
+                  <p className="mt-1.5 flex flex-wrap items-center gap-2 text-[0.8rem] text-ivory/45">
+                    <span className="break-all" dir="ltr">{user.email}</span>
                     <span aria-hidden="true">·</span>
                     <span>{c.secureNote}</span>
                     {user.primaryAdmin ? (
-                      <span className="border border-gold/25 px-1.5 py-0.5 text-[0.48rem] uppercase tracking-[0.1em] text-gold">
+                      <span className="border border-gold/25 px-2 py-0.5 text-[0.68rem] uppercase tracking-[0.1em] text-gold">
                         {c.primaryAdmin}
                       </span>
                     ) : null}
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPaletteOpen(true)}
+                    className="inline-flex h-10 items-center gap-2 border border-white/12 px-3 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
+                  >
+                    <Search className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">{c.commandSearch}</span>
+                    <kbd className="hidden border border-white/10 px-1.5 py-0.5 text-[0.62rem] text-ivory/40 md:inline">
+                      ⌘K
+                    </kbd>
+                  </button>
                   <Link
                     href="/portal"
-                    className="inline-flex h-9 items-center gap-2 border border-white/12 px-3.5 text-[0.56rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
+                    className="inline-flex h-10 items-center gap-2 border border-white/12 px-3.5 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
                   >
                     {c.portal}
                     <ArrowUpRight className="h-3.5 w-3.5" />
                   </Link>
-                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gold text-[0.62rem] font-semibold text-obsidian">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gold text-[0.7rem] font-semibold text-obsidian">
                     {user.name
                       .split(" ")
                       .slice(0, 2)
@@ -680,6 +764,16 @@ export function AdminDashboard({
         </div>
       </section>
 
+      {paletteOpen ? (
+        <AdminCommandPalette
+          projects={projects}
+          sections={paletteSections}
+          onClose={() => setPaletteOpen(false)}
+          onOpenProject={openEdit}
+          onNavigate={navigateToSection}
+        />
+      ) : null}
+
       {editorOpen ? (
         <AdminProjectEditor
           key={editing?.slug ?? "new"}
@@ -711,49 +805,28 @@ function OverviewSection({
   const c = copy[locale];
   const totalValue = projects.reduce((sum, project) => sum + project.contractValue, 0);
   const totalProfit = projects.reduce((sum, project) => sum + project.profit, 0);
-  const active = projects.filter((project) => project.status === "ongoing").length;
   const avgMargin = totalValue ? (totalProfit / totalValue) * 100 : 0;
   const top = [...projects].sort((a, b) => b.budget - a.budget).slice(0, 5);
   const maxBudget = Math.max(1, ...top.map((project) => project.budget));
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-px border border-white/10 bg-white/10 lg:grid-cols-4">
-        {[
-          { label: c.totalProjects, value: `${projects.length}`, icon: Building2 },
-          { label: c.activeProjects, value: `${active}`, icon: FolderKanban },
-          { label: c.portfolioValue, value: formatM(totalValue, locale), icon: CircleDollarSign },
-          { label: c.netProfit, value: formatM(totalProfit, locale), icon: TrendingUp },
-        ].map((stat) => {
-          const Icon = stat.icon;
-          return (
-            <div key={stat.label} className="bg-coal p-4">
-              <Icon className="h-4 w-4 text-gold" />
-              <p className="mt-3 tabular font-display text-2xl leading-none text-ivory">
-                {stat.value}
-              </p>
-              <p className="mt-2 text-[0.48rem] uppercase tracking-[0.14em] text-ivory/40">
-                {stat.label}
-              </p>
-            </div>
-          );
-        })}
-      </div>
+      <ExecutiveKpiBar />
 
       <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        <div className="border border-white/10 bg-coal p-5">
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-[0.55rem] font-semibold uppercase tracking-[0.16em] text-gold">
+        <div className="border border-white/10 bg-coal p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <span className="text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-gold">
               {c.budgetVsSpent}
             </span>
-            <span className="tabular text-[0.55rem] text-ivory/40">
+            <span className="tabular text-[0.7rem] text-ivory/40">
               {c.avgMargin} {avgMargin.toFixed(1)}%
             </span>
           </div>
-          <div className="mt-6 space-y-4">
+          <div className="mt-6 space-y-5">
             {top.map((project) => (
               <div key={project.slug}>
-                <div className="flex items-center justify-between gap-3 text-[0.6rem]">
+                <div className="flex items-center justify-between gap-3 text-[0.74rem]">
                   <span className="truncate text-ivory/60">{l(project.title)}</span>
                   <span className="tabular shrink-0 text-ivory/45">
                     {formatM(project.spent, locale)} / {formatM(project.budget, locale)}
@@ -778,42 +851,42 @@ function OverviewSection({
           <button
             type="button"
             onClick={onNew}
-            className="group flex items-center justify-between gap-4 border border-gold/30 bg-gold/[0.06] p-5 text-start transition-colors hover:border-gold/70"
+            className="group flex items-center justify-between gap-4 border border-gold/30 bg-gold/[0.06] p-6 text-start transition-colors hover:border-gold/70"
           >
             <div>
-              <p className="flex items-center gap-2 text-[0.72rem] font-medium text-ivory">
+              <p className="flex items-center gap-2 text-[0.88rem] font-medium text-ivory">
                 <Plus className="h-4 w-4 text-gold" />
                 {c.addProject}
               </p>
-              <p className="mt-1 text-[0.6rem] text-ivory/50">{c.projects}</p>
+              <p className="mt-1.5 text-[0.74rem] text-ivory/50">{c.projects}</p>
             </div>
             <ArrowUpRight className="h-4 w-4 text-gold transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
           </button>
           <button
             type="button"
             onClick={() => onNavigate("financials")}
-            className="group flex items-center justify-between gap-4 border border-white/10 bg-coal p-5 text-start transition-colors hover:border-gold/40"
+            className="group flex items-center justify-between gap-4 border border-white/10 bg-coal p-6 text-start transition-colors hover:border-gold/40"
           >
             <div>
-              <p className="flex items-center gap-2 text-[0.72rem] font-medium text-ivory">
+              <p className="flex items-center gap-2 text-[0.88rem] font-medium text-ivory">
                 <BarChart3 className="h-4 w-4 text-gold" />
                 {c.financials}
               </p>
-              <p className="mt-1 text-[0.6rem] text-ivory/50">{c.paymentStages}</p>
+              <p className="mt-1.5 text-[0.74rem] text-ivory/50">{c.paymentStages}</p>
             </div>
             <ArrowUpRight className="h-4 w-4 text-gold transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
           </button>
           <button
             type="button"
             onClick={() => onNavigate("messages")}
-            className="group flex items-center justify-between gap-4 border border-white/10 bg-coal p-5 text-start transition-colors hover:border-gold/40"
+            className="group flex items-center justify-between gap-4 border border-white/10 bg-coal p-6 text-start transition-colors hover:border-gold/40"
           >
             <div>
-              <p className="flex items-center gap-2 text-[0.72rem] font-medium text-ivory">
+              <p className="flex items-center gap-2 text-[0.88rem] font-medium text-ivory">
                 <MessageSquare className="h-4 w-4 text-gold" />
                 {c.messages}
               </p>
-              <p className="mt-1 text-[0.6rem] text-ivory/50">
+              <p className="mt-1.5 text-[0.74rem] text-ivory/50">
                 {messages.length} {c.messages}
               </p>
             </div>
@@ -824,41 +897,41 @@ function OverviewSection({
 
       <div className="border border-white/10 bg-coal">
         <div className="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-4">
-          <span className="text-[0.55rem] font-semibold uppercase tracking-[0.16em] text-gold">
+          <span className="text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-gold">
             {c.recent}
           </span>
           <button
             type="button"
             onClick={() => onNavigate("projects")}
-            className="text-[0.55rem] font-semibold uppercase tracking-[0.12em] text-ivory/45 transition-colors hover:text-gold"
+            className="text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-ivory/45 transition-colors hover:text-gold"
           >
             {c.viewAll}
           </button>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[620px] text-start">
+          <table className="w-full min-w-[700px] text-start">
             <thead>
-              <tr className="border-b border-white/8 text-[0.48rem] uppercase tracking-[0.14em] text-ivory/40">
-                <th className="px-5 py-3 text-start font-medium">{c.project}</th>
-                <th className="px-3 py-3 text-start font-medium">{c.category}</th>
-                <th className="px-3 py-3 text-start font-medium">{c.status}</th>
-                <th className="px-3 py-3 text-start font-medium">{c.progress}</th>
-                <th className="px-5 py-3 text-end font-medium">{c.value}</th>
+              <tr className="border-b border-white/8 text-[0.64rem] uppercase tracking-[0.14em] text-ivory/40">
+                <th className="px-5 py-3.5 text-start font-medium">{c.project}</th>
+                <th className="px-4 py-3.5 text-start font-medium">{c.category}</th>
+                <th className="px-4 py-3.5 text-start font-medium">{c.status}</th>
+                <th className="px-4 py-3.5 text-start font-medium">{c.progress}</th>
+                <th className="px-5 py-3.5 text-end font-medium">{c.value}</th>
               </tr>
             </thead>
             <tbody>
               {projects.slice(0, 5).map((project) => (
                 <tr key={project.slug} className="border-b border-white/6 last:border-0">
-                  <td className="px-5 py-3">
-                    <span className="text-[0.68rem] text-ivory/75">{l(project.title)}</span>
+                  <td className="px-5 py-4">
+                    <span className="text-[0.82rem] text-ivory/75">{l(project.title)}</span>
                   </td>
-                  <td className="px-3 py-3 text-[0.58rem] text-ivory/50">
+                  <td className="px-4 py-4 text-[0.72rem] text-ivory/50">
                     {c.categoryLabels[project.category]}
                   </td>
-                  <td className="px-3 py-3">
+                  <td className="px-4 py-4">
                     <span
                       className={cn(
-                        "px-2 py-0.5 text-[0.48rem] uppercase tracking-[0.1em]",
+                        "inline-flex min-h-7 items-center px-2.5 text-[0.64rem] uppercase tracking-[0.1em]",
                         project.status === "ongoing"
                           ? "bg-gold/15 text-gold"
                           : project.status === "completed"
@@ -869,20 +942,20 @@ function OverviewSection({
                       {c.statusLabels[project.status]}
                     </span>
                   </td>
-                  <td className="px-3 py-3">
+                  <td className="px-4 py-4">
                     <span className="flex items-center gap-2">
-                      <span className="h-1 w-12 overflow-hidden bg-white/10">
+                      <span className="h-1.5 w-14 overflow-hidden bg-white/10">
                         <span
                           className="block h-full bg-gold"
                           style={{ width: `${project.progress}%` }}
                         />
                       </span>
-                      <span className="tabular text-[0.55rem] text-ivory/45">
+                      <span className="tabular text-[0.7rem] text-ivory/45">
                         {project.progress}%
                       </span>
                     </span>
                   </td>
-                  <td className="px-5 py-3 text-end text-[0.6rem] text-ivory/55">
+                  <td className="px-5 py-4 text-end text-[0.74rem] text-ivory/55">
                     {l(project.value)}
                   </td>
                 </tr>
@@ -908,7 +981,9 @@ function ProjectsSection({
 }) {
   const { locale, l } = useI18n();
   const c = copy[locale];
+  const { updateProject } = useWorkspace();
   const [query, setQuery] = useState("");
+  const [selected, setSelected] = useState<Set<string>>(() => new Set());
 
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -921,70 +996,175 @@ function ProjectsSection({
     );
   }, [projects, query]);
 
+  const allSelected =
+    filtered.length > 0 && filtered.every((project) => selected.has(project.slug));
+
+  const toggleSelected = (slug: string) => {
+    setSelected((current) => {
+      const next = new Set(current);
+      if (next.has(slug)) next.delete(slug);
+      else next.add(slug);
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    setSelected((current) => {
+      if (filtered.every((project) => current.has(project.slug))) {
+        const next = new Set(current);
+        filtered.forEach((project) => next.delete(project.slug));
+        return next;
+      }
+      const next = new Set(current);
+      filtered.forEach((project) => next.add(project.slug));
+      return next;
+    });
+  };
+
+  const cycleStatus = (project: WorkspaceProject) => {
+    const nextStatus: Record<WorkspaceProject["status"], WorkspaceProject["status"]> = {
+      ongoing: "completed",
+      completed: "upcoming",
+      upcoming: "ongoing",
+    };
+    updateProject(project.slug, { status: nextStatus[project.status] });
+  };
+
+  const applyBulkStatus = (status: WorkspaceProject["status"]) => {
+    const known = new Set(projects.map((project) => project.slug));
+    for (const slug of selected) {
+      if (known.has(slug)) updateProject(slug, { status });
+    }
+    setSelected(new Set<string>());
+  };
+
   return (
     <div className="space-y-5">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div>
           <h2 className="font-display text-2xl text-ivory">{c.projects}</h2>
-          <p className="mt-1 text-[0.62rem] text-ivory/45">
+          <p className="mt-1 text-[0.76rem] text-ivory/45">
             {filtered.length} / {projects.length}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder={c.search}
-            className="h-9 w-full border border-white/12 bg-transparent px-3 text-[0.65rem] text-ivory outline-none placeholder:text-ivory/35 focus:border-gold/50 sm:w-56"
+            className="h-10 w-full border border-white/12 bg-transparent px-3 text-[0.8rem] text-ivory outline-none placeholder:text-ivory/35 focus:border-gold/50 sm:w-64"
           />
           <button
             type="button"
             onClick={onNew}
-            className="inline-flex h-9 shrink-0 items-center gap-2 bg-gold px-4 text-[0.56rem] font-semibold uppercase tracking-[0.12em] text-obsidian transition-colors hover:bg-gold-light"
+            className="inline-flex h-10 shrink-0 items-center gap-2 bg-gold px-4 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-obsidian transition-colors hover:bg-gold-light"
           >
-            <Plus className="h-3.5 w-3.5" />
+            <Plus className="h-4 w-4" />
             {c.addProject}
           </button>
         </div>
       </div>
 
+      {selected.size > 0 ? (
+        <div className="flex flex-wrap items-center gap-2 border border-gold/25 bg-gold/[0.05] px-3 py-2.5">
+          <span className="text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-gold">
+            {selected.size} {c.selected}
+          </span>
+          <span className="hidden h-4 w-px bg-gold/25 sm:block" />
+          <span className="text-[0.66rem] uppercase tracking-[0.1em] text-ivory/45">
+            {c.bulkStatus}
+          </span>
+          {(
+            [
+              ["ongoing", c.setOngoing],
+              ["completed", c.setCompleted],
+              ["upcoming", c.setUpcoming],
+            ] as const
+          ).map(([status, label]) => (
+            <button
+              key={status}
+              type="button"
+              onClick={() => applyBulkStatus(status)}
+              className="h-8 border border-white/12 px-3 text-[0.66rem] font-semibold uppercase tracking-[0.1em] text-ivory/60 transition-colors hover:border-gold/45 hover:text-gold"
+            >
+              {label}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => setSelected(new Set<string>())}
+            className="ms-auto h-8 px-2 text-[0.66rem] uppercase tracking-[0.1em] text-ivory/40 transition-colors hover:text-gold"
+          >
+            {c.clearSelection}
+          </button>
+        </div>
+      ) : null}
+
       <div className="overflow-x-auto border border-white/10 bg-coal">
-        <table className="w-full min-w-[760px]">
+        <table className="w-full min-w-[960px]">
           <thead>
-            <tr className="border-b border-white/8 text-[0.48rem] uppercase tracking-[0.14em] text-ivory/40">
-              <th className="px-4 py-3 text-start font-medium">{c.project}</th>
-              <th className="px-3 py-3 text-start font-medium">{c.category}</th>
-              <th className="px-3 py-3 text-start font-medium">{c.status}</th>
-              <th className="px-3 py-3 text-start font-medium">{c.progress}</th>
-              <th className="px-3 py-3 text-end font-medium">{c.value}</th>
-              <th className="px-4 py-3 text-end font-medium">{c.actions}</th>
+            <tr className="border-b border-white/8 text-[0.64rem] uppercase tracking-[0.14em] text-ivory/40">
+              <th className="w-12 px-4 py-4 text-start font-medium">
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  onChange={toggleAll}
+                  aria-label={c.selectAll}
+                  className="h-4 w-4 accent-gold"
+                />
+              </th>
+              <th className="px-4 py-4 text-start font-medium">{c.project}</th>
+              <th className="px-4 py-4 text-start font-medium">{c.category}</th>
+              <th className="px-4 py-4 text-start font-medium">{c.status}</th>
+              <th className="px-4 py-4 text-start font-medium">{c.progress}</th>
+              <th className="px-4 py-4 text-end font-medium">{c.value}</th>
+              <th className="px-4 py-4 text-end font-medium">{c.actions}</th>
             </tr>
           </thead>
           <tbody>
             {filtered.map((project) => (
-              <tr key={project.slug} className="border-b border-white/6 last:border-0">
-                <td className="px-4 py-3">
+              <tr
+                key={project.slug}
+                className={cn(
+                  "border-b border-white/6 last:border-0 transition-colors",
+                  selected.has(project.slug) && "bg-gold/[0.045]",
+                )}
+              >
+                <td className="px-4 py-4">
+                  <input
+                    type="checkbox"
+                    checked={selected.has(project.slug)}
+                    onChange={() => toggleSelected(project.slug)}
+                    aria-label={`${c.selectAll}: ${l(project.title)}`}
+                    className="h-4 w-4 accent-gold"
+                  />
+                </td>
+                <td className="px-4 py-4">
                   <span className="flex items-center gap-3">
-                    <span className="relative h-8 w-11 overflow-hidden border border-white/10">
+                    <span className="relative h-10 w-14 shrink-0 overflow-hidden border border-white/10">
                       <ProjectArt variant={project.art} className="h-full w-full" />
                     </span>
-                    <span className="flex min-w-0 flex-col">
-                      <span className="truncate text-[0.68rem] text-ivory/75">
+                    <span className="flex min-w-0 flex-col gap-0.5">
+                      <span className="truncate text-[0.82rem] text-ivory/75">
                         {l(project.title)}
                       </span>
-                      <span className="truncate text-[0.5rem] text-ivory/40">
+                      <span className="truncate text-[0.7rem] text-ivory/40">
                         {l(project.location)}
                       </span>
                     </span>
                   </span>
                 </td>
-                <td className="px-3 py-3 text-[0.58rem] text-ivory/50">
+                <td className="px-4 py-4 text-[0.72rem] text-ivory/50">
                   {c.categoryLabels[project.category]}
                 </td>
-                <td className="px-3 py-3">
-                  <span
+                <td className="px-4 py-4">
+                  <button
+                    type="button"
+                    onClick={() => cycleStatus(project)}
+                    title={c.quickStatus}
+                    aria-label={`${c.quickStatus}: ${c.statusLabels[project.status]}`}
                     className={cn(
-                      "px-2 py-0.5 text-[0.48rem] uppercase tracking-[0.1em]",
+                      "inline-flex min-h-8 items-center px-2.5 text-[0.64rem] uppercase tracking-[0.1em] transition-[filter,background-color] hover:brightness-125",
                       project.status === "ongoing"
                         ? "bg-gold/15 text-gold"
                         : project.status === "completed"
@@ -993,41 +1173,41 @@ function ProjectsSection({
                     )}
                   >
                     {c.statusLabels[project.status]}
-                  </span>
+                  </button>
                 </td>
-                <td className="px-3 py-3">
+                <td className="px-4 py-4">
                   <span className="flex items-center gap-2">
-                    <span className="h-1 w-12 overflow-hidden bg-white/10">
+                    <span className="h-1.5 w-14 overflow-hidden bg-white/10">
                       <span
                         className="block h-full bg-gold"
                         style={{ width: `${project.progress}%` }}
                       />
                     </span>
-                    <span className="tabular text-[0.55rem] text-ivory/45">
+                    <span className="tabular text-[0.7rem] text-ivory/45">
                       {project.progress}%
                     </span>
                   </span>
                 </td>
-                <td className="px-3 py-3 text-end text-[0.58rem] text-ivory/55">
+                <td className="px-4 py-4 text-end text-[0.72rem] text-ivory/55">
                   {l(project.value)}
                 </td>
-                <td className="px-4 py-3">
-                  <span className="flex items-center justify-end gap-1.5">
+                <td className="px-4 py-4">
+                  <span className="flex items-center justify-end gap-2">
                     <button
                       type="button"
                       onClick={() => onEdit(project)}
-                      className="flex h-7 w-7 items-center justify-center border border-white/12 text-ivory/55 transition-colors hover:border-gold/50 hover:text-gold"
+                      className="flex h-9 w-9 items-center justify-center border border-white/12 text-ivory/55 transition-colors hover:border-gold/50 hover:text-gold"
                       aria-label={`${c.edit} ${l(project.title)}`}
                     >
-                      <Pencil className="h-3 w-3" />
+                      <Pencil className="h-3.5 w-3.5" />
                     </button>
                     <button
                       type="button"
                       onClick={() => onDelete(project)}
-                      className="flex h-7 w-7 items-center justify-center border border-white/12 text-ivory/55 transition-colors hover:border-red-400/50 hover:text-red-300"
+                      className="flex h-9 w-9 items-center justify-center border border-white/12 text-ivory/55 transition-colors hover:border-red-400/50 hover:text-red-300"
                       aria-label={`${c.delete} ${l(project.title)}`}
                     >
-                      <Trash2 className="h-3 w-3" />
+                      <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </span>
                 </td>
@@ -1036,7 +1216,7 @@ function ProjectsSection({
           </tbody>
         </table>
         {!filtered.length ? (
-          <p className="p-8 text-center text-[0.68rem] text-ivory/45">{c.noProjects}</p>
+          <p className="p-8 text-center text-[0.82rem] text-ivory/45">{c.noProjects}</p>
         ) : null}
       </div>
     </div>
@@ -1091,9 +1271,9 @@ function FinancialsSection({ projects }: { projects: WorkspaceProject[] }) {
           { label: c.spent, value: formatM(totalSpent, locale) },
           { label: c.profit, value: formatM(totalProfit, locale) },
         ].map((stat) => (
-          <div key={stat.label} className="bg-coal p-4">
+          <div key={stat.label} className="bg-coal p-5">
             <p className="tabular font-display text-2xl leading-none text-ivory">{stat.value}</p>
-            <p className="mt-2 text-[0.48rem] uppercase tracking-[0.14em] text-ivory/40">
+            <p className="mt-2.5 text-[0.7rem] uppercase tracking-[0.14em] text-ivory/40">
               {stat.label}
             </p>
           </div>
@@ -1102,28 +1282,28 @@ function FinancialsSection({ projects }: { projects: WorkspaceProject[] }) {
 
       <div className="border border-white/10 bg-coal">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-5 py-4">
-          <span className="text-[0.55rem] font-semibold uppercase tracking-[0.16em] text-gold">
+          <span className="text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-gold">
             {c.financials}
           </span>
           <button
             type="button"
             onClick={exportCsv}
-            className="inline-flex h-8 items-center gap-2 border border-white/12 px-3 text-[0.52rem] font-semibold uppercase tracking-[0.12em] text-ivory/55 transition-colors hover:border-gold/40 hover:text-gold"
+            className="inline-flex h-9 items-center gap-2 border border-white/12 px-3.5 text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-ivory/55 transition-colors hover:border-gold/40 hover:text-gold"
           >
-            <FileText className="h-3 w-3" />
+            <FileText className="h-3.5 w-3.5" />
             {c.export}
           </button>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[760px]">
+          <table className="w-full min-w-[880px]">
             <thead>
-              <tr className="border-b border-white/8 text-[0.48rem] uppercase tracking-[0.14em] text-ivory/40">
-                <th className="px-5 py-3 text-start font-medium">{c.project}</th>
-                <th className="px-3 py-3 text-start font-medium">{c.budget}</th>
-                <th className="px-3 py-3 text-start font-medium">{c.spent}</th>
-                <th className="px-3 py-3 text-start font-medium">{c.profit}</th>
-                <th className="px-3 py-3 text-start font-medium">{c.contract}</th>
-                <th className="px-5 py-3 text-end font-medium">{c.margin}</th>
+              <tr className="border-b border-white/8 text-[0.64rem] uppercase tracking-[0.14em] text-ivory/40">
+                <th className="px-5 py-4 text-start font-medium">{c.project}</th>
+                <th className="px-4 py-4 text-start font-medium">{c.budget}</th>
+                <th className="px-4 py-4 text-start font-medium">{c.spent}</th>
+                <th className="px-4 py-4 text-start font-medium">{c.profit}</th>
+                <th className="px-4 py-4 text-start font-medium">{c.contract}</th>
+                <th className="px-5 py-4 text-end font-medium">{c.margin}</th>
               </tr>
             </thead>
             <tbody>
@@ -1133,9 +1313,9 @@ function FinancialsSection({ projects }: { projects: WorkspaceProject[] }) {
                   : 0;
                 return (
                   <tr key={project.slug} className="border-b border-white/6 last:border-0">
-                    <td className="px-5 py-3 text-[0.66rem] text-ivory/70">{l(project.title)}</td>
+                    <td className="px-5 py-4 text-[0.8rem] text-ivory/70">{l(project.title)}</td>
                     {(["budget", "spent", "profit", "contractValue"] as const).map((key) => (
-                      <td key={key} className="px-3 py-2">
+                      <td key={key} className="px-4 py-3">
                         <input
                           type="number"
                           min={0}
@@ -1143,14 +1323,14 @@ function FinancialsSection({ projects }: { projects: WorkspaceProject[] }) {
                           onChange={(event) =>
                             updateProject(project.slug, { [key]: Number(event.target.value) })
                           }
-                          className="h-8 w-20 border border-white/10 bg-transparent px-2 text-[0.6rem] text-ivory/70 outline-none focus:border-gold/50"
+                          className="h-10 w-24 border border-white/10 bg-transparent px-3 text-[0.78rem] text-ivory/70 outline-none focus:border-gold/50"
                         />
                       </td>
                     ))}
-                    <td className="px-5 py-3 text-end">
+                    <td className="px-5 py-4 text-end">
                       <span
                         className={cn(
-                          "tabular text-[0.62rem]",
+                          "tabular text-[0.8rem]",
                           margin >= 18 ? "text-emerald-300/80" : "text-gold",
                         )}
                       >
@@ -1166,16 +1346,16 @@ function FinancialsSection({ projects }: { projects: WorkspaceProject[] }) {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-        <div className="border border-white/10 bg-coal p-5">
-          <span className="text-[0.55rem] font-semibold uppercase tracking-[0.16em] text-gold">
+        <div className="border border-white/10 bg-coal p-6">
+          <span className="text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-gold">
             {c.budgetVsSpent}
           </span>
-          <div className="mt-6 space-y-4">
+          <div className="mt-6 space-y-5">
             {projects.slice(0, 6).map((project) => {
               const max = Math.max(1, project.budget);
               return (
                 <div key={project.slug}>
-                  <div className="flex items-center justify-between gap-3 text-[0.6rem]">
+                  <div className="flex items-center justify-between gap-3 text-[0.74rem]">
                     <span className="truncate text-ivory/60">{l(project.title)}</span>
                     <span className="tabular shrink-0 text-ivory/45">
                       {formatM(project.spent, locale)} / {formatM(project.budget, locale)}
@@ -1195,13 +1375,13 @@ function FinancialsSection({ projects }: { projects: WorkspaceProject[] }) {
 
         <div className="border border-white/10 bg-coal">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-5 py-4">
-            <span className="text-[0.55rem] font-semibold uppercase tracking-[0.16em] text-gold">
+            <span className="text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-gold">
               {c.paymentStages}
             </span>
             <select
               value={activeSlug}
               onChange={(event) => setSelected(event.target.value)}
-              className="h-8 border border-white/12 bg-coal px-2 text-[0.6rem] text-ivory/60 outline-none focus:border-gold/50"
+              className="h-10 max-w-full border border-white/12 bg-coal px-3 text-[0.74rem] text-ivory/60 outline-none focus:border-gold/50"
             >
               {projects.map((project) => (
                 <option key={project.slug} value={project.slug}>
@@ -1213,19 +1393,19 @@ function FinancialsSection({ projects }: { projects: WorkspaceProject[] }) {
           {selectedProject && selectedProject.invoices.length > 0 ? (
             <div className="divide-y divide-white/6">
               {selectedProject.invoices.map((invoice) => (
-                <div key={invoice.number} className="flex items-center gap-3 px-5 py-3.5">
-                  <FileText className="h-3.5 w-3.5 shrink-0 text-gold" />
+                <div key={invoice.number} className="flex items-center gap-3 px-6 py-4">
+                  <FileText className="h-4 w-4 shrink-0 text-gold" />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[0.65rem] text-ivory/65">{l(invoice.title)}</p>
-                    <span className="text-[0.5rem] text-ivory/40">
+                    <p className="truncate text-[0.84rem] text-ivory/65">{l(invoice.title)}</p>
+                    <span className="mt-0.5 block text-[0.7rem] text-ivory/40">
                       {invoice.number} · {invoice.date}
                     </span>
                   </div>
                   <div className="text-end">
-                    <p className="tabular text-[0.62rem] text-ivory/65">{invoice.amount}</p>
+                    <p className="tabular text-[0.8rem] text-ivory/65">{invoice.amount}</p>
                     <span
                       className={cn(
-                        "text-[0.48rem] uppercase tracking-[0.1em]",
+                        "text-[0.64rem] uppercase tracking-[0.1em]",
                         invoice.status === "paid"
                           ? "text-emerald-300/80"
                           : invoice.status === "due"
@@ -1240,9 +1420,9 @@ function FinancialsSection({ projects }: { projects: WorkspaceProject[] }) {
               ))}
             </div>
           ) : (
-            <p className="p-6 text-center text-[0.62rem] text-ivory/40">{c.noProjects}</p>
+            <p className="p-6 text-center text-[0.76rem] text-ivory/40">{c.noProjects}</p>
           )}
-          <div className="border-t border-white/10 px-5 py-3 text-[0.55rem] text-ivory/40">
+          <div className="border-t border-white/10 px-5 py-3 text-[0.7rem] text-ivory/40">
             {selectedProject ? l(selectedProject.title) : ""}
           </div>
         </div>
@@ -1442,6 +1622,8 @@ function ContentSection() {
 
   const [mediaDraft, setMediaDraft] = useState<Record<string, MediaOverride>>({});
   const [mediaNotice, setMediaNotice] = useState(false);
+  const [mediaError, setMediaError] = useState("");
+  const [mediaValidating, setMediaValidating] = useState(false);
   const mediaNoticeTimer = useRef<number | null>(null);
   const mediaGroups = useMemo(
     () => Array.from(new Set(mediaCatalog.map((asset) => asset.group))),
@@ -1450,6 +1632,7 @@ function ContentSection() {
 
   const flashMediaNotice = () => {
     setMediaNotice(true);
+    setMediaError("");
     if (mediaNoticeTimer.current) window.clearTimeout(mediaNoticeTimer.current);
     mediaNoticeTimer.current = window.setTimeout(() => setMediaNotice(false), 2400);
   };
@@ -1468,6 +1651,7 @@ function ContentSection() {
   };
 
   const updateMedia = (key: string, patch: Partial<MediaOverride>) => {
+    setMediaError("");
     const current = effectiveMedia(key);
     setMediaDraft((draft) => ({
       ...draft,
@@ -1488,13 +1672,40 @@ function ContentSection() {
     });
   };
 
-  const saveMedia = (event: React.FormEvent) => {
+  const mediaValidationMessage = (reason?: string) => {
+    switch (reason) {
+      case "too_large":
+        return c.mediaTooLarge;
+      case "dimensions":
+        return c.mediaDimensions;
+      case "format":
+        return c.mediaFormat;
+      case "unreachable":
+        return c.mediaUnreachable;
+      case "not_image":
+        return c.mediaNotImage;
+      default:
+        return c.invalidMedia;
+    }
+  };
+
+  const saveMedia = async (event: React.FormEvent) => {
     event.preventDefault();
+    const invalid = mediaCatalog.find((asset) => {
+      const src = effectiveMedia(asset.key).src.trim();
+      return Boolean(src) && !isAllowedMediaSource(src);
+    });
+    if (invalid) {
+      setMediaNotice(false);
+      setMediaError(c.invalidMedia);
+      return;
+    }
+
     const next: Record<string, MediaOverride> = {};
     for (const asset of mediaCatalog) {
       const current = effectiveMedia(asset.key);
       const src = current.src.trim();
-      if (!src || !isAllowedMediaSource(src)) continue;
+      if (!src) continue;
       next[asset.key] = {
         src,
         alt: {
@@ -1503,12 +1714,60 @@ function ContentSection() {
         },
       };
     }
+
+    const mediaSources = Array.from(
+      new Set(Object.values(next).map((override) => override.src)),
+    );
+
+    if (mediaSources.length > 0) {
+      setMediaNotice(false);
+      setMediaError("");
+      setMediaValidating(true);
+      try {
+        // Validate in small batches so a full-catalog update stays responsive
+        // and never exceeds the API's per-request inspection limit.
+        for (let index = 0; index < mediaSources.length; index += 8) {
+          const response = await fetch("/api/admin/media/validate", {
+            method: "POST",
+            credentials: "same-origin",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ sources: mediaSources.slice(index, index + 8) }),
+          });
+          const payload = response.ok
+            ? ((await response.json().catch(() => null)) as
+                | {
+                    valid?: boolean;
+                    results?: Array<{ ok?: boolean; reason?: string }>;
+                  }
+                | null)
+            : null;
+
+          if (!response.ok || !payload) {
+            setMediaError(c.mediaUnreachable);
+            return;
+          }
+
+          if (!payload.valid) {
+            const failed = payload.results?.find((result) => !result.ok);
+            setMediaError(mediaValidationMessage(failed?.reason));
+            return;
+          }
+        }
+      } catch {
+        setMediaError(c.mediaUnreachable);
+        return;
+      } finally {
+        setMediaValidating(false);
+      }
+    }
+
     updateContent({ mediaOverrides: next });
     setMediaDraft({});
     flashMediaNotice();
   };
 
   const resetMedia = (key: string) => {
+    setMediaError("");
     const nextDraft = { ...mediaDraft };
     delete nextDraft[key];
     setMediaDraft(nextDraft);
@@ -1529,13 +1788,13 @@ function ContentSection() {
     <div className="space-y-6">
       <form onSubmit={saveContent} className="border border-white/10 bg-coal">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-5 py-4">
-          <span className="text-[0.55rem] font-semibold uppercase tracking-[0.16em] text-gold">
+          <span className="text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-gold">
             {c.heroContent}
           </span>
           <Link
             href="/"
             target="_blank"
-            className="inline-flex items-center gap-1.5 text-[0.52rem] uppercase tracking-[0.12em] text-ivory/45 transition-colors hover:text-gold"
+            className="inline-flex items-center gap-1.5 text-[0.68rem] uppercase tracking-[0.12em] text-ivory/45 transition-colors hover:text-gold"
           >
             {c.back}
             <ArrowUpRight className="h-3 w-3" />
@@ -1607,7 +1866,7 @@ function ContentSection() {
         </div>
 
         <div className="border-t border-white/10 p-5">
-          <p className="mb-4 text-[0.55rem] font-semibold uppercase tracking-[0.16em] text-gold/80">
+          <p className="mb-4 text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-gold/80">
             {c.promo}
           </p>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -1650,7 +1909,7 @@ function ContentSection() {
                 onChange={(event) => setHero({ ...hero, promoHref: event.target.value })}
               />
             </Field>
-            <label className="flex items-end gap-2 pb-2 text-[0.68rem] text-ivory/65">
+            <label className="flex items-end gap-2 pb-2 text-[0.82rem] text-ivory/65">
               <input
                 type="checkbox"
                 checked={hero.promoVisible}
@@ -1663,10 +1922,10 @@ function ContentSection() {
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 p-4">
-          <span className="text-[0.58rem] text-ivory/40">{saved ? c.saved : ""}</span>
+          <span className="text-[0.72rem] text-ivory/40">{saved ? c.saved : ""}</span>
           <button
             type="submit"
-            className="inline-flex h-9 items-center gap-2 bg-gold px-4 text-[0.56rem] font-semibold uppercase tracking-[0.12em] text-obsidian transition-colors hover:bg-gold-light"
+            className="inline-flex h-9 items-center gap-2 bg-gold px-4 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-obsidian transition-colors hover:bg-gold-light"
           >
             {saved ? <Check className="h-3.5 w-3.5" /> : <Save className="h-3.5 w-3.5" />}
             {c.saveContent}
@@ -1676,13 +1935,13 @@ function ContentSection() {
 
       <form onSubmit={saveService} className="border border-white/10 bg-coal">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-5 py-4">
-          <span className="text-[0.55rem] font-semibold uppercase tracking-[0.16em] text-gold">
+          <span className="text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-gold">
             {c.serviceCards}
           </span>
           <select
             value={activeServiceSlug}
             onChange={(event) => selectService(event.target.value)}
-            className="h-8 border border-white/12 bg-coal px-2 text-[0.6rem] text-ivory/60 outline-none focus:border-gold/50"
+            className="h-8 border border-white/12 bg-coal px-2 text-[0.74rem] text-ivory/60 outline-none focus:border-gold/50"
           >
             {services.map((service) => (
               <option key={service.slug} value={service.slug}>
@@ -1748,7 +2007,7 @@ function ContentSection() {
         <div className="flex justify-end border-t border-white/10 p-4">
           <button
             type="submit"
-            className="inline-flex h-9 items-center gap-2 border border-gold/40 px-4 text-[0.56rem] font-semibold uppercase tracking-[0.12em] text-gold transition-colors hover:bg-gold hover:text-obsidian"
+            className="inline-flex h-9 items-center gap-2 border border-gold/40 px-4 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-gold transition-colors hover:bg-gold hover:text-obsidian"
           >
             <Save className="h-3.5 w-3.5" />
             {c.saveService}
@@ -1758,18 +2017,18 @@ function ContentSection() {
       <form onSubmit={saveCopy} className="border border-white/10 bg-coal">
         <div className="flex flex-wrap items-start justify-between gap-3 border-b border-white/10 px-5 py-4">
           <div>
-            <span className="flex items-center gap-2 text-[0.55rem] font-semibold uppercase tracking-[0.16em] text-gold">
+            <span className="flex items-center gap-2 text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-gold">
               <Sparkles className="h-3.5 w-3.5" />
               {c.siteCopy}
             </span>
-            <p className="mt-2 max-w-2xl text-[0.6rem] leading-relaxed text-ivory/45">
+            <p className="mt-2 max-w-2xl text-[0.74rem] leading-relaxed text-ivory/45">
               {c.siteCopyText}
             </p>
           </div>
           <button
             type="button"
             onClick={resetCopy}
-            className="inline-flex h-8 items-center gap-1.5 border border-white/12 px-3 text-[0.52rem] font-semibold uppercase tracking-[0.12em] text-ivory/50 transition-all duration-300 hover:border-gold/40 hover:text-gold active:scale-[0.98]"
+            className="inline-flex h-8 items-center gap-1.5 border border-white/12 px-3 text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-ivory/50 transition-all duration-300 hover:border-gold/40 hover:text-gold active:scale-[0.98]"
           >
             <RotateCcw className="h-3 w-3" />
             {c.resetCopy}
@@ -1790,7 +2049,7 @@ function ContentSection() {
           <select
             value={copyGroup}
             onChange={(event) => setCopyGroup(event.target.value)}
-            className="h-10 border border-white/12 bg-coal px-3 text-[0.62rem] text-ivory/60 outline-none transition-colors focus:border-gold/50"
+            className="h-10 border border-white/12 bg-coal px-3 text-[0.76rem] text-ivory/60 outline-none transition-colors focus:border-gold/50"
             aria-label={c.allGroups}
           >
             <option value="all">{c.allGroups}</option>
@@ -1800,14 +2059,14 @@ function ContentSection() {
               </option>
             ))}
           </select>
-          <span className="text-[0.55rem] text-ivory/40">
+          <span className="text-[0.7rem] text-ivory/40">
             {filteredCopyFields.length} / {copyFields.length}
           </span>
         </div>
 
         <div className="space-y-2 p-4">
           {filteredCopyFields.length === 0 ? (
-            <p className="py-8 text-center text-[0.62rem] text-ivory/40">{c.noCopyResults}</p>
+            <p className="py-8 text-center text-[0.76rem] text-ivory/40">{c.noCopyResults}</p>
           ) : (
             copyGroups.map((group) => {
               const groupFields = filteredCopyFields.filter((field) => field.group === group);
@@ -1819,12 +2078,12 @@ function ContentSection() {
                   open={copyQuery.trim().length > 0 ? true : undefined}
                   className="group/copy border border-white/8 bg-obsidian/25"
                 >
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-[0.58rem] font-semibold uppercase tracking-[0.14em] text-ivory/65 transition-colors hover:text-gold [&::-webkit-details-marker]:hidden">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-ivory/65 transition-colors hover:text-gold [&::-webkit-details-marker]:hidden">
                     <span className="flex items-center gap-2">
                       <ChevronDown className="h-3.5 w-3.5 text-gold/60 transition-transform duration-300 group-open/copy:rotate-180" />
                       {label[locale]}
                     </span>
-                    <span className="tabular text-[0.5rem] text-ivory/35">{groupFields.length}</span>
+                    <span className="tabular text-[0.66rem] text-ivory/35">{groupFields.length}</span>
                   </summary>
                   <div className="space-y-1 border-t border-white/8 p-3">
                     {groupFields.map((field) => {
@@ -1837,12 +2096,12 @@ function ContentSection() {
                           className="grid gap-2 rounded-sm border border-transparent px-2 py-2 transition-colors hover:border-white/8 hover:bg-white/[0.025] lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.2fr)_minmax(0,1.2fr)] lg:items-center"
                         >
                           <div className="min-w-0">
-                            <code className="block truncate text-[0.55rem] text-ivory/50" dir="ltr">
+                            <code className="block truncate text-[0.7rem] text-ivory/50" dir="ltr">
                               {field.path}
                             </code>
                             <span
                               className={cn(
-                                "mt-0.5 inline-block text-[0.44rem] uppercase tracking-[0.12em]",
+                                "mt-0.5 inline-block text-[0.62rem] uppercase tracking-[0.12em]",
                                 customised ? "text-gold/70" : "text-ivory/30",
                               )}
                             >
@@ -1894,10 +2153,10 @@ function ContentSection() {
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 p-4">
-          <span className="text-[0.58rem] text-ivory/40">{copyNotice ? c.copySaved : ""}</span>
+          <span className="text-[0.72rem] text-ivory/40">{copyNotice ? c.copySaved : ""}</span>
           <button
             type="submit"
-            className="inline-flex h-9 items-center gap-2 bg-gold px-4 text-[0.56rem] font-semibold uppercase tracking-[0.12em] text-obsidian transition-all duration-300 hover:bg-gold-light active:scale-[0.98]"
+            className="inline-flex h-9 items-center gap-2 bg-gold px-4 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-obsidian transition-all duration-300 hover:bg-gold-light active:scale-[0.98]"
           >
             {copyNotice ? <Check className="h-3.5 w-3.5" /> : <Save className="h-3.5 w-3.5" />}
             {c.saveCopy}
@@ -1908,15 +2167,15 @@ function ContentSection() {
       <form onSubmit={saveMedia} className="border border-white/10 bg-coal">
         <div className="flex flex-wrap items-start justify-between gap-3 border-b border-white/10 px-5 py-4">
           <div>
-            <span className="flex items-center gap-2 text-[0.55rem] font-semibold uppercase tracking-[0.16em] text-gold">
+            <span className="flex items-center gap-2 text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-gold">
               <ImageIcon className="h-3.5 w-3.5" />
               {c.mediaAssets}
             </span>
-            <p className="mt-2 max-w-2xl text-[0.6rem] leading-relaxed text-ivory/45">
+            <p className="mt-2 max-w-2xl text-[0.74rem] leading-relaxed text-ivory/45">
               {c.mediaAssetsText}
             </p>
           </div>
-          <span className="border border-white/10 px-2.5 py-1 text-[0.48rem] uppercase tracking-[0.12em] text-ivory/40">
+          <span className="border border-white/10 px-2.5 py-1 text-[0.64rem] uppercase tracking-[0.12em] text-ivory/40">
             {mediaCatalog.length}
           </span>
         </div>
@@ -1930,12 +2189,12 @@ function ContentSection() {
                 key={group}
                 className="group/media border border-white/8 bg-obsidian/25"
               >
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-[0.58rem] font-semibold uppercase tracking-[0.14em] text-ivory/65 transition-colors hover:text-gold [&::-webkit-details-marker]:hidden">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-ivory/65 transition-colors hover:text-gold [&::-webkit-details-marker]:hidden">
                   <span className="flex items-center gap-2">
                     <ChevronDown className="h-3.5 w-3.5 text-gold/60 transition-transform duration-300 group-open/media:rotate-180" />
                     {label[locale]}
                   </span>
-                  <span className="tabular text-[0.5rem] text-ivory/35">{assets.length}</span>
+                  <span className="tabular text-[0.66rem] text-ivory/35">{assets.length}</span>
                 </summary>
                 <div className="grid gap-3 border-t border-white/8 p-3 xl:grid-cols-2">
                   {assets.map((asset) => {
@@ -1944,6 +2203,8 @@ function ContentSection() {
                     const customised = Boolean(
                       mediaDraft[asset.key] || content.mediaOverrides[asset.key],
                     );
+                    const srcInvalid =
+                      Boolean(value.src.trim()) && !isAllowedMediaSource(value.src.trim());
                     return (
                       <div
                         key={asset.key}
@@ -1963,10 +2224,10 @@ function ContentSection() {
                         <div className="min-w-0 space-y-2">
                           <div className="flex items-center justify-between gap-2">
                             <div className="min-w-0">
-                              <p className="truncate text-[0.62rem] text-ivory/65">
+                              <p className="truncate text-[0.76rem] text-ivory/65">
                                 {asset.label[locale]}
                               </p>
-                              <code className="block truncate text-[0.48rem] text-ivory/40" dir="ltr">
+                              <code className="block truncate text-[0.64rem] text-ivory/40" dir="ltr">
                                 {asset.key}
                               </code>
                             </div>
@@ -1988,7 +2249,13 @@ function ContentSection() {
                             }
                             dir="ltr"
                             aria-label={`${c.imageSource}: ${asset.key}`}
+                            aria-invalid={srcInvalid}
                           />
+                          {srcInvalid ? (
+                            <p className="text-[0.66rem] leading-relaxed text-red-300/80">
+                              {c.invalidMedia}
+                            </p>
+                          ) : null}
                           <div className="grid gap-2 sm:grid-cols-2">
                             <TextInput
                               value={value.alt.ar}
@@ -2009,7 +2276,7 @@ function ContentSection() {
                               aria-label={`${c.imageAlt} — English`}
                             />
                           </div>
-                          <div className="flex items-center justify-between gap-2 text-[0.46rem] uppercase tracking-[0.1em]">
+                          <div className="flex items-center justify-between gap-2 text-[0.62rem] uppercase tracking-[0.1em]">
                             <span className={customised ? "text-gold/70" : "text-ivory/30"}>
                               {customised ? c.customised : c.original}
                             </span>
@@ -2026,13 +2293,28 @@ function ContentSection() {
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 p-4">
-          <span className="text-[0.58rem] text-ivory/40">{mediaNotice ? c.saved : ""}</span>
+          <span
+            className={cn(
+              "text-[0.72rem]",
+              mediaError ? "text-red-300/85" : "text-ivory/40",
+            )}
+            role={mediaError ? "alert" : undefined}
+          >
+            {mediaError || (mediaValidating ? c.validatingMedia : mediaNotice ? c.saved : "")}
+          </span>
           <button
             type="submit"
-            className="inline-flex h-9 items-center gap-2 border border-gold/40 px-4 text-[0.56rem] font-semibold uppercase tracking-[0.12em] text-gold transition-all duration-300 hover:bg-gold hover:text-obsidian active:scale-[0.98]"
+            disabled={mediaValidating}
+            className="inline-flex h-9 items-center gap-2 border border-gold/40 px-4 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-gold transition-all duration-300 hover:bg-gold hover:text-obsidian active:scale-[0.98] disabled:cursor-wait disabled:opacity-60 disabled:hover:bg-transparent disabled:hover:text-gold"
           >
-            {mediaNotice ? <Check className="h-3.5 w-3.5" /> : <Save className="h-3.5 w-3.5" />}
-            {c.mediaAssets}
+            {mediaValidating ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : mediaNotice ? (
+              <Check className="h-3.5 w-3.5" />
+            ) : (
+              <Save className="h-3.5 w-3.5" />
+            )}
+            {mediaValidating ? c.validatingMedia : c.mediaAssets}
           </button>
         </div>
       </form>
@@ -2050,7 +2332,7 @@ function MediaSection({ projects }: { projects: WorkspaceProject[] }) {
       <div className="flex flex-col justify-between gap-3 border border-white/10 bg-coal p-5 sm:flex-row sm:items-center">
         <div>
           <h2 className="font-display text-2xl text-ivory">{c.mediaTitle}</h2>
-          <p className="mt-1 max-w-2xl text-[0.62rem] leading-relaxed text-ivory/45">
+          <p className="mt-1 max-w-2xl text-[0.76rem] leading-relaxed text-ivory/45">
             {c.mediaText}
           </p>
         </div>
@@ -2060,8 +2342,8 @@ function MediaSection({ projects }: { projects: WorkspaceProject[] }) {
         {projects.map((project) => (
           <div key={project.slug} className="border border-white/10 bg-coal p-4">
             <div className="flex items-center justify-between gap-3">
-              <span className="truncate text-[0.68rem] text-ivory/70">{l(project.title)}</span>
-              <span className="text-[0.5rem] uppercase tracking-[0.12em] text-ivory/40">
+              <span className="truncate text-[0.82rem] text-ivory/70">{l(project.title)}</span>
+              <span className="text-[0.66rem] uppercase tracking-[0.12em] text-ivory/40">
                 {c.cover}: {c.artLabels[project.art]}
               </span>
             </div>
@@ -2087,13 +2369,13 @@ function MediaSection({ projects }: { projects: WorkspaceProject[] }) {
                   aria-label={`${c.setCover}: ${c.artLabels[variant]}`}
                 >
                   <ProjectArt variant={variant} className="h-full w-full" />
-                  <span className="absolute inset-x-0 bottom-0 bg-obsidian/75 px-1 py-0.5 text-[0.42rem] uppercase tracking-[0.08em] text-ivory/60">
+                  <span className="absolute inset-x-0 bottom-0 bg-obsidian/75 px-1 py-0.5 text-[0.6rem] uppercase tracking-[0.08em] text-ivory/60">
                     {c.artLabels[variant]}
                   </span>
                 </button>
               ))}
             </div>
-            <p className="mt-3 text-[0.52rem] text-ivory/40">
+            <p className="mt-3 text-[0.68rem] text-ivory/40">
               {c.gallery}: {project.gallery.length}
             </p>
           </div>
@@ -2132,7 +2414,7 @@ function MessagesSection({ projects }: { projects: WorkspaceProject[] }) {
       <div className="border border-white/10 bg-coal">
         <div className="border-b border-white/10 px-5 py-4">
           <h2 className="font-display text-2xl text-ivory">{c.messagesTitle}</h2>
-          <p className="mt-1 text-[0.6rem] leading-relaxed text-ivory/45">{c.messagesText}</p>
+          <p className="mt-1 text-[0.74rem] leading-relaxed text-ivory/45">{c.messagesText}</p>
         </div>
         <div className="divide-y divide-white/6">
           {projects.map((project) => {
@@ -2148,14 +2430,14 @@ function MessagesSection({ projects }: { projects: WorkspaceProject[] }) {
                 )}
               >
                 <span className="min-w-0">
-                  <span className="block truncate text-[0.66rem] text-ivory/70">
+                  <span className="block truncate text-[0.8rem] text-ivory/70">
                     {l(project.title)}
                   </span>
-                  <span className="text-[0.5rem] text-ivory/40">{l(project.location)}</span>
+                  <span className="text-[0.66rem] text-ivory/40">{l(project.location)}</span>
                 </span>
                 <span
                   className={cn(
-                    "tabular flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[0.5rem]",
+                    "tabular flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[0.66rem]",
                     count ? "bg-gold text-obsidian" : "bg-white/10 text-ivory/40",
                   )}
                 >
@@ -2169,10 +2451,10 @@ function MessagesSection({ projects }: { projects: WorkspaceProject[] }) {
 
       <div className="border border-white/10 bg-coal">
         <div className="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-4">
-          <span className="text-[0.55rem] font-semibold uppercase tracking-[0.16em] text-gold">
+          <span className="text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-gold">
             {c.messagesTitle}
           </span>
-          <span className="text-[0.52rem] text-ivory/40">
+          <span className="text-[0.68rem] text-ivory/40">
             {projectMessages.length} {c.messages}
           </span>
         </div>
@@ -2186,13 +2468,13 @@ function MessagesSection({ projects }: { projects: WorkspaceProject[] }) {
                   message.author === "manager" ? "items-end" : "items-start",
                 )}
               >
-                <span className="flex items-center gap-1.5 text-[0.48rem] uppercase tracking-[0.12em] text-ivory/40">
+                <span className="flex items-center gap-1.5 text-[0.64rem] uppercase tracking-[0.12em] text-ivory/40">
                   {message.author === "manager" ? c.manager : c.client}
                   <span className="text-ivory/30">{dateFormat.format(new Date(message.at))}</span>
                 </span>
                 <p
                   className={cn(
-                    "max-w-[90%] px-3 py-2 text-[0.68rem] leading-relaxed",
+                    "max-w-[90%] px-3 py-2 text-[0.82rem] leading-relaxed",
                     message.author === "manager"
                       ? "bg-gold text-obsidian"
                       : "border border-white/10 bg-white/5 text-ivory/65",
@@ -2203,21 +2485,21 @@ function MessagesSection({ projects }: { projects: WorkspaceProject[] }) {
               </div>
             ))
           ) : (
-            <p className="py-10 text-center text-[0.62rem] text-ivory/40">{c.noMessages}</p>
+            <p className="py-10 text-center text-[0.76rem] text-ivory/40">{c.noMessages}</p>
           )}
         </div>
         <form onSubmit={submit} className="border-t border-white/10 p-4">
-          <p className="mb-2 text-[0.5rem] uppercase tracking-[0.14em] text-ivory/40">{c.reply}</p>
+          <p className="mb-2 text-[0.66rem] uppercase tracking-[0.14em] text-ivory/40">{c.reply}</p>
           <div className="flex gap-2">
             <input
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
               placeholder={c.replyPlaceholder}
-              className="h-10 min-w-0 flex-1 border border-white/12 bg-transparent px-3 text-[0.66rem] text-ivory outline-none placeholder:text-ivory/35 focus:border-gold/50"
+              className="h-10 min-w-0 flex-1 border border-white/12 bg-transparent px-3 text-[0.8rem] text-ivory outline-none placeholder:text-ivory/35 focus:border-gold/50"
             />
             <button
               type="submit"
-              className="flex h-10 items-center gap-2 bg-gold px-4 text-[0.54rem] font-semibold uppercase tracking-[0.12em] text-obsidian transition-colors hover:bg-gold-light"
+              className="flex h-10 items-center gap-2 bg-gold px-4 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-obsidian transition-colors hover:bg-gold-light"
             >
               <Send className="h-3.5 w-3.5" />
               {c.send}

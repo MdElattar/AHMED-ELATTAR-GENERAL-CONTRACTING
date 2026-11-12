@@ -19,10 +19,10 @@ import type { Project } from "@/data/projects";
 import { cn } from "@/lib/utils";
 
 const colors: Record<EstimatePart["key"], string> = {
-  structure: "#d4af37",
-  finishes: "#f2dfa0",
-  mep: "#c5a059",
-  management: "#8b7440",
+  structure: "#b8860b",
+  finishes: "#c59b27",
+  mep: "#a67c1a",
+  management: "#7d5e15",
 };
 
 const icons: Record<EstimatePart["key"], typeof Building2> = {

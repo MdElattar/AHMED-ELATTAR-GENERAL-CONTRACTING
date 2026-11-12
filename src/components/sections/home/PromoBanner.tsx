@@ -14,7 +14,7 @@ export function PromoBanner() {
 
   return (
     <section className="relative overflow-hidden border-y border-gold/20 bg-gold/[0.06]">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(201,164,92,0.14),transparent_65%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(166,124,26,0.14),transparent_65%)]" />
       <div className="container-lux relative flex flex-col items-start justify-between gap-5 py-7 sm:flex-row sm:items-center">
         <div className="flex items-start gap-4">
           <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-gold/30 bg-gold/10 text-gold">

@@ -92,7 +92,7 @@ export function Modal({
             exit={{ opacity: 0, y: 20, scale: 0.99 }}
             transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
             className={cn(
-              "relative z-10 max-h-[90svh] w-full max-w-5xl overflow-y-auto border border-white/10 bg-coal shadow-[0_40px_120px_-30px_rgba(0,0,0,0.9)]",
+              "relative z-10 max-h-[85vh] w-full max-w-5xl overflow-y-auto overscroll-contain border border-white/10 bg-coal shadow-[0_40px_120px_-30px_rgba(0,0,0,0.9)]",
               className,
             )}
           >

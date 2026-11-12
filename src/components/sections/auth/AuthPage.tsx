@@ -132,7 +132,7 @@ export function AuthPage({ mode }: AuthPageProps) {
 
   return (
     <section className="relative min-h-[100svh] overflow-hidden bg-obsidian pt-20 text-ivory">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_20%_0%,rgba(200,169,107,0.08),transparent_55%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_20%_0%,rgba(166,124,26,0.08),transparent_55%)]" />
       <div className="blueprint-grid pointer-events-none absolute inset-0 opacity-[0.18]" />
 
       <div className="relative grid min-h-[calc(100svh-5rem)] lg:grid-cols-[0.95fr_1.05fr]">

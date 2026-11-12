@@ -509,7 +509,7 @@ export function BidForm() {
                       return next;
                     });
                   }}
-                  className="mt-0.5 h-4 w-4 shrink-0 accent-[#8f6f34]"
+                  className="mt-0.5 h-4 w-4 shrink-0 accent-[#996515]"
                 />
                 {t.contactPage.form.consent}
               </label>

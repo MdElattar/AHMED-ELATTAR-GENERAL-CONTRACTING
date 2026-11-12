@@ -17,6 +17,7 @@ const SmoothScrollEngine = dynamic(
 
 type SmoothScrollContextValue = {
   scrollTo: (target: string | number | HTMLElement, offset?: number) => void;
+  scrollToTop: (immediate?: boolean) => void;
   stop: () => void;
   start: () => void;
 };
@@ -58,6 +59,24 @@ export function SmoothScrollProvider({ children }: { children: ReactNode }) {
           const top = element.getBoundingClientRect().top + window.scrollY + offset;
           window.scrollTo({ top, behavior: "smooth" });
         }
+      },
+      scrollToTop: (immediate = false) => {
+        if (typeof window === "undefined") return;
+
+        if (lenisRef.current) {
+          lenisRef.current.scrollTo(0, {
+            immediate,
+            force: true,
+            duration: immediate ? 0 : 0.95,
+          });
+          return;
+        }
+
+        window.scrollTo({
+          top: 0,
+          left: 0,
+          behavior: immediate ? "auto" : "smooth",
+        });
       },
       stop: () => {
         if (typeof document === "undefined") return;

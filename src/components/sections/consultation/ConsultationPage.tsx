@@ -168,7 +168,7 @@ export function ConsultationPage({ dates }: { dates: ConsultationDay[] }) {
   return (
     <main className="bg-obsidian text-ivory">
       <section className="relative overflow-hidden border-b border-white/10 pb-16 pt-36 sm:pb-20 sm:pt-44">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_70%_0%,rgba(212,175,55,0.12),transparent_55%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_70%_0%,rgba(184,134,11,0.12),transparent_55%)]" />
         <div className="blueprint-grid pointer-events-none absolute inset-0 opacity-25" />
         <div className="container-lux relative">
           <Reveal>
@@ -437,7 +437,7 @@ export function ConsultationPage({ dates }: { dates: ConsultationDay[] }) {
 
           <aside className="flex flex-col gap-5">
             <div className="relative overflow-hidden border border-white/10 bg-obsidian p-6 sm:p-8">
-              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_80%_0%,rgba(212,175,55,0.12),transparent_60%)]" />
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_80%_0%,rgba(184,134,11,0.12),transparent_60%)]" />
               <span className="relative flex h-11 w-11 items-center justify-center border border-gold/40 bg-gold/10 text-gold">
                 <Building2 className="h-5 w-5" />
               </span>

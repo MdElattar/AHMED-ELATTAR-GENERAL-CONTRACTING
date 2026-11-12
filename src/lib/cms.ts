@@ -103,12 +103,40 @@ export function isCmsPath(value: string): boolean {
     );
 }
 
+const MEDIA_EXTENSIONS = new Set([
+  "avif",
+  "gif",
+  "jpeg",
+  "jpg",
+  "png",
+  "svg",
+  "webp",
+]);
+
+/**
+ * Validate a CMS media link before it reaches next/image. Relative paths must
+ * stay on this origin, and remote assets must use HTTPS with a recognised image
+ * extension when one is present.
+ */
 export function isAllowedMediaSource(value: string): boolean {
-  if (!value || value.length > 2000) return false;
-  if (value.startsWith("/") && !value.startsWith("//")) return true;
+  const source = value.trim();
+  if (!source || source.length > 2000) return false;
+  if (/[\u0000-\u001f\\]/.test(source) || source.includes("..")) return false;
+
+  if (source.startsWith("/") && !source.startsWith("//")) return true;
+
   try {
-    const url = new URL(value);
-    return url.protocol === "https:";
+    const url = new URL(source);
+    if (url.protocol !== "https:" || url.username || url.password) return false;
+    if (url.pathname.includes("..")) return false;
+
+    const fileName = url.pathname.split("/").pop() ?? "";
+    const extension = fileName.includes(".")
+      ? fileName.split(".").pop()?.toLowerCase()
+      : "";
+    if (extension && !MEDIA_EXTENSIONS.has(extension)) return false;
+
+    return true;
   } catch {
     return false;
   }

@@ -12,6 +12,7 @@ import {
   isSameOrigin,
   readJsonBody,
 } from "@/lib/security/http";
+import { revalidatePublicContent } from "@/lib/revalidate";
 import { rateLimit } from "@/lib/security/rate-limit";
 import { isPlainObject } from "@/lib/security/validation";
 
@@ -86,6 +87,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       ip: clientIp(request),
     });
 
+    revalidatePublicContent(slug);
     return NextResponse.json({ project }, { headers: NO_STORE_HEADERS });
   } catch (error) {
     console.error("[admin] failed to update project", error);
@@ -126,6 +128,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       ip: clientIp(request),
     });
 
+    revalidatePublicContent(slug);
     return NextResponse.json({ ok: true }, { headers: NO_STORE_HEADERS });
   } catch (error) {
     console.error("[admin] failed to delete project", error);

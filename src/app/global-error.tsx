@@ -32,7 +32,7 @@ export default function GlobalError({
           <p
             style={{
               margin: 0,
-              color: "#c9a45c",
+              color: "#a67c1a",
               fontSize: "0.7rem",
               letterSpacing: "0.2em",
               textTransform: "uppercase",
@@ -61,7 +61,7 @@ export default function GlobalError({
               minHeight: "3rem",
               padding: "0 1.75rem",
               border: 0,
-              background: "#c9a45c",
+              background: "#a67c1a",
               color: "#060708",
               fontSize: "0.7rem",
               fontWeight: 700,

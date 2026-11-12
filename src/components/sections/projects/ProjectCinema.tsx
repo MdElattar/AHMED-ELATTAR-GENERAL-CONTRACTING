@@ -115,7 +115,7 @@ export function ProjectCinema({
 
   return (
     <section className="relative overflow-hidden bg-coal text-ivory">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(212,175,55,0.08),transparent_55%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(184,134,11,0.08),transparent_55%)]" />
       <div className="container-lux section-pad relative">
         <SectionHeading
           eyebrow={c.eyebrow}
@@ -160,7 +160,7 @@ export function ProjectCinema({
               className="pointer-events-none absolute inset-y-0 z-10 w-px bg-gold/80"
               style={{ left: `${position}%` }}
             >
-              <span className="absolute left-1/2 top-1/2 flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-gold bg-obsidian text-gold shadow-[0_0_30px_rgba(212,175,55,0.35)]">
+              <span className="absolute left-1/2 top-1/2 flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-gold bg-obsidian text-gold shadow-[0_0_30px_rgba(184,134,11,0.35)]">
                 <SlidersHorizontal className="h-4 w-4" />
               </span>
             </div>

@@ -81,8 +81,8 @@ async function sendAlertEmail(alert: AdminAlert): Promise<DispatchState> {
 
   const html = `
     <div dir="rtl" style="background:#060708;padding:36px 18px;font-family:Tahoma,Arial,sans-serif;color:#f3eee4">
-      <div style="max-width:560px;margin:0 auto;border:1px solid rgba(212,175,55,.25);background:#0b0c0f;padding:30px">
-        <p style="margin:0;color:#d4af37;font-size:11px;letter-spacing:2px">شركة أحمد العطار للمقاولات العامة</p>
+      <div style="max-width:560px;margin:0 auto;border:1px solid rgba(184,134,11,.25);background:#0b0c0f;padding:30px">
+        <p style="margin:0;color:#b8860b;font-size:11px;letter-spacing:2px">شركة أحمد العطار للمقاولات العامة</p>
         <h1 style="margin:16px 0 0;font-size:21px;font-weight:600">${escapeHtml(alert.title)}</h1>
         <p style="margin:12px 0 0;color:rgba(243,238,228,.66);font-size:13px;line-height:1.9">${escapeHtml(
           alert.message,
@@ -92,7 +92,7 @@ async function sendAlertEmail(alert: AdminAlert): Promise<DispatchState> {
           alert.url
             ? `<p style="margin:22px 0 0"><a href="${escapeHtml(
                 alert.url,
-              )}" style="color:#f2dfa0;font-size:12px">فتح لوحة الإدارة</a></p>`
+              )}" style="color:#c59b27;font-size:12px">فتح لوحة الإدارة</a></p>`
             : ""
         }
       </div>

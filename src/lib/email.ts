@@ -101,12 +101,12 @@ function template(
         : `رمز التحقق الخاص بك هو ${code}. ينتهي خلال ${minutes} دقائق. إذا لم تطلب إعادة تعيين كلمة المرور، تجاهل هذه الرسالة.`,
       html: `
         <div dir="rtl" style="background:#060708;padding:40px 20px;font-family:Tahoma,Arial,sans-serif;color:#f3eee4">
-          <div style="max-width:520px;margin:0 auto;border:1px solid rgba(212,175,55,.25);background:#0b0c0f;padding:36px">
-            <p style="margin:0;color:#d4af37;font-size:12px;letter-spacing:2px">شركة أحمد العطار للمقاولات العامة</p>
+          <div style="max-width:520px;margin:0 auto;border:1px solid rgba(184,134,11,.25);background:#0b0c0f;padding:36px">
+            <p style="margin:0;color:#b8860b;font-size:12px;letter-spacing:2px">شركة أحمد العطار للمقاولات العامة</p>
             <h1 style="margin:18px 0 0;font-size:26px;font-weight:600">${isDelegation ? "تأكيد تفويض صلاحية إدارية" : "رمز إعادة تعيين كلمة المرور"}</h1>
             <p style="margin:14px 0 0;color:rgba(243,238,228,.62);font-size:14px;line-height:1.8">${isDelegation ? `طلب تفويض صلاحية إدارية للحساب <strong dir="ltr">${target}</strong>. أدخل الرمز التالي للموافقة. الرمز صالح لمدة ${minutes} دقائق ولمرة واحدة فقط.` : `أدخل الرمز التالي لإكمال إعادة التعيين. الرمز صالح لمدة ${minutes} دقائق ولمرة واحدة فقط.`}</p>
-            <div style="margin:28px 0;padding:20px;text-align:center;border:1px solid rgba(212,175,55,.35);background:#060708">
-              <span style="font-size:38px;letter-spacing:12px;color:#f2dfa0;font-weight:700">${code}</span>
+            <div style="margin:28px 0;padding:20px;text-align:center;border:1px solid rgba(184,134,11,.35);background:#060708">
+              <span style="font-size:38px;letter-spacing:12px;color:#c59b27;font-weight:700">${code}</span>
             </div>
             <p style="margin:0;color:rgba(243,238,228,.38);font-size:12px;line-height:1.8">${isDelegation ? "إذا لم تطلب هذا التفويض، تجاهل الرسالة ولا تشارك الرمز مع أي شخص." : "إذا لم تطلب إعادة تعيين كلمة المرور، تجاهل هذه الرسالة — لن يتغير حسابك."}</p>
           </div>
@@ -123,12 +123,12 @@ function template(
       : `Your verification code is ${code}. It expires in ${minutes} minutes. If you did not request a password reset, ignore this email.`,
     html: `
       <div style="background:#060708;padding:40px 20px;font-family:Arial,Helvetica,sans-serif;color:#f3eee4">
-        <div style="max-width:520px;margin:0 auto;border:1px solid rgba(212,175,55,.25);background:#0b0c0f;padding:36px">
-          <p style="margin:0;color:#d4af37;font-size:12px;letter-spacing:2px">AHMED ELATTAR GENERAL CONTRACTING</p>
+        <div style="max-width:520px;margin:0 auto;border:1px solid rgba(184,134,11,.25);background:#0b0c0f;padding:36px">
+          <p style="margin:0;color:#b8860b;font-size:12px;letter-spacing:2px">AHMED ELATTAR GENERAL CONTRACTING</p>
           <h1 style="margin:18px 0 0;font-size:26px;font-weight:600">${isDelegation ? "Confirm admin delegation" : "Reset your password"}</h1>
           <p style="margin:14px 0 0;color:rgba(243,238,228,.62);font-size:14px;line-height:1.8">${isDelegation ? `A request was made to grant admin access to <strong dir="ltr">${target}</strong>. Enter the code below to approve it. It is valid for ${minutes} minutes and can be used once.` : `Enter the code below to complete the reset. It is valid for ${minutes} minutes and can be used once.`}</p>
-          <div style="margin:28px 0;padding:20px;text-align:center;border:1px solid rgba(212,175,55,.35);background:#060708">
-            <span style="font-size:38px;letter-spacing:12px;color:#f2dfa0;font-weight:700">${code}</span>
+          <div style="margin:28px 0;padding:20px;text-align:center;border:1px solid rgba(184,134,11,.35);background:#060708">
+            <span style="font-size:38px;letter-spacing:12px;color:#c59b27;font-weight:700">${code}</span>
           </div>
           <p style="margin:0;color:rgba(243,238,228,.38);font-size:12px;line-height:1.8">${isDelegation ? "If you did not request this delegation, ignore this email and do not share the code with anyone." : "If you did not request a reset, ignore this email — your account will not change."}</p>
         </div>

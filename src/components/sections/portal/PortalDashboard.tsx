@@ -253,7 +253,7 @@ export function PortalDashboard() {
       </section>
 
       <section className="relative min-h-[60svh] overflow-hidden border-t border-white/10 bg-obsidian">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_80%_0%,rgba(200,169,107,0.05),transparent_55%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_80%_0%,rgba(166,124,26,0.05),transparent_55%)]" />
         <div className="container-lux relative pb-20 pt-10">
           <div className="grid gap-2 sm:grid-cols-3">
             {projects.map((item) => (

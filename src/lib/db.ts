@@ -546,6 +546,19 @@ async function mongoModels(): Promise<MongoModels> {
     );
     signoffSchema.index({ projectSlug: 1, email: 1 }, { unique: true });
 
+    // Indexes shaped around the admin lists and public portfolio queries.
+    // Compound indexes keep status/category/featured filters efficient while
+    // preserving the newest-first ordering used by the UI.
+    projectSchema.index({ status: 1, createdAt: -1 });
+    projectSchema.index({ category: 1, createdAt: -1 });
+    projectSchema.index({ featured: 1, createdAt: -1 });
+    inquirySchema.index({ status: 1, createdAt: -1 });
+    inquirySchema.index({ kind: 1, createdAt: -1 });
+    auditSchema.index({ createdAt: -1 });
+    auditSchema.index({ entity: 1, createdAt: -1 });
+    auditSchema.index({ actor: 1, createdAt: -1 });
+    consultationSchema.index({ status: 1, createdAt: -1 });
+
     const User = (mongoose.models.User ??
       mongoose.model("User", userSchema)) as unknown as LeanModel;
     const Passkey = (mongoose.models.Passkey ??

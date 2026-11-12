@@ -54,9 +54,55 @@ export async function PATCH(request: NextRequest) {
     );
   }
 
-  const inquiryId = typeof body.id === "string" ? body.id.trim() : "";
   const status = typeof body.status === "string" ? body.status : "";
+  const ids = Array.isArray(body.ids)
+    ? Array.from(
+        new Set(
+          body.ids
+            .filter((id): id is string => typeof id === "string")
+            .map((id) => id.trim())
+            .filter(Boolean),
+        ),
+      ).slice(0, 100)
+    : [];
 
+  if (ids.length > 0) {
+    if (!STATUSES.has(status)) {
+      return NextResponse.json(
+        { error: "invalid_input" },
+        { status: 400, headers: NO_STORE_HEADERS },
+      );
+    }
+
+    const updated = (
+      await Promise.all(
+        ids.map((id) =>
+          updateInquiry(id, {
+            status: status as "new" | "read" | "won" | "lost",
+          }),
+        ),
+      )
+    ).filter((inquiry) => inquiry !== null);
+
+    if (!updated.length) {
+      return NextResponse.json(
+        { error: "not_found" },
+        { status: 404, headers: NO_STORE_HEADERS },
+      );
+    }
+
+    await recordAudit({
+      actor: session.email,
+      action: `inquiry.bulk_${status}`,
+      entity: "inquiry",
+      meta: { ids: updated.map((inquiry) => inquiry.id), count: updated.length },
+      ip: clientIp(request),
+    });
+
+    return NextResponse.json({ inquiries: updated }, { headers: NO_STORE_HEADERS });
+  }
+
+  const inquiryId = typeof body.id === "string" ? body.id.trim() : "";
   if (!inquiryId || !STATUSES.has(status)) {
     return NextResponse.json(
       { error: "invalid_input" },

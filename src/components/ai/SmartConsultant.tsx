@@ -202,7 +202,7 @@ export function SmartConsultant() {
         type="button"
         onClick={openPanel}
         aria-label={c.open}
-        className="group fixed bottom-5 end-5 z-[90] flex h-14 w-14 items-center justify-center rounded-full bg-gold text-obsidian shadow-[0_18px_50px_-12px_rgba(212,175,55,0.65)] transition-transform duration-300 hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold sm:bottom-7 sm:end-7"
+        className="group fixed bottom-5 end-5 z-[90] flex h-14 w-14 items-center justify-center rounded-full bg-gold text-obsidian shadow-[0_18px_50px_-12px_rgba(184,134,11,0.65)] transition-transform duration-300 hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold sm:bottom-7 sm:end-7"
       >
         <Sparkles className="h-5 w-5" />
         <span className="absolute -top-1 -end-1 flex h-3 w-3">

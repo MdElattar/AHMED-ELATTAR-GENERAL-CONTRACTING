@@ -388,34 +388,34 @@ export function AdminAccess() {
 
   if (!primary) {
     return (
-      <div className="flex items-start gap-3 border border-amber-500/20 bg-amber-500/[0.04] p-5">
+      <div className="flex items-start gap-3 border border-gold/25 bg-gold/[0.05] p-5">
         <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-gold" />
-        <p className="text-[0.72rem] leading-relaxed text-ivory/65">{c.onlyPrimary}</p>
+        <p className="text-[0.88rem] leading-relaxed text-ivory/65">{c.onlyPrimary}</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <header className="border border-white/10 bg-coal/70 p-5 sm:p-6">
-        <div className="flex flex-wrap items-start justify-between gap-4">
+      <header className="border border-white/10 bg-coal/70 p-6 sm:p-7">
+        <div className="flex flex-wrap items-start justify-between gap-5">
           <div className="max-w-2xl">
-            <span className="inline-flex items-center gap-2 text-[0.52rem] font-semibold uppercase tracking-[0.18em] text-gold">
+            <span className="inline-flex items-center gap-2 text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-gold">
               <Crown className="h-3.5 w-3.5" />
               {c.primary}
             </span>
-            <h2 className="mt-2 font-display text-2xl leading-tight text-ivory sm:text-3xl">
+            <h2 className="mt-3 font-display text-2xl leading-tight text-ivory sm:text-3xl">
               {c.title}
             </h2>
-            <p className="mt-2 text-[0.75rem] leading-relaxed text-ivory/60">{c.subtitle}</p>
+            <p className="mt-3 text-[0.92rem] leading-relaxed text-ivory/60">{c.subtitle}</p>
           </div>
-          <span className="inline-flex items-center gap-2 border border-gold/25 bg-gold/[0.05] px-3 py-2 text-[0.55rem] font-medium uppercase tracking-[0.12em] text-gold">
+          <span className="inline-flex items-center gap-2 border border-gold/25 bg-gold/[0.05] px-3.5 py-2.5 text-[0.7rem] font-medium uppercase tracking-[0.12em] text-gold">
             <LockKeyhole className="h-3.5 w-3.5" />
             {c.secureNote}
           </span>
         </div>
 
-        <div className="mt-5 grid gap-3 sm:grid-cols-3">
+        <div className="mt-6 grid gap-4 sm:grid-cols-3">
           <Stat icon={Users} label={c.clients} value={clientUsers.length} />
           <Stat icon={ShieldCheck} label={c.admins} value={adminUsers.length} />
           <Stat
@@ -431,7 +431,7 @@ export function AdminAccess() {
         <div
           role={noticeError ? "alert" : "status"}
           className={cn(
-            "flex items-center gap-2 border px-4 py-3 text-[0.68rem]",
+            "flex items-center gap-2 border px-4 py-3 text-[0.82rem]",
             noticeError
               ? "border-red-400/25 bg-red-400/[0.05] text-red-200"
               : "border-emerald-400/20 bg-emerald-400/[0.05] text-emerald-200",
@@ -448,15 +448,15 @@ export function AdminAccess() {
 
       {pending ? (
         <form onSubmit={confirmGrant} className="border border-gold/25 bg-coal/70 p-5 sm:p-6">
-          <div className="flex items-center gap-2 text-[0.56rem] font-semibold uppercase tracking-[0.16em] text-gold">
+          <div className="flex items-center gap-2 text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-gold">
             <MailCheck className="h-4 w-4" />
             {c.step}
           </div>
           <h3 className="mt-3 font-display text-2xl text-ivory">{c.otpTitle}</h3>
-          <p className="mt-2 max-w-2xl text-[0.72rem] leading-relaxed text-ivory/55">
+          <p className="mt-2 max-w-2xl text-[0.88rem] leading-relaxed text-ivory/55">
             {c.otpText}
           </p>
-          <div className="mt-4 flex flex-wrap gap-2 text-[0.62rem]">
+          <div className="mt-4 flex flex-wrap gap-2 text-[0.76rem]">
             <span className="border border-white/10 px-3 py-1.5 text-ivory/50">
               {c.otpTarget}: <strong className="font-medium text-ivory/75">{pending.targetEmail}</strong>
             </span>
@@ -467,9 +467,9 @@ export function AdminAccess() {
 
           {pending.devCode ? (
             <div className="mt-4 border border-dashed border-gold/30 bg-gold/[0.04] px-4 py-3">
-              <p className="text-[0.55rem] uppercase tracking-[0.14em] text-gold/70">{c.devCode}</p>
+              <p className="text-[0.7rem] uppercase tracking-[0.14em] text-gold/70">{c.devCode}</p>
               <p className="mt-1 font-mono text-xl tracking-[0.35em] text-gold">{pending.devCode}</p>
-              <p className="mt-1 text-[0.6rem] text-ivory/45">{c.devCodeHint}</p>
+              <p className="mt-1 text-[0.74rem] text-ivory/45">{c.devCodeHint}</p>
             </div>
           ) : null}
 
@@ -490,7 +490,7 @@ export function AdminAccess() {
           </div>
 
           {confirmError ? (
-            <p role="alert" className="mt-3 text-[0.66rem] text-red-300">
+            <p role="alert" className="mt-3 text-[0.8rem] text-red-300">
               {confirmError}
             </p>
           ) : null}
@@ -499,7 +499,7 @@ export function AdminAccess() {
             <button
               type="submit"
               disabled={confirming || code.length !== 6}
-              className="inline-flex h-11 items-center gap-2 bg-gold px-5 text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-obsidian transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex h-11 items-center gap-2 bg-gold px-5 text-[0.76rem] font-semibold uppercase tracking-[0.14em] text-obsidian transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-50"
             >
               {confirming ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
               {confirming ? c.confirming : c.confirm}
@@ -511,7 +511,7 @@ export function AdminAccess() {
                 setCode("");
                 setConfirmError("");
               }}
-              className="inline-flex h-11 items-center border border-white/12 px-5 text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-ivory/55 transition-colors hover:border-white/25 hover:text-ivory"
+              className="inline-flex h-11 items-center border border-white/12 px-5 text-[0.76rem] font-semibold uppercase tracking-[0.14em] text-ivory/55 transition-colors hover:border-white/25 hover:text-ivory"
             >
               {c.cancel}
             </button>
@@ -519,7 +519,7 @@ export function AdminAccess() {
         </form>
       ) : (
         <form onSubmit={requestGrant} className="border border-white/10 bg-coal/70">
-          <div className="flex flex-wrap gap-2 border-b border-white/10 p-3">
+          <div className="grid gap-2 border-b border-white/10 p-3 sm:grid-cols-2">
             <ModeButton
               active={mode === "promote"}
               icon={ShieldCheck}
@@ -541,7 +541,7 @@ export function AdminAccess() {
           </div>
 
           <div className="p-5 sm:p-6">
-            <p className="text-[0.72rem] leading-relaxed text-ivory/55">
+            <p className="text-[0.88rem] leading-relaxed text-ivory/55">
               {mode === "promote" ? c.promoteHint : c.createHint}
             </p>
 
@@ -618,21 +618,21 @@ export function AdminAccess() {
             </div>
 
             {requestError ? (
-              <p role="alert" className="mt-4 flex items-center gap-2 text-[0.66rem] text-red-300">
+              <p role="alert" className="mt-4 flex items-center gap-2 text-[0.8rem] text-red-300">
                 <AlertTriangle className="h-4 w-4" />
                 {requestError}
               </p>
             ) : null}
 
             <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-4">
-              <span className="inline-flex items-center gap-2 text-[0.58rem] text-ivory/40">
+              <span className="inline-flex items-center gap-2 text-[0.72rem] text-ivory/40">
                 <KeyRound className="h-3.5 w-3.5 text-gold/60" />
                 {c.secureNote}
               </span>
               <button
                 type="submit"
                 disabled={submitting}
-                className="inline-flex h-11 items-center gap-2 bg-gold px-5 text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-obsidian transition-colors hover:bg-gold-light disabled:cursor-wait disabled:opacity-60"
+                className="inline-flex h-11 items-center gap-2 bg-gold px-5 text-[0.76rem] font-semibold uppercase tracking-[0.14em] text-obsidian transition-colors hover:bg-gold-light disabled:cursor-wait disabled:opacity-60"
               >
                 {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <MailCheck className="h-4 w-4" />}
                 {submitting ? c.sendingCode : c.sendCode}
@@ -643,8 +643,8 @@ export function AdminAccess() {
       )}
 
       <section className="border border-white/10 bg-coal/70">
-        <div className="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-4">
-          <div className="flex items-center gap-2 text-[0.56rem] font-semibold uppercase tracking-[0.16em] text-gold">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-6 py-5">
+          <div className="flex items-center gap-2 text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-gold">
             <ShieldCheck className="h-4 w-4" />
             {c.admins}
           </div>
@@ -652,7 +652,7 @@ export function AdminAccess() {
             type="button"
             onClick={() => void load()}
             disabled={loading}
-            className="inline-flex h-10 items-center gap-1.5 border border-white/10 px-3 text-[0.56rem] uppercase tracking-[0.12em] text-ivory/50 transition-colors hover:border-gold/40 hover:text-gold disabled:opacity-50"
+            className="inline-flex h-10 items-center gap-1.5 border border-white/10 px-3 text-[0.7rem] uppercase tracking-[0.12em] text-ivory/50 transition-colors hover:border-gold/40 hover:text-gold disabled:opacity-50"
           >
             <RefreshCw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
             {c.reload}
@@ -660,16 +660,16 @@ export function AdminAccess() {
         </div>
 
         {loadError ? (
-          <p role="alert" className="px-5 py-6 text-[0.7rem] text-red-300">
+          <p role="alert" className="px-6 py-7 text-[0.84rem] text-red-300">
             {loadError}
           </p>
         ) : loading ? (
-          <div className="flex items-center gap-2 px-5 py-6 text-[0.68rem] text-ivory/45">
+          <div className="flex items-center gap-2 px-6 py-7 text-[0.82rem] text-ivory/45">
             <Loader2 className="h-4 w-4 animate-spin text-gold" />
             {c.reload}...
           </div>
         ) : adminUsers.length === 0 ? (
-          <p className="px-5 py-6 text-[0.68rem] text-ivory/45">{c.noAdmins}</p>
+          <p className="px-6 py-7 text-[0.82rem] text-ivory/45">{c.noAdmins}</p>
         ) : (
           <ul className="divide-y divide-white/8">
             {adminUsers.map((admin) => {
@@ -677,33 +677,33 @@ export function AdminAccess() {
               return (
                 <li
                   key={admin.email}
-                  className="flex flex-wrap items-center justify-between gap-3 px-5 py-4"
+                  className="flex flex-wrap items-center justify-between gap-3 px-6 py-5"
                 >
                   <div className="flex min-w-0 items-center gap-3">
                     <span className="flex h-10 w-10 shrink-0 items-center justify-center border border-gold/25 bg-gold/[0.06] text-gold">
                       {isPrimary ? <Crown className="h-4 w-4" /> : <ShieldCheck className="h-4 w-4" />}
                     </span>
                     <div className="min-w-0">
-                      <p className="truncate text-[0.75rem] font-medium text-ivory">
+                      <p className="truncate text-[0.92rem] font-medium text-ivory">
                         {admin.name}
                         {isPrimary ? (
-                          <span className="ms-2 border border-gold/25 px-1.5 py-0.5 text-[0.48rem] uppercase tracking-[0.1em] text-gold">
+                          <span className="ms-2 border border-gold/25 px-1.5 py-0.5 text-[0.64rem] uppercase tracking-[0.1em] text-gold">
                             {c.primary}
                           </span>
                         ) : null}
                       </p>
-                      <p className="mt-1 truncate text-[0.6rem] text-ivory/50" dir="ltr">
+                      <p className="mt-1 break-all text-[0.8rem] text-ivory/50" dir="ltr">
                         {admin.email}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="hidden text-[0.56rem] text-ivory/38 sm:block">
+                    <span className="hidden text-[0.7rem] text-ivory/38 sm:block">
                       {c.lastLogin}:{" "}
                       {formatDate(admin.lastLoginAt, locale, c.never)}
                     </span>
                     {isPrimary ? (
-                      <span className="inline-flex items-center gap-1 text-[0.55rem] uppercase tracking-[0.1em] text-ivory/35">
+                      <span className="inline-flex items-center gap-1 text-[0.7rem] uppercase tracking-[0.1em] text-ivory/35">
                         <LockKeyhole className="h-3 w-3" />
                         {c.protected}
                       </span>
@@ -712,7 +712,7 @@ export function AdminAccess() {
                         type="button"
                         onClick={() => void revoke(admin)}
                         disabled={busyEmail === admin.email}
-                        className="inline-flex h-10 items-center gap-1.5 border border-red-400/25 px-3 text-[0.55rem] uppercase tracking-[0.1em] text-red-300/80 transition-colors hover:border-red-400/50 hover:text-red-200 disabled:opacity-50"
+                        className="inline-flex h-10 items-center gap-1.5 border border-red-400/25 px-3 text-[0.7rem] uppercase tracking-[0.1em] text-red-300/80 transition-colors hover:border-red-400/50 hover:text-red-200 disabled:opacity-50"
                       >
                         {busyEmail === admin.email ? (
                           <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -731,7 +731,7 @@ export function AdminAccess() {
       </section>
 
       <section className="border border-white/10 bg-coal/70">
-        <div className="border-b border-white/10 px-5 py-4 text-[0.56rem] font-semibold uppercase tracking-[0.16em] text-gold">
+        <div className="border-b border-white/10 px-6 py-5 text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-gold">
           <span className="inline-flex items-center gap-2">
             <Users className="h-4 w-4" />
             {c.clients}
@@ -739,22 +739,22 @@ export function AdminAccess() {
         </div>
 
         {loading ? (
-          <div className="flex items-center gap-2 px-5 py-6 text-[0.68rem] text-ivory/45">
+          <div className="flex items-center gap-2 px-6 py-7 text-[0.82rem] text-ivory/45">
             <Loader2 className="h-4 w-4 animate-spin text-gold" />
             {c.reload}...
           </div>
         ) : clientUsers.length === 0 ? (
-          <p className="px-5 py-6 text-[0.68rem] text-ivory/45">{c.noClients}</p>
+          <p className="px-6 py-7 text-[0.82rem] text-ivory/45">{c.noClients}</p>
         ) : (
           <ul className="divide-y divide-white/8">
             {clientUsers.map((client) => (
               <li
                 key={client.email}
-                className="flex flex-wrap items-center justify-between gap-3 px-5 py-4"
+                className="flex flex-wrap items-center justify-between gap-3 px-6 py-5"
               >
                 <div className="min-w-0">
-                  <p className="truncate text-[0.75rem] font-medium text-ivory">{client.name}</p>
-                  <p className="mt-1 truncate text-[0.6rem] text-ivory/48" dir="ltr">
+                  <p className="truncate text-[0.92rem] font-medium text-ivory">{client.name}</p>
+                  <p className="mt-1 break-all text-[0.8rem] text-ivory/48" dir="ltr">
                     {client.email}
                     <span className="mx-2 text-ivory/15">·</span>
                     {client.company}
@@ -763,7 +763,7 @@ export function AdminAccess() {
                 <button
                   type="button"
                   onClick={() => startPromotion(client)}
-                  className="inline-flex h-10 items-center gap-1.5 border border-gold/30 bg-gold/[0.04] px-3 text-[0.55rem] uppercase tracking-[0.1em] text-gold transition-colors hover:border-gold/55 hover:bg-gold/[0.09]"
+                  className="inline-flex h-10 items-center gap-1.5 border border-gold/30 bg-gold/[0.04] px-3 text-[0.7rem] uppercase tracking-[0.1em] text-gold transition-colors hover:border-gold/55 hover:bg-gold/[0.09]"
                 >
                   <UserPlus className="h-3.5 w-3.5" />
                   {c.promote}
@@ -789,13 +789,15 @@ function Stat({
   text?: string;
 }) {
   return (
-    <div className="border border-white/10 bg-obsidian/40 px-4 py-3">
+    <div className="min-w-0 border border-white/10 bg-obsidian/40 px-6 py-5">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[0.52rem] uppercase tracking-[0.14em] text-ivory/45">{label}</span>
-        <Icon className="h-4 w-4 text-gold/60" />
+        <span className="text-[0.72rem] uppercase tracking-[0.14em] text-ivory/45">{label}</span>
+        <Icon className="h-4 w-4 shrink-0 text-gold/60" />
       </div>
-      <p className="mt-2 font-display text-2xl leading-none text-ivory">{value}</p>
-      {text ? <p className="mt-1 truncate text-[0.55rem] text-ivory/38">{text}</p> : null}
+      <p className="mt-2.5 font-display text-[1.7rem] leading-none text-ivory">{value}</p>
+      {text ? (
+        <p className="mt-2 break-words text-[0.76rem] leading-relaxed text-ivory/38">{text}</p>
+      ) : null}
     </div>
   );
 }
@@ -817,7 +819,7 @@ function ModeButton({
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        "inline-flex h-10 items-center gap-2 border px-4 text-[0.6rem] font-semibold uppercase tracking-[0.12em] transition-colors",
+        "inline-flex h-11 w-full items-center justify-center gap-2 border px-4 text-[0.74rem] font-semibold uppercase tracking-[0.12em] transition-colors",
         active
           ? "border-gold/45 bg-gold/[0.1] text-gold"
           : "border-white/10 text-ivory/50 hover:border-white/20 hover:text-ivory/70",

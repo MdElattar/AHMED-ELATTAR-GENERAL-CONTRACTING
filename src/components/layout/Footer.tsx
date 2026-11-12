@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { ArrowUp, ArrowUpRight } from "lucide-react";
 import { isAdminUser, useAuth } from "@/components/providers/AuthProvider";
 import { useI18n } from "@/components/providers/I18nProvider";
@@ -64,7 +65,8 @@ const expertiseHrefs = [
 export function Footer() {
   const { t, locale, isRTL } = useI18n();
   const { user } = useAuth();
-  const { scrollTo } = useSmoothScroll();
+  const pathname = usePathname();
+  const { scrollTo, scrollToTop } = useSmoothScroll();
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
   const [subscribing, setSubscribing] = useState(false);
@@ -73,6 +75,16 @@ export function Footer() {
   const links = isAdminUser(user)
     ? [...companyLinks, { href: "/admin", key: "admin" as const }]
     : companyLinks;
+
+  const handleNavigation = (
+    event: React.MouseEvent<HTMLAnchorElement>,
+    href: string,
+  ) => {
+    if (pathname === href) {
+      event.preventDefault();
+      scrollToTop();
+    }
+  };
 
   return (
     <footer className="relative overflow-hidden border-t border-white/10 bg-ink">
@@ -160,6 +172,7 @@ export function Footer() {
                   <li key={link.href}>
                     <Link
                       href={link.href}
+                      onClick={(event) => handleNavigation(event, link.href)}
                       className="text-sm text-ivory/60 transition-colors hover:text-gold"
                     >
                       {t.nav[link.key]}
@@ -178,6 +191,7 @@ export function Footer() {
                   <li key={href}>
                     <Link
                       href={href}
+                      onClick={(event) => handleNavigation(event, href)}
                       className="text-sm text-ivory/60 transition-colors hover:text-gold"
                     >
                       {t.sections.footerExpertise[index]?.title[locale] ?? href}
@@ -253,10 +267,18 @@ export function Footer() {
             <Logo />
             <div className="flex flex-wrap items-center gap-5 text-[0.65rem] text-ivory/45">
               <span>{t.footer.license}</span>
-              <Link href="/privacy" className="inline-flex min-h-10 items-center hover:text-gold">
+              <Link
+                href="/privacy"
+                onClick={(event) => handleNavigation(event, "/privacy")}
+                className="inline-flex min-h-10 items-center hover:text-gold"
+              >
                 {t.footer.privacy}
               </Link>
-              <Link href="/terms" className="inline-flex min-h-10 items-center hover:text-gold">
+              <Link
+                href="/terms"
+                onClick={(event) => handleNavigation(event, "/terms")}
+                className="inline-flex min-h-10 items-center hover:text-gold"
+              >
                 {t.footer.terms}
               </Link>
               <button
@@ -274,7 +296,7 @@ export function Footer() {
               © {CURRENT_YEAR} Ahmed Elattar General Contracting Co. {t.footer.rights}
             </span>
             <a
-              href="https://mohamedelattar.com"
+              href="https://mohamedaelattar.com"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Developed by Mohamed Elattar"

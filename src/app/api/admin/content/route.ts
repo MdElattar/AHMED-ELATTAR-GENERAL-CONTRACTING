@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/auth/guard";
+import { isAllowedMediaSource, isCmsPath } from "@/lib/cms";
 import { recordAudit, upsertProject } from "@/lib/db";
+import { revalidatePublicContent } from "@/lib/revalidate";
 import {
   NO_STORE_HEADERS,
   clientIp,
@@ -48,6 +50,34 @@ export async function PATCH(request: NextRequest) {
 
   const content = isPlainObject(body.content) ? body.content : body;
 
+  // Media links are admin-authored, but they still flow into next/image. Keep
+  // the same validation on both sides of the wire so a malformed script URL or
+  // unsupported protocol can never be persisted through the API.
+  if (content.mediaOverrides !== undefined) {
+    if (!isPlainObject(content.mediaOverrides)) {
+      return NextResponse.json(
+        { error: "invalid_media" },
+        { status: 422, headers: NO_STORE_HEADERS },
+      );
+    }
+
+    for (const [key, entry] of Object.entries(content.mediaOverrides)) {
+      if (!isCmsPath(key) || !isPlainObject(entry)) {
+        return NextResponse.json(
+          { error: "invalid_media" },
+          { status: 422, headers: NO_STORE_HEADERS },
+        );
+      }
+      const src = typeof entry.src === "string" ? entry.src.trim() : "";
+      if (!isAllowedMediaSource(src)) {
+        return NextResponse.json(
+          { error: "invalid_media" },
+          { status: 422, headers: NO_STORE_HEADERS },
+        );
+      }
+    }
+  }
+
   try {
     const record = await upsertProject(CONTENT_SLUG, { ...content, slug: CONTENT_SLUG });
 
@@ -59,6 +89,7 @@ export async function PATCH(request: NextRequest) {
       ip: clientIp(request),
     });
 
+    revalidatePublicContent();
     return NextResponse.json({ content: record.payload }, { headers: NO_STORE_HEADERS });
   } catch (error) {
     console.error("[admin] failed to update content", error);

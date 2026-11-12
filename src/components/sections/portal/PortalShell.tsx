@@ -146,7 +146,7 @@ export function PortalShell({
       </section>
       <section className="relative min-h-[60svh] overflow-hidden border-t border-white/10 bg-obsidian text-ivory">
         <div className="blueprint-grid pointer-events-none absolute inset-0 opacity-20" />
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_80%_0%,rgba(200,169,107,0.05),transparent_55%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_80%_0%,rgba(166,124,26,0.05),transparent_55%)]" />
         <div className="container-lux relative pb-20 pt-10">{children}</div>
       </section>
     </>

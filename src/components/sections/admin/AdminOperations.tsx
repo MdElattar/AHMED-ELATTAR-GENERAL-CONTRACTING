@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Activity,
   AlertCircle,
@@ -8,6 +9,7 @@ import {
   CalendarDays,
   Check,
   Clock,
+  Download,
   FileSignature,
   Flag,
   Loader2,
@@ -163,6 +165,13 @@ const copy = {
     cancel: "إلغاء",
     remove: "حذف المرحلة",
     titleRequired: "أدخل اسم المرحلة بالعربية أو الإنجليزية.",
+    selected: "محدد",
+    selectAll: "تحديد الكل",
+    clearSelection: "إلغاء التحديد",
+    bulkStatus: "تحديث حالة المحدد",
+    exportInquiries: "تصدير الاستفسارات",
+    exportAudit: "تصدير السجل",
+    exportMilestones: "تصدير المراحل",
   },
   en: {
     inquiriesTitle: "Inquiry inbox",
@@ -237,6 +246,13 @@ const copy = {
     cancel: "Cancel",
     remove: "Remove milestone",
     titleRequired: "Enter the milestone title in Arabic or English.",
+    selected: "selected",
+    selectAll: "Select all",
+    clearSelection: "Clear selection",
+    bulkStatus: "Bulk status",
+    exportInquiries: "Export inquiries",
+    exportAudit: "Export log",
+    exportMilestones: "Export milestones",
   },
 };
 
@@ -282,7 +298,7 @@ function useRemoteList<T>(endpoint: string, key: string) {
     void load();
   }, [load]);
 
-  return { items, loading, error, reload };
+  return { items, loading, error, reload, setItems };
 }
 
 function StateBlock({
@@ -306,7 +322,7 @@ function StateBlock({
 }) {
   if (loading) {
     return (
-      <div className="flex items-center justify-center gap-2 py-14 text-[0.62rem] text-ivory/45">
+      <div className="flex items-center justify-center gap-2 py-14 text-[0.76rem] text-ivory/45">
         <Loader2 className="h-4 w-4 animate-spin" />
         {loadingText}
       </div>
@@ -317,11 +333,11 @@ function StateBlock({
     return (
       <div className="flex flex-col items-center gap-3 py-14 text-center">
         <AlertCircle className="h-5 w-5 text-red-300/70" />
-        <p className="text-[0.62rem] text-ivory/50">{errorText}</p>
+        <p className="text-[0.76rem] text-ivory/50">{errorText}</p>
         <button
           type="button"
           onClick={onRetry}
-          className="inline-flex h-9 items-center gap-2 border border-white/12 px-4 text-[0.54rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
+          className="inline-flex h-10 items-center gap-2 border border-white/12 px-4 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
         >
           <RefreshCcw className="h-3.5 w-3.5" />
           {retry}
@@ -331,7 +347,7 @@ function StateBlock({
   }
 
   if (empty) {
-    return <p className="py-14 text-center text-[0.62rem] text-ivory/40">{emptyText}</p>;
+    return <p className="py-14 text-center text-[0.76rem] text-ivory/40">{emptyText}</p>;
   }
 
   return null;
@@ -340,11 +356,15 @@ function StateBlock({
 export function InquiriesPanel() {
   const { locale } = useI18n();
   const c = copy[locale];
-  const { items, loading, error, reload } = useRemoteList<Inquiry>(
+  const searchParams = useSearchParams();
+  const focusId = searchParams.get("focus");
+  const { items, loading, error, reload, setItems } = useRemoteList<Inquiry>(
     "/api/admin/inquiries",
     "inquiries",
   );
   const [pending, setPending] = useState<string | null>(null);
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(() => new Set());
   const [notice, setNotice] = useState("");
 
   const dateFormat = new Intl.DateTimeFormat(locale === "ar" ? "ar-SA" : "en-GB", {
@@ -354,10 +374,35 @@ export function InquiriesPanel() {
     minute: "2-digit",
   });
 
+  const allSelected = items.length > 0 && items.every((item) => selected.has(item.id));
+
+  useEffect(() => {
+    if (!focusId || !items.length) return;
+    const timer = window.setTimeout(() => {
+      document
+        .getElementById(`inquiry-${focusId}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 120);
+    return () => window.clearTimeout(timer);
+  }, [focusId, items.length]);
+
+  const flash = (message: string) => {
+    setNotice(message);
+    window.setTimeout(() => setNotice(""), 2400);
+  };
+
   const updateStatus = async (inquiry: Inquiry, status: InquiryStatus) => {
-    if (inquiry.status === status || pending) return;
+    if (inquiry.status === status || pending || bulkBusy) return;
+    const previous = items;
     setPending(inquiry.id);
     setNotice("");
+    setItems((current) =>
+      current.map((item) =>
+        item.id === inquiry.id
+          ? { ...item, status, updatedAt: new Date().toISOString() }
+          : item,
+      ),
+    );
     try {
       const response = await fetch("/api/admin/inquiries", {
         method: "PATCH",
@@ -366,37 +411,141 @@ export function InquiriesPanel() {
         body: JSON.stringify({ id: inquiry.id, status }),
       });
       if (!response.ok) throw new Error("request_failed");
-      await reload();
-      setNotice(c.updated);
-      window.setTimeout(() => setNotice(""), 2400);
+      flash(c.updated);
     } catch {
+      setItems(previous);
       setNotice(c.error);
     } finally {
       setPending(null);
     }
   };
 
+  const toggleSelected = (id: string) => {
+    setSelected((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    setSelected((current) => {
+      if (items.every((item) => current.has(item.id))) {
+        const next = new Set(current);
+        items.forEach((item) => next.delete(item.id));
+        return next;
+      }
+      const next = new Set(current);
+      items.forEach((item) => next.add(item.id));
+      return next;
+    });
+  };
+
+  const applyBulkStatus = async (status: InquiryStatus) => {
+    const ids = Array.from(selected).slice(0, 100);
+    if (!ids.length || bulkBusy) return;
+    const previous = items;
+    setBulkBusy(true);
+    setNotice("");
+    setItems((current) =>
+      current.map((item) =>
+        ids.includes(item.id)
+          ? { ...item, status, updatedAt: new Date().toISOString() }
+          : item,
+      ),
+    );
+    setSelected(new Set<string>());
+    try {
+      const response = await fetch("/api/admin/inquiries", {
+        method: "PATCH",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids, status }),
+      });
+      if (!response.ok) throw new Error("request_failed");
+      flash(`${ids.length} ${c.updated}`);
+    } catch {
+      setItems(previous);
+      setNotice(c.error);
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
   return (
     <div className="border border-white/10 bg-coal">
-      <div className="flex flex-col justify-between gap-3 border-b border-white/10 px-5 py-4 sm:flex-row sm:items-center">
+      <div className="flex flex-col justify-between gap-3 border-b border-white/10 px-6 py-5 sm:flex-row sm:items-center">
         <div>
           <h2 className="font-display text-2xl text-ivory">{c.inquiriesTitle}</h2>
-          <p className="mt-1 text-[0.6rem] leading-relaxed text-ivory/45">{c.inquiriesText}</p>
+          <p className="mt-1 text-[0.74rem] leading-relaxed text-ivory/45">{c.inquiriesText}</p>
         </div>
-        <button
-          type="button"
-          onClick={() => void reload()}
-          className="inline-flex h-9 w-fit items-center gap-2 border border-white/12 px-3.5 text-[0.54rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
-        >
-          <RefreshCcw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
-          {c.refresh}
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <a
+            href="/api/admin/export/inquiries"
+            className="inline-flex h-10 items-center gap-2 border border-white/12 px-3.5 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
+          >
+            <Download className="h-3.5 w-3.5" />
+            {c.exportInquiries}
+          </a>
+          <button
+            type="button"
+            onClick={() => void reload()}
+            className="inline-flex h-10 w-fit items-center gap-2 border border-white/12 px-3.5 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
+          >
+            <RefreshCcw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
+            {c.refresh}
+          </button>
+        </div>
       </div>
 
       {notice ? (
-        <p className="border-b border-white/8 bg-gold/10 px-5 py-2 text-[0.58rem] text-gold">
+        <p className="border-b border-white/8 bg-gold/10 px-5 py-2 text-[0.72rem] text-gold">
           {notice}
         </p>
+      ) : null}
+
+      {items.length ? (
+        <div className="flex flex-wrap items-center gap-3 border-b border-white/8 px-6 py-3">
+          <label className="inline-flex items-center gap-2 text-[0.68rem] uppercase tracking-[0.12em] text-ivory/45">
+            <input
+              type="checkbox"
+              checked={allSelected}
+              onChange={toggleAll}
+              className="h-3.5 w-3.5 accent-gold"
+            />
+            {c.selectAll}
+          </label>
+          <span className="text-[0.66rem] text-ivory/35">
+            {selected.size} {c.selected}
+          </span>
+        </div>
+      ) : null}
+
+      {selected.size > 0 ? (
+        <div className="flex flex-wrap items-center gap-2 border-b border-gold/20 bg-gold/[0.05] px-6 py-3">
+          <span className="text-[0.66rem] uppercase tracking-[0.1em] text-ivory/45">
+            {c.bulkStatus}
+          </span>
+          {statusOrder.map((status) => (
+            <button
+              key={status}
+              type="button"
+              disabled={bulkBusy}
+              onClick={() => void applyBulkStatus(status)}
+              className="h-8 border border-white/12 px-2.5 text-[0.66rem] font-semibold uppercase tracking-[0.1em] text-ivory/60 transition-colors hover:border-gold/45 hover:text-gold disabled:opacity-40"
+            >
+              {c[status]}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => setSelected(new Set<string>())}
+            className="ms-auto h-8 px-2 text-[0.66rem] uppercase tracking-[0.1em] text-ivory/40 transition-colors hover:text-gold"
+          >
+            {c.clearSelection}
+          </button>
+        </div>
       ) : null}
 
       <StateBlock
@@ -413,39 +562,53 @@ export function InquiriesPanel() {
       {items.length ? (
         <ul className="divide-y divide-white/6">
           {items.map((inquiry) => (
-            <li key={inquiry.id} className="px-5 py-4">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0">
+            <li
+              key={inquiry.id}
+              id={`inquiry-${inquiry.id}`}
+              className={cn(
+                "scroll-mt-32 px-6 py-5 transition-colors",
+                focusId === inquiry.id && "bg-gold/[0.055]",
+              )}
+            >
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <input
+                  type="checkbox"
+                  checked={selected.has(inquiry.id)}
+                  onChange={() => toggleSelected(inquiry.id)}
+                  aria-label={`${c.selectAll}: ${inquiry.name || inquiry.email}`}
+                  className="mt-1 h-4 w-4 shrink-0 accent-gold"
+                />
+                <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <span
                       className={cn(
-                        "px-2 py-0.5 text-[0.48rem] font-semibold uppercase tracking-[0.12em]",
+                        "inline-flex min-h-7 items-center px-2.5 text-[0.64rem] font-semibold uppercase tracking-[0.12em]",
                         statusStyles[inquiry.status],
                       )}
                     >
                       {c[inquiry.status]}
                     </span>
-                    <span className="text-[0.5rem] uppercase tracking-[0.14em] text-ivory/40">
+                    <span className="text-[0.66rem] uppercase tracking-[0.14em] text-ivory/40">
                       {inquiry.kind === "newsletter" ? c.newsletter : c.contact}
                     </span>
                     {inquiry.reference ? (
-                      <span className="tabular text-[0.5rem] text-ivory/35">
+                      <span className="tabular text-[0.66rem] text-ivory/35">
                         {inquiry.reference}
                       </span>
                     ) : null}
                   </div>
-                  <p className="mt-2 flex items-center gap-2 text-[0.72rem] text-ivory/80">
-                    <UserRound className="h-3.5 w-3.5 text-gold/60" />
-                    {inquiry.name || inquiry.email}
+                  <p className="mt-2.5 flex items-center gap-2 text-[0.95rem] text-ivory/85">
+                    <UserRound className="h-4 w-4 shrink-0 text-gold/60" />
+                    <span className="break-words">{inquiry.name || inquiry.email}</span>
                   </p>
-                  <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[0.56rem] text-ivory/45">
-                    <span className="inline-flex items-center gap-1.5">
-                      <Mail className="h-3 w-3" />
+                  <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[0.74rem] text-ivory/45">
+                    <span className="inline-flex items-center gap-1.5 break-all">
+                      <Mail className="h-3.5 w-3.5 shrink-0" />
                       {inquiry.email}
                     </span>
                     {inquiry.phone ? (
                       <span className="inline-flex items-center gap-1.5" dir="ltr">
-                        <Phone className="h-3 w-3" />
+                        <Phone className="h-3.5 w-3.5 shrink-0" />
                         {inquiry.phone}
                       </span>
                     ) : null}
@@ -454,29 +617,29 @@ export function InquiriesPanel() {
                     {inquiry.service ? <span>{inquiry.service}</span> : null}
                   </div>
                 </div>
-                <span className="tabular shrink-0 text-[0.52rem] text-ivory/35">
+                <span className="tabular shrink-0 text-[0.7rem] text-ivory/35">
                   {dateFormat.format(new Date(inquiry.createdAt))}
                 </span>
               </div>
 
               {inquiry.message ? (
-                <p className="mt-3 border-s-2 border-gold/30 bg-white/[0.03] px-3 py-2 text-[0.62rem] leading-relaxed text-ivory/65">
+                <p className="mt-4 border-s-2 border-gold/30 bg-white/[0.03] px-4 py-3 text-[0.8rem] leading-relaxed text-ivory/65">
                   {inquiry.message}
                 </p>
               ) : null}
 
-              <div className="mt-3 flex flex-wrap items-center gap-1.5">
-                <span className="me-1 text-[0.48rem] uppercase tracking-[0.14em] text-ivory/35">
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                <span className="me-1 text-[0.64rem] uppercase tracking-[0.14em] text-ivory/35">
                   {c.mark}
                 </span>
                 {statusOrder.map((status) => (
                   <button
                     key={status}
                     type="button"
-                    disabled={pending !== null}
+                    disabled={pending !== null || bulkBusy}
                     onClick={() => void updateStatus(inquiry, status)}
                     className={cn(
-                      "h-7 px-2.5 text-[0.5rem] font-semibold uppercase tracking-[0.1em] transition-colors disabled:opacity-40",
+                      "h-9 px-3 text-[0.66rem] font-semibold uppercase tracking-[0.1em] transition-colors disabled:opacity-40",
                       inquiry.status === status
                         ? statusStyles[status]
                         : "border border-white/10 text-ivory/50 hover:border-gold/40 hover:text-gold",
@@ -509,22 +672,31 @@ export function AuditPanel() {
 
   return (
     <div className="border border-white/10 bg-coal">
-      <div className="flex flex-col justify-between gap-3 border-b border-white/10 px-5 py-4 sm:flex-row sm:items-center">
+      <div className="flex flex-col justify-between gap-3 border-b border-white/10 px-6 py-5 sm:flex-row sm:items-center">
         <div>
           <h2 className="flex items-center gap-2 font-display text-2xl text-ivory">
             <Activity className="h-4 w-4 text-gold" />
             {c.auditTitle}
           </h2>
-          <p className="mt-1 text-[0.6rem] leading-relaxed text-ivory/45">{c.auditText}</p>
+          <p className="mt-1 text-[0.74rem] leading-relaxed text-ivory/45">{c.auditText}</p>
         </div>
-        <button
-          type="button"
-          onClick={() => void reload()}
-          className="inline-flex h-9 w-fit items-center gap-2 border border-white/12 px-3.5 text-[0.54rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
-        >
-          <RefreshCcw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
-          {c.refresh}
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <a
+            href="/api/admin/export/audit"
+            className="inline-flex h-10 items-center gap-2 border border-white/12 px-3.5 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
+          >
+            <Download className="h-3.5 w-3.5" />
+            {c.exportAudit}
+          </a>
+          <button
+            type="button"
+            onClick={() => void reload()}
+            className="inline-flex h-10 w-fit items-center gap-2 border border-white/12 px-3.5 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
+          >
+            <RefreshCcw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
+            {c.refresh}
+          </button>
+        </div>
       </div>
 
       <StateBlock
@@ -543,25 +715,25 @@ export function AuditPanel() {
           {items.map((entry) => (
             <li
               key={entry.id}
-              className="flex flex-wrap items-center justify-between gap-3 px-5 py-3"
+              className="flex flex-wrap items-center justify-between gap-3 px-6 py-5"
             >
-              <div className="flex min-w-0 items-center gap-3">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-gold/20 bg-gold/5">
-                  <Activity className="h-3 w-3 text-gold/70" />
+              <div className="flex min-w-0 flex-1 items-center gap-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-gold/20 bg-gold/5">
+                  <Activity className="h-3.5 w-3.5 text-gold/70" />
                 </span>
                 <div className="min-w-0">
-                  <p className="truncate text-[0.66rem] text-ivory/75">
+                  <p className="truncate text-[0.84rem] text-ivory/75">
                     <span className="text-gold/80">{entry.actor}</span>{" "}
                     <span className="text-ivory/55">{entry.action}</span>
                   </p>
-                  <p className="truncate text-[0.52rem] text-ivory/40">
+                  <p className="mt-0.5 truncate text-[0.72rem] text-ivory/40">
                     {entry.entity}
                     {entry.entityId ? ` · ${entry.entityId}` : ""}
                     {entry.ip ? ` · ${entry.ip}` : ""}
                   </p>
                 </div>
               </div>
-              <span className="tabular shrink-0 text-[0.52rem] text-ivory/35">
+              <span className="tabular shrink-0 text-[0.72rem] text-ivory/35">
                 {dateFormat.format(new Date(entry.createdAt))}
               </span>
             </li>
@@ -619,18 +791,18 @@ export function ConsultationsPanel() {
 
   return (
     <div className="border border-white/10 bg-coal">
-      <div className="flex flex-col justify-between gap-3 border-b border-white/10 px-5 py-4 sm:flex-row sm:items-center">
+      <div className="flex flex-col justify-between gap-3 border-b border-white/10 px-6 py-5 sm:flex-row sm:items-center">
         <div>
           <h2 className="flex items-center gap-2 font-display text-2xl text-ivory">
             <CalendarDays className="h-4 w-4 text-gold" />
             {c.consultationsTitle}
           </h2>
-          <p className="mt-1 text-[0.6rem] leading-relaxed text-ivory/45">{c.consultationsText}</p>
+          <p className="mt-1 text-[0.74rem] leading-relaxed text-ivory/45">{c.consultationsText}</p>
         </div>
         <button
           type="button"
           onClick={() => void reload()}
-          className="inline-flex h-9 w-fit items-center gap-2 border border-white/12 px-3.5 text-[0.54rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
+          className="inline-flex h-10 w-fit items-center gap-2 border border-white/12 px-3.5 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
         >
           <RefreshCcw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
           {c.refresh}
@@ -651,42 +823,42 @@ export function ConsultationsPanel() {
       {items.length ? (
         <ul className="divide-y divide-white/6">
           {items.map((record) => (
-            <li key={record.id} className="px-5 py-4">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0">
+            <li key={record.id} className="px-6 py-5">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-mono text-[0.58rem] text-gold">{record.reference}</span>
+                    <span className="font-mono text-[0.72rem] text-gold">{record.reference}</span>
                     <span
                       className={cn(
-                        "px-2 py-0.5 text-[0.46rem] font-semibold uppercase tracking-[0.12em]",
+                        "inline-flex min-h-7 items-center px-2.5 text-[0.62rem] font-semibold uppercase tracking-[0.12em]",
                         consultationStatusStyles[record.status],
                       )}
                     >
                       {c[record.status]}
                     </span>
-                    <span className="text-[0.5rem] uppercase tracking-[0.12em] text-ivory/40">
+                    <span className="text-[0.66rem] uppercase tracking-[0.12em] text-ivory/40">
                       {c[record.mode]}
                     </span>
                   </div>
-                  <p className="mt-1.5 text-[0.72rem] text-ivory/80">
+                  <p className="mt-2.5 text-[0.95rem] text-ivory/85">
                     {record.name}
                     {record.company ? ` · ${record.company}` : ""}
                   </p>
-                  <p className="mt-1 flex flex-wrap items-center gap-3 text-[0.55rem] text-ivory/45">
-                    <span className="flex items-center gap-1">
-                      <CalendarDays className="h-3 w-3" />
+                  <p className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[0.74rem] text-ivory/45">
+                    <span className="flex items-center gap-1.5">
+                      <CalendarDays className="h-3.5 w-3.5 shrink-0" />
                       {dateFormat.format(new Date(`${record.date}T12:00:00.000Z`))} · {record.slot}
                     </span>
-                    <span className="flex items-center gap-1">
-                      <Mail className="h-3 w-3" />
+                    <span className="flex items-center gap-1.5 break-all">
+                      <Mail className="h-3.5 w-3.5 shrink-0" />
                       {record.email}
                     </span>
-                    <span className="flex items-center gap-1">
-                      <Phone className="h-3 w-3" />
+                    <span className="flex items-center gap-1.5" dir="ltr">
+                      <Phone className="h-3.5 w-3.5 shrink-0" />
                       {record.phone}
                     </span>
                   </p>
-                  <p className="mt-2 max-w-2xl text-[0.62rem] leading-relaxed text-ivory/55">
+                  <p className="mt-3 max-w-3xl text-[0.8rem] leading-relaxed text-ivory/55">
                     {record.topic}
                     {record.notes ? ` — ${record.notes}` : ""}
                   </p>
@@ -697,7 +869,7 @@ export function ConsultationsPanel() {
                       type="button"
                       disabled={Boolean(pending)}
                       onClick={() => void update(record, "confirmed")}
-                      className="inline-flex h-8 items-center gap-1.5 border border-emerald-400/25 px-2.5 text-[0.5rem] font-semibold uppercase tracking-[0.1em] text-emerald-300 transition-colors hover:bg-emerald-400/10 disabled:opacity-50"
+                      className="inline-flex h-9 items-center gap-1.5 border border-emerald-400/25 px-2.5 text-[0.66rem] font-semibold uppercase tracking-[0.1em] text-emerald-300 transition-colors hover:bg-emerald-400/10 disabled:opacity-50"
                     >
                       <Check className="h-3 w-3" />
                       {c.confirm}
@@ -708,7 +880,7 @@ export function ConsultationsPanel() {
                       type="button"
                       disabled={Boolean(pending)}
                       onClick={() => void update(record, "completed")}
-                      className="inline-flex h-8 items-center gap-1.5 border border-gold/25 px-2.5 text-[0.5rem] font-semibold uppercase tracking-[0.1em] text-gold transition-colors hover:bg-gold/10 disabled:opacity-50"
+                      className="inline-flex h-9 items-center gap-1.5 border border-gold/25 px-2.5 text-[0.66rem] font-semibold uppercase tracking-[0.1em] text-gold transition-colors hover:bg-gold/10 disabled:opacity-50"
                     >
                       <Check className="h-3 w-3" />
                       {c.complete}
@@ -719,7 +891,7 @@ export function ConsultationsPanel() {
                       type="button"
                       disabled={Boolean(pending)}
                       onClick={() => void update(record, "cancelled")}
-                      className="inline-flex h-8 items-center gap-1.5 border border-red-400/20 px-2.5 text-[0.5rem] font-semibold uppercase tracking-[0.1em] text-red-300 transition-colors hover:bg-red-400/10 disabled:opacity-50"
+                      className="inline-flex h-9 items-center gap-1.5 border border-red-400/20 px-2.5 text-[0.66rem] font-semibold uppercase tracking-[0.1em] text-red-300 transition-colors hover:bg-red-400/10 disabled:opacity-50"
                     >
                       <X className="h-3 w-3" />
                       {c.cancel}
@@ -733,7 +905,7 @@ export function ConsultationsPanel() {
       ) : null}
 
       {notice ? (
-        <p className="border-t border-white/8 px-5 py-3 text-[0.6rem] text-gold">{notice}</p>
+        <p className="border-t border-white/8 px-6 py-4 text-[0.74rem] text-gold">{notice}</p>
       ) : null}
     </div>
   );
@@ -742,6 +914,8 @@ export function ConsultationsPanel() {
 export function ContractsPanel() {
   const { locale } = useI18n();
   const c = copy[locale];
+  const searchParams = useSearchParams();
+  const focusId = searchParams.get("focus");
   const { items, loading, error, reload } = useRemoteList<SignoffRecord>(
     "/api/admin/contracts",
     "signoffs",
@@ -752,20 +926,30 @@ export function ContractsPanel() {
     timeStyle: "short",
   });
 
+  useEffect(() => {
+    if (!focusId || !items.length) return;
+    const timer = window.setTimeout(() => {
+      document
+        .getElementById(`contract-${focusId}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 120);
+    return () => window.clearTimeout(timer);
+  }, [focusId, items.length]);
+
   return (
     <div className="border border-white/10 bg-coal">
-      <div className="flex flex-col justify-between gap-3 border-b border-white/10 px-5 py-4 sm:flex-row sm:items-center">
+      <div className="flex flex-col justify-between gap-3 border-b border-white/10 px-6 py-5 sm:flex-row sm:items-center">
         <div>
           <h2 className="flex items-center gap-2 font-display text-2xl text-ivory">
             <FileSignature className="h-4 w-4 text-gold" />
             {c.contractsTitle}
           </h2>
-          <p className="mt-1 text-[0.6rem] leading-relaxed text-ivory/45">{c.contractsText}</p>
+          <p className="mt-1 text-[0.74rem] leading-relaxed text-ivory/45">{c.contractsText}</p>
         </div>
         <button
           type="button"
           onClick={() => void reload()}
-          className="inline-flex h-9 w-fit items-center gap-2 border border-white/12 px-3.5 text-[0.54rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
+          className="inline-flex h-10 w-fit items-center gap-2 border border-white/12 px-3.5 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
         >
           <RefreshCcw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
           {c.refresh}
@@ -786,27 +970,34 @@ export function ContractsPanel() {
       {items.length ? (
         <ul className="divide-y divide-white/6">
           {items.map((record) => (
-            <li key={record.id} className="px-5 py-4">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="flex items-center gap-2 text-[0.72rem] text-ivory/80">
-                    <ShieldCheck className="h-3.5 w-3.5 text-gold" />
+            <li
+              key={record.id}
+              id={`contract-${record.id}`}
+              className={cn(
+                "scroll-mt-32 px-6 py-5 transition-colors",
+                focusId === record.id && "bg-gold/[0.055]",
+              )}
+            >
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="min-w-0 flex-1">
+                  <p className="flex items-center gap-2 text-[0.95rem] text-ivory/85">
+                    <ShieldCheck className="h-4 w-4 shrink-0 text-gold" />
                     {record.projectSlug}
                   </p>
-                  <p className="mt-1 text-[0.58rem] text-ivory/50">
+                  <p className="mt-1.5 break-all text-[0.76rem] text-ivory/50">
                     {c.signedBy}: {record.signerName} · {record.email}
                   </p>
-                  <p className="mt-1 font-mono text-[0.5rem] text-ivory/35">
+                  <p className="mt-1.5 break-all font-mono text-[0.7rem] text-ivory/35">
                     {c.digest}: {record.contractHash.slice(0, 24)}…
                   </p>
-                  <p className="mt-1.5 text-[0.54rem] text-ivory/45">
+                  <p className="mt-2 text-[0.74rem] leading-relaxed text-ivory/45">
                     {c.verifiedMilestones}: {record.milestones.length}
                     {record.milestones.length
                       ? ` · ${record.milestones.map((item) => item.titleEn).join(" · ")}`
                       : ` · ${c.noVerifiedMilestones}`}
                   </p>
                 </div>
-                <span className="tabular shrink-0 text-[0.52rem] text-ivory/35">
+                <span className="tabular shrink-0 text-[0.7rem] text-ivory/35">
                   {dateFormat.format(new Date(record.signedAt))}
                 </span>
               </div>
@@ -893,19 +1084,19 @@ export function NotificationsPanel() {
 
   return (
     <div className="border border-white/10 bg-coal">
-      <div className="flex flex-col justify-between gap-3 border-b border-white/10 px-5 py-4 sm:flex-row sm:items-center">
+      <div className="flex flex-col justify-between gap-3 border-b border-white/10 px-6 py-5 sm:flex-row sm:items-center">
         <div>
           <h2 className="flex items-center gap-2 font-display text-2xl text-ivory">
             <BellRing className="h-4 w-4 text-gold" />
             {c.notificationsTitle}
           </h2>
-          <p className="mt-1 text-[0.6rem] leading-relaxed text-ivory/45">{c.notificationsText}</p>
+          <p className="mt-1 text-[0.74rem] leading-relaxed text-ivory/45">{c.notificationsText}</p>
         </div>
         <button
           type="button"
           onClick={() => void test()}
           disabled={busy}
-          className="inline-flex h-9 w-fit items-center gap-2 border border-gold/30 bg-gold/5 px-3.5 text-[0.54rem] font-semibold uppercase tracking-[0.12em] text-gold transition-colors hover:bg-gold/10 disabled:opacity-50"
+          className="inline-flex h-10 w-fit items-center gap-2 border border-gold/30 bg-gold/5 px-3.5 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-gold transition-colors hover:bg-gold/10 disabled:opacity-50"
         >
           {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
           {busy ? c.sendingTest : c.sendTest}
@@ -913,18 +1104,18 @@ export function NotificationsPanel() {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center gap-2 py-14 text-[0.62rem] text-ivory/45">
+        <div className="flex items-center justify-center gap-2 py-14 text-[0.76rem] text-ivory/45">
           <Loader2 className="h-4 w-4 animate-spin" />
           {c.loading}
         </div>
       ) : error ? (
         <div className="flex flex-col items-center gap-3 py-14 text-center">
           <AlertCircle className="h-5 w-5 text-red-300/70" />
-          <p className="text-[0.62rem] text-ivory/50">{c.error}</p>
+          <p className="text-[0.76rem] text-ivory/50">{c.error}</p>
           <button
             type="button"
             onClick={() => void load()}
-            className="inline-flex h-9 items-center gap-2 border border-white/12 px-4 text-[0.54rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
+            className="inline-flex h-10 items-center gap-2 border border-white/12 px-4 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
           >
             <RefreshCcw className="h-3.5 w-3.5" />
             {c.retry}
@@ -933,15 +1124,15 @@ export function NotificationsPanel() {
       ) : (
         <div className="grid gap-px bg-white/10 sm:grid-cols-2">
           {channels.map(({ key, icon: Icon, label, configured, detail }) => (
-            <div key={key} className="bg-obsidian p-5">
-              <div className="flex items-center justify-between gap-3">
-                <span className="flex items-center gap-2 text-[0.66rem] text-ivory/70">
-                  <Icon className="h-4 w-4 text-gold" />
+            <div key={key} className="bg-obsidian p-6">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <span className="flex items-center gap-2 text-[0.84rem] text-ivory/70">
+                  <Icon className="h-4 w-4 shrink-0 text-gold" />
                   {label}
                 </span>
                 <span
                   className={cn(
-                    "px-2 py-0.5 text-[0.46rem] font-semibold uppercase tracking-[0.12em]",
+                    "inline-flex min-h-7 items-center px-2.5 text-[0.66rem] font-semibold uppercase tracking-[0.12em]",
                     configured
                       ? "bg-emerald-400/12 text-emerald-300"
                       : "bg-white/8 text-ivory/45",
@@ -950,17 +1141,17 @@ export function NotificationsPanel() {
                   {configured ? c.configured : c.notConfigured}
                 </span>
               </div>
-              <p className="mt-3 text-[0.52rem] uppercase tracking-[0.12em] text-ivory/40">
+              <p className="mt-4 text-[0.72rem] uppercase tracking-[0.12em] text-ivory/40">
                 {key === "email" ? c.recipient : c.transport}
               </p>
-              <p className="mt-1 truncate text-[0.64rem] text-ivory/65">{detail}</p>
+              <p className="mt-1.5 truncate text-[0.8rem] text-ivory/65">{detail}</p>
             </div>
           ))}
         </div>
       )}
 
       {notice ? (
-        <p className="border-t border-white/8 px-5 py-3 text-[0.6rem] text-gold">{notice}</p>
+        <p className="border-t border-white/8 px-6 py-4 text-[0.74rem] text-gold">{notice}</p>
       ) : null}
     </div>
   );
@@ -1030,21 +1221,28 @@ export function MilestonesPanel() {
 
   return (
     <div className="border border-white/10 bg-coal">
-      <div className="flex flex-col justify-between gap-3 border-b border-white/10 px-5 py-4 sm:flex-row sm:items-center">
+      <div className="flex flex-col justify-between gap-3 border-b border-white/10 px-6 py-5 sm:flex-row sm:items-center">
         <div>
           <h2 className="flex items-center gap-2 font-display text-2xl text-ivory">
             <Flag className="h-4 w-4 text-gold" />
             {c.milestonesTitle}
           </h2>
-          <p className="mt-1 text-[0.6rem] leading-relaxed text-ivory/45">{c.milestonesText}</p>
+          <p className="mt-1 text-[0.74rem] leading-relaxed text-ivory/45">{c.milestonesText}</p>
         </div>
         <div className="flex flex-wrap items-end gap-2">
+          <a
+            href="/api/admin/export/milestones"
+            className="inline-flex h-10 items-center gap-1.5 border border-white/12 px-3.5 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
+          >
+            <Download className="h-3.5 w-3.5" />
+            {c.exportMilestones}
+          </a>
           <label className="block">
             <span className="sr-only">{c.selectProject}</span>
             <select
               value={active?.slug ?? ""}
               onChange={(event) => selectProject(event.target.value)}
-              className="h-9 w-full min-w-44 border border-white/12 bg-coal px-3 text-[0.62rem] text-ivory outline-none focus:border-gold/50 sm:w-auto"
+              className="h-10 w-full min-w-44 border border-white/12 bg-coal px-3 text-[0.76rem] text-ivory outline-none focus:border-gold/50 sm:w-auto"
             >
               {projects.map((project) => (
                 <option key={project.slug} value={project.slug}>
@@ -1060,7 +1258,7 @@ export function MilestonesPanel() {
               setAdding(true);
               setFormError("");
             }}
-            className="inline-flex h-9 items-center gap-1.5 border border-gold/40 px-3.5 text-[0.54rem] font-semibold uppercase tracking-[0.12em] text-gold transition-colors hover:bg-gold hover:text-obsidian disabled:opacity-40"
+            className="inline-flex h-10 items-center gap-1.5 border border-gold/40 px-3.5 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-gold transition-colors hover:bg-gold hover:text-obsidian disabled:opacity-40"
           >
             <Plus className="h-3.5 w-3.5" />
             {c.addMilestone}
@@ -1074,9 +1272,9 @@ export function MilestonesPanel() {
             event.preventDefault();
             addMilestone();
           }}
-          className="border-b border-white/10 bg-obsidian/40 px-5 py-4"
+          className="border-b border-white/10 bg-obsidian/40 px-6 py-5"
         >
-          <p className="text-[0.52rem] font-semibold uppercase tracking-[0.16em] text-gold">
+          <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-gold">
             {c.newMilestone}
           </p>
           <div className="mt-3 grid gap-2 sm:grid-cols-2">
@@ -1085,39 +1283,39 @@ export function MilestonesPanel() {
               onChange={(event) => setDraft((current) => ({ ...current, titleAr: event.target.value }))}
               placeholder={c.titleAr}
               dir="rtl"
-              className="h-9 w-full border border-white/12 bg-transparent px-3 text-[0.64rem] text-ivory outline-none placeholder:text-ivory/35 focus:border-gold/50"
+              className="h-10 w-full border border-white/12 bg-transparent px-3 text-[0.78rem] text-ivory outline-none placeholder:text-ivory/35 focus:border-gold/50"
             />
             <input
               value={draft.titleEn}
               onChange={(event) => setDraft((current) => ({ ...current, titleEn: event.target.value }))}
               placeholder={c.titleEn}
               dir="ltr"
-              className="h-9 w-full border border-white/12 bg-transparent px-3 text-[0.64rem] text-ivory outline-none placeholder:text-ivory/35 focus:border-gold/50"
+              className="h-10 w-full border border-white/12 bg-transparent px-3 text-[0.78rem] text-ivory outline-none placeholder:text-ivory/35 focus:border-gold/50"
             />
             <input
               value={draft.dateAr}
               onChange={(event) => setDraft((current) => ({ ...current, dateAr: event.target.value }))}
               placeholder={c.dateAr}
               dir="rtl"
-              className="h-9 w-full border border-white/12 bg-transparent px-3 text-[0.64rem] text-ivory outline-none placeholder:text-ivory/35 focus:border-gold/50"
+              className="h-10 w-full border border-white/12 bg-transparent px-3 text-[0.78rem] text-ivory outline-none placeholder:text-ivory/35 focus:border-gold/50"
             />
             <input
               value={draft.dateEn}
               onChange={(event) => setDraft((current) => ({ ...current, dateEn: event.target.value }))}
               placeholder={c.dateEn}
               dir="ltr"
-              className="h-9 w-full border border-white/12 bg-transparent px-3 text-[0.64rem] text-ivory outline-none placeholder:text-ivory/35 focus:border-gold/50"
+              className="h-10 w-full border border-white/12 bg-transparent px-3 text-[0.78rem] text-ivory outline-none placeholder:text-ivory/35 focus:border-gold/50"
             />
           </div>
           {formError ? (
-            <p className="mt-2 text-[0.56rem] text-red-300">{formError}</p>
+            <p className="mt-2 text-[0.7rem] text-red-300">{formError}</p>
           ) : null}
           <div className="mt-3 flex flex-wrap gap-2">
             <button
               type="submit"
-              className="inline-flex h-8 items-center gap-1.5 bg-gold px-3.5 text-[0.52rem] font-semibold uppercase tracking-[0.12em] text-obsidian transition-colors hover:bg-gold-light"
+              className="inline-flex h-10 items-center gap-1.5 bg-gold px-4 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-obsidian transition-colors hover:bg-gold-light"
             >
-              <Check className="h-3 w-3" />
+              <Check className="h-3.5 w-3.5" />
               {c.saveMilestone}
             </button>
             <button
@@ -1127,7 +1325,7 @@ export function MilestonesPanel() {
                 setDraft(emptyMilestoneDraft);
                 setFormError("");
               }}
-              className="inline-flex h-8 items-center border border-white/12 px-3.5 text-[0.52rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
+              className="inline-flex h-10 items-center border border-white/12 px-4 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
             >
               {c.cancel}
             </button>
@@ -1138,12 +1336,12 @@ export function MilestonesPanel() {
       {active?.milestones.length ? (
         <ol className="divide-y divide-white/6">
           {active.milestones.map((milestone, index) => (
-            <li key={`${milestone.title.en}-${index}`} className="px-5 py-4">
+            <li key={`${milestone.title.en}-${index}`} className="px-6 py-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="flex min-w-0 items-start gap-3">
                   <span
                     className={cn(
-                      "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border",
+                      "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border",
                       milestone.status === "complete"
                         ? "border-gold bg-gold text-obsidian"
                         : milestone.status === "current"
@@ -1152,30 +1350,30 @@ export function MilestonesPanel() {
                     )}
                   >
                     {milestone.status === "complete" ? (
-                      <Check className="h-3 w-3" />
+                      <Check className="h-3.5 w-3.5" />
                     ) : milestone.status === "current" ? (
-                      <Clock className="h-3 w-3" />
+                      <Clock className="h-3.5 w-3.5" />
                     ) : (
-                      <span className="h-1 w-1 rounded-full bg-current" />
+                      <span className="h-1.5 w-1.5 rounded-full bg-current" />
                     )}
                   </span>
                   <div className="min-w-0">
-                    <p className="text-[0.72rem] leading-snug text-ivory/80">
+                    <p className="text-[0.92rem] leading-snug text-ivory/80">
                       {l(milestone.title)}
                     </p>
-                    <span className="text-[0.55rem] text-ivory/40">
+                    <span className="mt-0.5 block text-[0.76rem] text-ivory/40">
                       {l(milestone.date)}
                     </span>
                   </div>
                 </div>
-                <div className="flex flex-wrap items-center gap-1.5">
+                <div className="flex flex-wrap items-center gap-2">
                   {milestoneStatuses.map((status) => (
                     <button
                       key={status}
                       type="button"
                       onClick={() => setStatus(index, status)}
                       className={cn(
-                        "h-7 px-2.5 text-[0.5rem] font-semibold uppercase tracking-[0.1em] transition-colors",
+                        "h-9 px-3 text-[0.68rem] font-semibold uppercase tracking-[0.1em] transition-colors",
                         milestone.status === status
                           ? "bg-gold text-obsidian"
                           : "border border-white/10 text-ivory/50 hover:border-gold/40 hover:text-gold",
@@ -1188,9 +1386,9 @@ export function MilestonesPanel() {
                     type="button"
                     onClick={() => removeMilestone(index)}
                     aria-label={`${c.remove} — ${l(milestone.title)}`}
-                    className="flex h-7 w-7 items-center justify-center border border-white/10 text-ivory/45 transition-colors hover:border-red-400/50 hover:text-red-300"
+                    className="flex h-9 w-9 items-center justify-center border border-white/10 text-ivory/45 transition-colors hover:border-red-400/50 hover:text-red-300"
                   >
-                    <Trash2 className="h-3 w-3" />
+                    <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 </div>
               </div>
@@ -1198,10 +1396,10 @@ export function MilestonesPanel() {
           ))}
         </ol>
       ) : (
-        <p className="py-14 text-center text-[0.62rem] text-ivory/40">{c.noMilestones}</p>
+        <p className="py-14 text-center text-[0.76rem] text-ivory/40">{c.noMilestones}</p>
       )}
 
-      <p className="border-t border-white/8 px-5 py-3 text-[0.52rem] text-ivory/35">
+      <p className="border-t border-white/8 px-6 py-4 text-[0.68rem] text-ivory/35">
         {c.milestoneHint}
       </p>
     </div>

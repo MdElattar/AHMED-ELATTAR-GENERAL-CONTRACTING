@@ -11,12 +11,12 @@
   --color-paper: #e9e2d5;
   --color-sand: #d8ccb7;
   --color-muted: #96938b;
-  --color-gold: #d4af37;
-  --color-gold-light: #f2dfa0;
-  --color-gold-dark: #9a7423;
-  --color-bronze: #c5a059;
-  --color-champagne: #f4e3b8;
-  --color-ember: #d98e4a;
+  --color-gold: #b8860b;
+  --color-gold-light: #c59b27;
+  --color-gold-dark: #996515;
+  --color-bronze: #a67c1a;
+  --color-champagne: #c59b27;
+  --color-ember: #b87333;
 
   --font-sans: var(--font-body), var(--font-arabic), ui-sans-serif, sans-serif;
   --font-arabic: var(--font-arabic), ui-sans-serif, sans-serif;
@@ -27,13 +27,13 @@
   --ease-smooth: cubic-bezier(0.65, 0, 0.35, 1);
 
   --shadow-lux: 0 30px 80px -30px rgb(0 0 0 / 0.65);
-  --shadow-gold: 0 0 0 1px rgb(201 164 92 / 0.18), 0 20px 60px -20px rgb(201 164 92 / 0.18);
+  --shadow-gold: 0 0 0 1px rgb(166 124 26 / 0.18), 0 20px 60px -20px rgb(166 124 26 / 0.18);
 }
 
 :root {
   --background: #060708;
   --foreground: #f3eee4;
-  --gold: #d4af37;
+  --gold: #b8860b;
   --nav-height: 84px;
 
   /*
@@ -41,10 +41,10 @@
    * toggle swaps these to blue hour or a neutral studio grade. The values are
    * raw RGB channels so every glow can be composed with a variable alpha.
    */
-  --atmo-glow: 212 175 55;
-  --atmo-glow-2: 197 160 89;
-  --atmo-accent: #d4af37;
-  --atmo-warm: #f0c97a;
+  --atmo-glow: 184 134 11;
+  --atmo-glow-2: 153 101 21;
+  --atmo-accent: #b8860b;
+  --atmo-warm: #c59b27;
   --atmo-photo-filter: saturate(1.08) contrast(1.06) brightness(0.9);
   --pointer-x: 50%;
   --pointer-y: 30%;
@@ -108,7 +108,7 @@ html[lang="ar"] body {
 }
 
 ::selection {
-  background: #d4af37;
+  background: #b8860b;
   color: #060708;
 }
 
@@ -124,11 +124,11 @@ html[lang="ar"] body {
   border: 2px solid #060708;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #9a7423;
+  background: #996515;
 }
 
 :focus-visible {
-  outline: 2px solid #f2dfa0;
+  outline: 2px solid #c59b27;
   outline-offset: 3px;
 }
 
@@ -191,7 +191,7 @@ html:not([data-locale="en"]) .i18n-en {
 .hairline {
   height: 1px;
   width: 100%;
-  background: linear-gradient(90deg, transparent, rgb(212 175 55 / 0.45), transparent);
+  background: linear-gradient(90deg, transparent, rgb(184 134 11 / 0.45), transparent);
 }
 
 /* Phase description (pinned stages) — visible only where the viewport gives
@@ -215,7 +215,7 @@ html:not([data-locale="en"]) .i18n-en {
   font-weight: 500;
   letter-spacing: 0.28em;
   text-transform: uppercase;
-  color: #d4af37;
+  color: #b8860b;
 }
 
 html[lang="ar"] .eyebrow {
@@ -228,7 +228,7 @@ html[lang="ar"] .eyebrow {
   display: inline-block;
   width: 1.75rem;
   height: 1px;
-  background: #d4af37;
+  background: #b8860b;
   flex: none;
 }
 
@@ -248,7 +248,7 @@ html[lang="ar"] .display-title {
 }
 
 .gold-text {
-  background: linear-gradient(105deg, #9a7423 0%, #f2dfa0 40%, #d4af37 66%, #fff2c8 100%);
+  background: linear-gradient(105deg, #996515 0%, #c59b27 40%, #b8860b 66%, #c59b27 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -261,20 +261,20 @@ html[lang="ar"] .display-title {
 
 .text-outline-gold {
   color: transparent;
-  -webkit-text-stroke: 1px rgb(212 175 55 / 0.55);
+  -webkit-text-stroke: 1px rgb(184 134 11 / 0.55);
 }
 
 .blueprint-grid {
   background-image:
-    linear-gradient(rgb(212 175 55 / 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(212 175 55 / 0.06) 1px, transparent 1px);
+    linear-gradient(rgb(184 134 11 / 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(184 134 11 / 0.06) 1px, transparent 1px);
   background-size: 72px 72px;
 }
 
 .blueprint-grid-fine {
   background-image:
-    linear-gradient(rgb(212 175 55 / 0.075) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(212 175 55 / 0.075) 1px, transparent 1px);
+    linear-gradient(rgb(184 134 11 / 0.075) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(184 134 11 / 0.075) 1px, transparent 1px);
   background-size: 24px 24px;
 }
 
@@ -484,8 +484,8 @@ html[dir="rtl"] .hero-rule {
 }
 .field:focus {
   outline: none;
-  border-color: #d4af37;
-  box-shadow: 0 1px 0 0 #d4af37;
+  border-color: #b8860b;
+  box-shadow: 0 1px 0 0 #b8860b;
 }
 .field-light {
   color: #0a0b0e;
@@ -495,7 +495,7 @@ html[dir="rtl"] .hero-rule {
   color: rgb(10 11 14 / 0.38);
 }
 .field-light:focus {
-  border-color: #9a7423;
+  border-color: #996515;
 }
 select.field option {
   background: #0f1115;
@@ -579,7 +579,7 @@ select.field option {
 .photo-warmth {
   background: linear-gradient(
     115deg,
-    rgb(217 142 74 / 0.14),
+    rgb(166 124 26 / 0.14),
     transparent 44%,
     rgb(var(--atmo-glow) / 0.12)
   );
@@ -601,7 +601,7 @@ select.field option {
 .hero-aurora {
   background:
     radial-gradient(ellipse at 68% 38%, rgb(var(--atmo-glow) / 0.28), transparent 52%),
-    radial-gradient(ellipse at 28% 72%, rgb(217 142 74 / 0.16), transparent 58%);
+    radial-gradient(ellipse at 28% 72%, rgb(166 124 26 / 0.16), transparent 58%);
   animation: golden-drift 30s ease-in-out infinite;
 }
 
@@ -718,13 +718,13 @@ select.field option {
 }
 
 .timeline-fill {
-  background: linear-gradient(180deg, var(--atmo-warm), var(--atmo-accent) 45%, #9a7423);
+  background: linear-gradient(180deg, var(--atmo-warm), var(--atmo-accent) 45%, #996515);
   box-shadow: 0 0 18px rgb(var(--atmo-glow) / 0.45);
   transform-origin: top;
 }
 
 .timeline-fill-x {
-  background: linear-gradient(90deg, #9a7423, var(--atmo-accent) 55%, var(--atmo-warm));
+  background: linear-gradient(90deg, #996515, var(--atmo-accent) 55%, var(--atmo-warm));
   box-shadow: 0 0 18px rgb(var(--atmo-glow) / 0.4);
   transform-origin: left;
 }

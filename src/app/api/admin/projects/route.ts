@@ -7,6 +7,7 @@ import {
   isSameOrigin,
   readJsonBody,
 } from "@/lib/security/http";
+import { revalidatePublicContent } from "@/lib/revalidate";
 import { rateLimit } from "@/lib/security/rate-limit";
 import { isPlainObject } from "@/lib/security/validation";
 
@@ -77,6 +78,7 @@ export async function POST(request: NextRequest) {
       entityId: slug,
       ip: clientIp(request),
     });
+    revalidatePublicContent(slug);
     return NextResponse.json({ project }, { status: 201, headers: NO_STORE_HEADERS });
   } catch (error) {
     console.error("[admin] failed to create project", error);
