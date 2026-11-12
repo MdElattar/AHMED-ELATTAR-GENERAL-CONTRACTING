@@ -26,6 +26,7 @@ const primaryLinks = [
   { href: "/projects", key: "projects" as const },
   { href: "/services", key: "services" as const },
   { href: "/about", key: "about" as const },
+  { href: "/consultation", key: "consultation" as const },
   { href: "/contact", key: "contact" as const },
 ];
 
@@ -131,7 +132,7 @@ export function Navbar() {
             </button>
             <ProfileMenu tone="dark" />
             <Link
-              href="/contact"
+              href="/consultation"
               className="btn-shine group flex h-10 items-center gap-2 bg-gold px-5 text-[0.63rem] font-semibold uppercase tracking-[0.16em] text-obsidian transition-colors hover:bg-gold-light"
             >
               {t.nav.cta}
@@ -259,7 +260,7 @@ export function Navbar() {
                     </Link>
                   ) : null}
                   <Link
-                    href="/contact"
+                    href="/consultation"
                     onClick={() => setOpen(false)}
                     className="mt-1 flex min-h-[50px] items-center justify-center gap-2 bg-gold px-5 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-obsidian transition-colors hover:bg-gold-light"
                   >

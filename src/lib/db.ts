@@ -1,5 +1,6 @@
 import type { Model, Mongoose } from "mongoose";
 import { hashPassword } from "@/lib/auth/password";
+import type { ConsultationMode, ConsultationStatus } from "@/lib/consultation";
 import {
   CONTENT_SLUG,
   buildSeedContent,
@@ -76,6 +77,49 @@ export type StoredOtp = {
   createdAt: string;
 };
 
+export type StoredConsultation = {
+  id: string;
+  reference: string;
+  name: string;
+  email: string;
+  phone: string;
+  company?: string;
+  topic: string;
+  /** YYYY-MM-DD */
+  date: string;
+  /** HH:MM, one of the shared CONSULTATION_SLOTS. */
+  slot: string;
+  mode: ConsultationMode;
+  notes?: string;
+  status: ConsultationStatus;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type NewConsultation = Omit<
+  StoredConsultation,
+  "id" | "reference" | "status" | "createdAt" | "updatedAt"
+> & {
+  status?: ConsultationStatus;
+};
+
+export type StoredSignoff = {
+  id: string;
+  projectSlug: string;
+  email: string;
+  signerName: string;
+  contractHash: string;
+  signedAt: string;
+  ip?: string;
+  milestones: {
+    titleEn: string;
+    verifiedAt: string;
+    verifiedBy: string;
+  }[];
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type NewUser = {
   email: string;
   name: string;
@@ -96,6 +140,8 @@ type MemoryDb = {
   inquiries: Map<string, StoredInquiry>;
   audit: StoredAudit[];
   otps: Map<string, StoredOtp>;
+  consultations: Map<string, StoredConsultation>;
+  signoffs: Map<string, StoredSignoff>;
   seed: Promise<void> | null;
 };
 
@@ -114,6 +160,8 @@ type MongoModels = {
   Inquiry: LeanModel;
   AuditLog: LeanModel;
   OtpToken: LeanModel;
+  Consultation: LeanModel;
+  Signoff: LeanModel;
 };
 
 const globalForDb = globalThis as unknown as {
@@ -131,6 +179,8 @@ function memory(): MemoryDb {
       inquiries: new Map(),
       audit: [],
       otps: new Map(),
+      consultations: new Map(),
+      signoffs: new Map(),
       seed: null,
     };
   }
@@ -364,6 +414,53 @@ async function mongoModels(): Promise<MongoModels> {
       { timestamps: true, versionKey: false },
     );
 
+    const consultationSchema = new mongoose.Schema(
+      {
+        reference: { type: String, required: true, unique: true, index: true },
+        name: { type: String, required: true },
+        email: { type: String, required: true, index: true, lowercase: true },
+        phone: { type: String, required: true },
+        company: String,
+        topic: { type: String, required: true },
+        date: { type: String, required: true, index: true },
+        slot: { type: String, required: true },
+        mode: {
+          type: String,
+          enum: ["boardroom", "video", "site"],
+          default: "boardroom",
+          index: true,
+        },
+        notes: String,
+        status: {
+          type: String,
+          enum: ["requested", "confirmed", "completed", "cancelled"],
+          default: "requested",
+          index: true,
+        },
+      },
+      { timestamps: true, versionKey: false },
+    );
+
+    const signoffSchema = new mongoose.Schema(
+      {
+        projectSlug: { type: String, required: true, index: true, lowercase: true },
+        email: { type: String, required: true, index: true, lowercase: true },
+        signerName: { type: String, required: true },
+        contractHash: { type: String, required: true },
+        signedAt: { type: Date, required: true },
+        ip: String,
+        milestones: [
+          {
+            titleEn: { type: String, required: true },
+            verifiedAt: { type: Date, required: true },
+            verifiedBy: { type: String, required: true },
+          },
+        ],
+      },
+      { timestamps: true, versionKey: false },
+    );
+    signoffSchema.index({ projectSlug: 1, email: 1 }, { unique: true });
+
     const User = (mongoose.models.User ??
       mongoose.model("User", userSchema)) as unknown as LeanModel;
     const Project = (mongoose.models.Project ??
@@ -374,8 +471,12 @@ async function mongoModels(): Promise<MongoModels> {
       mongoose.model("AuditLog", auditSchema)) as unknown as LeanModel;
     const OtpToken = (mongoose.models.OtpToken ??
       mongoose.model("OtpToken", otpSchema)) as unknown as LeanModel;
+    const Consultation = (mongoose.models.Consultation ??
+      mongoose.model("Consultation", consultationSchema)) as unknown as LeanModel;
+    const Signoff = (mongoose.models.Signoff ??
+      mongoose.model("Signoff", signoffSchema)) as unknown as LeanModel;
 
-    return { User, Project, Inquiry, AuditLog, OtpToken };
+    return { User, Project, Inquiry, AuditLog, OtpToken, Consultation, Signoff };
   })();
 
   try {
@@ -496,6 +597,59 @@ function mapOtp(doc: LeanDoc): StoredOtp {
     attempts: typeof doc.attempts === "number" ? doc.attempts : 0,
     ...(doc.consumedAt ? { consumedAt: iso(doc.consumedAt) } : {}),
     createdAt: iso(doc.createdAt),
+  };
+}
+
+function mapConsultation(doc: LeanDoc): StoredConsultation {
+  const mode =
+    doc.mode === "video" || doc.mode === "site" || doc.mode === "boardroom"
+      ? doc.mode
+      : "boardroom";
+  const status =
+    doc.status === "confirmed" || doc.status === "completed" || doc.status === "cancelled"
+      ? doc.status
+      : "requested";
+
+  return {
+    id: docId(doc),
+    reference: str(doc.reference),
+    name: str(doc.name),
+    email: str(doc.email),
+    phone: str(doc.phone),
+    ...(str(doc.company) ? { company: str(doc.company) } : {}),
+    topic: str(doc.topic),
+    date: str(doc.date),
+    slot: str(doc.slot),
+    mode,
+    ...(str(doc.notes) ? { notes: str(doc.notes) } : {}),
+    status,
+    createdAt: iso(doc.createdAt),
+    updatedAt: iso(doc.updatedAt),
+  };
+}
+
+function mapSignoff(doc: LeanDoc): StoredSignoff {
+  const milestones = Array.isArray(doc.milestones)
+    ? (doc.milestones as LeanDoc[])
+        .map((milestone) => ({
+          titleEn: str(milestone.titleEn),
+          verifiedAt: iso(milestone.verifiedAt),
+          verifiedBy: str(milestone.verifiedBy),
+        }))
+        .filter((milestone) => milestone.titleEn)
+    : [];
+
+  return {
+    id: docId(doc),
+    projectSlug: str(doc.projectSlug),
+    email: str(doc.email),
+    signerName: str(doc.signerName),
+    contractHash: str(doc.contractHash),
+    signedAt: iso(doc.signedAt),
+    ...(str(doc.ip) ? { ip: str(doc.ip) } : {}),
+    milestones,
+    createdAt: iso(doc.createdAt),
+    updatedAt: iso(doc.updatedAt),
   };
 }
 
@@ -917,6 +1071,258 @@ export async function consumeOtp(email: string): Promise<void> {
     { email: normalized },
     { $set: { consumedAt: new Date() }, $inc: { attempts: 1 } },
   );
+}
+
+/* ----------------------------------------------------------- consultations */
+
+function consultationReference() {
+  const year = new Date().getUTCFullYear();
+  const suffix = crypto.randomUUID().replace(/-/g, "").slice(0, 6).toUpperCase();
+  return `VIP-${year}-${suffix}`;
+}
+
+export async function createConsultation(input: NewConsultation): Promise<StoredConsultation> {
+  const timestamp = now();
+  const consultation: StoredConsultation = {
+    ...input,
+    id: id(),
+    reference: consultationReference(),
+    status: input.status ?? "requested",
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  };
+
+  if ((await activeMode()) === "memory") {
+    memory().consultations.set(consultation.id, consultation);
+    return consultation;
+  }
+
+  const { Consultation } = await mongoModels();
+  const created = await Consultation.create({
+    reference: consultation.reference,
+    name: consultation.name,
+    email: consultation.email,
+    phone: consultation.phone,
+    ...(consultation.company ? { company: consultation.company } : {}),
+    topic: consultation.topic,
+    date: consultation.date,
+    slot: consultation.slot,
+    mode: consultation.mode,
+    ...(consultation.notes ? { notes: consultation.notes } : {}),
+    status: consultation.status,
+  });
+  const doc = (created as unknown as { toObject: () => LeanDoc }).toObject();
+  return mapConsultation(doc);
+}
+
+export async function listConsultations(limit = 200): Promise<StoredConsultation[]> {
+  if ((await activeMode()) === "memory") {
+    return [...memory().consultations.values()]
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .slice(0, limit);
+  }
+
+  const { Consultation } = await mongoModels();
+  const docs = (await Consultation.find({})
+    .sort({ createdAt: -1 })
+    .limit(limit)
+    .lean()) as LeanDoc[];
+  return docs.map(mapConsultation);
+}
+
+export async function updateConsultationStatus(
+  consultationId: string,
+  status: ConsultationStatus,
+): Promise<StoredConsultation | null> {
+  if ((await activeMode()) === "memory") {
+    const current = memory().consultations.get(consultationId);
+    if (!current) return null;
+    const next = { ...current, status, updatedAt: now() };
+    memory().consultations.set(consultationId, next);
+    return next;
+  }
+
+  const { Consultation } = await mongoModels();
+  const doc = (await Consultation.findByIdAndUpdate(
+    consultationId,
+    { $set: { status, updatedAt: new Date() } },
+    { new: true },
+  ).lean()) as LeanDoc | null;
+  return doc ? mapConsultation(doc) : null;
+}
+
+/**
+ * Boardroom capacity is one meeting per slot. Video and site visits are not
+ * capacity-bound, so only `boardroom` requests participate in slot locking.
+ */
+export async function listBookedSlots(
+  date: string,
+  mode: ConsultationMode = "boardroom",
+): Promise<string[]> {
+  if (mode !== "boardroom") return [];
+
+  if ((await activeMode()) === "memory") {
+    const slots = new Set<string>();
+    for (const consultation of memory().consultations.values()) {
+      if (
+        consultation.date === date &&
+        consultation.mode === "boardroom" &&
+        (consultation.status === "requested" || consultation.status === "confirmed")
+      ) {
+        slots.add(consultation.slot);
+      }
+    }
+    return [...slots];
+  }
+
+  const { Consultation } = await mongoModels();
+  const docs = (await Consultation.find({
+    date,
+    mode: "boardroom",
+    status: { $in: ["requested", "confirmed"] },
+  })
+    .select("slot")
+    .lean()) as LeanDoc[];
+  return [...new Set(docs.map((doc) => str(doc.slot)).filter(Boolean))];
+}
+
+/* --------------------------------------------------------------- sign-offs */
+
+function signoffKey(projectSlug: string, email: string) {
+  return `${projectSlug.trim().toLowerCase()}::${email.trim().toLowerCase()}`;
+}
+
+export async function getSignoff(
+  projectSlug: string,
+  email: string,
+): Promise<StoredSignoff | null> {
+  const key = signoffKey(projectSlug, email);
+
+  if ((await activeMode()) === "memory") {
+    return memory().signoffs.get(key) ?? null;
+  }
+
+  const { Signoff } = await mongoModels();
+  const doc = (await Signoff.findOne({
+    projectSlug: projectSlug.trim().toLowerCase(),
+    email: email.trim().toLowerCase(),
+  }).lean()) as LeanDoc | null;
+  return doc ? mapSignoff(doc) : null;
+}
+
+export async function listSignoffs(limit = 200): Promise<StoredSignoff[]> {
+  if ((await activeMode()) === "memory") {
+    return [...memory().signoffs.values()]
+      .sort((a, b) => b.signedAt.localeCompare(a.signedAt))
+      .slice(0, limit);
+  }
+
+  const { Signoff } = await mongoModels();
+  const docs = (await Signoff.find({}).sort({ signedAt: -1 }).limit(limit).lean()) as LeanDoc[];
+  return docs.map(mapSignoff);
+}
+
+export async function saveSignoff(input: {
+  projectSlug: string;
+  email: string;
+  signerName: string;
+  contractHash: string;
+  ip?: string;
+}): Promise<StoredSignoff> {
+  const projectSlug = input.projectSlug.trim().toLowerCase();
+  const email = input.email.trim().toLowerCase();
+  const timestamp = now();
+  const key = signoffKey(projectSlug, email);
+
+  if ((await activeMode()) === "memory") {
+    const db = memory();
+    const existing = db.signoffs.get(key);
+    // A scope or value change produces a new digest. The previous milestone
+    // verifications belong to the old terms and must not survive re-signing.
+    const termsChanged = Boolean(existing && existing.contractHash !== input.contractHash);
+    const signoff: StoredSignoff = {
+      id: existing?.id ?? id(),
+      projectSlug,
+      email,
+      signerName: input.signerName,
+      contractHash: input.contractHash,
+      signedAt: timestamp,
+      ...(input.ip ? { ip: input.ip } : {}),
+      milestones: termsChanged ? [] : (existing?.milestones ?? []),
+      createdAt: existing?.createdAt ?? timestamp,
+      updatedAt: timestamp,
+    };
+    db.signoffs.set(key, signoff);
+    return signoff;
+  }
+
+  const { Signoff } = await mongoModels();
+  const existing = (await Signoff.findOne({ projectSlug, email }).lean()) as LeanDoc | null;
+  const termsChanged = Boolean(
+    existing && str(existing.contractHash) !== input.contractHash,
+  );
+
+  const update: Record<string, unknown> = {
+    $set: {
+      signerName: input.signerName,
+      contractHash: input.contractHash,
+      signedAt: new Date(),
+      ...(input.ip ? { ip: input.ip } : {}),
+      ...(termsChanged ? { milestones: [] } : {}),
+      updatedAt: new Date(),
+    },
+  };
+  if (!existing) update.$setOnInsert = { milestones: [] };
+
+  const doc = (await Signoff.findOneAndUpdate({ projectSlug, email }, update, {
+    upsert: true,
+    new: true,
+    setDefaultsOnInsert: true,
+  }).lean()) as LeanDoc | null;
+  if (!doc) throw new Error("signoff_failed");
+  return mapSignoff(doc);
+}
+
+export async function saveMilestoneVerification(input: {
+  projectSlug: string;
+  email: string;
+  titleEn: string;
+  verifiedBy: string;
+}): Promise<StoredSignoff | null> {
+  const projectSlug = input.projectSlug.trim().toLowerCase();
+  const email = input.email.trim().toLowerCase();
+  const timestamp = now();
+  const key = signoffKey(projectSlug, email);
+
+  if ((await activeMode()) === "memory") {
+    const db = memory();
+    const existing = db.signoffs.get(key);
+    if (!existing) return null;
+    const milestones = [
+      ...existing.milestones.filter((milestone) => milestone.titleEn !== input.titleEn),
+      { titleEn: input.titleEn, verifiedAt: timestamp, verifiedBy: input.verifiedBy },
+    ];
+    const next = { ...existing, milestones, updatedAt: timestamp };
+    db.signoffs.set(key, next);
+    return next;
+  }
+
+  const { Signoff } = await mongoModels();
+  const existing = (await Signoff.findOne({ projectSlug, email }).lean()) as LeanDoc | null;
+  if (!existing) return null;
+
+  const current = mapSignoff(existing);
+  const milestones = [
+    ...current.milestones.filter((milestone) => milestone.titleEn !== input.titleEn),
+    { titleEn: input.titleEn, verifiedAt: timestamp, verifiedBy: input.verifiedBy },
+  ];
+
+  const doc = (await Signoff.findOneAndUpdate(
+    { projectSlug, email },
+    { $set: { milestones, updatedAt: new Date() } },
+    { new: true },
+  ).lean()) as LeanDoc | null;
+  return doc ? mapSignoff(doc) : null;
 }
 
 /* ------------------------------------------------------------------- seed */

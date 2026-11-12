@@ -3,7 +3,7 @@
 > Living production tracker for the definitive platform overhaul.
 > Legend: `- [x]` shipped & verified · `- [ ]` pending · `- [~]` in progress
 
-**Last updated:** 2026-11-11
+**Last updated:** 2026-11-12
 **Verification gates:** `npm run build` · `npm run lint` · `npx tsc --noEmit`
 
 ---
@@ -100,6 +100,26 @@
 - [x] No `console.error` on primary user journeys
 - [x] Lighthouse-oriented image sizing and font strategy documented
 
+## 8. Enterprise & Luxury Features
+
+- [x] Interactive Project Cost Visualizer (Breakdown by structural, finishes, & MEP)
+  (`ProjectCostVisualizer` on every project detail page, type-aware weights)
+- [x] Before / After Interactive Site Slider & 4K Cinema Mode Project Player
+  (`ProjectCinema`: drag divider, autoplay, fullscreen, 3,200px master source)
+- [x] VIP Executive Consultation Scheduler & Direct Boardroom Booking
+  (`/consultation`, availability API, boardroom calendar, admin status board)
+- [x] Automated Project Proposal PDF Generator & Direct Download API
+  (`POST /api/proposal`, `pdf-lib` + Arabic shaping, three-page branded PDF)
+- [x] Admin Instant Notification Webhook (Email & WhatsApp alert dispatch)
+  (`lib/notifications` fan-out on inquiry, consultation, proposal, signature)
+- [x] Digital Contract Sign-Off & Milestone Verification in Client Portal
+  (`PortalContract`, SHA-256 digest, stale-signature re-sign gate, verified milestones)
+- [x] Multi-Currency Real-time Converter (SAR / EGP / USD) for Estimator Engine
+  (`/api/rates`, live `open.er-api.com` feed with cached fallback, PDF currency)
+
+**Section 8 verified:** 2026-11-12 — `npx tsc --noEmit`, `npm run lint`,
+`npm run build`, and the proposal PDF smoke render all pass.
+
 ---
 
 ## Environment Checklist (deployment)
@@ -112,9 +132,15 @@
 | `RESEND_API_KEY` | production | OTP email delivery |
 | `OTP_FROM_EMAIL` | production | Verified sender, e.g. `no-reply@alattar.sa` |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | production | First admin bootstrap (hashed by `npm run seed`) |
+| `ADMIN_ALERT_EMAIL` | optional | Recipient for instant admin email alerts |
+| `WHATSAPP_WEBHOOK_URL` | optional | Generic webhook alert transport |
+| `WHATSAPP_TOKEN` / `WHATSAPP_PHONE_NUMBER_ID` / `WHATSAPP_TO` | optional | Meta Cloud API WhatsApp transport |
 | `ALLOW_IN_MEMORY_DB` | optional | Explicitly allows the seeded memory repository in production |
 
 > Production fails closed without `MONGODB_URI` unless `ALLOW_IN_MEMORY_DB=true`.
 > Development falls back to the seeded in-process repository when MongoDB is
 > unreachable. Run `npm run seed` once against the production database to
 > bootstrap the first super-admin and the project/service catalogue.
+
+> The proposal PDF embeds `public/fonts/NotoNaskhArabic.ttf`; keep that asset
+> deployed with the app so Arabic shaping renders on the server.

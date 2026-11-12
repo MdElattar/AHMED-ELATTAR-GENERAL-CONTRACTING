@@ -11,6 +11,13 @@ export type MediaAsset = {
 const unsplash = (id: string, width = 2400) =>
   `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${width}&q=80`;
 
+/** Request a larger master for the cinema player without a second registry. */
+export function cinemaSource(src: string) {
+  return src
+    .replace(/([?&])w=\d+/, "$1w=3200")
+    .replace(/([?&])q=\d+/, "$1q=90");
+}
+
 /**
  * Central photography registry.
  *

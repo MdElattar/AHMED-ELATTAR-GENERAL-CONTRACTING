@@ -1,13 +1,24 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowUpRight, Calculator, Clock3, Ruler, Wallet } from "lucide-react";
+import { ArrowUpRight, Calculator, Clock3, FileDown, Ruler, Wallet } from "lucide-react";
 import { useI18n } from "@/components/providers/I18nProvider";
+import { ProposalDialog } from "@/components/sections/proposal/ProposalDialog";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import {
-  ESTIMATE_BREAKDOWN,
+  CURRENCIES,
+  CURRENCY_META,
+  FALLBACK_RATES,
+  convertFromSar,
+  formatCurrencyValue,
+  formatRateLine,
+  type CurrencyCode,
+  type ExchangeRates,
+} from "@/lib/currency";
+import {
   computeEstimate,
+  costBreakdownForType,
   type EstimateCity,
   type EstimatePace,
   type EstimateQuality,
@@ -37,6 +48,10 @@ const copy = {
     months: "شهراً",
     perM2: "ريال / م²",
     breakdown: "توزيع التكلفة",
+    currency: "العملة",
+    liveRates: "أسعار صرف لحظية",
+    fallbackRates: "أسعار مرجعية",
+    proposal: "تنزيل عرض PDF",
     disclaimer:
       "تقدير استرشادي لا يُعد عرضاً تعاقدياً. نُصدر عرضاً مفصلاً بعد مراجعة المخططات والموقع.",
     cta: "اطلب عرضاً مفصلاً",
@@ -86,6 +101,10 @@ const copy = {
     months: "months",
     perM2: "SAR / m²",
     breakdown: "Cost breakdown",
+    currency: "Currency",
+    liveRates: "Live exchange rates",
+    fallbackRates: "Reference rates",
+    proposal: "Download PDF proposal",
     disclaimer:
       "Indicative only; not a contractual offer. We issue a detailed proposal after reviewing drawings and site conditions.",
     cta: "Request a detailed quote",
@@ -129,23 +148,52 @@ export function Estimator() {
   const [quality, setQuality] = useState<EstimateQuality>("premium");
   const [city, setCity] = useState<EstimateCity>("riyadh");
   const [pace, setPace] = useState<EstimatePace>("standard");
+  const [currency, setCurrency] = useState<CurrencyCode>("SAR");
+  const [rates, setRates] = useState<ExchangeRates | null>(null);
+  const [proposalOpen, setProposalOpen] = useState(false);
 
   const result = useMemo(
     () => computeEstimate({ type, area, quality, city, pace }),
     [area, city, pace, quality, type],
   );
 
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/rates")
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload: ExchangeRates | null) => {
+        if (!cancelled && payload?.rates) setRates(payload);
+      })
+      .catch(() => {
+        // The estimator keeps the reference rates when the feed is unavailable.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const activeRates = rates ?? {
+    base: "SAR" as const,
+    rates: FALLBACK_RATES,
+    updatedAt: "",
+    source: "fallback" as const,
+  };
+
   // Formatters are expensive to construct and this panel re-renders on every
   // slider tick, so build them once per locale.
-  const { nf, df } = useMemo(() => {
-    const tag = locale === "ar" ? "ar-SA" : "en-US";
-    return {
-      nf: new Intl.NumberFormat(tag, { maximumFractionDigits: 0 }),
-      df: new Intl.NumberFormat(tag, { maximumFractionDigits: 1 }),
-    };
-  }, [locale]);
+  const nf = useMemo(
+    () => new Intl.NumberFormat(locale === "ar" ? "ar-SA" : "en-US", { maximumFractionDigits: 0 }),
+    [locale],
+  );
 
-  const breakdown = ESTIMATE_BREAKDOWN;
+  const breakdown = costBreakdownForType(type);
+  const money = (amountSar: number, compact = false) =>
+    formatCurrencyValue(
+      convertFromSar(amountSar, currency, activeRates.rates),
+      currency,
+      locale,
+      { compact },
+    );
 
   const optionClass = (active: boolean) =>
     cn(
@@ -281,16 +329,37 @@ export function Estimator() {
           <div className="flex flex-col justify-between bg-obsidian p-6 text-ivory sm:p-9">
             <div>
               <span className="eyebrow">{c.estimate}</span>
-              <p className="mt-4 text-[0.58rem] uppercase tracking-[0.16em] text-ivory/35">
-                {c.range}
-              </p>
-              <p className="mt-2 font-display text-[clamp(2.1rem,5vw,4.1rem)] leading-none text-ivory">
-                <span className="tabular text-gold">{df.format(result.low / 1_000_000)}</span>
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                <p className="text-[0.58rem] uppercase tracking-[0.16em] text-ivory/35">
+                  {c.range}
+                </p>
+                <div className="flex items-center gap-1" aria-label={c.currency}>
+                  {CURRENCIES.map((code) => (
+                    <button
+                      key={code}
+                      type="button"
+                      onClick={() => setCurrency(code)}
+                      aria-pressed={currency === code}
+                      className={cn(
+                        "h-7 px-2.5 text-[0.5rem] font-semibold uppercase tracking-[0.12em] transition-colors",
+                        currency === code
+                          ? "bg-gold text-obsidian"
+                          : "border border-white/10 text-ivory/40 hover:border-gold/40 hover:text-gold",
+                      )}
+                    >
+                      {CURRENCY_META[code][locale]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <p className="mt-2 font-display text-[clamp(1.9rem,4.4vw,3.6rem)] leading-none text-ivory">
+                <span className="tabular text-gold">{money(result.low, true)}</span>
                 <span className="mx-2 text-ivory/25">–</span>
-                <span className="tabular text-gold">{df.format(result.high / 1_000_000)}</span>
-                <span className="ms-2 text-[0.35em] font-sans uppercase tracking-[0.14em] text-ivory/35">
-                  {locale === "ar" ? "مليون ر.س" : "M SAR"}
-                </span>
+                <span className="tabular text-gold">{money(result.high, true)}</span>
+              </p>
+              <p className="mt-2 text-[0.5rem] uppercase tracking-[0.14em] text-ivory/25">
+                {activeRates.source === "live" ? c.liveRates : c.fallbackRates} ·{" "}
+                {formatRateLine(activeRates, locale)}
               </p>
 
               <div className="mt-7 grid grid-cols-2 gap-px overflow-hidden border border-white/10 bg-white/10">
@@ -306,7 +375,7 @@ export function Estimator() {
                 <div className="bg-coal p-4">
                   <Ruler className="h-3.5 w-3.5 text-gold" />
                   <p className="mt-3 tabular text-xl font-light text-ivory">
-                    {nf.format(Math.round(result.perM2))}
+                    {money(result.perM2)}
                   </p>
                   <p className="mt-1 text-[0.48rem] uppercase tracking-[0.14em] text-ivory/30">
                     {c.perM2}
@@ -323,7 +392,10 @@ export function Estimator() {
                     <div key={part.key}>
                       <div className="flex items-center justify-between gap-3 text-[0.58rem]">
                         <span className="text-ivory/55">{c.parts[part.key]}</span>
-                        <span className="tabular text-ivory/35">{part.pct}%</span>
+                        <span className="ms-auto tabular text-ivory/30">
+                          {money((result.total * part.pct) / 100, true)}
+                        </span>
+                        <span className="tabular text-ivory/45">{part.pct}%</span>
                       </div>
                       <div className="mt-1.5 h-1 overflow-hidden bg-white/10">
                         <div
@@ -339,23 +411,40 @@ export function Estimator() {
 
             <div className="mt-8">
               <p className="text-[0.6rem] leading-relaxed text-ivory/30">{c.disclaimer}</p>
-              <Link
-                href="/contact"
-                className="btn-shine group mt-4 inline-flex h-11 items-center justify-center gap-2 bg-gold px-5 text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-obsidian transition-colors hover:bg-gold-light"
-              >
-                <Wallet className="h-3.5 w-3.5" />
-                {c.cta}
-                <ArrowUpRight
-                  className={cn(
-                    "h-3.5 w-3.5 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5",
-                    isRTL && "-scale-x-100",
-                  )}
-                />
-              </Link>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setProposalOpen(true)}
+                  className="group inline-flex h-11 items-center justify-center gap-2 border border-gold/35 px-5 text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-gold transition-colors hover:border-gold hover:bg-gold/10"
+                >
+                  <FileDown className="h-3.5 w-3.5" />
+                  {c.proposal}
+                </button>
+                <Link
+                  href="/contact"
+                  className="btn-shine group inline-flex h-11 items-center justify-center gap-2 bg-gold px-5 text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-obsidian transition-colors hover:bg-gold-light"
+                >
+                  <Wallet className="h-3.5 w-3.5" />
+                  {c.cta}
+                  <ArrowUpRight
+                    className={cn(
+                      "h-3.5 w-3.5 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5",
+                      isRTL && "-scale-x-100",
+                    )}
+                  />
+                </Link>
+              </div>
             </div>
           </div>
         </div>
       </div>
+      {proposalOpen ? (
+        <ProposalDialog
+          open
+          onClose={() => setProposalOpen(false)}
+          defaults={{ type, area, quality, city, pace }}
+        />
+      ) : null}
     </section>
   );
 }

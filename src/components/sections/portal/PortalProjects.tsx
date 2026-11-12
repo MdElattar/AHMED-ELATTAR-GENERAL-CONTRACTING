@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { useWorkspace } from "@/components/providers/WorkspaceProvider";
+import { PortalContract } from "@/components/sections/portal/PortalContract";
 import { PortalShell } from "@/components/sections/portal/PortalShell";
 import { SiteCamera } from "@/components/sections/portal/SiteCamera";
 import { ProjectArt } from "@/components/ui/ProjectArt";
@@ -337,6 +338,10 @@ export function PortalProjects() {
                 )}
               </ol>
             </div>
+          </Reveal>
+
+          <Reveal delay={120}>
+            <PortalContract project={project} />
           </Reveal>
 
           <Reveal delay={140}>

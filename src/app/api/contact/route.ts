@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { randomReference } from "@/lib/auth/token";
 import { createInquiry, listServiceSlugs } from "@/lib/db";
+import { dispatchAdminAlert } from "@/lib/notifications";
 import {
   NO_STORE_HEADERS,
   clientIp,
@@ -104,6 +105,19 @@ export async function POST(request: NextRequest) {
       { status: 500, headers: NO_STORE_HEADERS },
     );
   }
+
+  await dispatchAdminAlert({
+    title: "New project inquiry",
+    message: `${name} submitted a ${projectType} inquiry for ${service}.`,
+    meta: {
+      Reference: reference,
+      Email: email,
+      Phone: phone,
+      Budget: budget || "—",
+      Location: location,
+    },
+    url: `${(process.env.NEXT_PUBLIC_SITE_URL?.trim() || request.nextUrl.origin).replace(/\/$/, "")}/admin`,
+  });
 
   return NextResponse.json(
     {

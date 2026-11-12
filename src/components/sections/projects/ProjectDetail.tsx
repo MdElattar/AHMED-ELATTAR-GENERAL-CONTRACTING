@@ -7,6 +7,8 @@ import { useI18n } from "@/components/providers/I18nProvider";
 import { useWorkspace } from "@/components/providers/WorkspaceProvider";
 import { CTA } from "@/components/sections/home/CTA";
 import { ProjectCard } from "@/components/sections/projects/ProjectCard";
+import { ProjectCinema } from "@/components/sections/projects/ProjectCinema";
+import { ProjectCostVisualizer } from "@/components/sections/projects/ProjectCostVisualizer";
 import { ProjectArt } from "@/components/ui/ProjectArt";
 import { Reveal } from "@/components/ui/Reveal";
 import type { ArtVariant, Project } from "@/data/projects";
@@ -15,6 +17,7 @@ import { cn } from "@/lib/utils";
 type DetailProject = Project & {
   gallery?: ArtVariant[];
   progress?: number;
+  contractValue?: number;
 };
 
 export function ProjectDetail({ project }: { project: DetailProject }) {
@@ -145,6 +148,9 @@ export function ProjectDetail({ project }: { project: DetailProject }) {
         </section>
       ) : null}
 
+      <ProjectCinema project={project} gallery={gallery} />
+      <ProjectCostVisualizer project={project} contractValue={project.contractValue} />
+
       <section className="grain relative overflow-hidden bg-ivory text-ink">
         <div className="pointer-events-none absolute inset-0 opacity-[0.35] [background-image:linear-gradient(rgba(10,11,14,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(10,11,14,0.035)_1px,transparent_1px)] [background-size:90px_90px]" />
         <div className="container-lux section-pad relative">
@@ -265,7 +271,10 @@ export function ProjectDetailLive({
 }) {
   const { projects, ready } = useWorkspace();
   const { t, locale } = useI18n();
-  const project = ready ? projects.find((item) => item.slug === slug) : initialProject;
+  // The server-rendered record is authoritative until the live workspace feed
+  // is ready. If the client feed is empty or unreachable, keep the server
+  // record instead of rendering a false 404 for a valid project.
+  const project = (ready ? projects.find((item) => item.slug === slug) : undefined) ?? initialProject;
 
   if (!project) {
     if (!ready) {

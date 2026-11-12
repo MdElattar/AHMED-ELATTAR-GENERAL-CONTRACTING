@@ -40,6 +40,19 @@ export const ESTIMATE_BREAKDOWN: EstimatePart[] = [
   { key: "management", pct: 13 },
 ];
 
+const typeBreakdown: Record<EstimateType, Record<EstimatePart["key"], number>> = {
+  residential: { structure: 38, finishes: 30, mep: 20, management: 12 },
+  commercial: { structure: 36, finishes: 26, mep: 24, management: 14 },
+  infrastructure: { structure: 52, finishes: 10, mep: 24, management: 14 },
+  industrial: { structure: 44, finishes: 12, mep: 32, management: 12 },
+};
+
+/** Cost architecture tuned to the delivery profile of each asset class. */
+export function costBreakdownForType(type: EstimateType): EstimatePart[] {
+  const weights = typeBreakdown[type];
+  return ESTIMATE_BREAKDOWN.map((part) => ({ key: part.key, pct: weights[part.key] }));
+}
+
 const typeRate: Record<EstimateType, number> = {
   residential: 3200,
   commercial: 4200,

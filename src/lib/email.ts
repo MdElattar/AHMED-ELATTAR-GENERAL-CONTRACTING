@@ -10,6 +10,67 @@ export type SendOtpResult = {
   provider: "resend" | "development";
 };
 
+export type SendEmailInput = {
+  to: string;
+  subject: string;
+  text: string;
+  html?: string;
+  replyTo?: string;
+  from?: string;
+};
+
+export type SendEmailResult = {
+  delivered: boolean;
+  provider: "resend" | "development";
+};
+
+/**
+ * Generic transactional delivery used by OTP, consultation confirmations, and
+ * the admin alert webhook. Resend is the only provider that needs an API key;
+ * local development logs the payload instead of silently dropping it.
+ */
+export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult> {
+  const apiKey = process.env.RESEND_API_KEY?.trim();
+  const from =
+    input.from?.trim() ||
+    process.env.OTP_FROM_EMAIL?.trim() ||
+    "Ahmed Elattar <no-reply@alattar.sa>";
+
+  if (!apiKey) {
+    console.info(`[email] Development delivery for ${input.to}: ${input.subject}`);
+    return { delivered: false, provider: "development" };
+  }
+
+  try {
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      signal: AbortSignal.timeout(10_000),
+      body: JSON.stringify({
+        from,
+        to: [input.to],
+        subject: input.subject,
+        text: input.text,
+        ...(input.html ? { html: input.html } : {}),
+        ...(input.replyTo ? { reply_to: input.replyTo } : {}),
+      }),
+    });
+
+    if (!response.ok) {
+      console.error("[email] Resend delivery failed", response.status, await response.text());
+      return { delivered: false, provider: "resend" };
+    }
+
+    return { delivered: true, provider: "resend" };
+  } catch (error) {
+    console.error("[email] Resend request failed", error);
+    return { delivered: false, provider: "resend" };
+  }
+}
+
 function escapeHtml(value: string) {
   return value
     .replace(/&/g, "&amp;")
@@ -62,35 +123,20 @@ function template(code: string, minutes: number, locale: "ar" | "en") {
  * without an email provider. Production without a provider fails closed.
  */
 export async function sendOtpEmail(input: SendOtpInput): Promise<SendOtpResult> {
-  const apiKey = process.env.RESEND_API_KEY?.trim();
-  const from = process.env.OTP_FROM_EMAIL?.trim() || "Ahmed Elattar <no-reply@alattar.sa>";
   const locale = input.locale === "en" ? "en" : "ar";
   const body = template(input.code, input.expiresMinutes, locale);
 
-  if (!apiKey) {
+  if (!process.env.RESEND_API_KEY?.trim()) {
     console.info(`[otp] Development code for ${escapeHtml(input.to)}: ${input.code}`);
     return { delivered: false, provider: "development" };
   }
 
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from,
-      to: [input.to],
-      subject: body.subject,
-      text: body.text,
-      html: body.html,
-    }),
+  const result = await sendEmail({
+    to: input.to,
+    subject: body.subject,
+    text: body.text,
+    html: body.html,
   });
 
-  if (!response.ok) {
-    console.error("[otp] Resend delivery failed", response.status, await response.text());
-    return { delivered: false, provider: "resend" };
-  }
-
-  return { delivered: true, provider: "resend" };
+  return { delivered: result.delivered, provider: result.provider };
 }

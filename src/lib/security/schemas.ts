@@ -1,5 +1,7 @@
 import { z } from "zod";
 import { isStrongEnoughPassword } from "@/lib/auth/password";
+import { CONSULTATION_MODES, CONSULTATION_SLOTS } from "@/lib/consultation";
+import { ESTIMATE_AREA_MAX, ESTIMATE_AREA_MIN } from "@/lib/estimate";
 import {
   cleanMultiline,
   cleanString,
@@ -122,4 +124,101 @@ export const contactSchema = z.object({
 
 export const newsletterSchema = z.object({
   email: emailField,
+});
+
+const displayNameField = z
+  .string()
+  .max(120)
+  .transform((value) => cleanString(value, 120))
+  .refine((value) => isDisplayName(value), { message: "invalid_name" });
+
+const phoneField = z
+  .string()
+  .max(40)
+  .transform((value) => cleanString(value, 40))
+  .refine((value) => isPhone(value), { message: "invalid_phone" });
+
+const companyField = z
+  .string()
+  .max(160)
+  .optional()
+  .default("")
+  .transform((value) => cleanString(value, 160));
+
+const slugField = z
+  .string()
+  .max(120)
+  .transform((value) => cleanString(value, 120).toLowerCase())
+  .refine((value) => /^[a-z0-9][a-z0-9-]*$/.test(value), { message: "invalid_slug" });
+
+export const consultationSchema = z.object({
+  name: displayNameField,
+  email: emailField,
+  phone: phoneField,
+  company: companyField,
+  topic: z
+    .string()
+    .max(120)
+    .transform((value) => cleanString(value, 120))
+    .refine((value) => value.length > 0, { message: "invalid_topic" }),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, { message: "invalid_date" }),
+  slot: z.enum(CONSULTATION_SLOTS),
+  mode: z.enum(CONSULTATION_MODES),
+  notes: z
+    .string()
+    .max(2000)
+    .optional()
+    .default("")
+    .transform((value) => cleanMultiline(value, 2000)),
+});
+
+export const proposalSchema = z.object({
+  slug: z
+    .string()
+    .max(120)
+    .optional()
+    .default("")
+    .transform((value) => cleanString(value, 120).toLowerCase()),
+  name: displayNameField,
+  email: emailField,
+  company: companyField,
+  phone: z
+    .string()
+    .max(40)
+    .optional()
+    .default("")
+    .transform((value) => cleanString(value, 40))
+    .refine((value) => value.length === 0 || isPhone(value), { message: "invalid_phone" }),
+  type: z.enum(["residential", "commercial", "infrastructure", "industrial"]),
+  area: z.coerce.number().min(ESTIMATE_AREA_MIN).max(ESTIMATE_AREA_MAX),
+  quality: z.enum(["essential", "premium", "signature"]),
+  city: z.enum(["riyadh", "jeddah", "neom", "other", "cairo"]),
+  pace: z.enum(["standard", "fast", "accelerated"]),
+  currency: z.enum(["SAR", "USD", "EGP"]).optional().default("SAR"),
+  locale: z.enum(["ar", "en"]).optional().default("ar"),
+});
+
+export const contractSignSchema = z.object({
+  projectSlug: slugField,
+  signatureName: displayNameField,
+  accepted: z.literal(true),
+});
+
+export const milestoneVerifySchema = z.object({
+  projectSlug: slugField,
+  titleEn: z
+    .string()
+    .max(200)
+    .transform((value) => cleanString(value, 200))
+    .refine((value) => value.length > 0, { message: "invalid_milestone" }),
+});
+
+export const adminNotificationSchema = z.object({
+  channel: z.enum(["email", "whatsapp", "all"]).optional().default("all"),
+  message: z
+    .string()
+    .max(1000)
+    .optional()
+    .default("")
+    .transform((value) => cleanMultiline(value, 1000)),
 });

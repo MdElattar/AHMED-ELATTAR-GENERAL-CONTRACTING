@@ -7,9 +7,12 @@ import {
   Activity,
   ArrowUpRight,
   BarChart3,
+  BellRing,
   Building2,
+  CalendarDays,
   Check,
   CircleDollarSign,
+  FileSignature,
   FileText,
   Flag,
   FolderKanban,
@@ -35,7 +38,14 @@ import {
   type WorkspaceProject,
 } from "@/components/providers/WorkspaceProvider";
 import { AdminProjectEditor } from "@/components/sections/admin/AdminProjectEditor";
-import { AuditPanel, InquiriesPanel, MilestonesPanel } from "@/components/sections/admin/AdminOperations";
+import {
+  AuditPanel,
+  ConsultationsPanel,
+  ContractsPanel,
+  InquiriesPanel,
+  MilestonesPanel,
+  NotificationsPanel,
+} from "@/components/sections/admin/AdminOperations";
 import { Field, TextInput, Textarea } from "@/components/ui/Field";
 import { ProjectArt } from "@/components/ui/ProjectArt";
 import type { ArtVariant } from "@/data/projects";
@@ -46,6 +56,9 @@ type Section =
   | "overview"
   | "projects"
   | "milestones"
+  | "consultations"
+  | "contracts"
+  | "notifications"
   | "inquiries"
   | "financials"
   | "content"
@@ -66,6 +79,9 @@ const copy = {
     inquiries: "الاستفسارات",
     audit: "سجل النشاط",
     milestones: "المراحل",
+    consultations: "الاستشارات",
+    contracts: "العقود",
+    notifications: "التنبيهات",
     back: "العودة للموقع",
     portal: "بوابة العملاء",
     signOut: "تسجيل الخروج",
@@ -174,6 +190,9 @@ const copy = {
     inquiries: "Inquiries",
     audit: "Audit trail",
     milestones: "Milestones",
+    consultations: "Consultations",
+    contracts: "Contracts",
+    notifications: "Alerts",
     back: "Back to site",
     portal: "Client portal",
     signOut: "Sign out",
@@ -342,6 +361,9 @@ export function AdminDashboard() {
     { id: "overview", label: c.overview, icon: LayoutDashboard },
     { id: "projects", label: c.projects, icon: FolderKanban },
     { id: "milestones", label: c.milestones, icon: Flag },
+    { id: "consultations", label: c.consultations, icon: CalendarDays },
+    { id: "contracts", label: c.contracts, icon: FileSignature },
+    { id: "notifications", label: c.notifications, icon: BellRing },
     { id: "inquiries", label: c.inquiries, icon: Inbox },
     { id: "financials", label: c.financials, icon: Wallet },
     { id: "content", label: c.content, icon: Settings },
@@ -482,6 +504,9 @@ export function AdminDashboard() {
                   />
                 ) : null}
                 {section === "milestones" ? <MilestonesPanel /> : null}
+                {section === "consultations" ? <ConsultationsPanel /> : null}
+                {section === "contracts" ? <ContractsPanel /> : null}
+                {section === "notifications" ? <NotificationsPanel /> : null}
                 {section === "inquiries" ? <InquiriesPanel /> : null}
                 {section === "financials" ? <FinancialsSection projects={projects} /> : null}
                 {section === "content" ? <ContentSection /> : null}
