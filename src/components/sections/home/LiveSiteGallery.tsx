@@ -16,67 +16,14 @@ import {
   Workflow,
 } from "lucide-react";
 import { useI18n } from "@/components/providers/I18nProvider";
+import { useWorkspace } from "@/components/providers/WorkspaceProvider";
 import { Drawer } from "@/components/ui/Drawer";
 import { Reveal } from "@/components/ui/Reveal";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { SpotlightCard } from "@/components/ui/SpotlightCard";
 import { getLiveSite, liveSites, type LiveSite } from "@/data/liveSites";
+import { resolveMedia } from "@/lib/cms";
 import { cn } from "@/lib/utils";
-
-const copy = {
-  ar: {
-    eyebrow: "مواقع حية",
-    title: "ثلاث مدن. مشاريع تُبنى الآن.",
-    description:
-      "غرفة عمليات واحدة تربط الرياض والقاهرة والمنصورة. افتح أي موقع لاستعراض الصور، المواصفات الهندسية، ومؤشرات التنفيذ لحظة بلحظة.",
-    live: "مباشر",
-    liveFeed: "بث هندسي مباشر",
-    sitesCount: "٣ مواقع · تحديث كل ٥ ثوانٍ",
-    inspect: "افتح الموقع",
-    close: "إغلاق الموقع",
-    progress: "نسبة الإنجاز",
-    specs: "المواصفات الهندسية",
-    telemetry: "القياسات الحية",
-    milestones: "المراحل",
-    next: "المرحلة القادمة",
-    lastSync: "آخر مزامنة",
-    justNow: "الآن",
-    secondsAgo: "منذ {n} ثانية",
-    visit: "اطلب زيارة ميدانية",
-    allProjects: "كل المشاريع",
-    done: "مكتمل",
-    active: "جارٍ",
-    upcoming: "قادم",
-    floors: "الطوابق",
-    site: "الموقع",
-  },
-  en: {
-    eyebrow: "Live sites",
-    title: "Three cities. Projects rising now.",
-    description:
-      "One operations room connecting Riyadh, Cairo, and Mansoura. Open any site for photography, engineering specifications, and live delivery signals.",
-    live: "Live",
-    liveFeed: "Live engineering feed",
-    sitesCount: "3 sites · refreshed every 5 seconds",
-    inspect: "Inspect live site",
-    close: "Close live site",
-    progress: "Delivery progress",
-    specs: "Engineering specifications",
-    telemetry: "Live telemetry",
-    milestones: "Milestones",
-    next: "Next milestone",
-    lastSync: "Last sync",
-    justNow: "just now",
-    secondsAgo: "{n}s ago",
-    visit: "Request a site visit",
-    allProjects: "All projects",
-    done: "Complete",
-    active: "In progress",
-    upcoming: "Upcoming",
-    floors: "Floors",
-    site: "Site",
-  },
-};
 
 function formatTime(value: number, locale: "ar" | "en") {
   try {
@@ -92,8 +39,15 @@ function formatTime(value: number, locale: "ar" | "en") {
 }
 
 function LiveSiteDetail({ site }: { site: LiveSite }) {
-  const { locale, l, isRTL } = useI18n();
-  const c = copy[locale];
+  const { t, locale, l, isRTL } = useI18n();
+  const { content } = useWorkspace();
+  const c = t.sections.liveSites;
+  const sitePhoto = resolveMedia(
+    content.mediaOverrides,
+    `liveSite.${site.id}`,
+    site.photo,
+    locale,
+  );
 
   // The drawer simulates a live telemetry feed: a timestamp that advances
   // every few seconds and an "N seconds ago" counter between refreshes. Both
@@ -123,8 +77,8 @@ function LiveSiteDetail({ site }: { site: LiveSite }) {
     <div className="pb-8">
       <div className="relative h-64 overflow-hidden sm:h-72">
         <Image
-          src={site.photo.src}
-          alt={site.photo.alt}
+          src={sitePhoto.src}
+          alt={sitePhoto.alt}
           fill
           sizes="(max-width: 640px) 100vw, 576px"
           className="object-cover photo-grade"
@@ -312,8 +266,9 @@ function LiveSiteDetail({ site }: { site: LiveSite }) {
 }
 
 export function LiveSiteGallery() {
-  const { locale, l, isRTL } = useI18n();
-  const c = copy[locale];
+  const { t, locale, l, isRTL } = useI18n();
+  const { content } = useWorkspace();
+  const c = t.sections.liveSites;
   const [activeId, setActiveId] = useState<LiveSite["id"] | null>(null);
   const activeSite = useMemo(
     () => (activeId ? getLiveSite(activeId) : null),
@@ -353,7 +308,14 @@ export function LiveSiteGallery() {
         </div>
 
         <div className="mt-12 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {liveSites.map((site, index) => (
+          {liveSites.map((site, index) => {
+            const sitePhoto = resolveMedia(
+              content.mediaOverrides,
+              `liveSite.${site.id}`,
+              site.photo,
+              locale,
+            );
+            return (
             <Reveal key={site.id} delay={index * 90} variant="scale" className="h-full">
               <SpotlightCard
                 as="article"
@@ -367,8 +329,8 @@ export function LiveSiteGallery() {
                 >
                   <div className="relative aspect-[4/5] w-full overflow-hidden">
                     <Image
-                      src={site.photo.src}
-                      alt={site.photo.alt}
+                      src={sitePhoto.src}
+                      alt={sitePhoto.alt}
                       fill
                       sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
                       className="object-cover photo-grade transition-transform duration-[1.4s] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.05]"
@@ -425,7 +387,8 @@ export function LiveSiteGallery() {
                 </button>
               </SpotlightCard>
             </Reveal>
-          ))}
+            );
+          })}
         </div>
       </div>
 

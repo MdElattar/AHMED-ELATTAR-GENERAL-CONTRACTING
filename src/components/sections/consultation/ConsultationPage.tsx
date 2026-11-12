@@ -23,133 +23,6 @@ import {
 } from "@/lib/consultation";
 import { cn } from "@/lib/utils";
 
-const copy = {
-  ar: {
-    eyebrow: "مكتب المدير التنفيذي",
-    title: "استشارة تنفيذية خاصة.",
-    description:
-      "احجز جلسة مباشرة مع مجلس الإدارة أو فريق القيادة في مقر الرياض. نخصص لك مستشاراً تنفيذياً وملفاً تحضيرياً قبل الموعد.",
-    formTitle: "احجز موعدك",
-    formText: "اختر اليوم والقناة، وسنؤكد الموعد هاتفياً خلال ساعات العمل.",
-    name: "الاسم الكامل",
-    email: "البريد الإلكتروني",
-    phone: "رقم الهاتف",
-    company: "الشركة",
-    topic: "موضوع الجلسة",
-    date: "اليوم",
-    slot: "الوقت",
-    mode: "قناة الاجتماع",
-    notes: "سياق إضافي",
-    notesPlaceholder: "نبذة عن المشروع، الموقع، أو القرار الذي تريد مناقشته…",
-    submit: "تأكيد طلب الاستشارة",
-    working: "جارٍ إرسال الطلب…",
-    boardroom: "مجلس الإدارة",
-    video: "اجتماع مرئي",
-    site: "زيارة موقع",
-    boardroomNote: "مقر الرياض · الدور ٢٤",
-    videoNote: "رابط مشفّر يُرسل بعد التأكيد",
-    siteNote: "فريق ميداني في الرياض وجدة",
-    booked: "محجوز",
-    available: "متاح",
-    allBooked: "كل المواعيد محجوزة في هذا اليوم. اختر يوماً آخر أو تواصل معنا.",
-    topics: {
-      development: "تطوير جديد",
-      expansion: "توسّع أو مرحلة ثانية",
-      advisory: "استشارة هندسية / مالية",
-      partnership: "شراكة أو تحالف",
-      other: "موضوع آخر",
-    },
-    boardroomTitle: "قاعة المجلس",
-    boardroomText:
-      "جلسة مغلقة في مقر الشركة بالرياض، بحضور مدير تنفيذي ومدير مشروع. تتضمن مراجعة أولية للمخططات ونطاق الاستثمار.",
-    address: "طريق الملك فهد · الرياض",
-    capacity: "حتى ٨ مشاركين",
-    concierge: "مكتب الاستقبال التنفيذي",
-    protocol: "بروتوكول الجلسة",
-    steps: [
-      { title: "قبل الموعد", text: "نراجع ملفك ونرسل أجندة الجلسة والأسئلة المحورية." },
-      { title: "أثناء الجلسة", text: "٦٠ دقيقة مع القيادة التنفيذية، ومخرجات مكتوبة في اليوم نفسه." },
-      { title: "بعد الجلسة", text: "خطة عمل، نطاق أولي، وترشيح الفريق المناسب للمشروع." },
-    ],
-    confirmation: "تم استلام طلبك",
-    confirmationText: "سيتواصل معك مكتب المدير التنفيذي لتأكيد الموعد. احتفظ بالمرجع أدناه.",
-    reference: "المرجع",
-    addCalendar: "أضف إلى التقويم",
-    another: "حجز موعد آخر",
-    error: {
-      invalid_input: "تحقق من الحقول المطلوبة.",
-      invalid_date: "اليوم المختار غير متاح.",
-      slot_unavailable: "هذا الموعد حُجز للتو. اختر وقتاً آخر.",
-      rate_limited: "طلبات كثيرة. حاول بعد قليل.",
-      server_error: "تعذّر إرسال الطلب. حاول مرة أخرى.",
-      generic: "تعذّر إرسال الطلب.",
-    },
-    timezone: "بتوقيت الرياض",
-  },
-  en: {
-    eyebrow: "Executive office",
-    title: "A private executive consultation.",
-    description:
-      "Book a direct session with the board or leadership team at our Riyadh headquarters. We assign an executive adviser and prepare a briefing file before you arrive.",
-    formTitle: "Reserve your session",
-    formText: "Choose a day and channel; the executive office confirms by phone during business hours.",
-    name: "Full name",
-    email: "Email",
-    phone: "Phone",
-    company: "Company",
-    topic: "Session topic",
-    date: "Day",
-    slot: "Time",
-    mode: "Meeting channel",
-    notes: "Additional context",
-    notesPlaceholder: "A short brief on the project, site, or decision you want to discuss…",
-    submit: "Request consultation",
-    working: "Sending request…",
-    boardroom: "Boardroom",
-    video: "Video call",
-    site: "Site visit",
-    boardroomNote: "Riyadh HQ · Level 24",
-    videoNote: "Encrypted link after confirmation",
-    siteNote: "Field team in Riyadh & Jeddah",
-    booked: "Booked",
-    available: "Available",
-    allBooked: "All slots are booked on this day. Choose another day or contact us directly.",
-    topics: {
-      development: "New development",
-      expansion: "Expansion / phase two",
-      advisory: "Engineering / financial advisory",
-      partnership: "Partnership or alliance",
-      other: "Another topic",
-    },
-    boardroomTitle: "The boardroom",
-    boardroomText:
-      "A closed session at our Riyadh headquarters with an executive director and project lead. Includes a preliminary review of drawings and investment scope.",
-    address: "King Fahd Road · Riyadh",
-    capacity: "Up to 8 participants",
-    concierge: "Executive concierge",
-    protocol: "Session protocol",
-    steps: [
-      { title: "Before", text: "We review your file and send the agenda and key questions." },
-      { title: "During", text: "60 minutes with executive leadership, with written outcomes the same day." },
-      { title: "After", text: "An action plan, preliminary scope, and the right delivery team." },
-    ],
-    confirmation: "Request received",
-    confirmationText: "The executive office will call to confirm. Keep the reference below.",
-    reference: "Reference",
-    addCalendar: "Add to calendar",
-    another: "Book another session",
-    error: {
-      invalid_input: "Check the required fields.",
-      invalid_date: "The selected day is not available.",
-      slot_unavailable: "That slot was just booked. Choose another time.",
-      rate_limited: "Too many requests. Try again shortly.",
-      server_error: "The request could not be sent. Try again.",
-      generic: "The request could not be sent.",
-    },
-    timezone: "Riyadh time",
-  },
-};
-
 type Confirmation = {
   reference: string;
   date: string;
@@ -196,8 +69,8 @@ function calendarFile(confirmation: Confirmation, title: string) {
 }
 
 export function ConsultationPage({ dates }: { dates: ConsultationDay[] }) {
-  const { locale } = useI18n();
-  const c = copy[locale];
+  const { t, locale } = useI18n();
+  const c = t.sections.consultation;
   const [date, setDate] = useState(dates[0]?.value ?? "");
   const [slot, setSlot] = useState<ConsultationSlot>("10:00");
   const [mode, setMode] = useState<ConsultationMode>("boardroom");

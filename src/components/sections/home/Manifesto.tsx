@@ -6,15 +6,9 @@ import { useI18n } from "@/components/providers/I18nProvider";
 import { Reveal } from "@/components/ui/Reveal";
 import { cn } from "@/lib/utils";
 
-const pillars = [
-  { number: "01", ar: "الدقة", en: "Precision" },
-  { number: "02", ar: "الحجم", en: "Scale" },
-  { number: "03", ar: "السلامة", en: "Safety" },
-  { number: "04", ar: "الإرث", en: "Legacy" },
-];
-
 export function Manifesto() {
   const { t, locale, isRTL } = useI18n();
+  const pillars = t.sections.manifestoPillars;
 
   return (
     <section id="philosophy" className="grain relative overflow-hidden bg-ivory text-ink">
@@ -78,7 +72,7 @@ export function Manifesto() {
               <div className="flex items-baseline gap-3">
                 <span className="tabular text-[0.6rem] text-gold-dark">{pillar.number}</span>
                 <span className="font-display text-xl text-ink/70">
-                  {locale === "ar" ? pillar.ar : pillar.en}
+                  {pillar.title[locale]}
                 </span>
               </div>
             </Reveal>

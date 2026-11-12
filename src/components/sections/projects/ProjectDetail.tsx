@@ -21,7 +21,7 @@ type DetailProject = Project & {
 };
 
 export function ProjectDetail({ project }: { project: DetailProject }) {
-  const { t, l, locale, isRTL } = useI18n();
+  const { t, l, isRTL } = useI18n();
   const { projects } = useWorkspace();
 
   const related = useMemo(
@@ -49,7 +49,7 @@ export function ProjectDetail({ project }: { project: DetailProject }) {
 
   if (typeof project.progress === "number") {
     facts.push({
-      label: locale === "ar" ? "نسبة الإنجاز" : "Progress",
+      label: t.sections.inline.projectProgress,
       value: `${project.progress}%`,
     });
   }
@@ -128,7 +128,7 @@ export function ProjectDetail({ project }: { project: DetailProject }) {
           <div className="container-lux py-10 sm:py-14">
             <div className="flex items-center justify-between gap-4">
               <span className="text-[0.55rem] font-semibold uppercase tracking-[0.18em] text-gold">
-                {locale === "ar" ? "معرض المشروع" : "Project gallery"}
+                {t.sections.inline.projectGallery}
               </span>
               <span className="tabular text-[0.52rem] text-ivory/25">
                 {String(gallery.length).padStart(2, "0")}
@@ -270,7 +270,7 @@ export function ProjectDetailLive({
   initialProject: Project | null;
 }) {
   const { projects, ready } = useWorkspace();
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   // The server-rendered record is authoritative until the live workspace feed
   // is ready. If the client feed is empty or unreachable, keep the server
   // record instead of rendering a false 404 for a valid project.
@@ -291,12 +291,10 @@ export function ProjectDetailLive({
         <div className="container-lux relative text-center">
           <span className="eyebrow justify-center">404</span>
           <h1 className="display-title mt-5 text-[clamp(2.4rem,5vw,4.6rem)] text-ivory">
-            {locale === "ar" ? "المشروع غير موجود" : "Project not found"}
+            {t.sections.inline.projectNotFoundTitle}
           </h1>
           <p className="mx-auto mt-4 max-w-md text-[0.85rem] leading-relaxed text-ivory/45">
-            {locale === "ar"
-              ? "قد يكون المشروع قد حُذف أو تغيّر رابطه. تصفّح جميع المشاريع للمتابعة."
-              : "This project may have been removed or its link changed. Browse all projects to continue."}
+            {t.sections.inline.projectNotFoundText}
           </p>
           <Link
             href="/projects"

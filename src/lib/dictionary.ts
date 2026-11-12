@@ -1,3 +1,5 @@
+import { sectionCopy } from "@/lib/section-copy";
+
 export type Locale = "ar" | "en";
 
 export type Localized = {
@@ -595,6 +597,7 @@ const ar = {
     code: "خطأ غير متوقع",
     retry: "حاول مرة أخرى",
   },
+  sections: sectionCopy.ar,
 };
 
 const en: typeof ar = {
@@ -1204,6 +1207,7 @@ const en: typeof ar = {
     code: "Unexpected error",
     retry: "Try again",
   },
+  sections: sectionCopy.en,
 };
 
 export const dictionary = { ar, en };

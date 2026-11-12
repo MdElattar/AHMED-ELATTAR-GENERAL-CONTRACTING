@@ -4,33 +4,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight, Gauge } from "lucide-react";
 import { useI18n } from "@/components/providers/I18nProvider";
+import { useWorkspace } from "@/components/providers/WorkspaceProvider";
 import { Reveal } from "@/components/ui/Reveal";
 import { fleet } from "@/data/fleet";
 import { fleetPhotos } from "@/data/media";
+import { resolveMedia } from "@/lib/cms";
 import { cn } from "@/lib/utils";
-
-const copy = {
-  ar: {
-    ready: "جاهزة للتشغيل",
-    liveNote: "مواقع الأسطول وساعات التشغيل تُتابع من غرفة العمليات",
-    hint: "أسطول مملوك ومُدار داخلياً",
-    stats: [
-      { value: "٧٥٠", suffix: "طن", label: "أقصى قدرة رفع" },
-      { value: "٧٢", suffix: "+", label: "معدة ثقيلة" },
-      { value: "٢٤/٧", suffix: "", label: "دعم ميداني" },
-    ],
-  },
-  en: {
-    ready: "Deployment ready",
-    liveNote: "Fleet locations and operating hours are tracked from the operations room",
-    hint: "An owned and in-house managed fleet",
-    stats: [
-      { value: "750", suffix: "T", label: "Maximum lift" },
-      { value: "72", suffix: "+", label: "Heavy machines" },
-      { value: "24/7", suffix: "", label: "Field support" },
-    ],
-  },
-};
 
 /**
  * The fleet — a photographic equipment register.
@@ -42,7 +21,8 @@ const copy = {
  */
 export function FleetExperience() {
   const { t, l, locale, isRTL } = useI18n();
-  const c = copy[locale];
+  const { content } = useWorkspace();
+  const c = t.sections.fleet;
 
   return (
     <section id="fleet" className="relative overflow-hidden bg-obsidian py-20 sm:py-28">
@@ -81,7 +61,12 @@ export function FleetExperience() {
 
         <div className="mt-12 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {fleet.map((machine, index) => {
-            const photo = fleetPhotos[machine.art];
+            const photo = resolveMedia(
+              content.mediaOverrides,
+              `fleet.${machine.art}`,
+              fleetPhotos[machine.art],
+              locale,
+            );
             const specs = [
               { label: t.fleet.specs.capacity, value: machine.capacity },
               { label: t.fleet.specs.reach, value: machine.reach },

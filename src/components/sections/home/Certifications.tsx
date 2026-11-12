@@ -8,30 +8,9 @@ import { SectionHeading } from "@/components/ui/SectionHeading";
 import { certifications } from "@/data/company";
 import { cn } from "@/lib/utils";
 
-const copy = {
-  ar: {
-    eyebrow: "الجودة والسلامة",
-    title: "معايير لا نتنازل عنها.",
-    description:
-      "الشهادات ليست شعارات على الحائط. كل اعتماد هنا يُدقّق سنوياً، ويُقاس ميدانياً، ويُوثّق في كل مشروع نسلّمه.",
-    cta: "اقرأ سياسة الجودة",
-    audit: "تدقيق مستقل",
-    year: "سنة الاعتماد",
-  },
-  en: {
-    eyebrow: "Quality & safety",
-    title: "Standards we never trade.",
-    description:
-      "Certifications are not wall decorations. Every accreditation here is audited annually, measured on site, and documented on every project we hand over.",
-    cta: "Read our quality policy",
-    audit: "Independent audit",
-    year: "Certified",
-  },
-};
-
 export function Certifications() {
-  const { locale, l, isRTL } = useI18n();
-  const c = copy[locale];
+  const { t, l, isRTL } = useI18n();
+  const c = t.sections.certifications;
 
   return (
     <section id="certifications" className="relative overflow-hidden bg-obsidian">

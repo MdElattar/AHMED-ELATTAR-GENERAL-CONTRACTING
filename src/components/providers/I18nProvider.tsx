@@ -17,6 +17,8 @@ import {
   type Locale,
   type Localized,
 } from "@/lib/dictionary";
+import { applyCopyOverrides } from "@/lib/cms";
+import { useWorkspace } from "@/components/providers/WorkspaceProvider";
 
 type I18nContextValue = {
   locale: Locale;
@@ -80,6 +82,7 @@ function readInitialLocale(): Locale {
 }
 
 export function I18nProvider({ children }: { children: ReactNode }) {
+  const { content } = useWorkspace();
   const [locale, setLocaleState] = useState<Locale>("ar");
   const [ready, setReady] = useState(false);
 
@@ -123,18 +126,38 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const heroOverrides = useMemo(
+    () => ({
+      "hero.eyebrow": content.heroEyebrow,
+      "hero.titleTop": content.heroTitleTop,
+      "hero.titleAccent": content.heroTitleAccent,
+      "hero.description": content.heroDescription,
+    }),
+    [
+      content.heroDescription,
+      content.heroEyebrow,
+      content.heroTitleAccent,
+      content.heroTitleTop,
+    ],
+  );
+
+  const mergedOverrides = useMemo(
+    () => ({ ...heroOverrides, ...content.copyOverrides }),
+    [content.copyOverrides, heroOverrides],
+  );
+
   const value = useMemo<I18nContextValue>(
     () => ({
       locale,
       dir: dirFor(locale),
       isRTL: locale === "ar",
       ready,
-      t: dictionary[locale],
+      t: applyCopyOverrides(dictionary[locale], mergedOverrides, locale),
       setLocale,
       toggleLocale,
       l: (localized: Localized) => pick(localized, locale),
     }),
-    [locale, ready, setLocale, toggleLocale],
+    [locale, mergedOverrides, ready, setLocale, toggleLocale],
   );
 
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;

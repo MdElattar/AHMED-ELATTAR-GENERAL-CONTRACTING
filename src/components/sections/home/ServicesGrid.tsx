@@ -8,29 +8,13 @@ import { useWorkspace } from "@/components/providers/WorkspaceProvider";
 import { Reveal } from "@/components/ui/Reveal";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { projectPhotos } from "@/data/media";
+import { resolveMedia } from "@/lib/cms";
 import { cn } from "@/lib/utils";
 
-const copy = {
-  ar: {
-    eyebrow: "خدماتنا",
-    title: "من الفكرة الأولى إلى آخر مفتاح.",
-    description:
-      "أربع قدرات متكاملة تحت سقف واحد: مقاولات عامة، أسطول مملوك، هندسة وتصميم، وإدارة مشاريع. لا وسطاء، ولا مسؤولية مبعثرة.",
-    cta: "استكشف جميع الخدمات",
-  },
-  en: {
-    eyebrow: "Our services",
-    title: "From first idea to final key.",
-    description:
-      "Four integrated capabilities under one roof: general contracting, an owned fleet, engineering & design, and project management. No middlemen, no fragmented accountability.",
-    cta: "Explore all services",
-  },
-};
-
 export function ServicesGrid() {
-  const { locale, l, isRTL } = useI18n();
+  const { t, locale, l, isRTL } = useI18n();
   const { content } = useWorkspace();
-  const c = copy[locale];
+  const c = t.sections.servicesGrid;
 
   return (
     <section className="grain relative overflow-hidden bg-ivory text-ink">
@@ -73,7 +57,12 @@ export function ServicesGrid() {
                 const title = override?.title ?? service.title;
                 const description = override?.description ?? service.description;
                 const tagline = override?.tagline ?? service.tagline;
-                const photo = projectPhotos[service.art];
+                const photo = resolveMedia(
+                  content.mediaOverrides,
+                  `project.${service.art}`,
+                  projectPhotos[service.art],
+                  locale,
+                );
                 return (
                   <Reveal key={service.slug} delay={(index % 2) * 80}>
                     <Link

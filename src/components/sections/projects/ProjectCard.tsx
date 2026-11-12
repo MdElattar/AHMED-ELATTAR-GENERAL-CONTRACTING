@@ -4,8 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { useI18n } from "@/components/providers/I18nProvider";
+import { useWorkspace } from "@/components/providers/WorkspaceProvider";
 import type { Project } from "@/data/projects";
 import { projectPhotos } from "@/data/media";
+import { resolveMedia } from "@/lib/cms";
 import { cn } from "@/lib/utils";
 
 type ProjectCardProps = {
@@ -25,8 +27,15 @@ export function ProjectCard({
   artClassName,
   compact = false,
 }: ProjectCardProps) {
-  const { t, l, isRTL } = useI18n();
-  const photo = projectPhotos[project.art];
+  const { t, l, isRTL, locale } = useI18n();
+  const { content } = useWorkspace();
+  const fallback = projectPhotos[project.art] ?? projectPhotos.tower;
+  const photo = resolveMedia(
+    content.mediaOverrides,
+    `project.${project.art}`,
+    fallback,
+    locale,
+  );
 
   const inner = (
     <>

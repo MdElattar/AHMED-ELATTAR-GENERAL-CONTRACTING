@@ -72,6 +72,14 @@ const nextConfig: NextConfig = {
         hostname: "images.unsplash.com",
         pathname: "/**",
       },
+      // CMS-controlled art direction may point at any approved https host.
+      // Only administrators can write these fields; the optimiser still
+      // normalises and caches every remote asset.
+      {
+        protocol: "https",
+        hostname: "**",
+        pathname: "/**",
+      },
     ],
   },
   experimental: {

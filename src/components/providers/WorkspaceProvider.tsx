@@ -11,6 +11,11 @@ import {
   type ReactNode,
 } from "react";
 import { L, type Localized } from "@/lib/dictionary";
+import {
+  isAllowedMediaSource,
+  isCmsPath,
+  type MediaOverride,
+} from "@/lib/cms";
 import type {
   ArtVariant,
   Project,
@@ -59,6 +64,10 @@ export type SiteContent = {
   promoHref: string;
   services: Service[];
   serviceOverrides: Record<string, ServiceOverride>;
+  /** Flat dictionary-path overrides, e.g. `hero.titleTop` -> { ar, en }. */
+  copyOverrides: Record<string, Localized>;
+  /** Flat photography-registry overrides, e.g. `hero` -> { src, alt }. */
+  mediaOverrides: Record<string, MediaOverride>;
 };
 
 export type PortalMessage = {
@@ -109,6 +118,8 @@ const defaultContent: SiteContent = {
   promoHref: "/contact",
   services: [],
   serviceOverrides: {},
+  copyOverrides: {},
+  mediaOverrides: {},
 };
 
 const initialState: WorkspaceState = {
@@ -417,6 +428,44 @@ function normalizeServiceOverride(value: unknown): ServiceOverride {
   };
 }
 
+function normalizeOptionalLocalized(value: unknown): Localized {
+  if (!isRecord(value)) return L("", "");
+  const ar = typeof value.ar === "string" ? value.ar.slice(0, 8000) : "";
+  const en = typeof value.en === "string" ? value.en.slice(0, 8000) : "";
+  return L(ar, en);
+}
+
+function normalizeCopyOverrides(value: unknown): Record<string, Localized> {
+  if (!isRecord(value)) return {};
+  const overrides: Record<string, Localized> = {};
+
+  for (const [path, entry] of Object.entries(value).slice(0, 2_500)) {
+    if (!isCmsPath(path)) continue;
+    const localized = normalizeOptionalLocalized(entry);
+    if (!localized.ar && !localized.en) continue;
+    overrides[path] = localized;
+  }
+
+  return overrides;
+}
+
+function normalizeMediaOverrides(value: unknown): Record<string, MediaOverride> {
+  if (!isRecord(value)) return {};
+  const overrides: Record<string, MediaOverride> = {};
+
+  for (const [key, entry] of Object.entries(value).slice(0, 500)) {
+    if (!isCmsPath(key) || !isRecord(entry)) continue;
+    const src = typeof entry.src === "string" ? entry.src.trim().slice(0, 2000) : "";
+    if (!isAllowedMediaSource(src)) continue;
+    overrides[key] = {
+      src,
+      alt: normalizeOptionalLocalized(entry.alt),
+    };
+  }
+
+  return overrides;
+}
+
 function normalizeContent(value: unknown): SiteContent {
   const stored = isRecord(value) ? value : {};
   const rawOverrides = isRecord(stored.serviceOverrides) ? stored.serviceOverrides : {};
@@ -450,6 +499,8 @@ function normalizeContent(value: unknown): SiteContent {
         : defaultContent.promoHref,
     services: normalizeServices(stored.services),
     serviceOverrides,
+    copyOverrides: normalizeCopyOverrides(stored.copyOverrides),
+    mediaOverrides: normalizeMediaOverrides(stored.mediaOverrides),
   };
 }
 

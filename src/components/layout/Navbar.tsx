@@ -32,7 +32,7 @@ const primaryLinks = [
 
 export function Navbar() {
   const pathname = usePathname();
-  const { t, toggleLocale, isRTL, locale } = useI18n();
+  const { t, toggleLocale, isRTL } = useI18n();
   const { user } = useAuth();
   const { stop, start } = useSmoothScroll();
   const [open, setOpen] = useState(false);
@@ -191,7 +191,7 @@ export function Navbar() {
 
               <nav className="relative flex flex-1 flex-col px-6 py-6" aria-label="Mobile">
                 <p className="text-[0.55rem] font-semibold uppercase tracking-[0.24em] text-gold/70">
-                  {locale === "ar" ? "التنقل" : "Navigation"}
+                  {t.sections.inline.navbarNavigation}
                 </p>
 
                 <div className="mt-3 flex flex-col">
@@ -274,7 +274,7 @@ export function Navbar() {
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <p className="text-[0.55rem] uppercase tracking-[0.18em] text-ivory/30">
-                      {locale === "ar" ? "الرياض · جدة · دبي" : "Riyadh · Jeddah · Dubai"}
+                      {t.sections.inline.navbarLocations}
                     </p>
                     <a
                       href="tel:+966114821987"

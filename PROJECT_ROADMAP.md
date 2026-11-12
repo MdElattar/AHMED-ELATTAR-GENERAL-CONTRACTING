@@ -120,6 +120,25 @@
 **Section 8 verified:** 2026-11-12 — `npx tsc --noEmit`, `npm run lint`,
 `npm run build`, and the proposal PDF smoke render all pass.
 
+## 9. V5 — Editorial Control & Motion
+
+- [x] MongoDB-backed copy override layer (`copyOverrides`) keyed by dictionary dot-paths
+- [x] Every public dictionary leaf editable, including hand-authored section copy
+- [x] MongoDB-backed media override layer (`mediaOverrides`) for hero, crane,
+      craftsmanship, fleet, project covers, live-site covers, and live-site galleries
+- [x] Dedicated `/admin/site-content` copy studio and `/admin/media` route
+- [x] Route-addressable admin sections (`/admin/[section]`) with auth-gated metadata
+- [x] Searchable, grouped copy editor with bilingual fields and reset-to-original
+- [x] Animated admin sidebar: sliding gold indicator, icon lift/rotation, hover sweep,
+      fluid label motion, and pressed-state feedback
+- [x] `WorkspaceProvider` moved above `I18nProvider` so CMS copy resolves globally
+- [x] Hero copy and copy overrides share one effective translation surface
+- [x] Media overrides resolve through `next/image` with an admin-gated remote allow-list
+
+**Section 9 verified:** 2026-11-12 — `npx tsc --noEmit`, `npm run lint`, and
+`npm run build` all pass; `/admin/site-content` and `/admin/media` redirect to
+sign-in without an admin session, while `/api/content` and `/` return 200.
+
 ---
 
 ## Environment Checklist (deployment)

@@ -7,17 +7,19 @@ import { useSmoothScroll } from "@/components/providers/SmoothScroll";
 import { useWorkspace } from "@/components/providers/WorkspaceProvider";
 import { PhotoLayer } from "@/components/media/PhotoLayer";
 import { heroPhoto } from "@/data/media";
+import { resolveMedia } from "@/lib/cms";
 import { cn } from "@/lib/utils";
 
 export function Hero() {
-  const { t, l, isRTL, locale } = useI18n();
+  const { t, isRTL, locale } = useI18n();
   const { content } = useWorkspace();
   const { scrollTo } = useSmoothScroll();
+  const heroImage = resolveMedia(content.mediaOverrides, "hero", heroPhoto, locale);
 
   return (
     <section className="relative min-h-[100svh] overflow-hidden bg-obsidian">
       <PhotoLayer
-        images={[heroPhoto]}
+        images={[heroImage]}
         preloadFirst
         overlay="none"
         sizes="100vw"
@@ -37,17 +39,17 @@ export function Hero() {
             <div className="hero-fade flex items-center gap-4" style={{ animationDelay: "120ms" }}>
               <span className="h-px w-10 bg-gold/70" />
               <span className="text-[0.6rem] font-medium uppercase tracking-[0.24em] text-gold sm:text-[0.68rem]">
-                {l(content.heroEyebrow)}
+                {t.hero.eyebrow}
               </span>
             </div>
 
             <h1 className="display-title text-shadow-lux mt-7 text-[clamp(3.4rem,10vw,8.4rem)] text-ivory">
               <span className="hero-line">
-                <span style={{ animationDelay: "180ms" }}>{l(content.heroTitleTop)}</span>
+                <span style={{ animationDelay: "180ms" }}>{t.hero.titleTop}</span>
               </span>
               <span className="hero-line">
                 <span style={{ animationDelay: "300ms" }} className="gold-text italic">
-                  {l(content.heroTitleAccent)}
+                  {t.hero.titleAccent}
                 </span>
               </span>
             </h1>
@@ -56,7 +58,7 @@ export function Hero() {
               className="hero-fade text-shadow-lux mt-7 max-w-lg text-[0.95rem] leading-[1.95] text-ivory/62 sm:text-base"
               style={{ animationDelay: "460ms" }}
             >
-              {l(content.heroDescription)}
+              {t.hero.description}
             </p>
 
             <div
@@ -94,7 +96,7 @@ export function Hero() {
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-gold/60" />
                   <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-gold" />
                 </span>
-                {locale === "ar" ? "٣ مواقع حية" : "3 live sites"}
+                {t.sections.inline.heroLiveSites}
                 <ArrowUpRight
                   className={cn(
                     "h-3.5 w-3.5 transition-transform duration-500 group-hover:-translate-y-0.5 group-hover:translate-x-0.5",

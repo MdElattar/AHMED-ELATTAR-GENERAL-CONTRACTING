@@ -7,7 +7,7 @@ import { useWorkspace } from "@/components/providers/WorkspaceProvider";
 import { cn } from "@/lib/utils";
 
 export function PromoBanner() {
-  const { l, locale, isRTL } = useI18n();
+  const { t, l, isRTL } = useI18n();
   const { content } = useWorkspace();
 
   if (!content.promoVisible) return null;
@@ -31,7 +31,7 @@ export function PromoBanner() {
           href={content.promoHref || "/contact"}
           className="group inline-flex shrink-0 items-center gap-2 border border-gold/40 px-4 py-2.5 text-[0.6rem] font-semibold uppercase tracking-[0.14em] text-gold transition-colors hover:bg-gold hover:text-obsidian"
         >
-          {locale === "ar" ? "تحدث معنا" : "Talk to us"}
+          {t.sections.inline.promoBannerCta}
           <ArrowUpRight
             className={cn(
               "h-3.5 w-3.5 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5",

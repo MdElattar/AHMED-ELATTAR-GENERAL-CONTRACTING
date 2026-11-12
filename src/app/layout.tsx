@@ -106,11 +106,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="min-h-full bg-obsidian font-sans text-ivory">
-        <I18nProvider>
-          <AtmosphereProvider>
-            <SmoothScrollProvider>
-              <AuthProvider>
-                <WorkspaceProvider>
+        <WorkspaceProvider>
+          <I18nProvider>
+            <AtmosphereProvider>
+              <SmoothScrollProvider>
+                <AuthProvider>
                   <ScrollProgress />
                   <a
                     href="#main"
@@ -123,11 +123,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                     {children}
                   </main>
                   <Footer />
-                </WorkspaceProvider>
-              </AuthProvider>
-            </SmoothScrollProvider>
-          </AtmosphereProvider>
-        </I18nProvider>
+                </AuthProvider>
+              </SmoothScrollProvider>
+            </AtmosphereProvider>
+          </I18nProvider>
+        </WorkspaceProvider>
       </body>
     </html>
   );

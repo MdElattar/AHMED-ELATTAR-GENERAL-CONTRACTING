@@ -36,7 +36,9 @@ export async function PATCH(request: NextRequest) {
     );
   }
 
-  const body = await readJsonBody(request, 120_000);
+  // Copy overrides are intentionally granular (every dictionary leaf can be
+  // edited), so allow a larger admin-only payload while still bounding it.
+  const body = await readJsonBody(request, 1_000_000);
   if (!isPlainObject(body)) {
     return NextResponse.json(
       { error: "invalid_input" },

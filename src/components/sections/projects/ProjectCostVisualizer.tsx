@@ -18,47 +18,6 @@ import { parseAreaSqm, parseSarValue } from "@/lib/project-metrics";
 import type { Project } from "@/data/projects";
 import { cn } from "@/lib/utils";
 
-const copy = {
-  ar: {
-    eyebrow: "هندسة التكلفة",
-    title: "أين يذهب الاستثمار؟",
-    description:
-      "تفكيك تفاعلي لقيمة العقد حسب مراكز التكلفة الفعلية. مرّر أو اختر أي شريحة لعرض قيمتها.",
-    total: "قيمة العقد",
-    perM2: "التكلفة / م²",
-    area: "المساحة",
-    selected: "المركز المحدد",
-    onRequest: "حسب الطلب",
-    proposal: "عرض المشروع PDF",
-    note: "النسب معايرة حسب فئة الأصل وطبيعة التنفيذ، وتُثبَّت نهائياً بعد اعتماد المخططات.",
-    parts: {
-      structure: "الهيكل والغلاف",
-      finishes: "التشطيبات والنجارة",
-      mep: "الكهروميكانيك والأنظمة",
-      management: "الإدارة والجودة",
-    },
-  },
-  en: {
-    eyebrow: "Cost architecture",
-    title: "Where the investment goes.",
-    description:
-      "An interactive decomposition of the contract value by real cost centre. Hover or select any segment to inspect it.",
-    total: "Contract value",
-    perM2: "Cost / m²",
-    area: "Built area",
-    selected: "Selected centre",
-    onRequest: "On request",
-    proposal: "Project proposal PDF",
-    note: "Weights are calibrated to the asset class and delivery profile, then fixed after drawing approval.",
-    parts: {
-      structure: "Structure & envelope",
-      finishes: "Finishes & joinery",
-      mep: "MEP & systems",
-      management: "Management & QA",
-    },
-  },
-};
-
 const colors: Record<EstimatePart["key"], string> = {
   structure: "#d4af37",
   finishes: "#f2dfa0",
@@ -88,8 +47,8 @@ export function ProjectCostVisualizer({
   project: Project;
   contractValue?: number;
 }) {
-  const { locale, l } = useI18n();
-  const c = copy[locale];
+  const { t, locale, l } = useI18n();
+  const c = t.sections.projectCost;
   const [activeKey, setActiveKey] = useState<EstimatePart["key"]>("structure");
   const [proposalOpen, setProposalOpen] = useState(false);
 

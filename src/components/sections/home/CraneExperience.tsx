@@ -3,8 +3,10 @@
 import Image from "next/image";
 import { MoveDown } from "lucide-react";
 import { useI18n } from "@/components/providers/I18nProvider";
+import { useWorkspace } from "@/components/providers/WorkspaceProvider";
 import { Reveal } from "@/components/ui/Reveal";
 import { cranePhotos } from "@/data/media";
+import { resolveMedia } from "@/lib/cms";
 import { cn } from "@/lib/utils";
 
 /**
@@ -17,15 +19,16 @@ import { cn } from "@/lib/utils";
  */
 export function CraneExperience() {
   const { t, locale } = useI18n();
+  const { content } = useWorkspace();
   const steps = t.crane.steps;
-  const feature = cranePhotos[0];
+  const feature = resolveMedia(content.mediaOverrides, "crane.0", cranePhotos[0], locale);
 
   return (
     <section id="crane" className="relative overflow-hidden bg-obsidian py-20 sm:py-28">
       <div className="blueprint-grid pointer-events-none absolute inset-0 opacity-20" />
       <div className="atmo-glow pointer-events-none absolute inset-0 opacity-35" aria-hidden="true" />
       <div className="pointer-events-none absolute -start-16 top-24 select-none text-[11rem] font-semibold leading-none tracking-tighter text-white/[0.022] sm:text-[17rem]">
-        {locale === "ar" ? "رفع" : "LIFT"}
+        {t.sections.inline.craneTag}
       </div>
 
       <div className="container-lux relative">
@@ -59,7 +62,7 @@ export function CraneExperience() {
             <div className="absolute inset-0 bg-gradient-to-t from-obsidian/85 via-obsidian/15 to-transparent" />
             <figcaption className="absolute inset-x-0 bottom-0 flex flex-wrap items-end justify-between gap-4 p-5 sm:p-7">
               <div>
-                <span className="live-pill">{locale === "ar" ? "موقع مباشر" : "Live site"}</span>
+                <span className="live-pill">{t.sections.inline.craneLive}</span>
                 <p className="mt-3 max-w-md font-display text-[clamp(1.3rem,2.4vw,2rem)] leading-tight text-ivory">
                   {steps[0]?.heading}
                 </p>
@@ -80,7 +83,12 @@ export function CraneExperience() {
 
         <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {steps.map((step, index) => {
-            const photo = cranePhotos[index % cranePhotos.length];
+            const photo = resolveMedia(
+              content.mediaOverrides,
+              `crane.${index % cranePhotos.length}`,
+              cranePhotos[index % cranePhotos.length],
+              locale,
+            );
             return (
               <Reveal
                 key={step.title}

@@ -8,53 +8,6 @@ import { Modal } from "@/components/ui/Modal";
 import { CURRENCIES, CURRENCY_META, type CurrencyCode } from "@/lib/currency";
 import type { EstimateInput } from "@/lib/estimate";
 
-const copy = {
-  ar: {
-    eyebrow: "مستند رسمي",
-    title: "عرض مشروع بصيغة PDF",
-    description:
-      "أدخل بياناتك لإصدار عرض أولي منسّق يتضمن نطاق الاستثمار، البرنامج الزمني، والشروط التجارية.",
-    name: "الاسم الكامل",
-    email: "البريد الإلكتروني",
-    company: "الشركة",
-    phone: "الهاتف",
-    currency: "العملة",
-    submit: "إصدار وتنزيل العرض",
-    working: "جارٍ إصدار المستند…",
-    note: "يُستخدم بريدك لتسجيل العرض فقط. لا نشارك بياناتك مع أي طرف ثالث.",
-    success: "تم تنزيل العرض. المرجع:",
-    errors: {
-      invalid_input: "تحقق من الحقول المطلوبة.",
-      rate_limited: "طلبات كثيرة. حاول بعد قليل.",
-      project_not_found: "المشروع غير متاح حالياً.",
-      proposal_failed: "تعذّر إصدار المستند. حاول مرة أخرى.",
-      generic: "تعذّر إصدار العرض.",
-    },
-  },
-  en: {
-    eyebrow: "Official document",
-    title: "Project proposal · PDF",
-    description:
-      "Add your details to generate a formatted preliminary proposal with investment range, programme, and commercial terms.",
-    name: "Full name",
-    email: "Email",
-    company: "Company",
-    phone: "Phone",
-    currency: "Currency",
-    submit: "Generate & download",
-    working: "Generating document…",
-    note: "Your email is used to record this proposal only. We never share it.",
-    success: "Proposal downloaded. Reference:",
-    errors: {
-      invalid_input: "Check the required fields.",
-      rate_limited: "Too many requests. Try again shortly.",
-      project_not_found: "This project is not available.",
-      proposal_failed: "The document could not be generated.",
-      generic: "The proposal could not be generated.",
-    },
-  },
-};
-
 export function ProposalDialog({
   open,
   onClose,
@@ -68,8 +21,8 @@ export function ProposalDialog({
   projectSlug?: string;
   projectTitle?: string;
 }) {
-  const { locale } = useI18n();
-  const c = copy[locale];
+  const { t, locale } = useI18n();
+  const c = t.sections.proposal;
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [company, setCompany] = useState("");

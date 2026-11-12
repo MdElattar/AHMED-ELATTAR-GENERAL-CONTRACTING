@@ -19,39 +19,9 @@ const iconMap: Record<ServiceIcon, typeof Building2> = {
   pen: PenTool,
 };
 
-const approach = [
-  {
-    number: "01",
-    ar: "الاستكشاف",
-    en: "Discovery",
-    textAr: "نقرأ الموقع والقيود والطموح قبل أن نرسم أول خط.",
-    textEn: "We read the site, constraints, and ambition before drawing the first line.",
-  },
-  {
-    number: "02",
-    ar: "التصميم",
-    en: "Design",
-    textAr: "نموذج رقمي متكامل يختبر التكلفة والجدول والجودة قبل التنفيذ.",
-    textEn: "An integrated digital model that tests cost, schedule, and quality before construction.",
-  },
-  {
-    number: "03",
-    ar: "التنفيذ",
-    en: "Delivery",
-    textAr: "فرق ميدانية واحدة، ولوحة تحكم واحدة، ومعيار واحد لا يتغيّر.",
-    textEn: "One site team, one dashboard, and one standard that never shifts.",
-  },
-  {
-    number: "04",
-    ar: "التسليم",
-    en: "Handover",
-    textAr: "١٢٧ نقطة فحص، وتشغيل تجريبي، وتسليم يليق بالاسم.",
-    textEn: "127 inspection points, commissioning, and a handover worthy of the name.",
-  },
-];
-
 export function ServicesPage() {
   const { t, l, locale, isRTL } = useI18n();
+  const approach = t.sections.servicesApproach;
   const { content } = useWorkspace();
   const { scrollTo } = useSmoothScroll();
   const resolvedServices = content.services.map((service) => {
@@ -158,7 +128,7 @@ export function ServicesPage() {
                   : "border-ink/12 text-ink/45 hover:border-ink/30 hover:text-ink",
               )}
             >
-              {locale === "ar" ? "كل الخدمات" : "All services"}
+              {t.sections.inline.servicesAll}
             </button>
             {resolvedServices.map((service) => (
               <button
@@ -177,7 +147,7 @@ export function ServicesPage() {
             ))}
             {resolvedServices.length === 0 ? (
               <span className="px-2 text-[0.58rem] text-ink/35">
-                {locale === "ar" ? "جارٍ تحميل الخدمات…" : "Loading services…"}
+                {t.sections.inline.servicesLoading}
               </span>
             ) : null}
           </div>
@@ -306,14 +276,12 @@ export function ServicesPage() {
               </Reveal>
               <Reveal delay={80}>
                 <h2 className="display-title mt-6 max-w-md text-[clamp(2.2rem,4.4vw,4.2rem)] text-ivory">
-                  {locale === "ar" ? "منهج واحد. لا استثناءات." : "One method. No exceptions."}
+                  {t.sections.inline.servicesMethodTitle}
                 </h2>
               </Reveal>
               <Reveal delay={160}>
                 <p className="mt-5 max-w-md text-[0.9rem] leading-[1.9] text-ivory/45">
-                  {locale === "ar"
-                    ? "كل خدمة تعمل ضمن منظومة واحدة: نفس المعايير، نفس الشفافية، ونفس المسؤولية من أول اجتماع إلى آخر مفتاح."
-                    : "Every service runs inside one system: the same standards, the same transparency, and the same accountability from first meeting to final key."}
+                  {t.sections.inline.servicesMethodText}
                 </p>
               </Reveal>
             </div>
@@ -324,10 +292,10 @@ export function ServicesPage() {
                   <div className="flex h-full flex-col bg-coal p-6">
                     <span className="tabular text-[0.55rem] text-gold/70">{step.number}</span>
                     <h3 className="mt-5 font-display text-xl text-ivory">
-                      {locale === "ar" ? step.ar : step.en}
+                      {step.title[locale]}
                     </h3>
                     <p className="mt-2 text-[0.75rem] leading-relaxed text-ivory/40">
-                      {locale === "ar" ? step.textAr : step.textEn}
+                      {step.text[locale]}
                     </p>
                   </div>
                 </Reveal>

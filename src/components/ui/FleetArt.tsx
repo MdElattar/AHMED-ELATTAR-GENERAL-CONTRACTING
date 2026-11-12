@@ -3,6 +3,9 @@
 import Image from "next/image";
 import type { FleetArtVariant } from "@/data/fleet";
 import { fleetPhotos } from "@/data/media";
+import { useI18n } from "@/components/providers/I18nProvider";
+import { useWorkspace } from "@/components/providers/WorkspaceProvider";
+import { resolveMedia } from "@/lib/cms";
 import { cn } from "@/lib/utils";
 
 export function FleetArt({
@@ -14,7 +17,10 @@ export function FleetArt({
   className?: string;
   label?: string;
 }) {
-  const photo = fleetPhotos[variant] ?? fleetPhotos["tower-crane"];
+  const { locale } = useI18n();
+  const { content } = useWorkspace();
+  const fallback = fleetPhotos[variant] ?? fleetPhotos["tower-crane"];
+  const photo = resolveMedia(content.mediaOverrides, `fleet.${variant}`, fallback, locale);
 
   return (
     <div className={cn("relative h-full w-full overflow-hidden bg-coal", className)}>

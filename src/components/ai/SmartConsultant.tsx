@@ -29,151 +29,6 @@ const BUDGET_RANGE: Record<BudgetBand, { min: number; max: number }> = {
   "1000-plus": { min: 1_000_000_000, max: Number.POSITIVE_INFINITY },
 };
 
-const copy = {
-  ar: {
-    name: "العطار الذكي",
-    role: "مستشار المشاريع الذكي",
-    online: "متصل الآن",
-    open: "افتح العطار الذكي",
-    close: "إغلاق المستشار",
-    intro:
-      "أهلاً بك. أنا العطار الذكي — مستشارك الأول لتقدير المشاريع. ثلاث خطوات سريعة وسأصدر لك جدوى أولية مبنية على بيانات محفظتنا الفعلية منذ ١٩٨٧.",
-    askType: "ما نوع المشروع الذي تدرسه؟",
-    askArea: "ممتاز. ما المساحة التقريبية (م²)؟",
-    areaHint: "حرّك المؤشر أو اكتب القيمة مباشرة",
-    areaUnit: "م²",
-    confirmArea: "تأكيد المساحة",
-    askBudget: "وما النطاق التقريبي للميزانية؟",
-    askLocation: "أين سيُقام المشروع؟",
-    thinking: "أحلّل المعطيات…",
-    userArea: (area: string) => `مساحة تقريبية: ${area} م²`,
-    resultTitle: "الجدوى الأولية",
-    range: "نطاق التكلفة",
-    months: "المدة المتوقعة",
-    monthsUnit: "شهراً",
-    perM2: "ريال / م²",
-    verdict: {
-      label: "موقف الميزانية",
-      aligned: "ضمن الميزانية",
-      headroom: "مساحة لرفع المواصفات",
-      gap: "يتطلب جدولة مراحل",
-    },
-    verdictNote: {
-      aligned: "تقديرك يقع داخل النطاق المالي الذي حددته.",
-      headroom: "ميزانيتك تتيح مساحة أكبر أو مستوى تشطيب أعلى.",
-      gap: "التقدير يتجاوز النطاق — نقترح تنفيذاً على مراحل أو مراجعة النطاق.",
-    },
-    breakdown: "توزيع التكلفة",
-    parts: {
-      structure: "الهيكل والأعمال المدنية",
-      finishes: "التشطيبات",
-      mep: "الكهروميكانيك",
-      management: "الإدارة والجودة",
-    },
-    nextSteps: "الخطوات التالية",
-    steps: [
-      "مراجعة أولية للمخططات خلال ٤٨ ساعة",
-      "زيارة موقع واجتماع مع فريق الهندسة",
-      "عرض تفصيلي ومالي موقّع",
-    ],
-    disclaimer:
-      "تقدير استرشادي لا يُعد عرضاً تعاقدياً. النتائج مبنية على متوسطات محفظتنا المنفذة.",
-    cta: "اطلب استشارة رسمية",
-    again: "قيّم مشروعاً آخر",
-    types: {
-      residential: "سكني فاخر",
-      commercial: "تجاري / مكاتب",
-      infrastructure: "بنية تحتية",
-      industrial: "صناعي",
-    } as Record<EstimateType, string>,
-    budgets: {
-      "under-50": "أقل من ٥٠ مليون",
-      "50-200": "٥٠ – ٢٠٠ مليون",
-      "200-1000": "٢٠٠ مليون – مليار",
-      "1000-plus": "أكثر من مليار",
-    } as Record<BudgetBand, string>,
-    cities: {
-      riyadh: "الرياض",
-      jeddah: "جدة",
-      neom: "نيوم",
-      other: "مدينة أخرى",
-      cairo: "مصر — القاهرة",
-    } as Record<EstimateCity, string>,
-    budgetUnit: "ر.س",
-  },
-  en: {
-    name: "Elattar AI",
-    role: "Smart project consultant",
-    online: "Online",
-    open: "Open Elattar AI",
-    close: "Close consultant",
-    intro:
-      "Welcome. I am Elattar AI — your first-pass project consultant. Three quick questions and I will issue a preliminary feasibility read built on our portfolio data since 1987.",
-    askType: "What type of project are you studying?",
-    askArea: "Excellent. What is the approximate built area (m²)?",
-    areaHint: "Drag the slider or type the value directly",
-    areaUnit: "m²",
-    confirmArea: "Confirm area",
-    askBudget: "And the approximate budget range?",
-    askLocation: "Where will the project be located?",
-    thinking: "Analysing inputs…",
-    userArea: (area: string) => `Approximate area: ${area} m²`,
-    resultTitle: "Preliminary feasibility",
-    range: "Cost range",
-    months: "Expected duration",
-    monthsUnit: "months",
-    perM2: "SAR / m²",
-    verdict: {
-      label: "Budget position",
-      aligned: "Within budget",
-      headroom: "Room to raise spec",
-      gap: "Needs phasing",
-    },
-    verdictNote: {
-      aligned: "The estimate sits inside the range you set.",
-      headroom: "Your budget allows more area or a higher finish level.",
-      gap: "The estimate exceeds the range — we suggest phased delivery or a scope review.",
-    },
-    breakdown: "Cost breakdown",
-    parts: {
-      structure: "Structure & civil works",
-      finishes: "Finishes",
-      mep: "MEP",
-      management: "Management & QA",
-    },
-    nextSteps: "Next steps",
-    steps: [
-      "Initial drawing review within 48 hours",
-      "Site visit and engineering team meeting",
-      "Signed detailed technical & financial proposal",
-    ],
-    disclaimer:
-      "Indicative only; not a contractual offer. Figures are based on our delivered portfolio averages.",
-    cta: "Request formal consultation",
-    again: "Estimate another project",
-    types: {
-      residential: "Luxury residential",
-      commercial: "Commercial / offices",
-      infrastructure: "Infrastructure",
-      industrial: "Industrial",
-    } as Record<EstimateType, string>,
-    budgets: {
-      "under-50": "Under SAR 50M",
-      "50-200": "SAR 50–200M",
-      "200-1000": "SAR 200M–1B",
-      "1000-plus": "Above SAR 1B",
-    } as Record<BudgetBand, string>,
-    cities: {
-      riyadh: "Riyadh",
-      jeddah: "Jeddah",
-      neom: "NEOM",
-      other: "Another city",
-      cairo: "Egypt — Cairo",
-    } as Record<EstimateCity, string>,
-    budgetUnit: "SAR",
-  },
-};
-
 const THINKING_MS = 850;
 
 /**
@@ -186,8 +41,8 @@ const THINKING_MS = 850;
  * calls, no personal data leaves the browser.
  */
 export function SmartConsultant() {
-  const { locale, isRTL } = useI18n();
-  const c = copy[locale];
+  const { t, locale, isRTL } = useI18n();
+  const c = t.sections.smartConsultant;
 
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -273,7 +128,7 @@ export function SmartConsultant() {
     }).format(area);
     setMessages((current) => [
       ...current,
-      { id: (messageIdRef.current += 1), role: "user", text: c.userArea(formatted) },
+      { id: (messageIdRef.current += 1), role: "user", text: c.userArea.replace("{area}", formatted) },
     ]);
     say(c.askBudget);
   };
@@ -479,7 +334,7 @@ export function SmartConsultant() {
                   <span className="mx-1.5 text-ivory/25">–</span>
                   <span className="tabular text-gold">{df.format(result.high / 1_000_000)}</span>
                   <span className="ms-1.5 text-[0.42em] font-sans uppercase tracking-[0.14em] text-ivory/40">
-                    {locale === "ar" ? "مليون ر.س" : "M SAR"}
+                    {t.sections.inline.smartMillionSuffix}
                   </span>
                 </p>
 
@@ -560,7 +415,7 @@ export function SmartConsultant() {
               <div className="border-t border-white/10 bg-obsidian/60 p-4">
                 {areaConfirmed ? (
                   <p className="text-[0.58rem] uppercase tracking-[0.16em] text-ivory/40">
-                    {c.userArea(nf.format(area))}
+                    {c.userArea.replace("{area}", nf.format(area))}
                   </p>
                 ) : (
                   <div>

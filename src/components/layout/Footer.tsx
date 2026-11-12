@@ -54,11 +54,11 @@ const socialLinks = [
   },
 ];
 
-const expertiseLinks = [
-  { href: "/services#general-contracting", ar: "المقاولات العامة", en: "General Contracting" },
-  { href: "/services#heavy-equipment", ar: "تأجير المعدات الثقيلة", en: "Heavy Equipment Rental" },
-  { href: "/services#civil-engineering", ar: "الهندسة المدنية", en: "Civil Engineering" },
-  { href: "/services#architectural-design", ar: "التصميم المعماري", en: "Architectural Design" },
+const expertiseHrefs = [
+  "/services#general-contracting",
+  "/services#heavy-equipment",
+  "/services#civil-engineering",
+  "/services#architectural-design",
 ];
 
 export function Footer() {
@@ -98,11 +98,7 @@ export function Footer() {
                 setSubscribed(false);
 
                 if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(normalized)) {
-                  setSubscribeError(
-                    locale === "ar"
-                      ? "يرجى إدخال بريد إلكتروني صحيح."
-                      : "Please enter a valid email address.",
-                  );
+                  setSubscribeError(t.sections.inline.newsletterInvalid);
                   return;
                 }
 
@@ -118,11 +114,7 @@ export function Footer() {
                   setSubscribed(true);
                   setEmail("");
                 } catch {
-                  setSubscribeError(
-                    locale === "ar"
-                      ? "تعذر الاشتراك حالياً. حاول مرة أخرى."
-                      : "Could not subscribe right now. Please try again.",
-                  );
+                  setSubscribeError(t.sections.inline.newsletterError);
                 } finally {
                   setSubscribing(false);
                 }
@@ -182,13 +174,13 @@ export function Footer() {
                 {t.footer.expertise}
               </h3>
               <ul className="mt-5 space-y-3">
-                {expertiseLinks.map((link) => (
-                  <li key={link.href}>
+                {expertiseHrefs.map((href, index) => (
+                  <li key={href}>
                     <Link
-                      href={link.href}
+                      href={href}
                       className="text-sm text-ivory/60 transition-colors hover:text-gold"
                     >
-                      {locale === "ar" ? link.ar : link.en}
+                      {t.sections.footerExpertise[index]?.title[locale] ?? href}
                     </Link>
                   </li>
                 ))}

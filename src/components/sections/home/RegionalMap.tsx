@@ -9,45 +9,6 @@ import { SectionHeading } from "@/components/ui/SectionHeading";
 import { regionMarkers, regionStats } from "@/data/company";
 import { cn } from "@/lib/utils";
 
-const copy = {
-  ar: {
-    eyebrow: "حضورنا الإقليمي",
-    title: "إرث يمتد خارج الحدود.",
-    description:
-      "من الرياض إلى الخليج، نعمل حيث تكون المشاريع الكبرى. اختر مدينة لاستكشاف محفظتنا ومشروعنا الأبرز فيها.",
-    countries: "دول",
-    projects: "مشروعاً",
-    value: "قيمة تعاقدية",
-    cities: "مدن",
-    flagship: "المشروع الأبرز",
-    select: "اختر مدينة على الخريطة",
-    status: {
-      delivered: "مُسلّم",
-      active: "قيد التنفيذ",
-      upcoming: "قادم",
-    },
-    cta: "استكشف المشاريع",
-  },
-  en: {
-    eyebrow: "Regional footprint",
-    title: "A legacy beyond borders.",
-    description:
-      "From Riyadh to the Gulf, we operate where the major projects are. Select a city to explore our portfolio and flagship work there.",
-    countries: "Countries",
-    projects: "Projects",
-    value: "Contract value",
-    cities: "Cities",
-    flagship: "Flagship project",
-    select: "Select a city on the map",
-    status: {
-      delivered: "Delivered",
-      active: "In progress",
-      upcoming: "Upcoming",
-    },
-    cta: "Explore projects",
-  },
-};
-
 const statusTone = {
   delivered: "bg-emerald-400/70",
   active: "bg-gold",
@@ -55,8 +16,8 @@ const statusTone = {
 };
 
 export function RegionalMap() {
-  const { locale, l, isRTL } = useI18n();
-  const c = copy[locale];
+  const { t, locale, l, isRTL } = useI18n();
+  const c = t.sections.regionalMap;
   const [activeId, setActiveId] = useState(regionMarkers[0].id);
   const active = regionMarkers.find((marker) => marker.id === activeId) ?? regionMarkers[0];
 

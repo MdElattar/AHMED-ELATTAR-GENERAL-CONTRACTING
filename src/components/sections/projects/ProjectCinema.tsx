@@ -13,6 +13,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useI18n } from "@/components/providers/I18nProvider";
+import { useWorkspace } from "@/components/providers/WorkspaceProvider";
 import { Modal } from "@/components/ui/Modal";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import {
@@ -23,54 +24,17 @@ import {
   type MediaAsset,
 } from "@/data/media";
 import type { ArtVariant, Project } from "@/data/projects";
+import { resolveMedia } from "@/lib/cms";
 import { cn } from "@/lib/utils";
 
-const copy = {
-  ar: {
-    eyebrow: "من الموقع إلى التوقيع",
-    title: "شاهد الفرق.",
-    description:
-      "اسحب الفاصل لمقارنة الموقع أثناء التنفيذ مع النتيجة النهائية، ثم افتح وضع السينما لمشاهدة المشروع بالكامل.",
-    before: "أثناء التنفيذ",
-    after: "بعد التسليم",
-    drag: "اسحب للمقارنة",
-    cinema: "وضع السينما 4K",
-    cinemaLabel: "سينما 4K",
-    play: "تشغيل",
-    pause: "إيقاف",
-    prev: "السابق",
-    next: "التالي",
-    fullscreen: "ملء الشاشة",
-    gallery: "معرض المشروع",
-    slide: "لقطة",
-    close: "إغلاق",
-  },
-  en: {
-    eyebrow: "From site to signature",
-    title: "See the difference.",
-    description:
-      "Drag the divider to compare the live construction site with the delivered result, then open cinema mode for the full project.",
-    before: "During construction",
-    after: "Delivered",
-    drag: "Drag to compare",
-    cinema: "4K cinema mode",
-    cinemaLabel: "4K cinema",
-    play: "Play",
-    pause: "Pause",
-    prev: "Previous",
-    next: "Next",
-    fullscreen: "Fullscreen",
-    gallery: "Project gallery",
-    slide: "Frame",
-    close: "Close",
-  },
-};
-
-const beforeByCategory: Record<Project["category"], MediaAsset> = {
-  commercial: craftsmanshipPhotos[2],
-  residential: craftsmanshipPhotos[1],
-  infrastructure: craftsmanshipPhotos[0],
-  industrial: cranePhotos[3],
+const beforeByCategory: Record<
+  Project["category"],
+  { key: string; fallback: MediaAsset }
+> = {
+  commercial: { key: "craftsmanship.2", fallback: craftsmanshipPhotos[2] },
+  residential: { key: "craftsmanship.1", fallback: craftsmanshipPhotos[1] },
+  infrastructure: { key: "craftsmanship.0", fallback: craftsmanshipPhotos[0] },
+  industrial: { key: "crane.3", fallback: cranePhotos[3] },
 };
 
 export function ProjectCinema({
@@ -80,21 +44,42 @@ export function ProjectCinema({
   project: Project;
   gallery?: ArtVariant[];
 }) {
-  const { locale, l } = useI18n();
-  const c = copy[locale];
+  const { t, locale, l } = useI18n();
+  const { content } = useWorkspace();
+  const c = t.sections.projectCinema;
   const [position, setPosition] = useState(52);
   const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
   const [playing, setPlaying] = useState(true);
   const stageRef = useRef<HTMLDivElement | null>(null);
 
-  const after = projectPhotos[project.art] ?? projectPhotos.tower;
-  const before = beforeByCategory[project.category] ?? craftsmanshipPhotos[2];
+  const after = resolveMedia(
+    content.mediaOverrides,
+    `project.${project.art}`,
+    projectPhotos[project.art] ?? projectPhotos.tower,
+    locale,
+  );
+  const beforeSlot = beforeByCategory[project.category] ?? beforeByCategory.commercial;
+  const before = resolveMedia(
+    content.mediaOverrides,
+    beforeSlot.key,
+    beforeSlot.fallback,
+    locale,
+  );
 
   const images = useMemo(() => {
     const variants = gallery?.length ? gallery : [project.art];
-    return [...new Set(variants)].map((variant) => projectPhotos[variant]).filter(Boolean);
-  }, [gallery, project.art]);
+    return [...new Set(variants)]
+      .map((variant) =>
+        resolveMedia(
+          content.mediaOverrides,
+          `project.${variant}`,
+          projectPhotos[variant],
+          locale,
+        ),
+      )
+      .filter(Boolean);
+  }, [content.mediaOverrides, gallery, locale, project.art]);
 
   useEffect(() => {
     if (!open || !playing || images.length < 2) return;

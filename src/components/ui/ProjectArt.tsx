@@ -3,6 +3,9 @@
 import Image from "next/image";
 import type { ArtVariant } from "@/data/projects";
 import { projectPhotos } from "@/data/media";
+import { useI18n } from "@/components/providers/I18nProvider";
+import { useWorkspace } from "@/components/providers/WorkspaceProvider";
+import { resolveMedia } from "@/lib/cms";
 import { cn } from "@/lib/utils";
 
 type ProjectArtProps = {
@@ -20,7 +23,10 @@ type ProjectArtProps = {
  * surface first, so a slow connection never exposes an empty card.
  */
 export function ProjectArt({ variant, className, label, priority = false }: ProjectArtProps) {
-  const photo = projectPhotos[variant] ?? projectPhotos.tower;
+  const { locale } = useI18n();
+  const { content } = useWorkspace();
+  const fallback = projectPhotos[variant] ?? projectPhotos.tower;
+  const photo = resolveMedia(content.mediaOverrides, `project.${variant}`, fallback, locale);
 
   return (
     <div className={cn("relative h-full w-full overflow-hidden bg-coal", className)}>

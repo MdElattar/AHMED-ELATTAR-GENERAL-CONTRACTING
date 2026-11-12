@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   Activity,
@@ -11,6 +12,7 @@ import {
   Building2,
   CalendarDays,
   Check,
+  ChevronDown,
   CircleDollarSign,
   FileSignature,
   FileText,
@@ -23,10 +25,13 @@ import {
   MessageSquare,
   Pencil,
   Plus,
+  RotateCcw,
   Save,
+  Search,
   Send,
   Settings,
   ShieldCheck,
+  Sparkles,
   Trash2,
   TrendingUp,
   Wallet,
@@ -49,10 +54,19 @@ import {
 import { Field, TextInput, Textarea } from "@/components/ui/Field";
 import { ProjectArt } from "@/components/ui/ProjectArt";
 import type { ArtVariant } from "@/data/projects";
-import { L } from "@/lib/dictionary";
+import { dictionary, L, type Localized } from "@/lib/dictionary";
+import {
+  copyGroupLabels,
+  flattenCopy,
+  isAllowedMediaSource,
+  mediaCatalog,
+  mediaGroupLabels,
+  type CopyField,
+  type MediaOverride,
+} from "@/lib/cms";
 import { cn } from "@/lib/utils";
 
-type Section =
+export type AdminSection =
   | "overview"
   | "projects"
   | "milestones"
@@ -65,6 +79,23 @@ type Section =
   | "media"
   | "messages"
   | "audit";
+
+type Section = AdminSection;
+
+const sectionHrefs: Record<Section, string> = {
+  overview: "/admin",
+  projects: "/admin/projects",
+  milestones: "/admin/milestones",
+  consultations: "/admin/consultations",
+  contracts: "/admin/contracts",
+  notifications: "/admin/notifications",
+  inquiries: "/admin/inquiries",
+  financials: "/admin/financials",
+  content: "/admin/site-content",
+  media: "/admin/media",
+  messages: "/admin/messages",
+  audit: "/admin/audit",
+};
 
 const copy = {
   ar: {
@@ -134,6 +165,24 @@ const copy = {
     serviceTagline: "السطر المختصر",
     serviceDescription: "الوصف",
     saveService: "حفظ الخدمة",
+    siteCopy: "نسخ الموقع الكامل",
+    siteCopyText:
+      "كل نص في الموقع العام — العناوين، الأوصاف، الأزرار، القوائم، والبيانات — قابل للتعديل هنا ويُحفظ مباشرة في قاعدة البيانات.",
+    searchCopy: "ابحث في النصوص...",
+    resetCopy: "مسح جميع التعديلات النصية",
+    saveCopy: "حفظ نسخ الموقع",
+    copySaved: "تم حفظ نسخ الموقع.",
+    allGroups: "كل الأقسام",
+    noCopyResults: "لا توجد نصوص مطابقة لبحثك.",
+    mediaAssets: "أصول الصور",
+    mediaAssetsText:
+      "استبدل أي صورة في الموقع برابط صورة جديد. اترك الحقل فارغاً للعودة إلى الصورة الأصلية.",
+    imageSource: "رابط الصورة",
+    imageAlt: "النص البديل",
+    resetAsset: "استعادة الأصل",
+    mediaHint: "https://... أو /path داخل الموقع",
+    customised: "معدّل",
+    original: "الأصل",
     mediaTitle: "مكتبة الوسائط",
     mediaText: "غيّر أغلفة المشاريع ومعارضها. التغييرات تظهر فوراً في الصفحة الرئيسية وصفحات المشاريع.",
     cover: "الغلاف",
@@ -245,6 +294,24 @@ const copy = {
     serviceTagline: "Short tagline",
     serviceDescription: "Description",
     saveService: "Save service",
+    siteCopy: "Complete site copy",
+    siteCopyText:
+      "Every string on the public site — headlines, descriptions, buttons, menus, and metadata — is editable here and persisted directly to the database.",
+    searchCopy: "Search copy...",
+    resetCopy: "Clear all copy overrides",
+    saveCopy: "Save site copy",
+    copySaved: "Site copy saved.",
+    allGroups: "All sections",
+    noCopyResults: "No copy matches your search.",
+    mediaAssets: "Image assets",
+    mediaAssetsText:
+      "Replace any photograph on the public site with a new image URL. Leave a field empty to inherit the original.",
+    imageSource: "Image URL",
+    imageAlt: "Alt text",
+    resetAsset: "Reset to original",
+    mediaHint: "https://... or a /path inside this site",
+    customised: "Customised",
+    original: "Original",
     mediaTitle: "Media library",
     mediaText: "Change project covers and galleries. Changes appear instantly on the homepage and project pages.",
     cover: "Cover",
@@ -307,14 +374,18 @@ const formatM = (value: number, locale: "ar" | "en") =>
     maximumFractionDigits: 1,
   }).format(value)}M`;
 
-export function AdminDashboard() {
+export function AdminDashboard({
+  initialSection = "overview",
+}: {
+  initialSection?: AdminSection;
+}) {
   const { locale } = useI18n();
   const { user, ready, signOut } = useAuth();
   const { projects, messages, addProject, updateProject, deleteProject } =
     useWorkspace();
   const router = useRouter();
   const c = copy[locale];
-  const [section, setSection] = useState<Section>("overview");
+  const [section, setSection] = useState<Section>(initialSection);
   const [editing, setEditing] = useState<WorkspaceProject | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
 
@@ -372,6 +443,11 @@ export function AdminDashboard() {
     { id: "audit", label: c.audit, icon: Activity },
   ];
 
+  const navigateToSection = (next: Section) => {
+    setSection(next);
+    router.push(sectionHrefs[next]);
+  };
+
   const openNew = () => {
     setEditing(null);
     setEditorOpen(true);
@@ -398,7 +474,7 @@ export function AdminDashboard() {
         </div>
         <div className="container-lux relative">
           <div className="grid gap-6 lg:grid-cols-[220px_1fr]">
-            <aside className="h-fit border border-white/10 bg-coal/80 p-4 backdrop-blur">
+            <aside className="h-fit border border-white/10 bg-coal/80 p-4 backdrop-blur transition-[border-color,box-shadow,transform] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:border-gold/20 hover:shadow-[0_34px_90px_-46px_rgba(212,175,55,0.45)]">
               <div className="border-b border-white/10 pb-4">
                 <span className="text-[0.52rem] uppercase tracking-[0.18em] text-gold">
                   {c.admin}
@@ -406,25 +482,82 @@ export function AdminDashboard() {
                 <p className="mt-1 font-display text-2xl leading-none text-ivory">{c.control}</p>
               </div>
               <nav className="mt-3 flex flex-col gap-1" aria-label={c.admin}>
-                {navItems.map(({ id, label, icon: Icon }) => (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => setSection(id)}
-                    className={cn(
-                      "flex items-center gap-2.5 px-3 py-2.5 text-start text-[0.66rem] font-medium transition-colors",
-                      section === id
-                        ? "bg-gold text-obsidian"
-                        : "text-ivory/50 hover:bg-white/5 hover:text-ivory",
-                    )}
-                  >
-                    <Icon className="h-4 w-4" />
-                    <span className="flex-1">{label}</span>
-                    {id === "messages" ? (
-                      <span className="tabular text-[0.55rem] opacity-60">{messages.length}</span>
-                    ) : null}
-                  </button>
-                ))}
+                {navItems.map(({ id, label, icon: Icon }) => {
+                  const active = section === id;
+                  return (
+                    <Link
+                      key={id}
+                      href={sectionHrefs[id]}
+                      onClick={() => setSection(id)}
+                      aria-current={active ? "page" : undefined}
+                      className={cn(
+                        "group relative flex items-center gap-2.5 overflow-hidden px-3 py-2.5 text-start text-[0.66rem] font-medium",
+                        "transition-[padding,background-color,color,box-shadow,transform] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
+                        "hover:ps-4 active:scale-[0.985] active:duration-150",
+                        active
+                          ? "bg-gold text-obsidian shadow-[0_10px_30px_-16px_rgba(212,175,55,0.85)]"
+                          : "text-ivory/50 hover:bg-white/[0.055] hover:text-ivory",
+                      )}
+                    >
+                      <span
+                        aria-hidden="true"
+                        className={cn(
+                          "pointer-events-none absolute inset-y-1 start-0 w-[2px] origin-center bg-gold transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]",
+                          active
+                            ? "scale-y-100 opacity-100"
+                            : "scale-y-0 opacity-0 group-hover:scale-y-100 group-hover:opacity-70",
+                        )}
+                      />
+                      <span
+                        aria-hidden="true"
+                        className={cn(
+                          "pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-gold/12 via-gold/[0.04] to-transparent transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-x-0 rtl:translate-x-full rtl:group-hover:translate-x-0",
+                          active && "hidden",
+                        )}
+                      />
+                      <span
+                        className={cn(
+                          "relative flex h-7 w-7 shrink-0 items-center justify-center rounded-sm transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:-translate-y-0.5 group-hover:scale-105",
+                          active
+                            ? "bg-obsidian/12 text-obsidian"
+                            : "bg-white/[0.035] text-ivory/55 group-hover:bg-gold/12 group-hover:text-gold",
+                        )}
+                      >
+                        <Icon className="h-4 w-4 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:rotate-[-6deg] group-hover:scale-110" />
+                      </span>
+                      <span
+                        className={cn(
+                          "relative flex-1 truncate transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5",
+                          active && "tracking-[0.01em]",
+                        )}
+                      >
+                        {label}
+                      </span>
+                      {id === "messages" ? (
+                        <span
+                          className={cn(
+                            "relative tabular text-[0.55rem] transition-all duration-300",
+                            active
+                              ? "text-obsidian/60"
+                              : "text-ivory/40 group-hover:scale-110 group-hover:text-gold",
+                          )}
+                        >
+                          {messages.length}
+                        </span>
+                      ) : (
+                        <span
+                          aria-hidden="true"
+                          className={cn(
+                            "relative h-1 w-1 rounded-full bg-gold transition-all duration-300",
+                            active
+                              ? "scale-100 opacity-100"
+                              : "scale-0 opacity-0 group-hover:scale-100 group-hover:opacity-70",
+                          )}
+                        />
+                      )}
+                    </Link>
+                  );
+                })}
               </nav>
 
               <div className="mt-4 space-y-1 border-t border-white/10 pt-3">
@@ -489,7 +622,7 @@ export function AdminDashboard() {
 
               <div className="mt-6">
                 {section === "overview" ? (
-                  <OverviewSection projects={projects} messages={messages} onNew={openNew} onNavigate={setSection} />
+                  <OverviewSection projects={projects} messages={messages} onNew={openNew} onNavigate={navigateToSection} />
                 ) : null}
                 {section === "projects" ? (
                   <ProjectsSection
@@ -1157,6 +1290,14 @@ function ContentSection() {
 
   const saveContent = (event: React.FormEvent) => {
     event.preventDefault();
+    // The hero form is the direct control for these four fields. Remove any
+    // older copy override for the same paths so the form is authoritative.
+    const copyOverrides = { ...content.copyOverrides };
+    delete copyOverrides["hero.eyebrow"];
+    delete copyOverrides["hero.titleTop"];
+    delete copyOverrides["hero.titleAccent"];
+    delete copyOverrides["hero.description"];
+
     updateContent({
       heroEyebrow: L(hero.eyebrowAr, hero.eyebrowEn),
       heroTitleTop: L(hero.titleTopAr, hero.titleTopEn),
@@ -1166,6 +1307,7 @@ function ContentSection() {
       promoText: L(hero.promoTextAr, hero.promoTextEn),
       promoHref: hero.promoHref,
       promoVisible: hero.promoVisible,
+      copyOverrides,
     });
     flashSaved();
   };
@@ -1180,6 +1322,182 @@ function ContentSection() {
     });
     flashSaved();
   };
+
+  const copyFields = useMemo(() => flattenCopy(dictionary.ar), []);
+  const copyGroups = useMemo(
+    () => Array.from(new Set(copyFields.map((field) => field.group))),
+    [copyFields],
+  );
+  const [copyDraft, setCopyDraft] = useState<Record<string, Localized>>({});
+  const [copyQuery, setCopyQuery] = useState("");
+  const [copyGroup, setCopyGroup] = useState("all");
+  const [copyNotice, setCopyNotice] = useState(false);
+  const copyNoticeTimer = useRef<number | null>(null);
+
+  const fieldFallback = useCallback(
+    (field: CopyField): Localized => {
+      if (field.path === "hero.eyebrow") return content.heroEyebrow;
+      if (field.path === "hero.titleTop") return content.heroTitleTop;
+      if (field.path === "hero.titleAccent") return content.heroTitleAccent;
+      if (field.path === "hero.description") return content.heroDescription;
+      return { ar: field.ar, en: field.en };
+    },
+    [
+      content.heroDescription,
+      content.heroEyebrow,
+      content.heroTitleAccent,
+      content.heroTitleTop,
+    ],
+  );
+
+  const flashCopyNotice = () => {
+    setCopyNotice(true);
+    if (copyNoticeTimer.current) window.clearTimeout(copyNoticeTimer.current);
+    copyNoticeTimer.current = window.setTimeout(() => setCopyNotice(false), 2400);
+  };
+
+  const effectiveCopy = useCallback(
+    (path: string, fallback: Localized, lang: "ar" | "en") =>
+      copyDraft[path]?.[lang] ??
+      content.copyOverrides[path]?.[lang] ??
+      fallback[lang],
+    [content.copyOverrides, copyDraft],
+  );
+
+  const updateCopyValue = (
+    path: string,
+    fallback: Localized,
+    lang: "ar" | "en",
+    value: string,
+  ) => {
+    setCopyDraft((current) => ({
+      ...current,
+      [path]: {
+        ar: lang === "ar" ? value : effectiveCopy(path, fallback, "ar"),
+        en: lang === "en" ? value : effectiveCopy(path, fallback, "en"),
+      },
+    }));
+  };
+
+  const saveCopy = (event: React.FormEvent) => {
+    event.preventDefault();
+    const next: Record<string, Localized> = {};
+    for (const field of copyFields) {
+      const fallback = fieldFallback(field);
+      const ar = effectiveCopy(field.path, fallback, "ar").trim();
+      const en = effectiveCopy(field.path, fallback, "en").trim();
+      if ((ar && ar !== fallback.ar) || (en && en !== fallback.en)) {
+        next[field.path] = { ar, en };
+      }
+    }
+    updateContent({ copyOverrides: next });
+    setCopyDraft({});
+    flashCopyNotice();
+  };
+
+  const resetCopy = () => {
+    setCopyDraft({});
+    updateContent({ copyOverrides: {} });
+    flashCopyNotice();
+  };
+
+  const filteredCopyFields = useMemo(() => {
+    const query = copyQuery.trim().toLowerCase();
+    return copyFields.filter((field) => {
+      if (copyGroup !== "all" && field.group !== copyGroup) return false;
+      if (!query) return true;
+      return (
+        field.path.toLowerCase().includes(query) ||
+        field.ar.toLowerCase().includes(query) ||
+        field.en.toLowerCase().includes(query)
+      );
+    });
+  }, [copyFields, copyGroup, copyQuery]);
+
+  const [mediaDraft, setMediaDraft] = useState<Record<string, MediaOverride>>({});
+  const [mediaNotice, setMediaNotice] = useState(false);
+  const mediaNoticeTimer = useRef<number | null>(null);
+  const mediaGroups = useMemo(
+    () => Array.from(new Set(mediaCatalog.map((asset) => asset.group))),
+    [],
+  );
+
+  const flashMediaNotice = () => {
+    setMediaNotice(true);
+    if (mediaNoticeTimer.current) window.clearTimeout(mediaNoticeTimer.current);
+    mediaNoticeTimer.current = window.setTimeout(() => setMediaNotice(false), 2400);
+  };
+
+  const effectiveMedia = (key: string): MediaOverride =>
+    mediaDraft[key] ??
+    content.mediaOverrides[key] ?? {
+      src: "",
+      alt: L("", ""),
+    };
+
+  const previewMedia = (key: string) => {
+    const override = effectiveMedia(key);
+    const entry = mediaCatalog.find((asset) => asset.key === key);
+    return override.src.trim() || entry?.fallback.src || "";
+  };
+
+  const updateMedia = (key: string, patch: Partial<MediaOverride>) => {
+    const current = effectiveMedia(key);
+    setMediaDraft((draft) => ({
+      ...draft,
+      [key]: {
+        src: patch.src ?? current.src,
+        alt: patch.alt ?? current.alt,
+      },
+    }));
+  };
+
+  const updateMediaAlt = (key: string, lang: "ar" | "en", value: string) => {
+    const current = effectiveMedia(key);
+    updateMedia(key, {
+      alt: {
+        ar: lang === "ar" ? value : current.alt.ar,
+        en: lang === "en" ? value : current.alt.en,
+      },
+    });
+  };
+
+  const saveMedia = (event: React.FormEvent) => {
+    event.preventDefault();
+    const next: Record<string, MediaOverride> = {};
+    for (const asset of mediaCatalog) {
+      const current = effectiveMedia(asset.key);
+      const src = current.src.trim();
+      if (!src || !isAllowedMediaSource(src)) continue;
+      next[asset.key] = {
+        src,
+        alt: {
+          ar: current.alt.ar.trim(),
+          en: current.alt.en.trim(),
+        },
+      };
+    }
+    updateContent({ mediaOverrides: next });
+    setMediaDraft({});
+    flashMediaNotice();
+  };
+
+  const resetMedia = (key: string) => {
+    const nextDraft = { ...mediaDraft };
+    delete nextDraft[key];
+    setMediaDraft(nextDraft);
+    const nextOverrides = { ...content.mediaOverrides };
+    delete nextOverrides[key];
+    updateContent({ mediaOverrides: nextOverrides });
+    flashMediaNotice();
+  };
+
+  useEffect(() => {
+    return () => {
+      if (copyNoticeTimer.current) window.clearTimeout(copyNoticeTimer.current);
+      if (mediaNoticeTimer.current) window.clearTimeout(mediaNoticeTimer.current);
+    };
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -1408,6 +1726,287 @@ function ContentSection() {
           >
             <Save className="h-3.5 w-3.5" />
             {c.saveService}
+          </button>
+        </div>
+      </form>
+      <form onSubmit={saveCopy} className="border border-white/10 bg-coal">
+        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-white/10 px-5 py-4">
+          <div>
+            <span className="flex items-center gap-2 text-[0.55rem] font-semibold uppercase tracking-[0.16em] text-gold">
+              <Sparkles className="h-3.5 w-3.5" />
+              {c.siteCopy}
+            </span>
+            <p className="mt-2 max-w-2xl text-[0.6rem] leading-relaxed text-ivory/35">
+              {c.siteCopyText}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={resetCopy}
+            className="inline-flex h-8 items-center gap-1.5 border border-white/12 px-3 text-[0.52rem] font-semibold uppercase tracking-[0.12em] text-ivory/40 transition-all duration-300 hover:border-gold/40 hover:text-gold active:scale-[0.98]"
+          >
+            <RotateCcw className="h-3 w-3" />
+            {c.resetCopy}
+          </button>
+        </div>
+
+        <div className="flex flex-col gap-3 border-b border-white/10 p-4 sm:flex-row sm:items-center">
+          <label className="relative flex-1">
+            <Search className="pointer-events-none absolute start-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ivory/25" />
+            <TextInput
+              value={copyQuery}
+              onChange={(event) => setCopyQuery(event.target.value)}
+              placeholder={c.searchCopy}
+              className="ps-9"
+              aria-label={c.searchCopy}
+            />
+          </label>
+          <select
+            value={copyGroup}
+            onChange={(event) => setCopyGroup(event.target.value)}
+            className="h-10 border border-white/12 bg-coal px-3 text-[0.62rem] text-ivory/60 outline-none transition-colors focus:border-gold/50"
+            aria-label={c.allGroups}
+          >
+            <option value="all">{c.allGroups}</option>
+            {copyGroups.map((group) => (
+              <option key={group} value={group}>
+                {(copyGroupLabels[group] ?? { ar: group, en: group })[locale]}
+              </option>
+            ))}
+          </select>
+          <span className="text-[0.55rem] text-ivory/30">
+            {filteredCopyFields.length} / {copyFields.length}
+          </span>
+        </div>
+
+        <div className="space-y-2 p-4">
+          {filteredCopyFields.length === 0 ? (
+            <p className="py-8 text-center text-[0.62rem] text-ivory/30">{c.noCopyResults}</p>
+          ) : (
+            copyGroups.map((group) => {
+              const groupFields = filteredCopyFields.filter((field) => field.group === group);
+              if (groupFields.length === 0) return null;
+              const label = copyGroupLabels[group] ?? { ar: group, en: group };
+              return (
+                <details
+                  key={group}
+                  open={copyQuery.trim().length > 0 ? true : undefined}
+                  className="group/copy border border-white/8 bg-obsidian/25"
+                >
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-[0.58rem] font-semibold uppercase tracking-[0.14em] text-ivory/55 transition-colors hover:text-gold [&::-webkit-details-marker]:hidden">
+                    <span className="flex items-center gap-2">
+                      <ChevronDown className="h-3.5 w-3.5 text-gold/60 transition-transform duration-300 group-open/copy:rotate-180" />
+                      {label[locale]}
+                    </span>
+                    <span className="tabular text-[0.5rem] text-ivory/25">{groupFields.length}</span>
+                  </summary>
+                  <div className="space-y-1 border-t border-white/8 p-3">
+                    {groupFields.map((field) => {
+                      const customised = Boolean(
+                        copyDraft[field.path] || content.copyOverrides[field.path],
+                      );
+                      return (
+                        <div
+                          key={field.path}
+                          className="grid gap-2 rounded-sm border border-transparent px-2 py-2 transition-colors hover:border-white/8 hover:bg-white/[0.025] lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.2fr)_minmax(0,1.2fr)] lg:items-center"
+                        >
+                          <div className="min-w-0">
+                            <code className="block truncate text-[0.55rem] text-ivory/40" dir="ltr">
+                              {field.path}
+                            </code>
+                            <span
+                              className={cn(
+                                "mt-0.5 inline-block text-[0.44rem] uppercase tracking-[0.12em]",
+                                customised ? "text-gold/70" : "text-ivory/20",
+                              )}
+                            >
+                              {customised ? c.customised : c.original}
+                            </span>
+                          </div>
+                          <TextInput
+                            value={effectiveCopy(
+                              field.path,
+                              fieldFallback(field),
+                              "ar",
+                            )}
+                            onChange={(event) =>
+                              updateCopyValue(
+                                field.path,
+                                fieldFallback(field),
+                                "ar",
+                                event.target.value,
+                              )
+                            }
+                            dir="rtl"
+                            aria-label={`${field.path} — العربية`}
+                          />
+                          <TextInput
+                            value={effectiveCopy(
+                              field.path,
+                              fieldFallback(field),
+                              "en",
+                            )}
+                            onChange={(event) =>
+                              updateCopyValue(
+                                field.path,
+                                fieldFallback(field),
+                                "en",
+                                event.target.value,
+                              )
+                            }
+                            dir="ltr"
+                            aria-label={`${field.path} — English`}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </details>
+              );
+            })
+          )}
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 p-4">
+          <span className="text-[0.58rem] text-ivory/30">{copyNotice ? c.copySaved : ""}</span>
+          <button
+            type="submit"
+            className="inline-flex h-9 items-center gap-2 bg-gold px-4 text-[0.56rem] font-semibold uppercase tracking-[0.12em] text-obsidian transition-all duration-300 hover:bg-gold-light active:scale-[0.98]"
+          >
+            {copyNotice ? <Check className="h-3.5 w-3.5" /> : <Save className="h-3.5 w-3.5" />}
+            {c.saveCopy}
+          </button>
+        </div>
+      </form>
+
+      <form onSubmit={saveMedia} className="border border-white/10 bg-coal">
+        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-white/10 px-5 py-4">
+          <div>
+            <span className="flex items-center gap-2 text-[0.55rem] font-semibold uppercase tracking-[0.16em] text-gold">
+              <ImageIcon className="h-3.5 w-3.5" />
+              {c.mediaAssets}
+            </span>
+            <p className="mt-2 max-w-2xl text-[0.6rem] leading-relaxed text-ivory/35">
+              {c.mediaAssetsText}
+            </p>
+          </div>
+          <span className="border border-white/10 px-2.5 py-1 text-[0.48rem] uppercase tracking-[0.12em] text-ivory/30">
+            {mediaCatalog.length}
+          </span>
+        </div>
+
+        <div className="space-y-2 p-4">
+          {mediaGroups.map((group) => {
+            const assets = mediaCatalog.filter((asset) => asset.group === group);
+            const label = mediaGroupLabels[group] ?? { ar: group, en: group };
+            return (
+              <details
+                key={group}
+                className="group/media border border-white/8 bg-obsidian/25"
+              >
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-[0.58rem] font-semibold uppercase tracking-[0.14em] text-ivory/55 transition-colors hover:text-gold [&::-webkit-details-marker]:hidden">
+                  <span className="flex items-center gap-2">
+                    <ChevronDown className="h-3.5 w-3.5 text-gold/60 transition-transform duration-300 group-open/media:rotate-180" />
+                    {label[locale]}
+                  </span>
+                  <span className="tabular text-[0.5rem] text-ivory/25">{assets.length}</span>
+                </summary>
+                <div className="grid gap-3 border-t border-white/8 p-3 xl:grid-cols-2">
+                  {assets.map((asset) => {
+                    const value = effectiveMedia(asset.key);
+                    const preview = previewMedia(asset.key);
+                    const customised = Boolean(
+                      mediaDraft[asset.key] || content.mediaOverrides[asset.key],
+                    );
+                    return (
+                      <div
+                        key={asset.key}
+                        className="grid gap-3 border border-white/8 bg-coal/60 p-3 sm:grid-cols-[112px_1fr]"
+                      >
+                        <div className="relative aspect-[4/3] overflow-hidden border border-white/10 bg-obsidian">
+                          {preview ? (
+                            <Image
+                              src={preview}
+                              alt=""
+                              fill
+                              sizes="112px"
+                              className="object-cover"
+                            />
+                          ) : null}
+                        </div>
+                        <div className="min-w-0 space-y-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="min-w-0">
+                              <p className="truncate text-[0.62rem] text-ivory/65">
+                                {asset.label[locale]}
+                              </p>
+                              <code className="block truncate text-[0.48rem] text-ivory/30" dir="ltr">
+                                {asset.key}
+                              </code>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => resetMedia(asset.key)}
+                              className="shrink-0 text-ivory/25 transition-colors hover:text-gold"
+                              title={c.resetAsset}
+                              aria-label={`${c.resetAsset}: ${asset.key}`}
+                            >
+                              <RotateCcw className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                          <TextInput
+                            value={value.src}
+                            placeholder={asset.fallback.src}
+                            onChange={(event) =>
+                              updateMedia(asset.key, { src: event.target.value })
+                            }
+                            dir="ltr"
+                            aria-label={`${c.imageSource}: ${asset.key}`}
+                          />
+                          <div className="grid gap-2 sm:grid-cols-2">
+                            <TextInput
+                              value={value.alt.ar}
+                              placeholder={asset.fallback.alt}
+                              onChange={(event) =>
+                                updateMediaAlt(asset.key, "ar", event.target.value)
+                              }
+                              dir="rtl"
+                              aria-label={`${c.imageAlt} — العربية`}
+                            />
+                            <TextInput
+                              value={value.alt.en}
+                              placeholder={asset.fallback.alt}
+                              onChange={(event) =>
+                                updateMediaAlt(asset.key, "en", event.target.value)
+                              }
+                              dir="ltr"
+                              aria-label={`${c.imageAlt} — English`}
+                            />
+                          </div>
+                          <div className="flex items-center justify-between gap-2 text-[0.46rem] uppercase tracking-[0.1em]">
+                            <span className={customised ? "text-gold/70" : "text-ivory/20"}>
+                              {customised ? c.customised : c.original}
+                            </span>
+                            <span className="truncate text-ivory/20">{c.mediaHint}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </details>
+            );
+          })}
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 p-4">
+          <span className="text-[0.58rem] text-ivory/30">{mediaNotice ? c.saved : ""}</span>
+          <button
+            type="submit"
+            className="inline-flex h-9 items-center gap-2 border border-gold/40 px-4 text-[0.56rem] font-semibold uppercase tracking-[0.12em] text-gold transition-all duration-300 hover:bg-gold hover:text-obsidian active:scale-[0.98]"
+          >
+            {mediaNotice ? <Check className="h-3.5 w-3.5" /> : <Save className="h-3.5 w-3.5" />}
+            {c.mediaAssets}
           </button>
         </div>
       </form>
