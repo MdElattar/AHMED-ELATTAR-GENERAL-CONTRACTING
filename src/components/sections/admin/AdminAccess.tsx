@@ -38,7 +38,6 @@ type PendingGrant = {
   targetEmail: string;
   mode: GrantMode;
   expiresAt: string;
-  devCode?: string;
 };
 
 const copy = {
@@ -75,8 +74,6 @@ const copy = {
     confirm: "تأكيد ومنح الصلاحية",
     confirming: "جارٍ التأكيد...",
     cancel: "إلغاء",
-    devCode: "رمز التطوير",
-    devCodeHint: "لا يوجد مزود بريد في بيئة التطوير، لذا يظهر الرمز هنا.",
     revoke: "سحب الصلاحية",
     revokeConfirm: "سحب الصلاحية الإدارية من هذا الحساب؟ ستنتهي جلساته الإدارية فوراً.",
     reload: "تحديث",
@@ -134,8 +131,6 @@ const copy = {
     confirm: "Confirm and grant access",
     confirming: "Confirming...",
     cancel: "Cancel",
-    devCode: "Development code",
-    devCodeHint: "No email provider is configured locally, so the code is shown here.",
     revoke: "Revoke access",
     revokeConfirm:
       "Revoke admin access from this account? Their admin session will end immediately.",
@@ -290,7 +285,6 @@ export function AdminAccess() {
         targetEmail: record.targetEmail,
         mode: record.mode,
         expiresAt: record.expiresAt,
-        ...(typeof record.devCode === "string" ? { devCode: record.devCode } : {}),
       });
       setCode("");
       setPrimaryPassword("");
@@ -464,14 +458,6 @@ export function AdminAccess() {
               {pending.mode === "promote" ? c.promote : c.create}
             </span>
           </div>
-
-          {pending.devCode ? (
-            <div className="mt-4 border border-dashed border-gold/30 bg-gold/[0.04] px-4 py-3">
-              <p className="text-[0.7rem] uppercase tracking-[0.14em] text-gold/70">{c.devCode}</p>
-              <p className="mt-1 font-mono text-xl tracking-[0.35em] text-gold">{pending.devCode}</p>
-              <p className="mt-1 text-[0.74rem] text-ivory/45">{c.devCodeHint}</p>
-            </div>
-          ) : null}
 
           <div className="mt-5 max-w-xs">
             <Field label={c.otpCode} htmlFor="admin-otp" required>

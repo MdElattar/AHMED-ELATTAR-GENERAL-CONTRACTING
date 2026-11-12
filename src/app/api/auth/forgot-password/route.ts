@@ -69,9 +69,9 @@ export async function POST(request: NextRequest) {
       locale,
     });
 
-    if (!delivery.delivered && process.env.NODE_ENV === "production") {
+    if (!delivery.delivered) {
       console.error(
-        "[auth] OTP delivery is not configured. Set RESEND_API_KEY and OTP_FROM_EMAIL.",
+        "[auth] OTP delivery failed. Confirm RESEND_API_KEY and OTP_FROM_EMAIL are valid.",
       );
       return NextResponse.json(
         { error: "email_unavailable" },
@@ -92,11 +92,6 @@ export async function POST(request: NextRequest) {
       {
         ok: true,
         expiresIn: OTP_TTL_SECONDS,
-        // Local development has no inbox wired up. Expose the code only in
-        // non-production so a real deployment can never leak it.
-        ...(delivery.provider === "development" && process.env.NODE_ENV !== "production"
-          ? { devCode: code }
-          : {}),
       },
       { headers: NO_STORE_HEADERS },
     );

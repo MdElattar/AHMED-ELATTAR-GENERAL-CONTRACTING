@@ -26,7 +26,7 @@ export function Logo({
 
   return (
     <span className={cn("flex items-center gap-3.5", className)}>
-      <span className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[#B8860B]/40 bg-obsidian/90 p-1.5 shadow-[0_12px_30px_-16px_rgba(0,0,0,0.9)] ring-1 ring-inset ring-white/[0.06] backdrop-blur-md sm:h-10 sm:w-10">
+      <span className="relative flex h-10 w-10 shrink-0 items-center justify-center">
         <Image
           src="/aa-logo-v5.svg"
           alt={compact ? (isArabic ? "أحمد العطار" : "Ahmed Elattar") : ""}

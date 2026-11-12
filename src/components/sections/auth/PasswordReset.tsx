@@ -39,7 +39,6 @@ export function PasswordReset({ mode }: PasswordResetProps) {
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [error, setError] = useState("");
-  const [devCode, setDevCode] = useState("");
 
   const BackIcon = isRTL ? ArrowRight : ArrowLeft;
   const ForwardIcon = isRTL ? ArrowLeft : ArrowRight;
@@ -51,11 +50,6 @@ export function PasswordReset({ mode }: PasswordResetProps) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: email.trim().toLowerCase(), locale }),
     });
-    const data = (await response.json().catch(() => ({}))) as {
-      devCode?: unknown;
-      error?: unknown;
-    };
-
     if (!response.ok) {
       setError(
         response.status === 429 ? t.auth.otpRateLimited : t.auth.otpEmailUnavailable,
@@ -63,7 +57,6 @@ export function PasswordReset({ mode }: PasswordResetProps) {
       return false;
     }
 
-    setDevCode(typeof data.devCode === "string" ? data.devCode : "");
     return true;
   };
 
@@ -253,21 +246,6 @@ export function PasswordReset({ mode }: PasswordResetProps) {
                   .
                 </p>
 
-                {devCode ? (
-                  <div className="mt-5 border border-gold/25 bg-gold/[0.05] px-4 py-3">
-                    <p className="text-[0.6rem] uppercase tracking-[0.16em] text-gold">
-                      {t.auth.otpDevHint}
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => setCode(devCode)}
-                      className="mt-1 font-mono text-lg tracking-[0.35em] text-ivory transition-colors hover:text-gold"
-                    >
-                      {devCode}
-                    </button>
-                  </div>
-                ) : null}
-
                 <form onSubmit={submitCode} className="mt-7 flex flex-col gap-5" noValidate>
                   <Field label={t.auth.otpCode} htmlFor="reset-code" required >
                     <TextInput
@@ -331,7 +309,6 @@ export function PasswordReset({ mode }: PasswordResetProps) {
                     onClick={() => {
                       setStep("email");
                       setError("");
-                      setDevCode("");
                       setCode("");
                     }}
                     className="text-ivory/55 transition-colors hover:text-gold"

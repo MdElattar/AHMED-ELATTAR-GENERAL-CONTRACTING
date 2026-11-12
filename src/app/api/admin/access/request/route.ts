@@ -138,14 +138,14 @@ export async function POST(request: NextRequest) {
     targetEmail: email,
   });
 
-  if (!delivery.delivered && process.env.NODE_ENV === "production") {
+  if (!delivery.delivered) {
     await deleteAdminGrant(grant.id);
     await recordAudit({
       actor: session.email,
       action: "admin.delegation.delivery_failed",
       entity: "user",
       entityId: session.sub,
-      meta: { targetEmail: email, mode },
+      meta: { targetEmail: email, mode, provider: delivery.provider },
       ip,
     });
     return NextResponse.json(
@@ -174,11 +174,6 @@ export async function POST(request: NextRequest) {
       targetEmail: email,
       mode,
       expiresAt: grant.expiresAt,
-      // Local development has no email provider. Expose the code only outside
-      // production so the secure flow remains testable end-to-end.
-      ...(process.env.NODE_ENV !== "production" && !delivery.delivered
-        ? { devCode: code }
-        : {}),
     },
     { headers: NO_STORE_HEADERS },
   );

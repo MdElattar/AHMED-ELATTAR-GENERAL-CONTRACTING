@@ -105,7 +105,7 @@ async function sendAlertEmail(alert: AdminAlert): Promise<DispatchState> {
     html,
   });
 
-  if (result.provider === "development") return "skipped";
+  if (result.provider === "unconfigured") return "skipped";
   return result.delivered ? "sent" : "failed";
 }
 

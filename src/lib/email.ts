@@ -9,7 +9,7 @@ type SendOtpInput = {
 
 export type SendOtpResult = {
   delivered: boolean;
-  provider: "resend" | "development";
+  provider: "resend" | "unconfigured";
 };
 
 export type SendEmailInput = {
@@ -23,24 +23,25 @@ export type SendEmailInput = {
 
 export type SendEmailResult = {
   delivered: boolean;
-  provider: "resend" | "development";
+  provider: "resend" | "unconfigured";
 };
 
 /**
- * Generic transactional delivery used by OTP, consultation confirmations, and
- * the admin alert webhook. Resend is the only provider that needs an API key;
- * local development logs the payload instead of silently dropping it.
+ * Generic transactional delivery used by consultation confirmations and the
+ * admin alert webhook. Resend is the only provider. Delivery fails closed when
+ * the provider is not configured; codes and message bodies are never logged.
  */
 export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult> {
   const apiKey = process.env.RESEND_API_KEY?.trim();
   const from =
     input.from?.trim() ||
     process.env.OTP_FROM_EMAIL?.trim() ||
+    process.env.MAIL_FROM_EMAIL?.trim() ||
     "Ahmed Elattar <no-reply@alattar.sa>";
 
   if (!apiKey) {
-    console.info(`[email] Development delivery for ${input.to}: ${input.subject}`);
-    return { delivered: false, provider: "development" };
+    console.error(`[email] Resend is not configured; "${input.subject}" was not sent.`);
+    return { delivered: false, provider: "unconfigured" };
   }
 
   try {
@@ -137,13 +138,22 @@ function template(
 }
 
 /**
- * Delivers the OTP through Resend when configured. In local development the
- * code is logged and returned to the client so the full flow remains testable
- * without an email provider. Production without a provider fails closed.
+ * Delivers a real OTP through Resend. If either credential is missing the
+ * request fails closed instead of exposing a development code or a bypass.
  */
 export async function sendOtpEmail(input: SendOtpInput): Promise<SendOtpResult> {
+  const apiKey = process.env.RESEND_API_KEY?.trim();
+  const from = process.env.OTP_FROM_EMAIL?.trim();
   const locale = input.locale === "en" ? "en" : "ar";
   const purpose = input.purpose === "admin-delegation" ? "admin-delegation" : "password-reset";
+
+  if (!apiKey || !from) {
+    console.error(
+      "[email] OTP delivery requires both RESEND_API_KEY and OTP_FROM_EMAIL.",
+    );
+    return { delivered: false, provider: "unconfigured" };
+  }
+
   const body = template(
     input.code,
     input.expiresMinutes,
@@ -152,12 +162,8 @@ export async function sendOtpEmail(input: SendOtpInput): Promise<SendOtpResult> 
     input.targetEmail,
   );
 
-  if (!process.env.RESEND_API_KEY?.trim()) {
-    console.info(`[otp] Development code for ${escapeHtml(input.to)}: ${input.code}`);
-    return { delivered: false, provider: "development" };
-  }
-
   const result = await sendEmail({
+    from,
     to: input.to,
     subject: body.subject,
     text: body.text,

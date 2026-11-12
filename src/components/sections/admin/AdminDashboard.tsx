@@ -441,15 +441,6 @@ export function AdminDashboard({
   const [editing, setEditing] = useState<WorkspaceProject | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
-  const activeNavRef = useRef<HTMLAnchorElement | null>(null);
-
-  useEffect(() => {
-    activeNavRef.current?.scrollIntoView({
-      behavior: "smooth",
-      block: "nearest",
-      inline: "nearest",
-    });
-  }, [section]);
 
   useEffect(() => {
     if (paletteOpen) return;
@@ -559,8 +550,8 @@ export function AdminDashboard({
           ADMIN
         </div>
         <div className="container-lux relative">
-          <div className="grid gap-7 lg:grid-cols-[248px_1fr]">
-            <aside className="h-fit border border-white/10 bg-coal/80 p-4 backdrop-blur transition-[border-color,box-shadow,transform] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:border-gold/20 hover:shadow-[0_34px_90px_-46px_rgba(184,134,11,0.45)] lg:sticky lg:top-24 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto lg:overscroll-contain">
+          <div className="grid items-start gap-7 lg:grid-cols-[248px_1fr]">
+            <aside className="h-fit border border-white/10 bg-coal/80 p-4 backdrop-blur transition-[border-color,box-shadow,transform] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:border-gold/20 hover:shadow-[0_34px_90px_-46px_rgba(184,134,11,0.45)] lg:sticky lg:top-24">
               <div className="border-b border-white/10 pb-4">
                 <Logo className="mb-4" />
                 <span className="text-[0.68rem] uppercase tracking-[0.18em] text-gold">
@@ -574,7 +565,6 @@ export function AdminDashboard({
                   return (
                     <Link
                       key={id}
-                      ref={active ? activeNavRef : undefined}
                       href={sectionHrefs[id]}
                       onClick={() => {
                         setSection(id);

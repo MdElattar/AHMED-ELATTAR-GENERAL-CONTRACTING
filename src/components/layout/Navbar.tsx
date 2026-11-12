@@ -217,7 +217,11 @@ export function Navbar() {
               <div className="blueprint-grid pointer-events-none absolute inset-0 opacity-25" />
               <div className="pointer-events-none absolute -end-16 top-10 h-64 w-64 rounded-full bg-gold/[0.06] blur-[100px]" />
 
-              <nav className="relative flex flex-1 flex-col px-6 py-6" aria-label="Mobile">
+              <div className="relative flex items-center border-b border-white/10 px-6 py-5">
+                <Logo priority />
+              </div>
+
+              <nav className="relative flex flex-1 flex-col px-6 pb-6 pt-5" aria-label="Mobile">
                 <p className="text-[0.55rem] font-semibold uppercase tracking-[0.24em] text-gold/70">
                   {t.sections.inline.navbarNavigation}
                 </p>
