@@ -346,9 +346,15 @@ export function AdminProjectEditor({
   };
 
   return (
-    <div className="fixed inset-0 z-[220] flex items-center justify-center bg-obsidian/85 p-3 backdrop-blur-md sm:p-6">
+    <div
+      className="fixed inset-0 z-[220] flex items-center justify-center bg-obsidian/85 p-3 backdrop-blur-md sm:p-6"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
       <form
         onSubmit={submit}
+        onMouseDown={(event) => event.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="admin-project-dialog-title"

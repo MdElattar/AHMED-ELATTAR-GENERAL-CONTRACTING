@@ -70,6 +70,7 @@ import {
   type CopyField,
   type MediaOverride,
 } from "@/lib/cms";
+import { acquireScrollLock, releaseScrollLock } from "@/lib/scroll/lock";
 import { cn } from "@/lib/utils";
 
 export type AdminSection =
@@ -437,7 +438,7 @@ export function AdminDashboard({
   const { user, ready, signOut } = useAuth();
   const { projects, messages, addProject, updateProject, deleteProject } =
     useWorkspace();
-  const { scrollToTop } = useSmoothScroll();
+  const { scrollToTop, stop, start } = useSmoothScroll();
   const router = useRouter();
   const c = copy[locale];
   const [section, setSection] = useState<Section>(initialSection);
@@ -457,6 +458,21 @@ export function AdminDashboard({
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [paletteOpen]);
+
+  useEffect(() => {
+    if (!mobileNavOpen) return;
+    acquireScrollLock(stop);
+    return () => releaseScrollLock(start);
+  }, [mobileNavOpen, start, stop]);
+
+  useEffect(() => {
+    if (!mobileNavOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMobileNavOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [mobileNavOpen]);
 
   const navigateToSection = (next: Section, focusId?: string) => {
     setSection(next);
@@ -679,32 +695,35 @@ export function AdminDashboard({
 
   return (
     <>
-      <section className="relative min-h-[100svh] overflow-hidden bg-obsidian text-ivory">
+      <section className="relative min-h-[100svh] overflow-hidden bg-obsidian pt-24 text-ivory">
         <div className="blueprint-grid pointer-events-none absolute inset-0 opacity-25" />
-        <div className="pointer-events-none absolute -end-20 top-10 select-none text-[14rem] font-semibold leading-none tracking-tighter text-white/[0.02] sm:text-[20rem]">
+        <div className="pointer-events-none absolute -end-20 top-24 select-none text-[14rem] font-semibold leading-none tracking-tighter text-white/[0.02] sm:text-[20rem]">
           ADMIN
         </div>
         {mobileNavOpen ? (
-          <div className="fixed inset-0 z-[120] lg:hidden" role="dialog" aria-modal="true">
+          <div className="fixed inset-0 z-[120] overscroll-contain lg:hidden" role="dialog" aria-modal="true">
             <button
               type="button"
               className="absolute inset-0 bg-obsidian/70 backdrop-blur-sm"
               aria-label={c.back}
               onClick={() => setMobileNavOpen(false)}
             />
-            <aside className="absolute inset-y-0 start-0 w-[min(22rem,88vw)] overflow-y-auto border-e border-white/10 bg-[#0e1017]/98 p-4 shadow-lux backdrop-blur-md">
+            <aside
+              data-lenis-prevent
+              className="absolute inset-y-0 start-0 h-full w-[min(22rem,88vw)] overflow-y-auto overscroll-contain border-e border-white/10 bg-[#0e1017]/98 p-4 shadow-lux backdrop-blur-md"
+            >
               {sidebarContent}
             </aside>
           </div>
         ) : null}
 
-        <div className="relative mx-auto w-full max-w-[1600px] lg:grid lg:min-h-screen lg:grid-cols-[280px_1fr]">
-          <aside className="hidden border-e border-white/10 bg-[#0e1017]/95 p-4 backdrop-blur transition-[border-color,box-shadow] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:border-gold/20 lg:sticky lg:top-0 lg:block lg:h-screen lg:overflow-y-auto">
+        <div className="relative mx-auto w-full max-w-[1600px] lg:grid lg:grid-cols-[280px_1fr] lg:items-start">
+          <aside className="hidden border-e border-white/10 bg-[#0e1017]/95 p-4 backdrop-blur transition-[border-color,box-shadow] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:border-gold/20 lg:block lg:self-stretch">
             {sidebarContent}
           </aside>
 
           <div className="min-w-0">
-            <div className="flex flex-col justify-between gap-4 border-b border-white/10 bg-[#0e1017]/95 p-5 backdrop-blur sm:flex-row sm:items-center sm:p-6 lg:sticky lg:top-0 lg:z-20">
+            <div className="flex flex-col justify-between gap-4 border-b border-white/10 bg-[#0e1017]/95 p-5 backdrop-blur sm:flex-row sm:items-center sm:p-6">
               <div className="flex min-w-0 items-start gap-3">
                 <button
                   type="button"
@@ -835,15 +854,92 @@ function OverviewSection({
 }) {
   const { locale, l } = useI18n();
   const c = copy[locale];
+  const [showMetrics, setShowMetrics] = useState(true);
   const totalValue = projects.reduce((sum, project) => sum + project.contractValue, 0);
   const totalProfit = projects.reduce((sum, project) => sum + project.profit, 0);
   const avgMargin = totalValue ? (totalProfit / totalValue) * 100 : 0;
   const top = [...projects].sort((a, b) => b.budget - a.budget).slice(0, 5);
   const maxBudget = Math.max(1, ...top.map((project) => project.budget));
 
+  const exportOverviewCsv = () => {
+    const rows = [
+      ["Project", "Category", "Status", "Progress", "Budget", "Spent", "Profit", "Contract Value"],
+      ...projects.map((project) => [
+        project.title.en || project.title.ar || project.slug,
+        project.category,
+        project.status,
+        String(project.progress),
+        String(project.budget),
+        String(project.spent),
+        String(project.profit),
+        String(project.contractValue),
+      ]),
+    ];
+    const content = rows.map((row) => row.join(",")).join("\n");
+    const blob = new Blob([content], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = "admin-overview-analytics.csv";
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-6">
-      <ExecutiveKpiBar />
+      <div className="flex flex-col gap-3 border border-white/10 bg-coal/80 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-gold">
+            {locale === "ar" ? "إجراءات سريعة وتحليلات" : "Quick actions & analytics"}
+          </p>
+          <p className="mt-1 text-[0.76rem] text-ivory/45">
+            {locale === "ar"
+              ? "تصدير فوري للبيانات والتحكم في عرض مؤشرات الأداء."
+              : "Export live data instantly and toggle executive performance metrics."}
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowMetrics((value) => !value)}
+            className={cn(
+              "inline-flex h-10 items-center gap-2 border px-3.5 text-[0.7rem] font-semibold uppercase tracking-[0.12em] transition-colors",
+              showMetrics
+                ? "border-gold/40 bg-gold/10 text-gold"
+                : "border-white/12 text-ivory/60 hover:border-gold/40 hover:text-gold",
+            )}
+          >
+            <BarChart3 className="h-3.5 w-3.5" />
+            {showMetrics
+              ? locale === "ar"
+                ? "إخفاء المؤشرات"
+                : "Hide metrics"
+              : locale === "ar"
+                ? "إظهار المؤشرات"
+                : "Show metrics"}
+          </button>
+          <button
+            type="button"
+            onClick={exportOverviewCsv}
+            className="inline-flex h-10 items-center gap-2 border border-white/12 px-3.5 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
+          >
+            <FileText className="h-3.5 w-3.5" />
+            {locale === "ar" ? "تصدير التحليلات" : "Export analytics"}
+          </button>
+          <button
+            type="button"
+            onClick={onNew}
+            className="inline-flex h-10 items-center gap-2 bg-gold px-3.5 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-obsidian transition-colors hover:bg-gold-light"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            {c.addProject}
+          </button>
+        </div>
+      </div>
+
+      {showMetrics ? <ExecutiveKpiBar /> : null}
 
       <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
         <div className="border border-white/10 bg-coal p-6">
