@@ -56,9 +56,10 @@ import {
   NotificationsPanel,
 } from "@/components/sections/admin/AdminOperations";
 import { Field, TextInput, Textarea } from "@/components/ui/Field";
-import { Logo } from "@/components/ui/Logo";
 import { ProjectArt } from "@/components/ui/ProjectArt";
+import { Checkbox } from "@/components/ui/Checkbox";
 import { AdminSectionBoundary } from "@/components/system/AdminSectionBoundary";
+import { useToast } from "@/components/ui/Toast";
 import type { ArtVariant } from "@/data/projects";
 import { dictionary, L, type Localized } from "@/lib/dictionary";
 import {
@@ -429,6 +430,28 @@ const formatM = (value: number, locale: "ar" | "en") =>
     maximumFractionDigits: 1,
   }).format(value)}M`;
 
+const formatMoney = (value: number, locale: "ar" | "en") => {
+  const sar = locale === "ar" ? "ر.س" : "SAR";
+  const abs = Math.abs(value);
+  if (abs >= 1000) {
+    const formatted = new Intl.NumberFormat(locale === "ar" ? "ar-SA" : "en-US", {
+      maximumFractionDigits: 2,
+    }).format(value / 1000);
+    return `${sar} ${formatted}B`;
+  }
+  const formatted = new Intl.NumberFormat(locale === "ar" ? "ar-SA" : "en-US", {
+    maximumFractionDigits: 1,
+  }).format(value);
+  return `${sar} ${formatted}M`;
+};
+
+const budgetRisk = (spent: number, budget: number) => {
+  const ratio = budget > 0 ? spent / budget : 0;
+  if (ratio >= 0.95) return "critical";
+  if (ratio >= 0.8) return "warning";
+  return "healthy";
+};
+
 export function AdminDashboard({
   initialSection = "overview",
 }: {
@@ -446,6 +469,7 @@ export function AdminDashboard({
   const [editorOpen, setEditorOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     if (paletteOpen) return;
@@ -522,28 +546,49 @@ export function AdminDashboard({
     );
   }
 
-  const navItems: { id: Section; label: string; icon: typeof LayoutDashboard }[] = [
-    { id: "overview", label: c.overview, icon: LayoutDashboard },
-    { id: "projects", label: c.projects, icon: FolderKanban },
-    { id: "milestones", label: c.milestones, icon: Flag },
-    { id: "consultations", label: c.consultations, icon: CalendarDays },
-    { id: "contracts", label: c.contracts, icon: FileSignature },
-    { id: "notifications", label: c.notifications, icon: BellRing },
-    { id: "inquiries", label: c.inquiries, icon: Inbox },
-    { id: "financials", label: c.financials, icon: Wallet },
-    { id: "content", label: c.content, icon: Settings },
-    { id: "media", label: c.media, icon: ImageIcon },
-    { id: "messages", label: c.messages, icon: MessageSquare },
-    { id: "audit", label: c.audit, icon: Activity },
-    ...(user.primaryAdmin
-      ? ([{ id: "access", label: c.access, icon: ShieldCheck }] satisfies {
-          id: Section;
-          label: string;
-          icon: typeof LayoutDashboard;
-        }[])
-      : []),
+  const navGroups: { title: string; items: { id: Section; label: string; icon: typeof LayoutDashboard }[] }[] = [
+    {
+      title: locale === "ar" ? "العمليات" : "Operations",
+      items: [
+        { id: "overview", label: c.overview, icon: LayoutDashboard },
+        { id: "projects", label: c.projects, icon: FolderKanban },
+        { id: "milestones", label: c.milestones, icon: Flag },
+        { id: "contracts", label: c.contracts, icon: FileSignature },
+      ],
+    },
+    {
+      title: locale === "ar" ? "الأعمال" : "Business",
+      items: [
+        { id: "consultations", label: c.consultations, icon: CalendarDays },
+        { id: "inquiries", label: c.inquiries, icon: Inbox },
+        { id: "financials", label: c.financials, icon: Wallet },
+      ],
+    },
+    {
+      title: locale === "ar" ? "المحتوى" : "Content",
+      items: [
+        { id: "content", label: c.content, icon: Settings },
+        { id: "media", label: c.media, icon: ImageIcon },
+        { id: "messages", label: c.messages, icon: MessageSquare },
+      ],
+    },
+    {
+      title: locale === "ar" ? "النظام" : "System",
+      items: [
+        { id: "notifications", label: c.notifications, icon: BellRing },
+        { id: "audit", label: c.audit, icon: Activity },
+        ...(user.primaryAdmin
+          ? ([{ id: "access", label: c.access, icon: ShieldCheck }] satisfies {
+              id: Section;
+              label: string;
+              icon: typeof LayoutDashboard;
+            }[])
+          : []),
+      ],
+    },
   ];
 
+  const navItems = navGroups.flatMap((group) => group.items);
   const paletteSections = navItems.map(({ id, label }) => ({ id, label }));
 
   const openNew = () => {
@@ -563,16 +608,22 @@ export function AdminDashboard({
     setEditing(null);
   };
 
-  const sidebarContent = (
+  const sidebarContent = (collapsed = false) => (
     <>
-      <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-4">
-        <div>
-          <Logo className="mb-4" />
-          <span className="text-[0.68rem] uppercase tracking-[0.18em] text-gold">
-            {c.admin}
-          </span>
-          <p className="mt-1 font-display text-2xl leading-none text-ivory">{c.control}</p>
-        </div>
+      <div className={cn("flex items-start justify-between gap-3 border-b border-white/10 pb-4", collapsed && "justify-center")}>
+        {!collapsed ? (
+          <div className="min-w-0">
+            <span className="text-[0.66rem] uppercase tracking-[0.18em] text-gold">
+              {c.admin}
+            </span>
+            <p className="mt-1 truncate font-display text-xl leading-none text-ivory sm:text-2xl">
+              AHMED ELATTAR
+            </p>
+            <p className="mt-1 text-[0.7rem] uppercase tracking-[0.14em] text-ivory/45">{c.control}</p>
+          </div>
+        ) : (
+          <span className="font-display text-lg text-gold" title="AHMED ELATTAR">AE</span>
+        )}
         <button
           type="button"
           onClick={() => setMobileNavOpen(false)}
@@ -582,120 +633,94 @@ export function AdminDashboard({
           <X className="h-4 w-4" />
         </button>
       </div>
-      <nav className="mt-3 flex flex-col gap-1" aria-label={c.admin}>
-        {navItems.map(({ id, label, icon: Icon }) => {
-          const active = section === id;
-          return (
-            <Link
-              key={id}
-              href={sectionHrefs[id]}
-              onClick={() => {
-                setSection(id);
-                setMobileNavOpen(false);
-                if (active) scrollToTop();
-              }}
-              aria-current={active ? "page" : undefined}
-              className={cn(
-                "group relative flex min-h-11 items-center gap-2.5 overflow-hidden px-3 py-2.5 text-start text-[0.8rem] font-medium",
-                "transition-[background-color,color,box-shadow,transform] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
-                "active:scale-[0.99] active:duration-150",
-                active
-                  ? "bg-gold text-obsidian shadow-[0_10px_30px_-16px_rgba(184,134,11,0.85)]"
-                  : "text-ivory/60 hover:bg-white/[0.055] hover:text-ivory",
-              )}
-            >
-              <span
-                aria-hidden="true"
-                className={cn(
-                  "pointer-events-none absolute inset-y-1 start-0 w-[2px] origin-center bg-gold transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]",
-                  active
-                    ? "scale-y-100 opacity-100"
-                    : "scale-y-0 opacity-0 group-hover:scale-y-100 group-hover:opacity-70",
-                )}
-              />
-              <span
-                aria-hidden="true"
-                className={cn(
-                  "pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-gold/12 via-gold/[0.04] to-transparent transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-x-0 rtl:translate-x-full rtl:group-hover:translate-x-0",
-                  active && "hidden",
-                )}
-              />
-              <span
-                className={cn(
-                  "relative flex h-8 w-8 shrink-0 items-center justify-center rounded-sm transition-colors duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
-                  active
-                    ? "bg-obsidian/12 text-obsidian"
-                    : "bg-white/[0.035] text-ivory/65 group-hover:bg-gold/12 group-hover:text-gold",
-                )}
-              >
-                <Icon className="h-4 w-4" />
-              </span>
-              <span
-                className={cn("relative flex-1 truncate", active && "tracking-[0.01em]")}
-              >
-                {label}
-              </span>
-              {id === "messages" ? (
-                <span
-                  className={cn(
-                    "relative tabular text-[0.7rem] transition-colors duration-300",
-                    active ? "text-obsidian/60" : "text-ivory/50 group-hover:text-gold",
-                  )}
-                >
-                  {messages.length}
-                </span>
-              ) : (
-                <span
-                  aria-hidden="true"
-                  className={cn(
-                    "relative h-1 w-1 rounded-full bg-gold transition-all duration-300",
-                    active
-                      ? "scale-100 opacity-100"
-                      : "scale-0 opacity-0 group-hover:scale-100 group-hover:opacity-70",
-                  )}
-                />
-              )}
-            </Link>
-          );
-        })}
+      <nav className="mt-3 flex flex-col gap-4" aria-label={c.admin}>
+        {navGroups.map((group) => (
+          <div key={group.title}>
+            {!collapsed ? (
+              <p className="mb-1.5 px-3 text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-ivory/35">
+                {group.title}
+              </p>
+            ) : (
+              <div className="mb-1.5 h-px bg-white/10" aria-hidden="true" />
+            )}
+            <div className="flex flex-col gap-1">
+              {group.items.map(({ id, label, icon: Icon }) => {
+                const active = section === id;
+                const badge = id === "messages" ? messages.length : 0;
+                return (
+                  <Link
+                    key={id}
+                    href={sectionHrefs[id]}
+                    title={collapsed ? label : undefined}
+                    onClick={() => {
+                      setSection(id);
+                      setMobileNavOpen(false);
+                      if (active) scrollToTop();
+                    }}
+                    aria-current={active ? "page" : undefined}
+                    className={cn(
+                      "group relative flex min-h-11 items-center gap-2.5 overflow-hidden border-s-2 px-3 py-2.5 text-start text-[0.8rem] font-medium transition-all duration-150 ease-[cubic-bezier(0.16,1,0.3,1)]",
+                      collapsed && "justify-center px-2",
+                      active
+                        ? "border-gold bg-transparent text-gold"
+                        : "border-transparent text-ivory/60 hover:bg-white/[0.03] hover:text-gold/90",
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "relative flex h-8 w-8 shrink-0 items-center justify-center rounded-sm transition-colors duration-150",
+                        active ? "bg-gold/10 text-gold" : "bg-white/[0.03] text-ivory/60 group-hover:text-gold",
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                    </span>
+                    {!collapsed ? <span className="relative flex-1 truncate">{label}</span> : null}
+                    {!collapsed && badge > 0 ? (
+                      <span className="relative inline-flex min-w-5 items-center justify-center rounded-full border border-gold/30 bg-gold/10 px-1.5 py-0.5 text-[0.62rem] tabular-nums text-gold">
+                        {badge}
+                      </span>
+                    ) : null}
+                    {collapsed && badge > 0 ? (
+                      <span className="absolute end-1 top-1 h-2 w-2 rounded-full bg-gold" aria-hidden="true" />
+                    ) : null}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
-      <div className="mt-4 space-y-1 border-t border-white/10 pt-3">
-        <Link
-          href="/portal"
-          onClick={() => setMobileNavOpen(false)}
-          className="flex min-h-10 items-center gap-2.5 px-3 py-2 text-[0.78rem] text-ivory/55 transition-colors hover:text-gold"
-        >
-          <LayoutDashboard className="h-3.5 w-3.5" />
-          {c.portal}
-        </Link>
-        <Link
-          href="/"
-          onClick={() => setMobileNavOpen(false)}
-          className="flex min-h-10 items-center gap-2.5 px-3 py-2 text-[0.78rem] text-ivory/55 transition-colors hover:text-gold"
-        >
-          <ArrowUpRight className="h-3.5 w-3.5" />
-          {c.back}
-        </Link>
-        <button
-          type="button"
-          onClick={() => {
-            setMobileNavOpen(false);
-            signOut();
-            router.push("/");
-          }}
-          className="flex min-h-10 w-full items-center gap-2.5 px-3 py-2 text-start text-[0.78rem] text-ivory/55 transition-colors hover:text-gold"
-        >
-          <LogOut className="h-3.5 w-3.5" />
-          {c.signOut}
-        </button>
-      </div>
+      {!collapsed ? (
+        <div className="mt-4 space-y-1 border-t border-white/10 pt-3">
+          <Link
+            href="/portal"
+            onClick={() => setMobileNavOpen(false)}
+            className="flex min-h-10 items-center gap-2.5 px-3 py-2 text-[0.78rem] text-ivory/55 transition-colors hover:text-gold"
+          >
+            <LayoutDashboard className="h-3.5 w-3.5" />
+            {c.portal}
+          </Link>
+          <button
+            type="button"
+            onClick={() => {
+              setMobileNavOpen(false);
+              signOut();
+              router.push("/");
+            }}
+            className="flex min-h-10 w-full items-center gap-2.5 px-3 py-2 text-start text-[0.78rem] text-ivory/55 transition-colors hover:text-gold"
+          >
+            <LogOut className="h-3.5 w-3.5" />
+            {c.signOut}
+          </button>
+        </div>
+      ) : null}
     </>
   );
 
   return (
     <>
-      <section className="relative min-h-[100svh] overflow-hidden bg-obsidian pt-24 text-ivory">
+      <section className="relative min-h-[100svh] overflow-hidden bg-obsidian pt-28 pb-12 text-ivory sm:pt-28">
         <div className="blueprint-grid pointer-events-none absolute inset-0 opacity-25" />
         <div className="pointer-events-none absolute -end-20 top-24 select-none text-[14rem] font-semibold leading-none tracking-tighter text-white/[0.02] sm:text-[20rem]">
           ADMIN
@@ -712,78 +737,72 @@ export function AdminDashboard({
               data-lenis-prevent
               className="absolute inset-y-0 start-0 h-full w-[min(22rem,88vw)] overflow-y-auto overscroll-contain border-e border-white/10 bg-[#0e1017]/98 p-4 shadow-lux backdrop-blur-md"
             >
-              {sidebarContent}
+              {sidebarContent(false)}
             </aside>
           </div>
         ) : null}
 
-        <div className="relative mx-auto w-full max-w-[1600px] lg:grid lg:grid-cols-[280px_1fr] lg:items-start">
-          <aside className="hidden border-e border-white/10 bg-[#0e1017]/95 p-4 backdrop-blur transition-[border-color,box-shadow] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:border-gold/20 lg:block lg:self-stretch">
-            {sidebarContent}
-          </aside>
-
-          <div className="min-w-0">
-            <div className="flex flex-col justify-between gap-4 border-b border-white/10 bg-[#0e1017]/95 p-5 backdrop-blur sm:flex-row sm:items-center sm:p-6">
-              <div className="flex min-w-0 items-start gap-3">
+        <div className="relative mx-auto w-full max-w-[1600px] px-4 sm:px-6 lg:px-8">
+          <div className={cn("lg:grid lg:items-start lg:gap-6", sidebarCollapsed ? "lg:grid-cols-[88px_1fr]" : "lg:grid-cols-[280px_1fr]")}>
+            <aside className={cn("hidden border border-white/10 bg-[#0e1017]/95 p-4 backdrop-blur transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] hover:border-gold/20 lg:block lg:self-stretch", sidebarCollapsed && "px-2")}>
+              <div className={cn("mb-3 flex", sidebarCollapsed ? "justify-center" : "justify-end")}>
                 <button
                   type="button"
-                  onClick={() => setMobileNavOpen(true)}
-                  className="mt-0.5 inline-flex h-10 w-10 shrink-0 items-center justify-center border border-white/12 text-ivory/70 transition-colors hover:border-gold/40 hover:text-gold lg:hidden"
-                  aria-label={c.admin}
+                  onClick={() => setSidebarCollapsed((v) => !v)}
+                  className="inline-flex h-9 w-9 items-center justify-center border border-white/12 text-ivory/55 transition-colors hover:border-gold/40 hover:text-gold"
+                  aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                  title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
                 >
-                  <Menu className="h-4 w-4" />
+                  <ChevronDown className={cn("h-4 w-4 transition-transform", sidebarCollapsed ? "-rotate-90 rtl:rotate-90" : "rotate-90 rtl:-rotate-90")} />
                 </button>
-                <div className="min-w-0">
-                  <span className="text-[0.7rem] uppercase tracking-[0.16em] text-gold/80">
-                    {c.welcome}
-                  </span>
-                  <h1 className="mt-1.5 font-display text-2xl leading-tight text-ivory sm:text-3xl">
-                    {user.name}
-                  </h1>
-                  <p className="mt-1.5 flex flex-wrap items-center gap-2 text-[0.8rem] text-ivory/45">
-                    <span className="break-all" dir="ltr">{user.email}</span>
-                    <span aria-hidden="true">·</span>
-                    <span>{c.secureNote}</span>
-                    {user.primaryAdmin ? (
-                      <span className="border border-gold/25 px-2 py-0.5 text-[0.68rem] uppercase tracking-[0.1em] text-gold">
-                        {c.primaryAdmin}
+              </div>
+              {sidebarContent(sidebarCollapsed)}
+            </aside>
+
+            <div className="min-w-0 border border-white/10 bg-[#0e1017]/70">
+              <div className="flex flex-col justify-between gap-3 border-b border-white/10 bg-[#0e1017]/95 p-4 backdrop-blur sm:flex-row sm:items-center sm:p-5">
+                <div className="flex min-w-0 items-start gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setMobileNavOpen(true)}
+                    className="mt-0.5 inline-flex h-10 w-10 shrink-0 items-center justify-center border border-white/12 text-ivory/70 transition-colors hover:border-gold/40 hover:text-gold lg:hidden"
+                    aria-label={c.admin}
+                  >
+                    <Menu className="h-4 w-4" />
+                  </button>
+                  <div className="min-w-0">
+                    <span className="text-[0.68rem] uppercase tracking-[0.16em] text-gold/80">
+                      {c.welcome}
+                    </span>
+                    <h1 className="mt-1 font-display text-xl leading-tight text-ivory sm:text-2xl">
+                      {user.name}
+                    </h1>
+                    <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.76rem] text-ivory/45 sm:text-[0.8rem]">
+                      <span className="max-w-full truncate tabular-nums" dir="ltr" title={user.email}>
+                        {user.email}
                       </span>
-                    ) : null}
-                  </p>
+                      {user.primaryAdmin ? (
+                        <span className="border border-gold/25 px-2 py-0.5 text-[0.64rem] uppercase tracking-[0.1em] text-gold">
+                          {c.primaryAdmin}
+                        </span>
+                      ) : null}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Link
+                    href="/portal"
+                    className="inline-flex h-10 items-center gap-2 border border-white/12 px-3.5 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
+                  >
+                    {c.portal}
+                    <ArrowUpRight className="h-3.5 w-3.5" />
+                  </Link>
                 </div>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setPaletteOpen(true)}
-                  className="inline-flex h-10 items-center gap-2 border border-white/12 px-3 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
-                >
-                  <Search className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">{c.commandSearch}</span>
-                  <kbd className="hidden border border-white/10 px-1.5 py-0.5 text-[0.62rem] text-ivory/40 md:inline">
-                    ⌘K
-                  </kbd>
-                </button>
-                <Link
-                  href="/portal"
-                  className="inline-flex h-10 items-center gap-2 border border-white/12 px-3.5 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
-                >
-                  {c.portal}
-                  <ArrowUpRight className="h-3.5 w-3.5" />
-                </Link>
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gold text-[0.7rem] font-semibold text-obsidian">
-                  {user.name
-                    .split(" ")
-                    .slice(0, 2)
-                    .map((part) => part.charAt(0))
-                    .join("")}
-                </span>
-              </div>
-            </div>
 
-            <div className="px-4 py-6 sm:px-6 lg:px-8">
-              <AdminSectionBoundary label={navItems.find((item) => item.id === section)?.label}>
-                {section === "overview" ? (
+              <div className="px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
+                <AdminSectionBoundary label={navItems.find((item) => item.id === section)?.label}>
+                  {section === "overview" ? (
                   <OverviewSection projects={projects} messages={messages} onNew={openNew} onNavigate={navigateToSection} />
                 ) : null}
                 {section === "projects" ? (
@@ -808,8 +827,9 @@ export function AdminDashboard({
                 {section === "access" ? <AdminAccess /> : null}
                 {section === "media" ? <MediaSection projects={projects} /> : null}
                 {section === "messages" ? <MessagesSection projects={projects} /> : null}
-                {section === "audit" ? <AuditPanel /> : null}
-              </AdminSectionBoundary>
+                  {section === "audit" ? <AuditPanel /> : null}
+                </AdminSectionBoundary>
+              </div>
             </div>
           </div>
         </div>
@@ -859,7 +879,6 @@ function OverviewSection({
   const totalProfit = projects.reduce((sum, project) => sum + project.profit, 0);
   const avgMargin = totalValue ? (totalProfit / totalValue) * 100 : 0;
   const top = [...projects].sort((a, b) => b.budget - a.budget).slice(0, 5);
-  const maxBudget = Math.max(1, ...top.map((project) => project.budget));
 
   const exportOverviewCsv = () => {
     const rows = [
@@ -952,26 +971,33 @@ function OverviewSection({
             </span>
           </div>
           <div className="mt-6 space-y-5">
-            {top.map((project) => (
-              <div key={project.slug}>
-                <div className="flex items-center justify-between gap-3 text-[0.74rem]">
-                  <span className="truncate text-ivory/60">{l(project.title)}</span>
-                  <span className="tabular shrink-0 text-ivory/45">
-                    {formatM(project.spent, locale)} / {formatM(project.budget, locale)}
-                  </span>
+            {([...top]
+              .sort((a, b) => b.spent / Math.max(1, b.budget) - a.spent / Math.max(1, a.budget))
+            ).map((project) => {
+              const risk = budgetRisk(project.spent, project.budget);
+              const ratio = Math.min(100, (project.spent / Math.max(1, project.budget)) * 100);
+              return (
+                <div key={project.slug}>
+                  <div className="flex items-center justify-between gap-3 text-[0.74rem]">
+                    <span className="truncate text-ivory/60">{l(project.title)}</span>
+                    <span className={cn("tabular-nums shrink-0", risk === "critical" ? "text-red-300/80" : risk === "warning" ? "text-amber-300/80" : "text-ivory/45")}>
+                      {formatMoney(project.spent, locale)} / {formatMoney(project.budget, locale)}
+                    </span>
+                  </div>
+                  <div className="mt-1.5 flex h-1.5 overflow-hidden bg-white/10">
+                    <div
+                      className={cn("h-full", risk === "critical" ? "bg-red-400/80" : risk === "warning" ? "bg-amber-400/80" : "bg-emerald-400/70")}
+                      style={{ width: `${ratio}%` }}
+                    />
+                  </div>
+                  {risk === "critical" ? (
+                    <p className="mt-1 text-[0.66rem] text-red-300/75">
+                      {locale === "ar" ? "تحذير: ميزانية حرجة" : "Critical budget risk"}
+                    </p>
+                  ) : null}
                 </div>
-                <div className="mt-1.5 flex h-1.5 overflow-hidden bg-white/10">
-                  <div
-                    className="h-full bg-gold"
-                    style={{ width: `${Math.min(100, (project.spent / maxBudget) * 100)}%` }}
-                  />
-                  <div
-                    className="h-full bg-gold/25"
-                    style={{ width: `${Math.min(100, ((project.budget - project.spent) / maxBudget) * 100)}%` }}
-                  />
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
@@ -1110,22 +1136,46 @@ function ProjectsSection({
   const { locale, l } = useI18n();
   const c = copy[locale];
   const { updateProject } = useWorkspace();
+  const { toast } = useToast();
   const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | WorkspaceProject["status"]>("all");
+  const [categoryFilter, setCategoryFilter] = useState<"all" | WorkspaceProject["category"]>("all");
+  const [sortBy, setSortBy] = useState<"updated" | "budget" | "progress" | "risk">("risk");
+  const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Set<string>>(() => new Set());
+  const [detail, setDetail] = useState<WorkspaceProject | null>(null);
+  const pageSize = 8;
 
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase();
-    if (!normalized) return projects;
-    return projects.filter((project) =>
-      [project.title.ar, project.title.en, project.location.ar, project.location.en]
+    const base = projects.filter((project) => {
+      if (statusFilter !== "all" && project.status !== statusFilter) return false;
+      if (categoryFilter !== "all" && project.category !== categoryFilter) return false;
+      if (!normalized) return true;
+      return [project.title.ar, project.title.en, project.location.ar, project.location.en, project.category]
         .join(" ")
         .toLowerCase()
-        .includes(normalized),
-    );
-  }, [projects, query]);
+        .includes(normalized);
+    });
+    const sorted = [...base].sort((a, b) => {
+      if (sortBy === "budget") return b.budget - a.budget;
+      if (sortBy === "progress") return b.progress - a.progress;
+      if (sortBy === "risk") {
+        const ra = a.spent / Math.max(1, a.budget);
+        const rb = b.spent / Math.max(1, b.budget);
+        return rb - ra;
+      }
+      return (b.updatedAt || "").localeCompare(a.updatedAt || "");
+    });
+    return sorted;
+  }, [categoryFilter, projects, query, sortBy, statusFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const paged = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const allSelected =
-    filtered.length > 0 && filtered.every((project) => selected.has(project.slug));
+    paged.length > 0 && paged.every((project) => selected.has(project.slug));
 
   const toggleSelected = (slug: string) => {
     setSelected((current) => {
@@ -1138,13 +1188,12 @@ function ProjectsSection({
 
   const toggleAll = () => {
     setSelected((current) => {
-      if (filtered.every((project) => current.has(project.slug))) {
-        const next = new Set(current);
-        filtered.forEach((project) => next.delete(project.slug));
-        return next;
-      }
       const next = new Set(current);
-      filtered.forEach((project) => next.add(project.slug));
+      if (paged.every((project) => current.has(project.slug))) {
+        paged.forEach((project) => next.delete(project.slug));
+      } else {
+        paged.forEach((project) => next.add(project.slug));
+      }
       return next;
     });
   };
@@ -1163,30 +1212,86 @@ function ProjectsSection({
     for (const slug of selected) {
       if (known.has(slug)) updateProject(slug, { status });
     }
+    toast(locale === "ar" ? "تم تحديث الحالة" : "Status updated", "success");
     setSelected(new Set<string>());
+  };
+
+  const exportCsv = () => {
+    const rows = [
+      ["Project", "Category", "Status", "Progress", "Value", "Budget", "Spent"],
+      ...filtered.map((project) => [
+        project.title.en || project.title.ar,
+        project.category,
+        project.status,
+        String(project.progress),
+        project.value.en || project.value.ar || "",
+        String(project.budget),
+        String(project.spent),
+      ]),
+    ];
+    const blob = new Blob([rows.map((r) => r.join(",")).join("\n")], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "ahmed-elattar-projects.csv";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    toast(locale === "ar" ? "تم التصدير" : "Export ready", "success");
+  };
+
+  const handleDelete = (project: WorkspaceProject) => {
+    if (!window.confirm(c.deleteConfirm)) return;
+    onDelete(project);
+    toast(
+      locale === "ar"
+        ? "تمت إزالة المشروع. يمكنك إعادة الإضافة عند الحاجة."
+        : "Project removed. You can restore/recreate it if needed.",
+      "success",
+    );
   };
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+      <div className="flex flex-col justify-between gap-3 xl:flex-row xl:items-end">
         <div>
           <h2 className="font-display text-2xl text-ivory">{c.projects}</h2>
-          <p className="mt-1 text-[0.76rem] text-ivory/45">
+          <p className="mt-1 text-[0.76rem] tabular-nums text-ivory/45">
             {filtered.length} / {projects.length}
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="grid w-full gap-2 sm:grid-cols-2 xl:flex xl:w-auto xl:flex-wrap xl:items-center">
           <input
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => { setQuery(event.target.value); setPage(1); }}
             placeholder={c.search}
-            className="h-10 w-full border border-white/12 bg-transparent px-3 text-[0.8rem] text-ivory outline-none placeholder:text-ivory/35 focus:border-gold/50 sm:w-64"
+            className="h-10 w-full border border-white/12 bg-transparent px-3 text-[0.8rem] text-ivory outline-none placeholder:text-ivory/35 focus:border-gold/50 xl:w-56"
           />
-          <button
-            type="button"
-            onClick={onNew}
-            className="inline-flex h-10 shrink-0 items-center gap-2 bg-gold px-4 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-obsidian transition-colors hover:bg-gold-light"
-          >
+          <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value as typeof statusFilter); setPage(1); }} className="h-10 border border-white/12 bg-coal px-3 text-[0.74rem] text-ivory/70 outline-none focus:border-gold/50">
+            <option value="all">{locale === "ar" ? "كل الحالات" : "All statuses"}</option>
+            <option value="ongoing">{c.statusLabels.ongoing}</option>
+            <option value="completed">{c.statusLabels.completed}</option>
+            <option value="upcoming">{c.statusLabels.upcoming}</option>
+          </select>
+          <select value={categoryFilter} onChange={(e) => { setCategoryFilter(e.target.value as typeof categoryFilter); setPage(1); }} className="h-10 border border-white/12 bg-coal px-3 text-[0.74rem] text-ivory/70 outline-none focus:border-gold/50">
+            <option value="all">{locale === "ar" ? "كل الفئات" : "All categories"}</option>
+            <option value="commercial">{c.categoryLabels.commercial}</option>
+            <option value="residential">{c.categoryLabels.residential}</option>
+            <option value="infrastructure">{c.categoryLabels.infrastructure}</option>
+            <option value="industrial">{c.categoryLabels.industrial}</option>
+          </select>
+          <select value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)} className="h-10 border border-white/12 bg-coal px-3 text-[0.74rem] text-ivory/70 outline-none focus:border-gold/50">
+            <option value="risk">{locale === "ar" ? "الأعلى خطورة" : "Highest risk"}</option>
+            <option value="budget">{locale === "ar" ? "الميزانية" : "Budget"}</option>
+            <option value="progress">{locale === "ar" ? "الإنجاز" : "Progress"}</option>
+            <option value="updated">{locale === "ar" ? "الأحدث" : "Latest"}</option>
+          </select>
+          <button type="button" onClick={exportCsv} className="inline-flex h-10 items-center justify-center gap-2 border border-white/12 px-3.5 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold">
+            <FileText className="h-3.5 w-3.5" />
+            {c.export}
+          </button>
+          <button type="button" onClick={onNew} className="inline-flex h-10 items-center justify-center gap-2 bg-gold px-4 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-obsidian transition-colors hover:bg-gold-light">
             <Plus className="h-4 w-4" />
             {c.addProject}
           </button>
@@ -1194,52 +1299,73 @@ function ProjectsSection({
       </div>
 
       {selected.size > 0 ? (
-        <div className="flex flex-wrap items-center gap-2 border border-gold/25 bg-gold/[0.05] px-3 py-2.5">
-          <span className="text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-gold">
+        <div className="sticky bottom-4 z-20 flex flex-wrap items-center gap-2 border border-gold/25 bg-[#0e1017]/95 px-3 py-2.5 shadow-lux backdrop-blur">
+          <span className="text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-gold tabular-nums">
             {selected.size} {c.selected}
           </span>
-          <span className="hidden h-4 w-px bg-gold/25 sm:block" />
-          <span className="text-[0.66rem] uppercase tracking-[0.1em] text-ivory/45">
-            {c.bulkStatus}
-          </span>
-          {(
-            [
-              ["ongoing", c.setOngoing],
-              ["completed", c.setCompleted],
-              ["upcoming", c.setUpcoming],
-            ] as const
-          ).map(([status, label]) => (
-            <button
-              key={status}
-              type="button"
-              onClick={() => applyBulkStatus(status)}
-              className="h-8 border border-white/12 px-3 text-[0.66rem] font-semibold uppercase tracking-[0.1em] text-ivory/60 transition-colors hover:border-gold/45 hover:text-gold"
-            >
-              {label}
+          <span className="text-[0.66rem] uppercase tracking-[0.1em] text-ivory/45">{c.bulkStatus}</span>
+          {(["ongoing", "completed", "upcoming"] as const).map((status) => (
+            <button key={status} type="button" onClick={() => applyBulkStatus(status)} className="h-8 border border-white/12 px-3 text-[0.66rem] font-semibold uppercase tracking-[0.1em] text-ivory/60 transition-colors hover:border-gold/45 hover:text-gold">
+              {c.statusLabels[status]}
             </button>
           ))}
-          <button
-            type="button"
-            onClick={() => setSelected(new Set<string>())}
-            className="ms-auto h-8 px-2 text-[0.66rem] uppercase tracking-[0.1em] text-ivory/40 transition-colors hover:text-gold"
-          >
+          <button type="button" onClick={exportCsv} className="h-8 border border-white/12 px-3 text-[0.66rem] font-semibold uppercase tracking-[0.1em] text-ivory/60 transition-colors hover:border-gold/45 hover:text-gold">
+            {locale === "ar" ? "تصدير المحدد" : "Export"}
+          </button>
+          <button type="button" onClick={() => setSelected(new Set<string>())} className="ms-auto h-8 px-2 text-[0.66rem] uppercase tracking-[0.1em] text-ivory/40 transition-colors hover:text-gold">
             {c.clearSelection}
           </button>
         </div>
       ) : null}
 
-      <div className="overflow-x-auto border border-white/10 bg-coal">
+      {/* Mobile luxury cards */}
+      <div className="grid gap-3 md:hidden">
+        {paged.map((project) => {
+          const risk = budgetRisk(project.spent, project.budget);
+          return (
+            <button key={project.slug} type="button" onClick={() => setDetail(project)} className="border border-white/10 bg-coal p-4 text-start transition-colors hover:border-gold/30">
+              <div className="flex items-start gap-3">
+                <span className="relative h-16 w-20 shrink-0 overflow-hidden border border-white/10">
+                  <ProjectArt variant={project.art} className="h-full w-full" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="truncate text-[0.9rem] font-medium text-ivory">{l(project.title)}</p>
+                    <span className={cn("shrink-0 px-2 py-0.5 text-[0.62rem] uppercase tracking-[0.1em]", project.status === "ongoing" ? "bg-gold/15 text-gold" : project.status === "completed" ? "bg-emerald-400/10 text-emerald-300/80" : "bg-sky-400/10 text-sky-300/80")}>
+                      {c.statusLabels[project.status]}
+                    </span>
+                  </div>
+                  <p className="mt-1 truncate text-[0.72rem] text-ivory/45">{l(project.location)}</p>
+                  <div className="mt-3 flex items-center gap-2">
+                    <span className="h-1.5 flex-1 overflow-hidden bg-white/10">
+                      <span className={cn("block h-full", risk === "critical" ? "bg-red-400/80" : risk === "warning" ? "bg-amber-400/80" : "bg-gold")} style={{ width: `${project.progress}%` }} />
+                    </span>
+                    <span className="tabular-nums text-[0.68rem] text-ivory/45">{project.progress}%</span>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between text-[0.72rem]">
+                    <span className="text-ivory/45">{c.categoryLabels[project.category]}</span>
+                    <span className="tabular-nums text-gold">{formatMoney(project.contractValue || project.budget, locale)}</span>
+                  </div>
+                </div>
+              </div>
+            </button>
+          );
+        })}
+        {!paged.length ? (
+          <div className="border border-dashed border-white/12 bg-coal/40 p-10 text-center">
+            <p className="font-display text-xl text-ivory/70">{c.noProjects}</p>
+            <p className="mt-2 text-[0.78rem] text-ivory/40">{locale === "ar" ? "جرّب تعديل عوامل التصفية أو أضف مشروعاً جديداً." : "Try adjusting filters or add a new project."}</p>
+          </div>
+        ) : null}
+      </div>
+
+      {/* Desktop/tablet table */}
+      <div className="hidden overflow-x-auto border border-white/10 bg-coal md:block">
         <table className="w-full min-w-[960px]">
           <thead>
             <tr className="border-b border-white/8 text-[0.64rem] uppercase tracking-[0.14em] text-ivory/40">
               <th className="w-12 px-4 py-4 text-start font-medium">
-                <input
-                  type="checkbox"
-                  checked={allSelected}
-                  onChange={toggleAll}
-                  aria-label={c.selectAll}
-                  className="h-4 w-4 accent-gold"
-                />
+                <Checkbox checked={allSelected} onChange={toggleAll} aria-label={c.selectAll} />
               </th>
               <th className="px-4 py-4 text-start font-medium">{c.project}</th>
               <th className="px-4 py-4 text-start font-medium">{c.category}</th>
@@ -1250,103 +1376,122 @@ function ProjectsSection({
             </tr>
           </thead>
           <tbody>
-            {filtered.map((project) => (
-              <tr
-                key={project.slug}
-                className={cn(
-                  "border-b border-white/6 last:border-0 transition-colors",
-                  selected.has(project.slug) && "bg-gold/[0.045]",
-                )}
-              >
-                <td className="px-4 py-4">
-                  <input
-                    type="checkbox"
-                    checked={selected.has(project.slug)}
-                    onChange={() => toggleSelected(project.slug)}
-                    aria-label={`${c.selectAll}: ${l(project.title)}`}
-                    className="h-4 w-4 accent-gold"
-                  />
-                </td>
-                <td className="px-4 py-4">
-                  <span className="flex items-center gap-3">
-                    <span className="relative h-10 w-14 shrink-0 overflow-hidden border border-white/10">
-                      <ProjectArt variant={project.art} className="h-full w-full" />
-                    </span>
-                    <span className="flex min-w-0 flex-col gap-0.5">
-                      <span className="truncate text-[0.82rem] text-ivory/75">
-                        {l(project.title)}
+            {paged.map((project) => {
+              const risk = budgetRisk(project.spent, project.budget);
+              return (
+                <tr key={project.slug} onClick={() => setDetail(project)} className={cn("cursor-pointer border-b border-white/6 last:border-0 transition-colors hover:bg-white/[0.02]", selected.has(project.slug) && "bg-gold/[0.045]")}>
+                  <td className="px-4 py-4" onClick={(e) => e.stopPropagation()}>
+                    <Checkbox checked={selected.has(project.slug)} onChange={() => toggleSelected(project.slug)} aria-label={`${c.selectAll}: ${l(project.title)}`} />
+                  </td>
+                  <td className="px-4 py-4">
+                    <span className="flex items-center gap-3">
+                      <span className="relative h-10 w-14 shrink-0 overflow-hidden border border-white/10">
+                        <ProjectArt variant={project.art} className="h-full w-full" />
                       </span>
-                      <span className="truncate text-[0.7rem] text-ivory/40">
-                        {l(project.location)}
+                      <span className="flex min-w-0 flex-col gap-0.5">
+                        <span className="truncate text-[0.82rem] text-ivory/75">{l(project.title)}</span>
+                        <span className="truncate text-[0.7rem] text-ivory/40">{l(project.location)}</span>
                       </span>
                     </span>
-                  </span>
-                </td>
-                <td className="px-4 py-4 text-[0.72rem] text-ivory/50">
-                  {c.categoryLabels[project.category]}
-                </td>
-                <td className="px-4 py-4">
-                  <button
-                    type="button"
-                    onClick={() => cycleStatus(project)}
-                    title={c.quickStatus}
-                    aria-label={`${c.quickStatus}: ${c.statusLabels[project.status]}`}
-                    className={cn(
-                      "inline-flex min-h-8 items-center px-2.5 text-[0.64rem] uppercase tracking-[0.1em] transition-[filter,background-color] hover:brightness-125",
-                      project.status === "ongoing"
-                        ? "bg-gold/15 text-gold"
-                        : project.status === "completed"
-                          ? "bg-emerald-400/10 text-emerald-300/80"
-                          : "bg-sky-400/10 text-sky-300/80",
-                    )}
-                  >
-                    {c.statusLabels[project.status]}
-                  </button>
-                </td>
-                <td className="px-4 py-4">
-                  <span className="flex items-center gap-2">
-                    <span className="h-1.5 w-14 overflow-hidden bg-white/10">
-                      <span
-                        className="block h-full bg-gold"
-                        style={{ width: `${project.progress}%` }}
-                      />
-                    </span>
-                    <span className="tabular text-[0.7rem] text-ivory/45">
-                      {project.progress}%
-                    </span>
-                  </span>
-                </td>
-                <td className="px-4 py-4 text-end text-[0.72rem] text-ivory/55">
-                  {l(project.value)}
-                </td>
-                <td className="px-4 py-4">
-                  <span className="flex items-center justify-end gap-2">
-                    <button
-                      type="button"
-                      onClick={() => onEdit(project)}
-                      className="flex h-9 w-9 items-center justify-center border border-white/12 text-ivory/55 transition-colors hover:border-gold/50 hover:text-gold"
-                      aria-label={`${c.edit} ${l(project.title)}`}
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
+                  </td>
+                  <td className="px-4 py-4 text-[0.72rem] text-ivory/50">{c.categoryLabels[project.category]}</td>
+                  <td className="px-4 py-4" onClick={(e) => e.stopPropagation()}>
+                    <button type="button" onClick={() => cycleStatus(project)} title={c.quickStatus} className={cn("inline-flex min-h-8 items-center px-2.5 text-[0.64rem] uppercase tracking-[0.1em] transition-[filter,background-color] duration-150 hover:brightness-125", project.status === "ongoing" ? "bg-gold/15 text-gold" : project.status === "completed" ? "bg-emerald-400/10 text-emerald-300/80" : "bg-sky-400/10 text-sky-300/80")}>
+                      {c.statusLabels[project.status]}
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => onDelete(project)}
-                      className="flex h-9 w-9 items-center justify-center border border-white/12 text-ivory/55 transition-colors hover:border-red-400/50 hover:text-red-300"
-                      aria-label={`${c.delete} ${l(project.title)}`}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </span>
-                </td>
-              </tr>
-            ))}
+                  </td>
+                  <td className="px-4 py-4">
+                    <span className="flex items-center gap-2">
+                      <span className="h-1.5 w-14 overflow-hidden bg-white/10">
+                        <span className={cn("block h-full", risk === "critical" ? "bg-red-400/80" : risk === "warning" ? "bg-amber-400/80" : "bg-gold")} style={{ width: `${project.progress}%` }} />
+                      </span>
+                      <span className="tabular-nums text-[0.7rem] text-ivory/45">{project.progress}%</span>
+                    </span>
+                  </td>
+                  <td className="px-4 py-4 text-end text-[0.72rem] tabular-nums text-ivory/55">{formatMoney(project.contractValue || project.budget, locale)}</td>
+                  <td className="px-4 py-4" onClick={(e) => e.stopPropagation()}>
+                    <span className="flex items-center justify-end gap-2">
+                      <button type="button" onClick={() => onEdit(project)} className="flex h-9 w-9 items-center justify-center border border-white/12 text-ivory/55 transition-colors duration-150 hover:border-gold/50 hover:text-gold" aria-label={`${c.edit} ${l(project.title)}`}>
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button type="button" onClick={() => handleDelete(project)} className="flex h-9 w-9 items-center justify-center border border-white/12 text-ivory/55 transition-colors duration-150 hover:border-red-400/50 hover:text-red-300" aria-label={`${c.delete} ${l(project.title)}`}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
-        {!filtered.length ? (
-          <p className="p-8 text-center text-[0.82rem] text-ivory/45">{c.noProjects}</p>
+        {!paged.length ? (
+          <div className="p-10 text-center">
+            <p className="font-display text-xl text-ivory/70">{c.noProjects}</p>
+            <p className="mt-2 text-[0.78rem] text-ivory/40">{locale === "ar" ? "لا توجد نتائج مطابقة — عدّل البحث أو الفلاتر." : "No matching results — adjust search or filters."}</p>
+          </div>
         ) : null}
       </div>
+
+      {totalPages > 1 ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 border border-white/10 bg-coal px-4 py-3">
+          <p className="text-[0.72rem] tabular-nums text-ivory/45">
+            {locale === "ar" ? `صفحة ${currentPage} من ${totalPages}` : `Page ${currentPage} of ${totalPages}`}
+          </p>
+          <div className="flex items-center gap-2">
+            <button type="button" disabled={currentPage <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))} className="h-9 border border-white/12 px-3 text-[0.7rem] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold disabled:opacity-30">
+              {locale === "ar" ? "السابق" : "Previous"}
+            </button>
+            <button type="button" disabled={currentPage >= totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))} className="h-9 border border-white/12 px-3 text-[0.7rem] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold disabled:opacity-30">
+              {locale === "ar" ? "التالي" : "Next"}
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {detail ? (
+        <div className="fixed inset-0 z-[230] flex justify-end bg-obsidian/70 backdrop-blur-sm" onMouseDown={(e) => { if (e.target === e.currentTarget) setDetail(null); }}>
+          <aside data-lenis-prevent className="h-full w-full max-w-xl overflow-y-auto overscroll-contain border-s border-white/10 bg-[#0e1017] p-5 shadow-lux sm:p-6">
+            <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-4">
+              <div className="min-w-0">
+                <p className="text-[0.68rem] uppercase tracking-[0.16em] text-gold">{locale === "ar" ? "تفاصيل المشروع" : "Project details"}</p>
+                <h3 className="mt-1 truncate font-display text-2xl text-ivory">{l(detail.title)}</h3>
+                <p className="mt-1 text-[0.78rem] text-ivory/45">{l(detail.location)}</p>
+              </div>
+              <button type="button" onClick={() => setDetail(null)} className="inline-flex h-10 w-10 items-center justify-center border border-white/12 text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold" aria-label="Close">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="mt-5 space-y-4">
+              <div className="relative h-44 overflow-hidden border border-white/10">
+                <ProjectArt variant={detail.art} className="h-full w-full" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  [c.status, c.statusLabels[detail.status]],
+                  [c.category, c.categoryLabels[detail.category]],
+                  [c.progress, `${detail.progress}%`],
+                  [c.value, formatMoney(detail.contractValue || detail.budget, locale)],
+                  [c.budget, formatMoney(detail.budget, locale)],
+                  [c.spent, formatMoney(detail.spent, locale)],
+                ].map(([label, value]) => (
+                  <div key={String(label)} className="border border-white/10 bg-coal p-3">
+                    <p className="text-[0.64rem] uppercase tracking-[0.12em] text-ivory/40">{label}</p>
+                    <p className="mt-1 text-[0.86rem] tabular-nums text-ivory">{value}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="flex flex-wrap gap-2 pt-2">
+                <button type="button" onClick={() => { onEdit(detail); setDetail(null); }} className="inline-flex h-10 items-center gap-2 bg-gold px-4 text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-obsidian transition-colors hover:bg-gold-light">
+                  <Pencil className="h-3.5 w-3.5" />{c.edit}
+                </button>
+                <button type="button" onClick={() => setDetail(null)} className="inline-flex h-10 items-center gap-2 border border-white/12 px-4 text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold">
+                  {locale === "ar" ? "إغلاق" : "Close"}
+                </button>
+              </div>
+            </div>
+          </aside>
+        </div>
+      ) : null}
     </div>
   );
 }

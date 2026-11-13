@@ -51,10 +51,20 @@ const copy = {
   },
 };
 
-const formatM = (value: number, locale: "ar" | "en") =>
-  `${new Intl.NumberFormat(locale === "ar" ? "ar-SA" : "en-US", {
+const formatMoney = (value: number, locale: "ar" | "en") => {
+  const abs = Math.abs(value);
+  const sar = locale === "ar" ? "ر.س" : "SAR";
+  if (abs >= 1000) {
+    const formatted = new Intl.NumberFormat(locale === "ar" ? "ar-SA" : "en-US", {
+      maximumFractionDigits: 2,
+    }).format(value / 1000);
+    return `${sar} ${formatted}B`;
+  }
+  const formatted = new Intl.NumberFormat(locale === "ar" ? "ar-SA" : "en-US", {
     maximumFractionDigits: 1,
-  }).format(value)}M`;
+  }).format(value);
+  return `${sar} ${formatted}M`;
+};
 
 export function ExecutiveKpiBar() {
   const { locale } = useI18n();
@@ -111,10 +121,10 @@ export function ExecutiveKpiBar() {
         { label: c.activeProjects, value: String(kpis.activeProjects), icon: FolderKanban },
         {
           label: c.portfolioValue,
-          value: formatM(kpis.portfolioValue, locale),
+          value: formatMoney(kpis.portfolioValue, locale),
           icon: CircleDollarSign,
         },
-        { label: c.netProfit, value: formatM(kpis.netProfit, locale), icon: TrendingUp },
+        { label: c.netProfit, value: formatMoney(kpis.netProfit, locale), icon: TrendingUp },
         { label: c.newInquiries, value: String(kpis.newInquiries), icon: Inbox },
         {
           label: c.signedContracts,
@@ -179,7 +189,7 @@ export function ExecutiveKpiBar() {
           : stats.map(({ label, value, icon: Icon }) => (
               <div key={label} className="min-w-0 bg-coal p-5">
                 <Icon className="h-4 w-4 text-gold" />
-                <p className="mt-3 tabular font-display text-[1.9rem] leading-none text-ivory">
+                <p className="mt-3 tabular-nums font-display text-[1.9rem] leading-none text-ivory">
                   {value}
                 </p>
                 <p className="mt-2.5 text-[0.72rem] leading-snug uppercase tracking-[0.12em] text-ivory/40">

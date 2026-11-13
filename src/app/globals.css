@@ -97,6 +97,12 @@ body {
     color 0.6s var(--ease-lux);
 }
 
+.tabular-nums,
+[data-numeric] {
+  font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+}
+
 .bg-surface {
   background-color: #0e1017;
 }
@@ -807,4 +813,39 @@ html[dir="rtl"] .carousel-progress {
     opacity: 1 !important;
     transform: none !important;
   }
+}
+
+/* Luxury checkbox */
+.lux-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 1.05rem;
+  height: 1.05rem;
+  border: 1px solid rgba(184, 134, 11, 0.45);
+  background: rgba(255, 255, 255, 0.02);
+  display: inline-grid;
+  place-content: center;
+  cursor: pointer;
+  transition: all 150ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.lux-checkbox::before {
+  content: "";
+  width: 0.55rem;
+  height: 0.55rem;
+  transform: scale(0);
+  transition: transform 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  background: #0a0b0e;
+  clip-path: polygon(14% 44%, 0 59%, 43% 100%, 100% 18%, 84% 4%, 42% 68%);
+}
+.lux-checkbox:checked {
+  background: #b8860b;
+  border-color: #c59b27;
+  box-shadow: 0 0 0 1px rgba(184, 134, 11, 0.2);
+}
+.lux-checkbox:checked::before {
+  transform: scale(1);
+}
+.lux-checkbox:focus-visible {
+  outline: 2px solid rgba(197, 155, 39, 0.7);
+  outline-offset: 2px;
 }
