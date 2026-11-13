@@ -6,6 +6,7 @@ import {
   ArrowUpRight,
   Command as CommandIcon,
   FileSignature,
+  Flag,
   FolderKanban,
   Inbox,
   Loader2,
@@ -185,6 +186,20 @@ export function AdminCommandPalette({
         icon: FolderKanban,
         run: () => onOpenProject(project),
       });
+
+      for (const [index, milestone] of (project.milestones ?? []).entries()) {
+        const milestoneTitle = l(milestone.title);
+        if (!milestoneTitle) continue;
+        items.push({
+          id: `milestone-${project.slug}-${index}`,
+          group: locale === "ar" ? "المراحل" : "Milestones",
+          label: milestoneTitle,
+          meta: `${title} · ${milestone.status}`,
+          keywords: `${milestoneTitle} ${title} ${project.slug} ${milestone.status} milestone`,
+          icon: Flag,
+          run: () => onNavigate("milestones"),
+        });
+      }
     }
 
     for (const inquiry of inquiries) {
@@ -213,7 +228,7 @@ export function AdminCommandPalette({
     }
 
     return items;
-  }, [c.contracts, c.inquiries, c.navigate, c.projects, contracts, inquiries, l, onNavigate, onOpenProject, projects, sections]);
+  }, [c.contracts, c.inquiries, c.navigate, c.projects, contracts, inquiries, l, locale, onNavigate, onOpenProject, projects, sections]);
 
   const filtered = useMemo(() => {
     const tokens = query.trim().toLowerCase().split(/\s+/).filter(Boolean);

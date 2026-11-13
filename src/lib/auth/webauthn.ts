@@ -17,7 +17,11 @@ type ChallengePayload = {
 };
 
 function secret() {
-  const value = (process.env.AUTH_SECRET ?? process.env.JWT_SECRET)?.trim();
+  const value = (
+    process.env.AUTH_SECRET ??
+    process.env.JWT_SECRET ??
+    process.env.NEXTAUTH_SECRET
+  )?.trim();
   if (value && value.length >= 32) return value;
 
   if (process.env.NODE_ENV === "production") {

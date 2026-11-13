@@ -1,9 +1,9 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-obsidian: #060708;
-  --color-ink: #0a0b0e;
-  --color-coal: #0f1115;
+  --color-obsidian: #0a0b0e;
+  --color-ink: #0e1017;
+  --color-coal: #0e1017;
   --color-graphite: #15181d;
   --color-steel: #262b33;
   --color-ash: #3a404a;
@@ -17,6 +17,7 @@
   --color-bronze: #a67c1a;
   --color-champagne: #c59b27;
   --color-ember: #b87333;
+  --color-surface: #0e1017;
 
   --font-sans: var(--font-body), var(--font-arabic), ui-sans-serif, sans-serif;
   --font-arabic: var(--font-arabic), ui-sans-serif, sans-serif;
@@ -31,7 +32,7 @@
 }
 
 :root {
-  --background: #060708;
+  --background: #0a0b0e;
   --foreground: #f3eee4;
   --gold: #b8860b;
   --nav-height: 84px;
@@ -96,6 +97,10 @@ body {
     color 0.6s var(--ease-lux);
 }
 
+.bg-surface {
+  background-color: #0e1017;
+}
+
 @supports not (overflow: clip) {
   body {
     overflow-x: hidden;
@@ -116,7 +121,7 @@ html[lang="ar"] body {
   width: 10px;
 }
 ::-webkit-scrollbar-track {
-  background: #060708;
+  background: #0a0b0e;
 }
 ::-webkit-scrollbar-thumb {
   background: #2a2e35;

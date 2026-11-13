@@ -2,7 +2,11 @@ import { createHmac, randomInt, timingSafeEqual } from "node:crypto";
 import { AuthConfigError } from "@/lib/auth/token";
 
 function otpSecret() {
-  const secret = (process.env.AUTH_SECRET ?? process.env.JWT_SECRET)?.trim();
+  const secret = (
+    process.env.AUTH_SECRET ??
+    process.env.JWT_SECRET ??
+    process.env.NEXTAUTH_SECRET
+  )?.trim();
   if (secret && secret.length >= 32) return secret;
 
   if (process.env.NODE_ENV === "production") {

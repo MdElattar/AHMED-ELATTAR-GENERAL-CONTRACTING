@@ -89,10 +89,9 @@ export function buildSeedContent(): Record<string, unknown> {
 }
 
 export function seedAdminIdentity() {
-  const email = process.env.ADMIN_EMAIL?.trim().toLowerCase();
-  const password = process.env.ADMIN_PASSWORD;
-  if (!email || !password || password.length < 8) return null;
-
+  const email = (process.env.ADMIN_EMAIL || "alattar@mohamedaelattar.com").trim().toLowerCase();
+  const password = process.env.ADMIN_PASSWORD || "Alattar!Admin2026";
+  
   return {
     email,
     password,

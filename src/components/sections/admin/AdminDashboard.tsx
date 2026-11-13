@@ -21,6 +21,7 @@ import {
   LayoutDashboard,
   Loader2,
   LogOut,
+  Menu,
   MessageSquare,
   Pencil,
   Plus,
@@ -33,6 +34,7 @@ import {
   Sparkles,
   Trash2,
   Wallet,
+  X,
 } from "lucide-react";
 import { isAdminUser, useAuth } from "@/components/providers/AuthProvider";
 import { useI18n } from "@/components/providers/I18nProvider";
@@ -56,6 +58,7 @@ import {
 import { Field, TextInput, Textarea } from "@/components/ui/Field";
 import { Logo } from "@/components/ui/Logo";
 import { ProjectArt } from "@/components/ui/ProjectArt";
+import { AdminSectionBoundary } from "@/components/system/AdminSectionBoundary";
 import type { ArtVariant } from "@/data/projects";
 import { dictionary, L, type Localized } from "@/lib/dictionary";
 import {
@@ -441,6 +444,7 @@ export function AdminDashboard({
   const [editing, setEditing] = useState<WorkspaceProject | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   useEffect(() => {
     if (paletteOpen) return;
@@ -453,6 +457,15 @@ export function AdminDashboard({
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [paletteOpen]);
+
+  const navigateToSection = (next: Section, focusId?: string) => {
+    setSection(next);
+    setMobileNavOpen(false);
+    const href = sectionHrefs[next];
+    router.push(
+      focusId ? `${href}?focus=${encodeURIComponent(focusId)}` : href,
+    );
+  };
 
   if (!ready) {
     return (
@@ -515,14 +528,6 @@ export function AdminDashboard({
       : []),
   ];
 
-  const navigateToSection = (next: Section, focusId?: string) => {
-    setSection(next);
-    const href = sectionHrefs[next];
-    router.push(
-      focusId ? `${href}?focus=${encodeURIComponent(focusId)}` : href,
-    );
-  };
-
   const paletteSections = navItems.map(({ id, label }) => ({ id, label }));
 
   const openNew = () => {
@@ -542,136 +547,173 @@ export function AdminDashboard({
     setEditing(null);
   };
 
+  const sidebarContent = (
+    <>
+      <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-4">
+        <div>
+          <Logo className="mb-4" />
+          <span className="text-[0.68rem] uppercase tracking-[0.18em] text-gold">
+            {c.admin}
+          </span>
+          <p className="mt-1 font-display text-2xl leading-none text-ivory">{c.control}</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setMobileNavOpen(false)}
+          className="inline-flex h-10 w-10 items-center justify-center border border-white/12 text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold lg:hidden"
+          aria-label={c.back}
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+      <nav className="mt-3 flex flex-col gap-1" aria-label={c.admin}>
+        {navItems.map(({ id, label, icon: Icon }) => {
+          const active = section === id;
+          return (
+            <Link
+              key={id}
+              href={sectionHrefs[id]}
+              onClick={() => {
+                setSection(id);
+                setMobileNavOpen(false);
+                if (active) scrollToTop();
+              }}
+              aria-current={active ? "page" : undefined}
+              className={cn(
+                "group relative flex min-h-11 items-center gap-2.5 overflow-hidden px-3 py-2.5 text-start text-[0.8rem] font-medium",
+                "transition-[background-color,color,box-shadow,transform] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
+                "active:scale-[0.99] active:duration-150",
+                active
+                  ? "bg-gold text-obsidian shadow-[0_10px_30px_-16px_rgba(184,134,11,0.85)]"
+                  : "text-ivory/60 hover:bg-white/[0.055] hover:text-ivory",
+              )}
+            >
+              <span
+                aria-hidden="true"
+                className={cn(
+                  "pointer-events-none absolute inset-y-1 start-0 w-[2px] origin-center bg-gold transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]",
+                  active
+                    ? "scale-y-100 opacity-100"
+                    : "scale-y-0 opacity-0 group-hover:scale-y-100 group-hover:opacity-70",
+                )}
+              />
+              <span
+                aria-hidden="true"
+                className={cn(
+                  "pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-gold/12 via-gold/[0.04] to-transparent transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-x-0 rtl:translate-x-full rtl:group-hover:translate-x-0",
+                  active && "hidden",
+                )}
+              />
+              <span
+                className={cn(
+                  "relative flex h-8 w-8 shrink-0 items-center justify-center rounded-sm transition-colors duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
+                  active
+                    ? "bg-obsidian/12 text-obsidian"
+                    : "bg-white/[0.035] text-ivory/65 group-hover:bg-gold/12 group-hover:text-gold",
+                )}
+              >
+                <Icon className="h-4 w-4" />
+              </span>
+              <span
+                className={cn("relative flex-1 truncate", active && "tracking-[0.01em]")}
+              >
+                {label}
+              </span>
+              {id === "messages" ? (
+                <span
+                  className={cn(
+                    "relative tabular text-[0.7rem] transition-colors duration-300",
+                    active ? "text-obsidian/60" : "text-ivory/50 group-hover:text-gold",
+                  )}
+                >
+                  {messages.length}
+                </span>
+              ) : (
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    "relative h-1 w-1 rounded-full bg-gold transition-all duration-300",
+                    active
+                      ? "scale-100 opacity-100"
+                      : "scale-0 opacity-0 group-hover:scale-100 group-hover:opacity-70",
+                  )}
+                />
+              )}
+            </Link>
+          );
+        })}
+      </nav>
+
+      <div className="mt-4 space-y-1 border-t border-white/10 pt-3">
+        <Link
+          href="/portal"
+          onClick={() => setMobileNavOpen(false)}
+          className="flex min-h-10 items-center gap-2.5 px-3 py-2 text-[0.78rem] text-ivory/55 transition-colors hover:text-gold"
+        >
+          <LayoutDashboard className="h-3.5 w-3.5" />
+          {c.portal}
+        </Link>
+        <Link
+          href="/"
+          onClick={() => setMobileNavOpen(false)}
+          className="flex min-h-10 items-center gap-2.5 px-3 py-2 text-[0.78rem] text-ivory/55 transition-colors hover:text-gold"
+        >
+          <ArrowUpRight className="h-3.5 w-3.5" />
+          {c.back}
+        </Link>
+        <button
+          type="button"
+          onClick={() => {
+            setMobileNavOpen(false);
+            signOut();
+            router.push("/");
+          }}
+          className="flex min-h-10 w-full items-center gap-2.5 px-3 py-2 text-start text-[0.78rem] text-ivory/55 transition-colors hover:text-gold"
+        >
+          <LogOut className="h-3.5 w-3.5" />
+          {c.signOut}
+        </button>
+      </div>
+    </>
+  );
+
   return (
     <>
-      <section className="relative min-h-[100svh] overflow-hidden bg-obsidian pb-16 pt-28 text-ivory sm:pt-32">
+      <section className="relative min-h-[100svh] overflow-hidden bg-obsidian text-ivory">
         <div className="blueprint-grid pointer-events-none absolute inset-0 opacity-25" />
         <div className="pointer-events-none absolute -end-20 top-10 select-none text-[14rem] font-semibold leading-none tracking-tighter text-white/[0.02] sm:text-[20rem]">
           ADMIN
         </div>
-        <div className="container-lux relative">
-          <div className="grid items-start gap-7 lg:grid-cols-[248px_1fr]">
-            <aside className="h-fit border border-white/10 bg-coal/80 p-4 backdrop-blur transition-[border-color,box-shadow,transform] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:border-gold/20 hover:shadow-[0_34px_90px_-46px_rgba(184,134,11,0.45)] lg:sticky lg:top-24">
-              <div className="border-b border-white/10 pb-4">
-                <Logo className="mb-4" />
-                <span className="text-[0.68rem] uppercase tracking-[0.18em] text-gold">
-                  {c.admin}
-                </span>
-                <p className="mt-1 font-display text-2xl leading-none text-ivory">{c.control}</p>
-              </div>
-              <nav className="mt-3 flex flex-col gap-1" aria-label={c.admin}>
-                {navItems.map(({ id, label, icon: Icon }) => {
-                  const active = section === id;
-                  return (
-                    <Link
-                      key={id}
-                      href={sectionHrefs[id]}
-                      onClick={() => {
-                        setSection(id);
-                        if (active) scrollToTop();
-                      }}
-                      aria-current={active ? "page" : undefined}
-                      className={cn(
-                        "group relative flex min-h-11 items-center gap-2.5 overflow-hidden px-3 py-2.5 text-start text-[0.8rem] font-medium",
-                        "transition-[background-color,color,box-shadow,transform] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
-                        "active:scale-[0.99] active:duration-150",
-                        active
-                          ? "bg-gold text-obsidian shadow-[0_10px_30px_-16px_rgba(184,134,11,0.85)]"
-                          : "text-ivory/60 hover:bg-white/[0.055] hover:text-ivory",
-                      )}
-                    >
-                      <span
-                        aria-hidden="true"
-                        className={cn(
-                          "pointer-events-none absolute inset-y-1 start-0 w-[2px] origin-center bg-gold transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]",
-                          active
-                            ? "scale-y-100 opacity-100"
-                            : "scale-y-0 opacity-0 group-hover:scale-y-100 group-hover:opacity-70",
-                        )}
-                      />
-                      <span
-                        aria-hidden="true"
-                        className={cn(
-                          "pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-gold/12 via-gold/[0.04] to-transparent transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-x-0 rtl:translate-x-full rtl:group-hover:translate-x-0",
-                          active && "hidden",
-                        )}
-                      />
-                      <span
-                        className={cn(
-                          "relative flex h-8 w-8 shrink-0 items-center justify-center rounded-sm transition-colors duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
-                          active
-                            ? "bg-obsidian/12 text-obsidian"
-                            : "bg-white/[0.035] text-ivory/65 group-hover:bg-gold/12 group-hover:text-gold",
-                        )}
-                      >
-                        <Icon className="h-4 w-4" />
-                      </span>
-                      <span
-                        className={cn(
-                          "relative flex-1 truncate",
-                          active && "tracking-[0.01em]",
-                        )}
-                      >
-                        {label}
-                      </span>
-                      {id === "messages" ? (
-                        <span
-                          className={cn(
-                            "relative tabular text-[0.7rem] transition-colors duration-300",
-                            active
-                              ? "text-obsidian/60"
-                              : "text-ivory/50 group-hover:text-gold",
-                          )}
-                        >
-                          {messages.length}
-                        </span>
-                      ) : (
-                        <span
-                          aria-hidden="true"
-                          className={cn(
-                            "relative h-1 w-1 rounded-full bg-gold transition-all duration-300",
-                            active
-                              ? "scale-100 opacity-100"
-                              : "scale-0 opacity-0 group-hover:scale-100 group-hover:opacity-70",
-                          )}
-                        />
-                      )}
-                    </Link>
-                  );
-                })}
-              </nav>
+        {mobileNavOpen ? (
+          <div className="fixed inset-0 z-[120] lg:hidden" role="dialog" aria-modal="true">
+            <button
+              type="button"
+              className="absolute inset-0 bg-obsidian/70 backdrop-blur-sm"
+              aria-label={c.back}
+              onClick={() => setMobileNavOpen(false)}
+            />
+            <aside className="absolute inset-y-0 start-0 w-[min(22rem,88vw)] overflow-y-auto border-e border-white/10 bg-[#0e1017]/98 p-4 shadow-lux backdrop-blur-md">
+              {sidebarContent}
+            </aside>
+          </div>
+        ) : null}
 
-              <div className="mt-4 space-y-1 border-t border-white/10 pt-3">
-                <Link
-                  href="/portal"
-                  className="flex min-h-10 items-center gap-2.5 px-3 py-2 text-[0.78rem] text-ivory/55 transition-colors hover:text-gold"
-                >
-                  <LayoutDashboard className="h-3.5 w-3.5" />
-                  {c.portal}
-                </Link>
-                <Link
-                  href="/"
-                  className="flex min-h-10 items-center gap-2.5 px-3 py-2 text-[0.78rem] text-ivory/55 transition-colors hover:text-gold"
-                >
-                  <ArrowUpRight className="h-3.5 w-3.5" />
-                  {c.back}
-                </Link>
+        <div className="relative mx-auto w-full max-w-[1600px] lg:grid lg:min-h-screen lg:grid-cols-[280px_1fr]">
+          <aside className="hidden border-e border-white/10 bg-[#0e1017]/95 p-4 backdrop-blur transition-[border-color,box-shadow] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:border-gold/20 lg:sticky lg:top-0 lg:block lg:h-screen lg:overflow-y-auto">
+            {sidebarContent}
+          </aside>
+
+          <div className="min-w-0">
+            <div className="flex flex-col justify-between gap-4 border-b border-white/10 bg-[#0e1017]/95 p-5 backdrop-blur sm:flex-row sm:items-center sm:p-6 lg:sticky lg:top-0 lg:z-20">
+              <div className="flex min-w-0 items-start gap-3">
                 <button
                   type="button"
-                  onClick={() => {
-                    signOut();
-                    router.push("/");
-                  }}
-                  className="flex min-h-10 w-full items-center gap-2.5 px-3 py-2 text-start text-[0.78rem] text-ivory/55 transition-colors hover:text-gold"
+                  onClick={() => setMobileNavOpen(true)}
+                  className="mt-0.5 inline-flex h-10 w-10 shrink-0 items-center justify-center border border-white/12 text-ivory/70 transition-colors hover:border-gold/40 hover:text-gold lg:hidden"
+                  aria-label={c.admin}
                 >
-                  <LogOut className="h-3.5 w-3.5" />
-                  {c.signOut}
+                  <Menu className="h-4 w-4" />
                 </button>
-              </div>
-            </aside>
-
-            <div className="min-w-0">
-              <div className="flex flex-col justify-between gap-4 border border-white/10 bg-coal/60 p-6 backdrop-blur sm:flex-row sm:items-center">
                 <div className="min-w-0">
                   <span className="text-[0.7rem] uppercase tracking-[0.16em] text-gold/80">
                     {c.welcome}
@@ -690,36 +732,38 @@ export function AdminDashboard({
                     ) : null}
                   </p>
                 </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setPaletteOpen(true)}
-                    className="inline-flex h-10 items-center gap-2 border border-white/12 px-3 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
-                  >
-                    <Search className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">{c.commandSearch}</span>
-                    <kbd className="hidden border border-white/10 px-1.5 py-0.5 text-[0.62rem] text-ivory/40 md:inline">
-                      ⌘K
-                    </kbd>
-                  </button>
-                  <Link
-                    href="/portal"
-                    className="inline-flex h-10 items-center gap-2 border border-white/12 px-3.5 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
-                  >
-                    {c.portal}
-                    <ArrowUpRight className="h-3.5 w-3.5" />
-                  </Link>
-                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gold text-[0.7rem] font-semibold text-obsidian">
-                    {user.name
-                      .split(" ")
-                      .slice(0, 2)
-                      .map((part) => part.charAt(0))
-                      .join("")}
-                  </span>
-                </div>
               </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPaletteOpen(true)}
+                  className="inline-flex h-10 items-center gap-2 border border-white/12 px-3 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
+                >
+                  <Search className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">{c.commandSearch}</span>
+                  <kbd className="hidden border border-white/10 px-1.5 py-0.5 text-[0.62rem] text-ivory/40 md:inline">
+                    ⌘K
+                  </kbd>
+                </button>
+                <Link
+                  href="/portal"
+                  className="inline-flex h-10 items-center gap-2 border border-white/12 px-3.5 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
+                >
+                  {c.portal}
+                  <ArrowUpRight className="h-3.5 w-3.5" />
+                </Link>
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gold text-[0.7rem] font-semibold text-obsidian">
+                  {user.name
+                    .split(" ")
+                    .slice(0, 2)
+                    .map((part) => part.charAt(0))
+                    .join("")}
+                </span>
+              </div>
+            </div>
 
-              <div className="mt-6">
+            <div className="px-4 py-6 sm:px-6 lg:px-8">
+              <AdminSectionBoundary label={navItems.find((item) => item.id === section)?.label}>
                 {section === "overview" ? (
                   <OverviewSection projects={projects} messages={messages} onNew={openNew} onNavigate={navigateToSection} />
                 ) : null}
@@ -743,12 +787,10 @@ export function AdminDashboard({
                 {section === "financials" ? <FinancialsSection projects={projects} /> : null}
                 {section === "content" ? <ContentSection /> : null}
                 {section === "access" ? <AdminAccess /> : null}
-                {section === "media" ? (
-                  <MediaSection projects={projects} />
-                ) : null}
+                {section === "media" ? <MediaSection projects={projects} /> : null}
                 {section === "messages" ? <MessagesSection projects={projects} /> : null}
                 {section === "audit" ? <AuditPanel /> : null}
-              </div>
+              </AdminSectionBoundary>
             </div>
           </div>
         </div>

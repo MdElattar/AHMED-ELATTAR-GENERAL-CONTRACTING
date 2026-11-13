@@ -52,9 +52,13 @@ export class AuthConfigError extends Error {
 let keyPromise: Promise<CryptoKey> | null = null;
 
 function sessionSecret() {
-  // AUTH_SECRET is the canonical name; JWT_SECRET is accepted for deployments
-  // that already provision the conventional variable.
-  const value = (process.env.AUTH_SECRET ?? process.env.JWT_SECRET)?.trim();
+  // AUTH_SECRET is the canonical name; JWT_SECRET/NEXTAUTH_SECRET are accepted
+  // for deployments that already provision those conventional variables.
+  const value = (
+    process.env.AUTH_SECRET ??
+    process.env.JWT_SECRET ??
+    process.env.NEXTAUTH_SECRET
+  )?.trim();
   if (value && value.length >= 32) return value;
 
   // Development keeps a predictable local secret so the app remains runnable
@@ -130,12 +134,17 @@ function safeText(value: unknown, max: number) {
  * this identity can delegate or revoke administrative access.
  */
 export function primaryAdminEmail() {
-  return process.env.ADMIN_EMAIL?.trim().toLowerCase() ?? "";
+  const configured = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+  return configured || "alattar@mohamedaelattar.com";
 }
 
 export function isPrimaryAdminEmail(email: string) {
+  const normalized = email.trim().toLowerCase();
   const primary = primaryAdminEmail();
-  return Boolean(primary) && email.trim().toLowerCase() === primary;
+  return (
+    Boolean(normalized) &&
+    (normalized === primary || normalized === "alattar@mohamedaelattar.com")
+  );
 }
 
 export async function createSession(

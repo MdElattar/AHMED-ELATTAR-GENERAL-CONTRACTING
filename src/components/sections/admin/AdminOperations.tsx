@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { useWorkspace } from "@/components/providers/WorkspaceProvider";
+import { useToast } from "@/components/ui/Toast";
 import type { PortalMilestone } from "@/data/portal";
 import { L } from "@/lib/dictionary";
 import { cn } from "@/lib/utils";
@@ -391,6 +392,8 @@ export function InquiriesPanel() {
     window.setTimeout(() => setNotice(""), 2400);
   };
 
+  const { toast } = useToast();
+
   const updateStatus = async (inquiry: Inquiry, status: InquiryStatus) => {
     if (inquiry.status === status || pending || bulkBusy) return;
     const previous = items;
@@ -412,9 +415,11 @@ export function InquiriesPanel() {
       });
       if (!response.ok) throw new Error("request_failed");
       flash(c.updated);
+      toast(c.updated, "success");
     } catch {
       setItems(previous);
       setNotice(c.error);
+      toast(c.error, "error");
     } finally {
       setPending(null);
     }
@@ -465,9 +470,11 @@ export function InquiriesPanel() {
       });
       if (!response.ok) throw new Error("request_failed");
       flash(`${ids.length} ${c.updated}`);
+      toast(`${ids.length} ${c.updated}`, "success");
     } catch {
       setItems(previous);
       setNotice(c.error);
+      toast(c.error, "error");
     } finally {
       setBulkBusy(false);
     }
@@ -755,10 +762,11 @@ const consultationStatusStyles: Record<ConsultationStatus, string> = {
 export function ConsultationsPanel() {
   const { locale } = useI18n();
   const c = copy[locale];
-  const { items, loading, error, reload } = useRemoteList<ConsultationRecord>(
+  const { items, loading, error, reload, setItems } = useRemoteList<ConsultationRecord>(
     "/api/admin/consultations",
     "consultations",
   );
+  const { toast } = useToast();
   const [pending, setPending] = useState<string | null>(null);
   const [notice, setNotice] = useState("");
 
@@ -769,9 +777,13 @@ export function ConsultationsPanel() {
   });
 
   const update = async (record: ConsultationRecord, status: ConsultationStatus) => {
-    if (pending) return;
+    if (pending || record.status === status) return;
+    const previous = items;
     setPending(record.id);
     setNotice("");
+    setItems((current) =>
+      current.map((item) => (item.id === record.id ? { ...item, status } : item)),
+    );
     try {
       const response = await fetch("/api/admin/consultations", {
         method: "PATCH",
@@ -781,9 +793,11 @@ export function ConsultationsPanel() {
       });
       if (!response.ok) throw new Error("update_failed");
       setNotice(c.updated);
-      await reload();
+      toast(c.updated, "success");
     } catch {
+      setItems(previous);
       setNotice(c.error);
+      toast(c.error, "error");
     } finally {
       setPending(null);
     }
@@ -1165,6 +1179,7 @@ export function MilestonesPanel() {
   const { locale, l } = useI18n();
   const c = copy[locale];
   const { projects, updateProject } = useWorkspace();
+  const { toast } = useToast();
   const [selectedSlug, setSelectedSlug] = useState(projects[0]?.slug ?? "");
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState(emptyMilestoneDraft);
@@ -1186,6 +1201,7 @@ export function MilestonesPanel() {
       milestoneIndex === index ? { ...milestone, status } : milestone,
     );
     updateProject(active.slug, { milestones });
+    toast(c.updated, "success");
   };
 
   const addMilestone = () => {
@@ -1210,6 +1226,7 @@ export function MilestonesPanel() {
     setDraft(emptyMilestoneDraft);
     setFormError("");
     setAdding(false);
+    toast(c.updated, "success");
   };
 
   const removeMilestone = (index: number) => {
@@ -1217,6 +1234,7 @@ export function MilestonesPanel() {
     updateProject(active.slug, {
       milestones: active.milestones.filter((_, milestoneIndex) => milestoneIndex !== index),
     });
+    toast(c.updated, "success");
   };
 
   return (

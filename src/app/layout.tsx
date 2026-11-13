@@ -10,6 +10,7 @@ import { WorkspaceProvider } from "@/components/providers/WorkspaceProvider";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { ScrollProgress } from "@/components/layout/ScrollProgress";
+import { ToastProvider } from "@/components/ui/Toast";
 
 const arabic = Tajawal({
   subsets: ["arabic", "latin"],
@@ -79,7 +80,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#060708",
+  themeColor: "#0a0b0e",
   width: "device-width",
   initialScale: 1,
 };
@@ -112,19 +113,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <AtmosphereProvider>
               <SmoothScrollProvider>
                 <AuthProvider>
-                  <RouteScrollReset />
-                  <ScrollProgress />
-                  <a
-                    href="#main"
-                    className="sr-only z-[300] bg-gold px-5 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-obsidian focus:not-sr-only focus:fixed focus:start-4 focus:top-4"
-                  >
-                    تجاوز إلى المحتوى / Skip to content
-                  </a>
-                  <Navbar />
-                  <main id="main" className="min-h-screen">
-                    {children}
-                  </main>
-                  <Footer />
+                  <ToastProvider>
+                    <RouteScrollReset />
+                    <ScrollProgress />
+                    <a
+                      href="#main"
+                      className="sr-only z-[300] bg-gold px-5 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-obsidian focus:not-sr-only focus:fixed focus:start-4 focus:top-4"
+                    >
+                      تجاوز إلى المحتوى / Skip to content
+                    </a>
+                    <Navbar />
+                    <main id="main" className="min-h-screen">
+                      {children}
+                    </main>
+                    <Footer />
+                  </ToastProvider>
                 </AuthProvider>
               </SmoothScrollProvider>
             </AtmosphereProvider>

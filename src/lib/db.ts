@@ -238,8 +238,12 @@ function now() {
   return new Date().toISOString();
 }
 
+function mongoUri() {
+  return (process.env.MONGODB_URI ?? process.env.MONGODB_URL)?.trim() ?? "";
+}
+
 function hasMongoUri() {
-  return Boolean(process.env.MONGODB_URI?.trim());
+  return Boolean(mongoUri());
 }
 
 /** Synchronous diagnostics only; data access awaits `activeMode()`. */
@@ -256,7 +260,7 @@ export function databaseMode(): "mongodb" | "memory" {
 async function activeMode(): Promise<"mongodb" | "memory"> {
   if (!hasMongoUri()) {
     if (process.env.NODE_ENV === "production" && process.env.ALLOW_IN_MEMORY_DB !== "true") {
-      throw new Error("MONGODB_URI is required in production.");
+      throw new Error("MONGODB_URI or MONGODB_URL is required in production.");
     }
     return "memory";
   }
@@ -290,20 +294,25 @@ async function seedMemory() {
 
   db.seed = (async () => {
     const identity = seedAdminIdentity();
-    if (identity && !db.users.has(identity.email)) {
+    if (identity) {
       const passwordHash = await hashPassword(identity.password);
       const timestamp = now();
+      const existing = db.users.get(identity.email);
       db.users.set(identity.email, {
-        id: id(),
+        id: existing?.id ?? id(),
         email: identity.email,
         name: identity.name,
         company: identity.company,
+        ...(existing?.phone ? { phone: existing.phone } : {}),
         passwordHash,
         role: "admin",
-        accountId: `ALT-${String(Math.floor(Math.random() * 9000) + 1000)}`,
-        sessionVersion: 0,
-        createdAt: timestamp,
+        accountId:
+          existing?.accountId ??
+          `ALT-${String(Math.floor(Math.random() * 9000) + 1000)}`,
+        sessionVersion: existing?.sessionVersion ?? 0,
+        createdAt: existing?.createdAt ?? timestamp,
         updatedAt: timestamp,
+        ...(existing?.lastLoginAt ? { lastLoginAt: existing.lastLoginAt } : {}),
       });
     }
 
@@ -350,8 +359,8 @@ async function connectMongo(): Promise<Mongoose> {
     cached.promise = (async () => {
       const mongoose = (await import("mongoose")).default;
       mongoose.set("strictQuery", true);
-      const uri = process.env.MONGODB_URI?.trim();
-      if (!uri) throw new Error("MONGODB_URI is not configured");
+      const uri = mongoUri();
+      if (!uri) throw new Error("MONGODB_URI or MONGODB_URL is not configured");
       return mongoose.connect(uri, {
         maxPoolSize: 10,
         serverSelectionTimeoutMS: process.env.NODE_ENV === "production" ? 8000 : 2500,
@@ -1761,18 +1770,35 @@ export async function seedDatabase(): Promise<{
   }
 
   let admin = await getUserByEmail(identity.email);
+  const passwordHash = await hashPassword(identity.password);
   if (!admin) {
-    admin = await createUser({
-      email: identity.email,
+    try {
+      admin = await createUser({
+        email: identity.email,
+        name: identity.name,
+        company: identity.company,
+        passwordHash,
+        role: "admin",
+        accountId: `ALT-${String(Math.floor(Math.random() * 9000) + 1000)}`,
+      });
+    } catch (error) {
+      // Idempotent in case of a race against a unique email index.
+      if (error instanceof Error && error.message === "email_taken") {
+        admin = await getUserByEmail(identity.email);
+      } else {
+        throw error;
+      }
+    }
+  }
+
+  // Always enforce the configured primary-admin credentials and role safely.
+  admin =
+    (await updateUser(identity.email, {
+      role: "admin",
+      passwordHash,
       name: identity.name,
       company: identity.company,
-      passwordHash: await hashPassword(identity.password),
-      role: "admin",
-      accountId: `ALT-${String(Math.floor(Math.random() * 9000) + 1000)}`,
-    });
-  } else if (admin.role !== "admin") {
-    admin = (await updateUser(identity.email, { role: "admin" })) ?? admin;
-  }
+    })) ?? admin;
 
   let projects = 0;
   for (const payload of buildSeedProjects()) {
