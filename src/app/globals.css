@@ -849,3 +849,121 @@ html[dir="rtl"] .carousel-progress {
   outline: 2px solid rgba(197, 155, 39, 0.7);
   outline-offset: 2px;
 }
+
+
+/* ---------- Admin design reference tokens (visual-only restyle) ---------- */
+:root {
+  --admin-bg: #0b0c10;
+  --admin-bg-glow: rgba(226, 176, 74, 0.1);
+  --admin-card: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.018));
+  --admin-card-border: rgba(255, 255, 255, 0.07);
+  --admin-gold: #e2b04a;
+  --admin-gold-btn-from: #f3c86a;
+  --admin-gold-btn-to: #d9a03a;
+  --admin-green: #4ccb96;
+  --admin-red: #ff6b5e;
+  --admin-blue: #6bb6ff;
+  --admin-text: #f1eee8;
+  --admin-muted: #a6a9b4;
+  --admin-track: #232632;
+  --admin-pill-surface: rgba(255, 255, 255, 0.05);
+  --admin-sidebar: rgba(255, 255, 255, 0.015);
+  --admin-hero: linear-gradient(135deg, #1d1608 0%, #12131a 55%, #0f1117 100%);
+  --admin-hero-border: rgba(226, 176, 74, 0.22);
+  --admin-radius-hero: 24px;
+  --admin-radius-card: 22px;
+  --admin-radius-kpi: 20px;
+  --admin-radius-control: 12px;
+  --admin-radius-pill: 999px;
+  --admin-page-pad: 36px;
+  --admin-card-gap: 22px;
+  --admin-kpi-gap: 16px;
+}
+
+[data-theme="light"] {
+  --admin-bg: #f6f4ef;
+  --admin-bg-glow: rgba(184, 128, 28, 0.08);
+  --admin-card: #ffffff;
+  --admin-card-border: rgba(20, 18, 10, 0.08);
+  --admin-gold: #b8801c;
+  --admin-gold-btn-from: #d9a03a;
+  --admin-gold-btn-to: #b8801c;
+  --admin-green: #2f9e72;
+  --admin-red: #d9534f;
+  --admin-blue: #3a86d1;
+  --admin-text: #17150f;
+  --admin-muted: #5e6068;
+  --admin-track: #e8e4dc;
+  --admin-pill-surface: rgba(20, 18, 10, 0.04);
+  --admin-sidebar: #ffffff;
+  --admin-hero: linear-gradient(135deg, #fff8eb 0%, #f6f4ef 55%, #f0ede6 100%);
+  --admin-hero-border: rgba(184, 128, 28, 0.22);
+}
+
+.admin-shell {
+  min-height: 100svh;
+  background:
+    radial-gradient(900px 500px at 85% -5%, var(--admin-bg-glow), transparent),
+    var(--admin-bg);
+  color: var(--admin-text);
+  font-family: var(--font-inter), var(--font-arabic), system-ui, sans-serif;
+}
+.admin-shell h1, .admin-shell h2, .admin-shell h3, .admin-shell .page-title {
+  font-family: var(--font-inter), var(--font-arabic), system-ui, sans-serif;
+}
+
+[data-theme="light"] .admin-shell {
+  background:
+    radial-gradient(900px 500px at 85% -5%, var(--admin-bg-glow), transparent),
+    var(--admin-bg);
+}
+
+.admin-card-surface {
+  background: var(--admin-card);
+  border: 1px solid var(--admin-card-border);
+}
+
+[data-theme="light"] .admin-card-surface {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.admin-num {
+  font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  font-family: var(--font-arabic), ui-sans-serif, sans-serif;
+}
+
+.admin-focus-ring:focus-visible {
+  outline: 2px solid var(--admin-gold);
+  outline-offset: 2px;
+}
+
+.admin-skeleton {
+  position: relative;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.06);
+}
+.admin-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+  animation: admin-shimmer 1.4s infinite;
+}
+@keyframes admin-shimmer {
+  100% { transform: translateX(100%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-skeleton::after { animation: none; }
+}
+
+
+
+.admin-shell .font-display,
+.admin-shell .display-title,
+.admin-shell [class*="font-display"] {
+  font-family: var(--font-inter), var(--font-arabic), system-ui, sans-serif !important;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}

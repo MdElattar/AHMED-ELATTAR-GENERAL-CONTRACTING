@@ -4,10 +4,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { LazyMotion, domAnimation, m, useReducedMotion } from "framer-motion";
 import {
   Activity,
   ArrowUpRight,
-  BarChart3,
+  Building2,
+  Bell,
   BellRing,
   CalendarDays,
   Check,
@@ -20,8 +22,6 @@ import {
   Inbox,
   LayoutDashboard,
   Loader2,
-  LogOut,
-  Menu,
   MessageSquare,
   Pencil,
   Plus,
@@ -46,7 +46,6 @@ import {
 import { AdminAccess } from "@/components/sections/admin/AdminAccess";
 import { AdminCommandPalette } from "@/components/sections/admin/AdminCommandPalette";
 import { AdminProjectEditor } from "@/components/sections/admin/AdminProjectEditor";
-import { ExecutiveKpiBar } from "@/components/sections/admin/ExecutiveKpiBar";
 import {
   AuditPanel,
   ConsultationsPanel,
@@ -59,6 +58,7 @@ import { Field, TextInput, Textarea } from "@/components/ui/Field";
 import { ProjectArt } from "@/components/ui/ProjectArt";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { AdminSectionBoundary } from "@/components/system/AdminSectionBoundary";
+import { Button, Card, Chip, DataTable, EmptyState, PageHeader, ProjectPhoto, StatusPill, Table, TD, TH, THead, TR, AdminInput, AdminSelect } from "@/components/ui/admin";
 import { useToast } from "@/components/ui/Toast";
 import type { ArtVariant } from "@/data/projects";
 import { dictionary, L, type Localized } from "@/lib/dictionary";
@@ -73,6 +73,17 @@ import {
 } from "@/lib/cms";
 import { acquireScrollLock, releaseScrollLock } from "@/lib/scroll/lock";
 import { cn } from "@/lib/utils";
+import {
+  buildAlerts,
+  byCity,
+  formatSAR,
+  getBudgetHealth,
+  needsAttention as projectNeedsAttention,
+  projectCity,
+  projectName,
+  toMetricsProject,
+  type Alert,
+} from "@/lib/project-metrics";
 
 export type AdminSection =
   | "overview"
@@ -425,42 +436,17 @@ const artVariants: ArtVariant[] = [
   "solar",
 ];
 
-const formatM = (value: number, locale: "ar" | "en") =>
-  `${new Intl.NumberFormat(locale === "ar" ? "ar-SA" : "en-US", {
-    maximumFractionDigits: 1,
-  }).format(value)}M`;
-
-const formatMoney = (value: number, locale: "ar" | "en") => {
-  const sar = locale === "ar" ? "ر.س" : "SAR";
-  const abs = Math.abs(value);
-  if (abs >= 1000) {
-    const formatted = new Intl.NumberFormat(locale === "ar" ? "ar-SA" : "en-US", {
-      maximumFractionDigits: 2,
-    }).format(value / 1000);
-    return `${sar} ${formatted}B`;
-  }
-  const formatted = new Intl.NumberFormat(locale === "ar" ? "ar-SA" : "en-US", {
-    maximumFractionDigits: 1,
-  }).format(value);
-  return `${sar} ${formatted}M`;
-};
-
-const budgetRisk = (spent: number, budget: number) => {
-  const ratio = budget > 0 ? spent / budget : 0;
-  if (ratio >= 0.95) return "critical";
-  if (ratio >= 0.8) return "warning";
-  return "healthy";
-};
+const formatM = (value: number, locale: "ar" | "en") => formatSAR(value, locale);
+const formatMoney = (value: number, locale: "ar" | "en") => formatSAR(value, locale);
 
 export function AdminDashboard({
   initialSection = "overview",
 }: {
   initialSection?: AdminSection;
 }) {
-  const { locale } = useI18n();
-  const { user, ready, signOut } = useAuth();
-  const { projects, messages, addProject, updateProject, deleteProject } =
-    useWorkspace();
+  const { locale, toggleLocale } = useI18n();
+  const { user, ready } = useAuth();
+  const { projects, messages, addProject, updateProject, deleteProject, ready: workspaceReady } = useWorkspace();
   const { scrollToTop, stop, start } = useSmoothScroll();
   const router = useRouter();
   const c = copy[locale];
@@ -470,6 +456,27 @@ export function AdminDashboard({
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [fontScale, setFontScale] = useState<"normal" | "large">(() => {
+    if (typeof window === "undefined") return "normal";
+    try { const f = localStorage.getItem("admin-font-size"); return f === "large" ? "large" : "normal"; } catch { return "normal"; }
+  });
+  const [density, setDensity] = useState<"comfortable" | "compact">(() => {
+    if (typeof window === "undefined") return "comfortable";
+    try { const d = localStorage.getItem("admin-density"); return d === "compact" ? "compact" : "comfortable"; } catch { return "comfortable"; }
+  });
+  const [theme, setTheme] = useState<"dark" | "light">(() => {
+    if (typeof window === "undefined") return "dark";
+    try { const t = localStorage.getItem("admin-theme"); return t === "light" ? "light" : "dark"; } catch { return "dark"; }
+  });
+
+  useEffect(() => { try { localStorage.setItem("admin-density", density); } catch {} }, [density]);
+  useEffect(() => { try { localStorage.setItem("admin-font-size", fontScale); } catch {} }, [fontScale]);
+  useEffect(() => {
+    try { localStorage.setItem("admin-theme", theme); } catch {}
+    const root = document.documentElement;
+    if (theme === "light") root.setAttribute("data-theme", "light");
+    else root.removeAttribute("data-theme");
+  }, [theme]);
 
   useEffect(() => {
     if (paletteOpen) return;
@@ -534,7 +541,7 @@ export function AdminDashboard({
             </p>
             <Link
               href="/sign-in"
-              className="btn-shine mt-9 inline-flex h-12 items-center gap-2.5 bg-gold px-7 text-[0.8rem] font-semibold uppercase tracking-[0.16em] text-obsidian transition-colors hover:bg-gold-light"
+              className="btn-shine mt-9 inline-flex h-12 items-center gap-2.5 bg-gold px-7 text-[0.8rem] font-semibold  text-obsidian transition-colors hover:bg-gold-light"
             >
               {c.signIn}
               <ArrowUpRight className="h-4 w-4" />
@@ -608,81 +615,62 @@ export function AdminDashboard({
     setEditing(null);
   };
 
+  const BrandMark = ({ className }: { className?: string }) => (
+    <svg viewBox="0 0 390 328" aria-hidden="true" className={className}>
+      <g fill="#E2B04A">
+        <polygon points="48,0 190,0 142,48 68,48" /><polygon points="0,48 48,0 68,48 48,68" />
+        <polygon points="0,48 48,68 48,142 0,162" /><polygon points="0,162 48,142 68,162 48,210" />
+        <polygon points="68,162 142,162 142,210 48,210" /><polygon points="142,48 190,0 190,258 142,210" />
+      </g>
+      <g transform="translate(200,70)" fill="#F9602F">
+        <polygon points="48,0 190,0 142,48 68,48" /><polygon points="0,48 48,0 68,48 48,68" />
+        <polygon points="0,48 48,68 48,142 0,162" /><polygon points="0,162 48,142 68,162 48,210" />
+        <polygon points="68,162 142,162 142,210 48,210" /><polygon points="142,48 190,0 190,258 142,210" />
+      </g>
+    </svg>
+  );
+
   const sidebarContent = (collapsed = false) => (
     <>
-      <div className={cn("flex items-start justify-between gap-3 border-b border-white/10 pb-4", collapsed && "justify-center")}>
-        {!collapsed ? (
-          <div className="min-w-0">
-            <span className="text-[0.66rem] uppercase tracking-[0.18em] text-gold">
-              {c.admin}
-            </span>
-            <p className="mt-1 truncate font-display text-xl leading-none text-ivory sm:text-2xl">
-              AHMED ELATTAR
-            </p>
-            <p className="mt-1 text-[0.7rem] uppercase tracking-[0.14em] text-ivory/45">{c.control}</p>
+      <div className={cn("flex items-center gap-3 overflow-hidden px-2 pb-5", collapsed ? "justify-center" : "justify-between")}>
+        <div className="flex min-w-0 items-center gap-3 overflow-hidden">
+          <BrandMark className={cn("h-11 w-auto shrink-0", collapsed ? "h-10" : "h-11")} />
+          <div className={cn("min-w-0 overflow-hidden transition-all duration-200", collapsed ? "w-0 opacity-0" : "w-auto max-w-[180px] opacity-100")}>
+            <p className="truncate text-[19px] font-extrabold leading-tight text-[var(--admin-text)]">{locale === "ar" ? "أحمد العطار" : "Ahmed Elattar"}</p>
+            <p className="truncate text-[12px] text-[var(--admin-muted)]">{locale === "ar" ? "للمقاولات العامة" : "General Contracting"}</p>
           </div>
-        ) : (
-          <span className="font-display text-lg text-gold" title="AHMED ELATTAR">AE</span>
-        )}
-        <button
-          type="button"
-          onClick={() => setMobileNavOpen(false)}
-          className="inline-flex h-10 w-10 items-center justify-center border border-white/12 text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold lg:hidden"
-          aria-label={c.back}
-        >
-          <X className="h-4 w-4" />
+        </div>
+        <button type="button" onClick={() => setMobileNavOpen(false)} className={cn("admin-focus-ring inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[12px] text-[var(--admin-muted)] hover:bg-[var(--admin-pill-surface)] lg:hidden", collapsed && "hidden")} aria-label={locale === "ar" ? "إغلاق" : "Close"}>
+          <X className="h-5 w-5" strokeWidth={1.7} />
         </button>
       </div>
-      <nav className="mt-3 flex flex-col gap-4" aria-label={c.admin}>
+      <nav className="flex flex-1 flex-col" aria-label={locale === "ar" ? "تنقل الإدارة" : "Admin navigation"}>
         {navGroups.map((group) => (
-          <div key={group.title}>
-            {!collapsed ? (
-              <p className="mb-1.5 px-3 text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-ivory/35">
-                {group.title}
-              </p>
-            ) : (
-              <div className="mb-1.5 h-px bg-white/10" aria-hidden="true" />
-            )}
-            <div className="flex flex-col gap-1">
+          <div key={group.title} className="mt-1 first:mt-0">
+            {!collapsed ? <p className="px-3 pb-[6px] pt-[18px] text-[12px] text-[var(--admin-muted)]">{group.title}</p> : <div className="my-2 h-px bg-[var(--admin-card-border)]" />}
+            <div className="flex flex-col gap-[2px]">
               {group.items.map(({ id, label, icon: Icon }) => {
                 const active = section === id;
-                const badge = id === "messages" ? messages.length : 0;
+                const badge = id === "messages" ? messages.length : id === "notifications" ? 1 : 0;
                 return (
                   <Link
                     key={id}
                     href={sectionHrefs[id]}
                     title={collapsed ? label : undefined}
-                    onClick={() => {
-                      setSection(id);
-                      setMobileNavOpen(false);
-                      if (active) scrollToTop();
-                    }}
+                    onClick={() => { setSection(id); setMobileNavOpen(false); if (active) scrollToTop(); }}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "group relative flex min-h-11 items-center gap-2.5 overflow-hidden border-s-2 px-3 py-2.5 text-start text-[0.8rem] font-medium transition-all duration-150 ease-[cubic-bezier(0.16,1,0.3,1)]",
-                      collapsed && "justify-center px-2",
+                      "admin-focus-ring group relative flex min-h-[44px] items-center gap-3 rounded-[12px] px-3 py-[11px] text-[15px] transition-colors",
+                      collapsed && "justify-center px-0",
                       active
-                        ? "border-gold bg-transparent text-gold"
-                        : "border-transparent text-ivory/60 hover:bg-white/[0.03] hover:text-gold/90",
+                        ? "bg-[linear-gradient(90deg,rgba(226,176,74,0.20),rgba(226,176,74,0.04))] text-[#F3C86A] shadow-[inset_0_0_0_1px_rgba(226,176,74,0.25)]"
+                        : "text-[#CFCFD2] hover:bg-[rgba(255,255,255,0.05)]",
                     )}
                   >
-                    <span
-                      className={cn(
-                        "relative flex h-8 w-8 shrink-0 items-center justify-center rounded-sm transition-colors duration-150",
-                        active ? "bg-gold/10 text-gold" : "bg-white/[0.03] text-ivory/60 group-hover:text-gold",
-                      )}
-                    >
-                      <Icon className="h-4 w-4" />
-                    </span>
-                    {!collapsed ? <span className="relative flex-1 truncate">{label}</span> : null}
-                    {!collapsed && badge > 0 ? (
-                      <span className="relative inline-flex min-w-5 items-center justify-center rounded-full border border-gold/30 bg-gold/10 px-1.5 py-0.5 text-[0.62rem] tabular-nums text-gold">
-                        {badge}
-                      </span>
-                    ) : null}
-                    {collapsed && badge > 0 ? (
-                      <span className="absolute end-1 top-1 h-2 w-2 rounded-full bg-gold" aria-hidden="true" />
-                    ) : null}
+                    <Icon className="h-5 w-5 shrink-0" strokeWidth={1.7} />
+                    {!collapsed ? <span className="flex-1 truncate">{label}</span> : null}
+                    {!collapsed && badge > 0 ? <span className="ms-auto rounded-[9px] bg-[var(--admin-red)] px-[7px] py-0 text-[12px] leading-[18px] text-white">{badge}</span> : null}
+                    {collapsed && badge > 0 ? <span className="absolute end-2 top-2 h-2 w-2 rounded-full bg-[var(--admin-red)]" /> : null}
                   </Link>
                 );
               })}
@@ -690,438 +678,540 @@ export function AdminDashboard({
           </div>
         ))}
       </nav>
-
-      {!collapsed ? (
-        <div className="mt-4 space-y-1 border-t border-white/10 pt-3">
-          <Link
-            href="/portal"
-            onClick={() => setMobileNavOpen(false)}
-            className="flex min-h-10 items-center gap-2.5 px-3 py-2 text-[0.78rem] text-ivory/55 transition-colors hover:text-gold"
-          >
-            <LayoutDashboard className="h-3.5 w-3.5" />
-            {c.portal}
-          </Link>
-          <button
-            type="button"
-            onClick={() => {
-              setMobileNavOpen(false);
-              signOut();
-              router.push("/");
-            }}
-            className="flex min-h-10 w-full items-center gap-2.5 px-3 py-2 text-start text-[0.78rem] text-ivory/55 transition-colors hover:text-gold"
-          >
-            <LogOut className="h-3.5 w-3.5" />
-            {c.signOut}
-          </button>
-        </div>
-      ) : null}
+      <div className="mt-auto pt-4">
+        {!collapsed ? (
+          <div className="flex items-center gap-[10px] rounded-[14px] border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] p-3">
+            <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,#F3C86A,#C98F1E)] text-[14px] font-extrabold text-[#1a1205]">
+              {userInitials(user.name)}
+              <span className="absolute bottom-0 end-0 h-[11px] w-[11px] rounded-full border-2 border-[#14161d] bg-[var(--admin-green)]" />
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-[14px] font-medium text-[var(--admin-text)]">{user.name || (locale === "ar" ? "—" : "—")}</p>
+              <p className="truncate text-[12px] text-[var(--admin-muted)]">{userRoleLabel(user, locale)}</p>
+            </div>
+          </div>
+        ) : (
+          <div className="relative mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-[linear-gradient(135deg,#F3C86A,#C98F1E)] text-[13px] font-extrabold text-[#1a1205]" title={user.name}>
+            {userInitials(user.name)}
+            <span className="absolute bottom-0 end-0 h-[10px] w-[10px] rounded-full border-2 border-[#14161d] bg-[var(--admin-green)]" />
+          </div>
+        )}
+      </div>
     </>
   );
 
   return (
-    <>
-      <section className="relative min-h-[100svh] overflow-hidden bg-obsidian pt-28 pb-12 text-ivory sm:pt-28">
-        <div className="blueprint-grid pointer-events-none absolute inset-0 opacity-25" />
-        <div className="pointer-events-none absolute -end-20 top-24 select-none text-[14rem] font-semibold leading-none tracking-tighter text-white/[0.02] sm:text-[20rem]">
-          ADMIN
-        </div>
+    <LazyMotion features={domAnimation}>
+      <section
+        className={cn(
+          "admin-shell relative min-h-[100svh] pb-24 lg:pb-0",
+          fontScale === "large" ? "text-[18px]" : "text-[16px]",
+          density === "compact" && "[--admin-card-gap:16px] [--admin-page-pad:24px]",
+        )}
+        data-admin-theme={theme}
+      >
         {mobileNavOpen ? (
-          <div className="fixed inset-0 z-[120] overscroll-contain lg:hidden" role="dialog" aria-modal="true">
-            <button
-              type="button"
-              className="absolute inset-0 bg-obsidian/70 backdrop-blur-sm"
-              aria-label={c.back}
-              onClick={() => setMobileNavOpen(false)}
-            />
-            <aside
-              data-lenis-prevent
-              className="absolute inset-y-0 start-0 h-full w-[min(22rem,88vw)] overflow-y-auto overscroll-contain border-e border-white/10 bg-[#0e1017]/98 p-4 shadow-lux backdrop-blur-md"
-            >
+          <div className="fixed inset-0 z-[120] lg:hidden" role="dialog" aria-modal="true">
+            <button type="button" className="absolute inset-0 bg-black/60 backdrop-blur-sm" aria-label={locale === "ar" ? "إغلاق" : "Close"} onClick={() => setMobileNavOpen(false)} />
+            <aside data-lenis-prevent className="absolute inset-y-0 start-0 flex h-full w-[min(264px,88vw)] flex-col overflow-y-auto border-e border-[var(--admin-card-border)] bg-[var(--admin-sidebar)] p-[14px] backdrop-blur-md">
               {sidebarContent(false)}
             </aside>
           </div>
         ) : null}
 
-        <div className="relative mx-auto w-full max-w-[1600px] px-4 sm:px-6 lg:px-8">
-          <div className={cn("lg:grid lg:items-start lg:gap-6", sidebarCollapsed ? "lg:grid-cols-[88px_1fr]" : "lg:grid-cols-[280px_1fr]")}>
-            <aside className={cn("hidden border border-white/10 bg-[#0e1017]/95 p-4 backdrop-blur transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] hover:border-gold/20 lg:block lg:self-stretch", sidebarCollapsed && "px-2")}>
-              <div className={cn("mb-3 flex", sidebarCollapsed ? "justify-center" : "justify-end")}>
-                <button
-                  type="button"
-                  onClick={() => setSidebarCollapsed((v) => !v)}
-                  className="inline-flex h-9 w-9 items-center justify-center border border-white/12 text-ivory/55 transition-colors hover:border-gold/40 hover:text-gold"
-                  aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-                  title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-                >
-                  <ChevronDown className={cn("h-4 w-4 transition-transform", sidebarCollapsed ? "-rotate-90 rtl:rotate-90" : "rotate-90 rtl:-rotate-90")} />
-                </button>
-              </div>
-              {sidebarContent(sidebarCollapsed)}
-            </aside>
+        <div className="relative mx-auto flex min-h-[100svh] w-full max-w-[1600px]">
+          <aside className={cn("sticky top-0 hidden h-[100svh] shrink-0 flex-col border-e border-[var(--admin-card-border)] bg-[var(--admin-sidebar)] p-[14px] transition-all duration-200 lg:flex", sidebarCollapsed ? "w-[76px]" : "w-[264px]")}>
+            <button type="button" onClick={() => setSidebarCollapsed((v) => !v)} className="admin-focus-ring mb-2 ms-auto inline-flex h-9 w-9 items-center justify-center rounded-[12px] text-[var(--admin-muted)] hover:bg-[var(--admin-pill-surface)]" aria-label={sidebarCollapsed ? (locale === "ar" ? "توسيع الشريط" : "Expand sidebar") : (locale === "ar" ? "طي الشريط" : "Collapse sidebar")}> 
+              <ChevronDown className={cn("h-4 w-4 transition-transform", sidebarCollapsed ? "-rotate-90 rtl:rotate-90" : "rotate-90 rtl:-rotate-90")} />
+            </button>
+            {sidebarContent(sidebarCollapsed)}
+          </aside>
 
-            <div className="min-w-0 border border-white/10 bg-[#0e1017]/70">
-              <div className="flex flex-col justify-between gap-3 border-b border-white/10 bg-[#0e1017]/95 p-4 backdrop-blur sm:flex-row sm:items-center sm:p-5">
-                <div className="flex min-w-0 items-start gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setMobileNavOpen(true)}
-                    className="mt-0.5 inline-flex h-10 w-10 shrink-0 items-center justify-center border border-white/12 text-ivory/70 transition-colors hover:border-gold/40 hover:text-gold lg:hidden"
-                    aria-label={c.admin}
-                  >
-                    <Menu className="h-4 w-4" />
-                  </button>
-                  <div className="min-w-0">
-                    <span className="text-[0.68rem] uppercase tracking-[0.16em] text-gold/80">
-                      {c.welcome}
-                    </span>
-                    <h1 className="mt-1 font-display text-xl leading-tight text-ivory sm:text-2xl">
-                      {user.name}
-                    </h1>
-                    <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.76rem] text-ivory/45 sm:text-[0.8rem]">
-                      <span className="max-w-full truncate tabular-nums" dir="ltr" title={user.email}>
-                        {user.email}
-                      </span>
-                      {user.primaryAdmin ? (
-                        <span className="border border-gold/25 px-2 py-0.5 text-[0.64rem] uppercase tracking-[0.1em] text-gold">
-                          {c.primaryAdmin}
-                        </span>
-                      ) : null}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Link
-                    href="/portal"
-                    className="inline-flex h-10 items-center gap-2 border border-white/12 px-3.5 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
-                  >
-                    {c.portal}
-                    <ArrowUpRight className="h-3.5 w-3.5" />
-                  </Link>
-                </div>
-              </div>
+          <div className="flex min-w-0 flex-1 flex-col">
+            <header className="flex flex-wrap items-center gap-3 px-4 py-2 sm:px-6 lg:px-[36px]">
+              <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-[14px] text-[var(--admin-muted)]">
+                <span>{locale === "ar" ? "الرئيسية" : "Home"}</span>
+                <span>‹</span>
+                <span className="text-[var(--admin-text)]/80">{navItems.find((i) => i.id === section)?.label ?? (locale === "ar" ? "نظرة عامة" : "Overview")}</span>
+              </nav>
+              <button type="button" onClick={() => setPaletteOpen(true)} className="admin-focus-ring ms-auto flex h-11 w-full max-w-[360px] items-center gap-[10px] rounded-[999px] border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] px-4 text-[14px] text-[var(--admin-muted)]">
+                <Search className="h-5 w-5 shrink-0" strokeWidth={1.7} />
+                <span className="truncate">{locale === "ar" ? "ابحث في المشاريع والعقود…" : "Search projects and contracts…"}</span>
+                <kbd className="ms-auto shrink-0 rounded-[6px] border border-[var(--admin-card-border)] px-[7px] py-[1px] text-[12px]">⌘K</kbd>
+              </button>
+              <button type="button" onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))} className="admin-focus-ring inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] text-[13px] font-bold text-[var(--admin-text)]" aria-label={theme === "dark" ? (locale === "ar" ? "الوضع الفاتح" : "Light mode") : (locale === "ar" ? "الوضع الداكن" : "Dark mode")}>{theme === "dark" ? "☀" : "☾"}</button>
+              <button type="button" onClick={toggleLocale} className="admin-focus-ring inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] text-[13px] font-bold text-[var(--admin-text)]" aria-label={locale === "ar" ? "English" : "العربية"}>{locale === "ar" ? "EN" : "AR"}</button>
+              <button type="button" onClick={() => navigateToSection("notifications")} className="admin-focus-ring relative inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] text-[var(--admin-text)]" aria-label={locale === "ar" ? "التنبيهات" : "Notifications"}>
+                <Bell className="h-5 w-5" strokeWidth={1.7} />
+                <span className="absolute top-[10px] end-[11px] h-2 w-2 rounded-full bg-[var(--admin-gold)]" />
+              </button>
+            </header>
 
-              <div className="px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
-                <AdminSectionBoundary label={navItems.find((item) => item.id === section)?.label}>
-                  {section === "overview" ? (
-                  <OverviewSection projects={projects} messages={messages} onNew={openNew} onNavigate={navigateToSection} />
+            <main className="px-4 pb-10 pt-2 sm:px-6 lg:px-[var(--admin-page-pad)]">
+              <AdminSectionBoundary label={navItems.find((item) => item.id === section)?.label}>
+                {section === "overview" ? (
+                  <OverviewSection projects={projects} ready={workspaceReady} user={user} onNew={openNew} onNavigate={navigateToSection} density={density} setDensity={setDensity} fontScale={fontScale} setFontScale={setFontScale} setPaletteOpen={setPaletteOpen} locale={locale} />
                 ) : null}
                 {section === "projects" ? (
-                  <ProjectsSection
-                    projects={projects}
-                    onNew={openNew}
-                    onEdit={openEdit}
-                    onDelete={(project) => {
-                      if (window.confirm(c.deleteConfirm)) {
-                        deleteProject(project.slug);
-                      }
-                    }}
-                  />
+                  <ProjectsSection projects={projects} onNew={openNew} onEdit={openEdit} onDelete={(p) => deleteProject(p.slug)} />
                 ) : null}
                 {section === "milestones" ? <MilestonesPanel /> : null}
                 {section === "consultations" ? <ConsultationsPanel /> : null}
                 {section === "contracts" ? <ContractsPanel /> : null}
                 {section === "notifications" ? <NotificationsPanel /> : null}
-                {section === "inquiries" ? <InquiriesPanel /> : null}
                 {section === "financials" ? <FinancialsSection projects={projects} /> : null}
+                {section === "inquiries" ? <InquiriesPanel /> : null}
                 {section === "content" ? <ContentSection /> : null}
-                {section === "access" ? <AdminAccess /> : null}
                 {section === "media" ? <MediaSection projects={projects} /> : null}
                 {section === "messages" ? <MessagesSection projects={projects} /> : null}
-                  {section === "audit" ? <AuditPanel /> : null}
-                </AdminSectionBoundary>
-              </div>
-            </div>
+                {section === "audit" ? <AuditPanel /> : null}
+                {section === "access" ? <AdminAccess /> : null}
+              </AdminSectionBoundary>
+            </main>
           </div>
         </div>
+
+        <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--admin-card-border)] bg-[var(--admin-bg)]/95 backdrop-blur lg:hidden" aria-label={locale === "ar" ? "تنقل سفلي" : "Bottom navigation"}>
+          <div className="mx-auto grid max-w-3xl grid-cols-4 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2">
+            {([
+              { id: "overview" as Section, label: locale === "ar" ? "نظرة عامة" : "Overview", icon: LayoutDashboard },
+              { id: "projects" as Section, label: locale === "ar" ? "المشاريع" : "Projects", icon: FolderKanban },
+              { id: "notifications" as Section, label: locale === "ar" ? "التنبيهات" : "Alerts", icon: BellRing },
+            ]).map(({ id, label, icon: Icon }) => {
+              const active = section === id;
+              return (
+                <button key={id} type="button" onClick={() => navigateToSection(id)} className={cn("admin-focus-ring flex min-h-[52px] flex-col items-center justify-center gap-1 rounded-[12px] px-2 text-[12px]", active ? "text-[var(--admin-gold)]" : "text-[var(--admin-muted)]")}> 
+                  <Icon className="h-5 w-5" strokeWidth={1.7} />
+                  <span className="truncate">{label}</span>
+                </button>
+              );
+            })}
+            <button type="button" onClick={() => setMobileNavOpen(true)} className={cn("admin-focus-ring flex min-h-[52px] flex-col items-center justify-center gap-1 rounded-[12px] px-2 text-[12px]", mobileNavOpen ? "text-[var(--admin-gold)]" : "text-[var(--admin-muted)]")}> 
+              <Settings className="h-5 w-5" strokeWidth={1.7} />
+              <span className="truncate">{locale === "ar" ? "المزيد" : "More"}</span>
+            </button>
+          </div>
+        </nav>
       </section>
 
       {paletteOpen ? (
-        <AdminCommandPalette
-          projects={projects}
-          sections={paletteSections}
-          onClose={() => setPaletteOpen(false)}
-          onOpenProject={openEdit}
-          onNavigate={navigateToSection}
-        />
+        <AdminCommandPalette projects={projects} sections={paletteSections} onClose={() => setPaletteOpen(false)} onOpenProject={openEdit} onNavigate={navigateToSection} />
       ) : null}
-
       {editorOpen ? (
-        <AdminProjectEditor
-          key={editing?.slug ?? "new"}
-          project={editing}
-          existingSlugs={projects.map((project) => project.slug)}
-          onClose={() => {
-            setEditorOpen(false);
-            setEditing(null);
-          }}
-          onSave={saveProject}
-        />
+        <AdminProjectEditor key={editing?.slug ?? "new"} project={editing} existingSlugs={projects.map((project) => project.slug)} onClose={() => { setEditorOpen(false); setEditing(null); }} onSave={saveProject} />
       ) : null}
-    </>
+    </LazyMotion>
+  );
+}
+
+
+
+function userInitials(name: string) {
+  const parts = (name || "").trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return "—";
+  return parts.slice(0, 2).map((p) => Array.from(p)[0] || "").join("").toUpperCase();
+}
+
+function userRoleLabel(user: { role?: string; primaryAdmin?: boolean; company?: string }, locale: "ar" | "en") {
+  if (user.primaryAdmin) return locale === "ar" ? "المسؤول الرئيسي" : "Primary admin";
+  if (user.role === "admin") return locale === "ar" ? "مسؤول" : "Admin";
+  if (user.role === "client") return locale === "ar" ? "عميل" : "Client";
+  return user.company || (locale === "ar" ? "مستخدم" : "User");
+}
+
+function riyadhHour() {
+  try {
+    const parts = new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Riyadh", hour: "numeric", hour12: false }).formatToParts(new Date());
+    const h = Number(parts.find((p) => p.type === "hour")?.value || "0");
+    return h;
+  } catch {
+    return new Date().getHours();
+  }
+}
+
+function greetingFor(locale: "ar" | "en") {
+  const h = riyadhHour();
+  if (locale === "ar") {
+    if (h >= 5 && h < 12) return "صباح الخير";
+    if (h >= 12 && h < 17) return "مساء الخير";
+    return "مساء الخير";
+  }
+  if (h >= 5 && h < 12) return "Good morning";
+  if (h >= 12 && h < 17) return "Good afternoon";
+  return "Good evening";
+}
+
+function formatRiyadhDate(locale: "ar" | "en") {
+  try {
+    return new Intl.DateTimeFormat(locale === "ar" ? "ar-SA" : "en-US", { dateStyle: "full", timeZone: "Asia/Riyadh" }).format(new Date());
+  } catch {
+    return "";
+  }
+}
+
+const BUDGET_HEALTH_RANK: Record<string, number> = { overrun: 0, over: 1, watch: 2, on_track: 3, saved: 4, no_data: 5 };
+
+function StatusDonut({ completed, ongoing, upcoming }: { completed: number; ongoing: number; upcoming: number }) {
+  const total = completed + ongoing + upcoming || 1;
+  const C = 2 * Math.PI * 40;
+  const seg = (n: number) => (n / total) * C;
+  const a = seg(completed), b = seg(ongoing), c = seg(upcoming), gap = 4;
+  const arc = (len: number, offset: number, color: string) => len > 0 ? (
+    <circle cx="50" cy="50" r="40" stroke={color} strokeLinecap="round"
+      strokeDasharray={`${Math.max(len - gap, 0)} ${C}`} strokeDashoffset={-offset} />
+  ) : null;
+  return (
+    <svg width="150" height="150" viewBox="0 0 100 100" role="img"
+         aria-label={`${completed} of ${total} projects completed`}>
+      <g fill="none" strokeWidth="9" transform="rotate(-90 50 50)">
+        <circle cx="50" cy="50" r="40" stroke="#232632" />
+        {arc(a, 0, "#4CCB96")}{arc(b, a, "#E2B04A")}{arc(c, a + b, "#6BB6FF")}
+      </g>
+      <text x="50" y="56" textAnchor="middle" fill="#F1EEE8" fontSize="20" fontWeight="800">{completed}/{total}</text>
+    </svg>
+  );
+}
+
+function AdminWatermarkMark() {
+  return (
+    <svg className="pointer-events-none absolute -start-[30px] -bottom-[40px] opacity-[0.07]" width="420" height="354" viewBox="0 0 390 328" aria-hidden="true">
+      <g fill="#fff"><polygon points="48,0 190,0 142,48 68,48"/><polygon points="0,48 48,0 68,48 48,68"/><polygon points="0,48 48,68 48,142 0,162"/><polygon points="68,162 142,162 142,210 48,210"/><polygon points="142,48 190,0 190,258 142,210"/></g>
+      <g transform="translate(200,70)" fill="#fff"><polygon points="48,0 190,0 142,48 68,48"/><polygon points="0,48 48,0 68,48 48,68"/><polygon points="0,48 48,68 48,142 0,162"/><polygon points="68,162 142,162 142,210 48,210"/><polygon points="142,48 190,0 190,258 142,210"/></g>
+    </svg>
   );
 }
 
 function OverviewSection({
   projects,
-  messages,
+  ready,
+  user,
   onNew,
   onNavigate,
+  density,
+  setDensity,
+  fontScale,
+  setFontScale,
+  setPaletteOpen: _setPaletteOpen,
+  locale,
 }: {
   projects: WorkspaceProject[];
-  messages: { id: string }[];
+  ready: boolean;
+  user: { name: string; role?: string; primaryAdmin?: boolean; company?: string };
   onNew: () => void;
   onNavigate: (section: Section) => void;
+  density: "comfortable" | "compact";
+  setDensity: (v: "comfortable" | "compact") => void;
+  fontScale: "normal" | "large";
+  setFontScale: (v: "normal" | "large") => void;
+  setPaletteOpen?: (v: boolean) => void;
+  locale: "ar" | "en";
 }) {
-  const { locale, l } = useI18n();
-  const c = copy[locale];
-  const [showMetrics, setShowMetrics] = useState(true);
-  const totalValue = projects.reduce((sum, project) => sum + project.contractValue, 0);
-  const totalProfit = projects.reduce((sum, project) => sum + project.profit, 0);
-  const avgMargin = totalValue ? (totalProfit / totalValue) * 100 : 0;
-  const top = [...projects].sort((a, b) => b.budget - a.budget).slice(0, 5);
+  void _setPaletteOpen;
+  const isAr = locale === "ar";
+  const reduce = useReducedMotion();
+  const nf = useMemo(() => new Intl.NumberFormat(isAr ? "ar-SA" : "en-US"), [isAr]);
+  const metrics = useMemo(() => projects.map(toMetricsProject), [projects]);
+  const alerts = useMemo(() => buildAlerts(metrics), [metrics]);
+  const byId = useMemo(() => new Map(metrics.map((p) => [p.id, p])), [metrics]);
 
-  const exportOverviewCsv = () => {
-    const rows = [
-      ["Project", "Category", "Status", "Progress", "Budget", "Spent", "Profit", "Contract Value"],
-      ...projects.map((project) => [
-        project.title.en || project.title.ar || project.slug,
-        project.category,
-        project.status,
-        String(project.progress),
-        String(project.budget),
-        String(project.spent),
-        String(project.profit),
-        String(project.contractValue),
-      ]),
-    ];
-    const content = rows.map((row) => row.join(",")).join("\n");
-    const blob = new Blob([content], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = "admin-overview-analytics.csv";
-    document.body.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
-    URL.revokeObjectURL(url);
+  const completed = metrics.filter((p) => p.status === "completed").length;
+  const ongoing = metrics.filter((p) => p.status === "ongoing").length;
+  const upcoming = metrics.filter((p) => p.status === "upcoming").length;
+  const totalCount = metrics.length;
+  const totalValue = metrics.reduce((s, p) => s + (Number.isFinite(p.value) ? p.value : 0), 0);
+  const totalProfit = metrics.reduce((s, p) => s + (Number.isFinite(p.profit) ? p.profit : 0), 0);
+  const margin = totalValue > 0 ? (totalProfit / totalValue) * 100 : null;
+  const cities = byCity(metrics);
+  const distinctCities = cities.length;
+
+  const alertText = (a: Alert) => {
+    const name = projectName(byId.get(a.projectId)!, locale);
+    if (a.type === "budget_ahead") {
+      return isAr
+        ? `${name}: المصروف يسبق الإنجاز بـ ${nf.format(a.params.gap || 0)} نقطة. راجع الدفعات القادمة.`
+        : `${name}: spending is ${nf.format(a.params.gap || 0)} points ahead of progress. Review upcoming payments.`;
+    }
+    if (a.type === "budget_watch") {
+      return isAr
+        ? `${name}: المصروف يقترب من تجاوز الإنجاز بـ ${nf.format(a.params.gap || 0)} نقطة.`
+        : `${name}: spending is nearing progress by ${nf.format(a.params.gap || 0)} points.`;
+    }
+    return isAr
+      ? `${name}: تجاوز الميزانية بمقدار ${formatSAR(a.params.amount || 0, locale)}.`
+      : `${name}: budget overrun by ${formatSAR(a.params.amount || 0, locale)}.`;
   };
 
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-3 border border-white/10 bg-coal/80 p-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-gold">
-            {locale === "ar" ? "إجراءات سريعة وتحليلات" : "Quick actions & analytics"}
-          </p>
-          <p className="mt-1 text-[0.76rem] text-ivory/45">
-            {locale === "ar"
-              ? "تصدير فوري للبيانات والتحكم في عرض مؤشرات الأداء."
-              : "Export live data instantly and toggle executive performance metrics."}
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setShowMetrics((value) => !value)}
-            className={cn(
-              "inline-flex h-10 items-center gap-2 border px-3.5 text-[0.7rem] font-semibold uppercase tracking-[0.12em] transition-colors",
-              showMetrics
-                ? "border-gold/40 bg-gold/10 text-gold"
-                : "border-white/12 text-ivory/60 hover:border-gold/40 hover:text-gold",
-            )}
-          >
-            <BarChart3 className="h-3.5 w-3.5" />
-            {showMetrics
-              ? locale === "ar"
-                ? "إخفاء المؤشرات"
-                : "Hide metrics"
-              : locale === "ar"
-                ? "إظهار المؤشرات"
-                : "Show metrics"}
-          </button>
-          <button
-            type="button"
-            onClick={exportOverviewCsv}
-            className="inline-flex h-10 items-center gap-2 border border-white/12 px-3.5 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
-          >
-            <FileText className="h-3.5 w-3.5" />
-            {locale === "ar" ? "تصدير التحليلات" : "Export analytics"}
-          </button>
-          <button
-            type="button"
-            onClick={onNew}
-            className="inline-flex h-10 items-center gap-2 bg-gold px-3.5 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-obsidian transition-colors hover:bg-gold-light"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            {c.addProject}
-          </button>
-        </div>
+  const topAlert = alerts[0];
+  const attentionSentence = topAlert
+    ? (isAr
+        ? `مشروع يحتاج انتباهك اليوم: ${alertText(topAlert)}`
+        : `One project needs your attention today: ${alertText(topAlert)}`)
+    : (isAr ? "جميع المشاريع في المسار الصحيح." : "All projects are on track.");
+
+  const greeting = `${greetingFor(locale)}${user.name ? (isAr ? ` يا ${user.name}` : `, ${user.name}`) : ""}`;
+  const dateStr = formatRiyadhDate(locale);
+
+
+  const budgetRows = useMemo(() => {
+    return [...metrics]
+      .sort((a, b) => {
+        const ha = getBudgetHealth(a);
+        const hb = getBudgetHealth(b);
+        const ra = BUDGET_HEALTH_RANK[ha.key] ?? 9;
+        const rb = BUDGET_HEALTH_RANK[hb.key] ?? 9;
+        if (ra !== rb) return ra - rb;
+        const sa = a.status === "ongoing" ? 0 : a.status === "upcoming" ? 1 : 2;
+        const sb = b.status === "ongoing" ? 0 : b.status === "upcoming" ? 1 : 2;
+        if (sa !== sb) return sa - sb;
+        return b.value - a.value;
+      });
+  }, [metrics]);
+
+  const activeUpcoming = useMemo(
+    () => metrics.filter((p) => p.status === "ongoing" || p.status === "upcoming").slice(0, 4),
+    [metrics],
+  );
+
+  const pillFor = (h: ReturnType<typeof getBudgetHealth>) => {
+    if (h.key === "on_track") return { text: isAr ? "في المسار" : "On track", cls: "bg-[rgba(76,203,150,0.14)] text-[#7BE0B4]" };
+    if (h.key === "watch") return { text: isAr ? "تحت المراقبة" : "Watch", cls: "bg-[rgba(226,176,74,0.14)] text-[#F3C86A]" };
+    if (h.key === "over") return { text: isAr ? "المصروف أسرع من الإنجاز" : "Spending ahead of progress", cls: "bg-[rgba(255,107,94,0.14)] text-[#FF9A8F]" };
+    if (h.key === "saved") return { text: isAr ? `مكتمل · وفر ${formatSAR(h.amount, locale)}` : `Completed · Saved ${formatSAR(h.amount, locale)}`, cls: "bg-[rgba(76,203,150,0.14)] text-[#7BE0B4]" };
+    if (h.key === "overrun") return { text: isAr ? `تجاوز ${formatSAR(h.amount, locale)}` : `Overrun ${formatSAR(h.amount, locale)}`, cls: "bg-[rgba(255,107,94,0.14)] text-[#FF9A8F]" };
+    return { text: isAr ? "لا توجد بيانات" : "No data", cls: "bg-white/10 text-[#A6A9B4]" };
+  };
+
+  const insight = useMemo(() => {
+    if (!metrics.length) return isAr ? "لا توجد مشاريع حالياً. أضف مشروعاً لبدء التحليل." : "No projects yet. Add a project to start insights.";
+    if (!alerts.length) return isAr ? "جميع المشاريع في المسار الصحيح من حيث الميزانية والإنجاز." : "All projects are on track in budget and progress.";
+    const critical = alerts.filter((a) => a.severity === "critical").length;
+    const warning = alerts.filter((a) => a.severity === "warning").length;
+    const over = alerts.find((a) => a.type === "budget_ahead");
+    if (over) {
+      const name = projectName(byId.get(over.projectId)!, locale);
+      return isAr
+        ? `${name} يتطلب انتباهاً: المصروف يسبق الإنجاز بـ ${nf.format(over.params.gap || 0)} نقطة. ${critical + warning > 1 ? `إجمالي التنبيهات: ${nf.format(critical + warning)}.` : "باقي المشاريع مستقرة."}`
+        : `${name} needs attention: spending is ${nf.format(over.params.gap || 0)} points ahead of progress. ${critical + warning > 1 ? `Total alerts: ${nf.format(critical + warning)}.` : "Other projects are stable."}`;
+    }
+    const first = alerts[0];
+    const name = projectName(byId.get(first.projectId)!, locale);
+    return isAr ? `تنبيه على ${name}. إجمالي التنبيهات: ${nf.format(alerts.length)}.` : `Alert on ${name}. Total alerts: ${nf.format(alerts.length)}.`;
+  }, [alerts, metrics, byId, isAr, locale, nf]);
+
+  const fadeUp = { hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: { duration: reduce ? 0 : 0.24, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] } } };
+  const stagger = { show: { transition: { staggerChildren: reduce ? 0 : 0.04 } } };
+
+  const splitMoney = (s: string) => {
+    if (s === "—") return { num: "—", unit: "" };
+    if (isAr) {
+      const parts = s.split(" ");
+      const unit = parts.slice(-2).join(" ");
+      const num = parts.slice(0, -2).join(" ");
+      return { num: num || s, unit: num ? unit : "" };
+    }
+    const m = s.match(/^(\S+)\s+(.+)$/);
+    return m ? { num: m[2], unit: m[1] } : { num: s, unit: "" };
+  };
+
+  const portfolioStr = totalValue > 0 ? formatSAR(totalValue, locale) : "—";
+  const profitStr = totalProfit > 0 || (totalValue > 0 && Number.isFinite(totalProfit)) ? formatSAR(totalProfit, locale) : "—";
+  const portfolio = splitMoney(portfolioStr);
+  const profit = splitMoney(profitStr);
+  const marginStr = margin == null ? "—" : `${nf.format(Number(margin.toFixed(1)))}%`;
+
+  const card = "flex flex-col gap-2 rounded-[20px] border border-white/[.07] bg-gradient-to-b from-white/[.055] to-white/[.02] p-5 transition-all duration-[160ms] hover:-translate-y-0.5 hover:border-[rgba(226,176,74,0.25)]";
+  const panel = "flex flex-col gap-[18px] rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018] p-[22px_24px]";
+
+  if (!ready) {
+    return (
+      <div className="flex flex-col gap-[22px] animate-pulse">
+        <div className="h-48 rounded-[24px] bg-white/[0.04]" />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">{Array.from({length:5}).map((_,i)=><div key={i} className="h-36 rounded-[20px] bg-white/[0.04]" />)}</div>
+        <div className="grid gap-[22px] xl:grid-cols-[1.7fr_1fr]"><div className="h-64 rounded-[22px] bg-white/[0.04]" /><div className="h-64 rounded-[22px] bg-white/[0.04]" /></div>
       </div>
+    );
+  }
 
-      {showMetrics ? <ExecutiveKpiBar /> : null}
+  const maxCity = cities.length ? Math.max(...cities.map((c) => c.value), 1) : 1;
 
-      <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        <div className="border border-white/10 bg-coal p-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <span className="text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-gold">
-              {c.budgetVsSpent}
-            </span>
-            <span className="tabular text-[0.7rem] text-ivory/40">
-              {c.avgMargin} {avgMargin.toFixed(1)}%
-            </span>
+  return (
+    <m.div className="flex flex-col gap-[22px]" initial="hidden" animate="show" variants={stagger}>
+      <m.section variants={fadeUp} className="relative overflow-hidden rounded-[24px] border border-[rgba(226,176,74,0.22)] p-8 lg:px-9" style={{ background: "linear-gradient(135deg,#1D1608 0%,#12131A 55%,#0F1117 100%)" }}>
+        <div className="pointer-events-none absolute inset-0 opacity-[0.045]" style={{ background: "linear-gradient(rgba(255,255,255,1) 1px, transparent 1px) 0 0/36px 36px, linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px) 0 0/36px 36px", WebkitMaskImage: "linear-gradient(270deg,#000,transparent 70%)", maskImage: "linear-gradient(270deg,#000,transparent 70%)" }} />
+        <AdminWatermarkMark />
+        <div className="relative flex flex-col gap-8 lg:flex-row lg:items-center">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-[28px] font-bold leading-tight text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{greeting}</h1>
+            <p className="mt-2 max-w-[560px] text-[15px] leading-[1.8] text-[#C9CAD1]">
+              {dateStr ? `${dateStr} · ` : ""}{attentionSentence}
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <button type="button" onClick={onNew} className="admin-focus-ring inline-flex min-h-[44px] items-center gap-2 rounded-[12px] border border-transparent bg-[linear-gradient(180deg,#F3C86A,#D9A03A)] px-5 py-3 text-[15px] font-bold text-[#1a1205] shadow-[0_8px_24px_rgba(226,176,74,0.28)] transition-transform duration-[160ms] hover:-translate-y-0.5">{isAr ? "+ إضافة مشروع" : "+ Add project"}</button>
+              <button type="button" onClick={() => window.print()} className="admin-focus-ring inline-flex min-h-[44px] items-center gap-2 rounded-[12px] border border-white/15 bg-white/[0.04] px-5 py-3 text-[15px] font-bold text-[#F1EEE8] transition-all duration-[160ms] hover:-translate-y-0.5 hover:border-[rgba(226,176,74,0.25)]">{isAr ? "تقرير تنفيذي PDF" : "Executive PDF report"}</button>
+              <button type="button" onClick={() => onNavigate("access")} className="admin-focus-ring inline-flex min-h-[44px] items-center gap-2 rounded-[12px] border border-white/15 bg-white/[0.04] px-5 py-3 text-[15px] font-bold text-[#F1EEE8] transition-all duration-[160ms] hover:-translate-y-0.5 hover:border-[rgba(226,176,74,0.25)]">{isAr ? "دعوة عضو للفريق" : "Invite team member"}</button>
+            </div>
           </div>
-          <div className="mt-6 space-y-5">
-            {([...top]
-              .sort((a, b) => b.spent / Math.max(1, b.budget) - a.spent / Math.max(1, a.budget))
-            ).map((project) => {
-              const risk = budgetRisk(project.spent, project.budget);
-              const ratio = Math.min(100, (project.spent / Math.max(1, project.budget)) * 100);
+          <div className="flex items-center gap-5 lg:ms-auto">
+            <StatusDonut completed={completed} ongoing={ongoing} upcoming={upcoming} />
+            <ul className="m-0 flex list-none flex-col gap-2 p-0 text-[14px] text-[#C9CAD1]">
+              <li><span className="me-2 inline-block h-[9px] w-[9px] rounded-full align-middle" style={{ background: "#4CCB96" }} />{nf.format(completed)} {isAr ? "مكتمل" : "Completed"}</li>
+              <li><span className="me-2 inline-block h-[9px] w-[9px] rounded-full align-middle" style={{ background: "#E2B04A" }} />{nf.format(ongoing)} {isAr ? "جارٍ" : "Ongoing"}</li>
+              <li><span className="me-2 inline-block h-[9px] w-[9px] rounded-full align-middle" style={{ background: "#6BB6FF" }} />{nf.format(upcoming)} {isAr ? "قادم" : "Upcoming"}</li>
+            </ul>
+          </div>
+        </div>
+      </m.section>
+
+      <m.section variants={stagger} className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        <m.div variants={fadeUp} className={card}>
+          <div className="flex items-center gap-[10px] text-[14px] text-[#A6A9B4]"><Building2 className="h-5 w-5 text-[#E2B04A]" strokeWidth={1.7} />{isAr ? "إجمالي المشاريع" : "Total projects"}</div>
+          <div className="whitespace-nowrap text-[28px] font-extrabold tabular-nums text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{nf.format(totalCount)}</div>
+          <div className="flex gap-[6px]">{Array.from({ length: Math.max(totalCount, 1) }).slice(0, 12).map((_, i) => {
+            const p = metrics[i];
+            const color = !p ? "#232632" : p.status === "completed" ? "#4CCB96" : p.status === "ongoing" ? "#E2B04A" : "#6BB6FF";
+            return <span key={i} className="h-3 w-3 rounded-full" style={{ background: color }} />;
+          })}</div>
+          {totalCount === 0 ? <p className="text-[13px] text-[#A6A9B4]">{isAr ? "لا توجد مشاريع بعد" : "No projects yet"}</p> : null}
+        </m.div>
+
+        <m.div variants={fadeUp} className={card}>
+          <div className="flex items-center gap-[10px] text-[14px] text-[#A6A9B4]"><Wallet className="h-5 w-5 text-[#E2B04A]" strokeWidth={1.7} />{isAr ? "قيمة المحفظة" : "Portfolio value"}</div>
+          <div className="whitespace-nowrap text-[28px] font-extrabold tabular-nums text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">
+            {portfolioStr === "—" ? "—" : (isAr ? <>{portfolio.num} <span className="text-[14px] font-medium text-[#A6A9B4]">{portfolio.unit}</span></> : <><span className="text-[14px] font-medium text-[#A6A9B4]">{portfolio.unit} </span>{portfolio.num}</>)}
+          </div>
+          <div className="flex h-2 gap-[3px] overflow-hidden rounded-full">
+            {cities.length ? cities.slice(0, 5).map((c, i) => <span key={c.id} style={{ flex: c.value || 1, background: ["#F3C86A","#E2B04A","#C98F1E","#9A6A14","#6B4A10"][i] || "#6B4A10" }} />) : <span className="flex-1 bg-[#232632]" />}
+          </div>
+          <p className="text-[13px] text-[#A6A9B4]">{distinctCities ? (isAr ? `موزعة على ${nf.format(distinctCities)} مدن` : `Across ${nf.format(distinctCities)} cities`) : (isAr ? "لا توجد بيانات مدن" : "No city data")}</p>
+        </m.div>
+
+        <m.div variants={fadeUp} className={card}>
+          <div className="flex items-center gap-[10px] text-[14px] text-[#A6A9B4]"><Activity className="h-5 w-5 text-[#E2B04A]" strokeWidth={1.7} />{isAr ? "صافي الربح" : "Net profit"}</div>
+          <div className="whitespace-nowrap text-[28px] font-extrabold tabular-nums text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">
+            {profitStr === "—" ? "—" : (isAr ? <>{profit.num} <span className="text-[14px] font-medium text-[#A6A9B4]">{profit.unit}</span></> : <><span className="text-[14px] font-medium text-[#A6A9B4]">{profit.unit} </span>{profit.num}</>)}
+          </div>
+          <div className="flex h-2 gap-[3px] overflow-hidden rounded-full">
+            {margin == null ? <span className="flex-1 bg-[#232632]" /> : <><span style={{ flex: Math.max(0, Math.min(100, margin)), background: "#4CCB96" }} /><span style={{ flex: Math.max(0, 100 - margin), background: "#232632" }} /></>}
+          </div>
+          <p className="text-[13px] text-[#A6A9B4]">{margin == null ? (isAr ? "لا توجد بيانات هامش" : "No margin data") : (isAr ? `هامش الربح ${marginStr}` : `Margin ${marginStr}`)}</p>
+        </m.div>
+
+        <m.div variants={fadeUp} className={card}>
+          <div className="flex items-center gap-[10px] text-[14px] text-[#A6A9B4]"><MessageSquare className="h-5 w-5 text-[#E2B04A]" strokeWidth={1.7} />{isAr ? "استفسارات جديدة" : "New inquiries"}</div>
+          <div className="whitespace-nowrap text-[28px] font-extrabold tabular-nums text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">—</div>
+          <p className="text-[13px] text-[#A6A9B4]">{isAr ? "بيانات الاستفسارات غير متاحة هنا" : "Inquiry data unavailable here"}</p>
+        </m.div>
+
+        <m.div variants={fadeUp} className={card}>
+          <div className="flex items-center gap-[10px] text-[14px] text-[#A6A9B4]"><FileSignature className="h-5 w-5 text-[#E2B04A]" strokeWidth={1.7} />{isAr ? "عقود موقّعة" : "Signed contracts"}</div>
+          <div className="whitespace-nowrap text-[28px] font-extrabold tabular-nums text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">—</div>
+          <p className="text-[13px] text-[#A6A9B4]">{isAr ? "بيانات العقود غير متاحة هنا" : "Contract data unavailable here"}</p>
+        </m.div>
+      </m.section>
+
+      <section className="grid gap-[22px] lg:grid-cols-1 xl:grid-cols-[1.7fr_1fr]">
+        <div className="flex flex-col gap-[22px]">
+          <m.section variants={fadeUp} className={panel}>
+            <div className="flex items-center gap-[10px]"><span className="text-[16px] tracking-[-2px] text-[#5c5f6b]">⋮⋮</span><h2 className="m-0 text-[19px] font-bold text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{isAr ? "صحة الميزانية" : "Budget health"}</h2><button type="button" onClick={() => onNavigate("projects")} className="admin-focus-ring ms-auto text-[14px] text-[#E2B04A]">{isAr ? "كل المشاريع ‹" : "All projects ›"}</button></div>
+            <div className="-mt-3 text-[13px] text-[#A6A9B4]">{isAr ? "الشريط = المصروف · العلامة البيضاء = الإنجاز الفعلي" : "Bar = spent · white marker = actual progress"}</div>
+            {budgetRows.length === 0 ? (
+              <p className="py-6 text-[14px] text-[#A6A9B4]">{isAr ? "لا توجد مشاريع لعرض صحة الميزانية." : "No projects to show budget health."}</p>
+            ) : budgetRows.map((p) => {
+              const h = getBudgetHealth(p);
+              const spentPct = p.budget > 0 ? Math.min(100, (p.spent / p.budget) * 100) : 0;
+              const progressPct = Math.min(100, Math.max(0, p.progress || 0));
+              const pill = pillFor(h);
+              const color = h.key === "over" || h.key === "overrun" ? "#FF6B5E" : h.key === "watch" ? "#E2B04A" : "#4CCB96";
+              const sub = p.budget > 0
+                ? `${formatSAR(p.spent, locale)} / ${formatSAR(p.budget, locale)}`
+                : (isAr ? "بيانات الميزانية غير متاحة" : "Budget data unavailable");
               return (
-                <div key={project.slug}>
-                  <div className="flex items-center justify-between gap-3 text-[0.74rem]">
-                    <span className="truncate text-ivory/60">{l(project.title)}</span>
-                    <span className={cn("tabular-nums shrink-0", risk === "critical" ? "text-red-300/80" : risk === "warning" ? "text-amber-300/80" : "text-ivory/45")}>
-                      {formatMoney(project.spent, locale)} / {formatMoney(project.budget, locale)}
-                    </span>
+                <div key={p.id} className="grid items-center gap-4 md:grid-cols-[170px_1fr_190px]">
+                  <div className="text-[15px] text-[#F1EEE8]"><div>{projectName(p, locale)}</div><small className="block text-[13px] text-[#A6A9B4]">{sub}</small></div>
+                  <div className="relative h-3 rounded-full bg-[#232632]">
+                    <div className="absolute inset-y-0 start-0 rounded-full" style={{ width: `${spentPct}%`, background: color }} />
+                    <div className="absolute -top-[5px] h-[22px] w-[3px] rounded-sm bg-white" style={{ insetInlineStart: `${progressPct}%` }} />
                   </div>
-                  <div className="mt-1.5 flex h-1.5 overflow-hidden bg-white/10">
-                    <div
-                      className={cn("h-full", risk === "critical" ? "bg-red-400/80" : risk === "warning" ? "bg-amber-400/80" : "bg-emerald-400/70")}
-                      style={{ width: `${ratio}%` }}
-                    />
-                  </div>
-                  {risk === "critical" ? (
-                    <p className="mt-1 text-[0.66rem] text-red-300/75">
-                      {locale === "ar" ? "تحذير: ميزانية حرجة" : "Critical budget risk"}
-                    </p>
-                  ) : null}
+                  <div className={cn("rounded-full px-3 py-[5px] text-center text-[13px] font-medium", pill.cls)}>{pill.text}</div>
                 </div>
               );
             })}
-          </div>
+          </m.section>
+
+          <m.section variants={fadeUp} className={panel}>
+            <div className="flex items-center gap-[10px]"><span className="text-[16px] tracking-[-2px] text-[#5c5f6b]">⋮⋮</span><h2 className="m-0 text-[19px] font-bold text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{isAr ? "قيمة المحفظة حسب المدينة" : "Portfolio value by city"}</h2></div>
+            {cities.length === 0 ? (
+              <p className="py-2 text-[14px] text-[#A6A9B4]">{isAr ? "لا توجد بيانات مدن." : "No city data."}</p>
+            ) : cities.map((c) => (
+              <div key={c.id} className="grid items-center gap-[14px] text-[15px] [grid-template-columns:70px_1fr_110px]">
+                <span className="text-[#F1EEE8]">{isAr ? (c.nameAr || c.nameEn) : c.nameEn}</span>
+                <div className="relative h-3 rounded-full bg-[#232632]"><div className="absolute inset-y-0 start-0 rounded-full" style={{ width: `${(c.value / maxCity) * 100}%`, background: "linear-gradient(270deg,#F3C86A,#B8801C)" }} /></div>
+                <span className="whitespace-nowrap text-end text-[#D7D8DE] tabular-nums [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{formatSAR(c.value, locale)}</span>
+              </div>
+            ))}
+          </m.section>
         </div>
 
-        <div className="flex flex-col gap-4">
-          <button
-            type="button"
-            onClick={onNew}
-            className="group flex items-center justify-between gap-4 border border-gold/30 bg-gold/[0.06] p-6 text-start transition-colors hover:border-gold/70"
-          >
-            <div>
-              <p className="flex items-center gap-2 text-[0.88rem] font-medium text-ivory">
-                <Plus className="h-4 w-4 text-gold" />
-                {c.addProject}
-              </p>
-              <p className="mt-1.5 text-[0.74rem] text-ivory/50">{c.projects}</p>
+        <div className="flex flex-col gap-[22px]">
+          <m.section variants={fadeUp} className="flex flex-col gap-[18px] rounded-[22px] border border-[rgba(226,176,74,0.25)] p-[22px_24px]" style={{ background: "linear-gradient(180deg,rgba(226,176,74,0.09),rgba(255,255,255,0.02))" }}>
+            <div className="flex items-center gap-[10px]"><Sparkles className="h-5 w-5 text-[#E2B04A]" strokeWidth={1.7} /><h2 className="m-0 text-[19px] font-bold text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{isAr ? "رؤية ذكية" : "Insight"}</h2></div>
+            <div className="rounded-[14px] rounded-es-[4px] bg-white/[0.05] p-[12px_14px] text-[14px] leading-[1.8] text-[#E5E3DE]">{insight}</div>
+            <div className="flex items-center justify-between rounded-[14px] border border-white/[.07] bg-white/[0.03] p-[12px_14px] text-[14px] text-[#A6A9B4] opacity-70">
+              <span>{isAr ? "اسأل عن مشاريعك وأرقامك…" : "Ask about your projects and numbers…"}</span>
+              <span className="rounded-full border border-white/15 px-2 py-0.5 text-[12px]">{isAr ? "قريباً" : "Coming soon"}</span>
             </div>
-            <ArrowUpRight className="h-4 w-4 text-gold transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => onNavigate("financials")}
-            className="group flex items-center justify-between gap-4 border border-white/10 bg-coal p-6 text-start transition-colors hover:border-gold/40"
-          >
-            <div>
-              <p className="flex items-center gap-2 text-[0.88rem] font-medium text-ivory">
-                <BarChart3 className="h-4 w-4 text-gold" />
-                {c.financials}
-              </p>
-              <p className="mt-1.5 text-[0.74rem] text-ivory/50">{c.paymentStages}</p>
-            </div>
-            <ArrowUpRight className="h-4 w-4 text-gold transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => onNavigate("messages")}
-            className="group flex items-center justify-between gap-4 border border-white/10 bg-coal p-6 text-start transition-colors hover:border-gold/40"
-          >
-            <div>
-              <p className="flex items-center gap-2 text-[0.88rem] font-medium text-ivory">
-                <MessageSquare className="h-4 w-4 text-gold" />
-                {c.messages}
-              </p>
-              <p className="mt-1.5 text-[0.74rem] text-ivory/50">
-                {messages.length} {c.messages}
-              </p>
-            </div>
-            <ArrowUpRight className="h-4 w-4 text-gold transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-          </button>
-        </div>
-      </div>
+          </m.section>
 
-      <div className="border border-white/10 bg-coal">
-        <div className="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-4">
-          <span className="text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-gold">
-            {c.recent}
-          </span>
-          <button
-            type="button"
-            onClick={() => onNavigate("projects")}
-            className="text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-ivory/45 transition-colors hover:text-gold"
-          >
-            {c.viewAll}
-          </button>
+          <m.section variants={fadeUp} className={panel}>
+            <div className="flex items-center"><h2 className="m-0 text-[19px] font-bold text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{isAr ? "تنبيهات ذكية" : "Smart alerts"}</h2><button type="button" onClick={() => onNavigate("notifications")} className="admin-focus-ring ms-auto text-[14px] text-[#E2B04A]">{isAr ? "عرض الكل ‹" : "View all ›"}</button></div>
+            {alerts.length === 0 ? (
+              <div className="flex items-center gap-3 px-0.5 text-[14px] text-[#A6A9B4]"><MessageSquare className="h-5 w-5" strokeWidth={1.7} />{isAr ? "لا توجد تنبيهات. جميع المشاريع في المسار الصحيح." : "No alerts. All projects are on track."}</div>
+            ) : alerts.map((a) => (
+              <div key={a.id} className={cn("flex gap-3 rounded-[14px] border p-[14px] text-[14px] leading-[1.7] text-[#F1EEE8]", a.severity === "critical" ? "border-[rgba(255,107,94,0.25)] bg-[rgba(255,107,94,0.09)]" : "border-[rgba(226,176,74,0.25)] bg-[rgba(226,176,74,0.08)]")}>
+                <Bell className={cn("mt-0.5 h-5 w-5 shrink-0", a.severity === "critical" ? "text-[#FF8A7E]" : "text-[#F3C86A]")} strokeWidth={1.7} />
+                <div>{alertText(a)}</div>
+              </div>
+            ))}
+          </m.section>
+
+          <m.section variants={fadeUp} className={panel}>
+            <h2 className="m-0 text-[19px] font-bold text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{isAr ? "تخصيص اللوحة" : "Customize dashboard"}</h2>
+            <div className="flex flex-wrap items-center gap-2 text-[14px]"><span className="text-[#A6A9B4]">{isAr ? "الكثافة" : "Density"}</span>
+              <button type="button" onClick={() => setDensity("comfortable")} className={cn("admin-focus-ring min-h-[44px] rounded-[999px] border px-3 py-[6px]", density === "comfortable" ? "border-[rgba(226,176,74,0.3)] bg-[rgba(226,176,74,0.14)] text-[#F3C86A]" : "border-white/[.07] text-[#A6A9B4]")}>{isAr ? "مريح" : "Comfortable"}</button>
+              <button type="button" onClick={() => setDensity("compact")} className={cn("admin-focus-ring min-h-[44px] rounded-[999px] border px-3 py-[6px]", density === "compact" ? "border-[rgba(226,176,74,0.3)] bg-[rgba(226,176,74,0.14)] text-[#F3C86A]" : "border-white/[.07] text-[#A6A9B4]")}>{isAr ? "مضغوط" : "Compact"}</button>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 text-[14px]"><span className="text-[#A6A9B4]">{isAr ? "حجم الخط" : "Font size"}</span>
+              <button type="button" onClick={() => setFontScale("normal")} className={cn("admin-focus-ring min-h-[44px] rounded-[999px] border px-3 py-[6px]", fontScale === "normal" ? "border-[rgba(226,176,74,0.3)] bg-[rgba(226,176,74,0.14)] text-[#F3C86A]" : "border-white/[.07] text-[#A6A9B4]")}>{isAr ? "عادي" : "Normal"}</button>
+              <button type="button" onClick={() => setFontScale("large")} className={cn("admin-focus-ring min-h-[44px] rounded-[999px] border px-3 py-[6px]", fontScale === "large" ? "border-[rgba(226,176,74,0.3)] bg-[rgba(226,176,74,0.14)] text-[#F3C86A]" : "border-white/[.07] text-[#A6A9B4]")}>{isAr ? "كبير" : "Large"}</button>
+            </div>
+          </m.section>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[700px] text-start">
-            <thead>
-              <tr className="border-b border-white/8 text-[0.64rem] uppercase tracking-[0.14em] text-ivory/40">
-                <th className="px-5 py-3.5 text-start font-medium">{c.project}</th>
-                <th className="px-4 py-3.5 text-start font-medium">{c.category}</th>
-                <th className="px-4 py-3.5 text-start font-medium">{c.status}</th>
-                <th className="px-4 py-3.5 text-start font-medium">{c.progress}</th>
-                <th className="px-5 py-3.5 text-end font-medium">{c.value}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {projects.slice(0, 5).map((project) => (
-                <tr key={project.slug} className="border-b border-white/6 last:border-0">
-                  <td className="px-5 py-4">
-                    <span className="text-[0.82rem] text-ivory/75">{l(project.title)}</span>
-                  </td>
-                  <td className="px-4 py-4 text-[0.72rem] text-ivory/50">
-                    {c.categoryLabels[project.category]}
-                  </td>
-                  <td className="px-4 py-4">
-                    <span
-                      className={cn(
-                        "inline-flex min-h-7 items-center px-2.5 text-[0.64rem] uppercase tracking-[0.1em]",
-                        project.status === "ongoing"
-                          ? "bg-gold/15 text-gold"
-                          : project.status === "completed"
-                            ? "bg-emerald-400/10 text-emerald-300/80"
-                            : "bg-sky-400/10 text-sky-300/80",
-                      )}
-                    >
-                      {c.statusLabels[project.status]}
-                    </span>
-                  </td>
-                  <td className="px-4 py-4">
-                    <span className="flex items-center gap-2">
-                      <span className="h-1.5 w-14 overflow-hidden bg-white/10">
-                        <span
-                          className="block h-full bg-gold"
-                          style={{ width: `${project.progress}%` }}
-                        />
-                      </span>
-                      <span className="tabular text-[0.7rem] text-ivory/45">
-                        {project.progress}%
-                      </span>
-                    </span>
-                  </td>
-                  <td className="px-5 py-4 text-end text-[0.74rem] text-ivory/55">
-                    {l(project.value)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+      </section>
+
+      <div className="flex items-center gap-2"><h2 className="m-0 text-[28px] font-bold text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{isAr ? "مشاريع جارية وقادمة" : "Active and upcoming projects"}</h2><button type="button" onClick={() => onNavigate("projects")} className="admin-focus-ring ms-auto text-[14px] text-[#E2B04A]">{isAr ? "عرض الكل ‹" : "View all ›"}</button></div>
+      {activeUpcoming.length === 0 ? (
+        <div className="rounded-[20px] border border-white/[.07] bg-white/[0.02] p-6 text-[14px] text-[#A6A9B4]">{isAr ? "لا توجد مشاريع جارية أو قادمة." : "No active or upcoming projects."}</div>
+      ) : (
+        <m.section variants={stagger} className="grid gap-[18px] sm:grid-cols-2 xl:grid-cols-4">
+          {activeUpcoming.map((p, idx) => {
+            const grads = ["linear-gradient(160deg,#33415A,#141824)", "linear-gradient(160deg,#3A4A44,#141C1A)", "linear-gradient(160deg,#5A4636,#1D1612)", "linear-gradient(160deg,#2D4A6B,#121A26)"];
+            const statusLabel = p.status === "ongoing" ? (isAr ? "قيد التنفيذ" : "Ongoing") : p.status === "upcoming" ? (isAr ? "قادم" : "Upcoming") : (isAr ? "مكتمل" : "Completed");
+            return (
+              <m.button key={p.id} variants={fadeUp} type="button" onClick={() => onNavigate("projects")} className="admin-focus-ring overflow-hidden rounded-[20px] border border-white/[.07] bg-[#12141B] text-start transition-all duration-[160ms] hover:-translate-y-0.5 hover:border-[rgba(226,176,74,0.25)]">
+                <div className="relative h-[130px]" style={{ background: grads[idx % grads.length] }}><span className="absolute top-3 start-3 rounded-[999px] bg-[rgba(11,12,16,0.7)] px-[10px] py-1 text-[12px]" style={{ color: p.status === "upcoming" ? "#8CC7FF" : "#F3C86A" }}>{statusLabel}</span></div>
+                <div className="flex flex-col gap-[10px] p-[14px_16px] text-[15px] text-[#F1EEE8]">
+                  <div>{projectName(p, locale)}<small className="block text-[13px] text-[#A6A9B4]">{projectCity(p, locale)}</small></div>
+                  <div className="h-[6px] overflow-hidden rounded-[9px] bg-[#232632]"><span className="block h-full rounded-[9px] bg-[linear-gradient(270deg,#F3C86A,#C98F1E)]" style={{ width: `${Math.min(100, Math.max(0, p.progress || 0))}%` }} /></div>
+                  <small className="text-[13px] text-[#A6A9B4] tabular-nums [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{nf.format(Math.round(p.progress || 0))}% {isAr ? "إنجاز" : "complete"} · {formatSAR(p.value, locale)}</small>
+                </div>
+              </m.button>
+            );
+          })}
+        </m.section>
+      )}
+    </m.div>
   );
 }
-
 function ProjectsSection({
   projects,
   onNew,
@@ -1138,18 +1228,48 @@ function ProjectsSection({
   const { updateProject } = useWorkspace();
   const { toast } = useToast();
   const [query, setQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | WorkspaceProject["status"]>("all");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [tab, setTab] = useState<"all" | "ongoing" | "attention" | "completed" | "upcoming">("all");
   const [categoryFilter, setCategoryFilter] = useState<"all" | WorkspaceProject["category"]>("all");
   const [sortBy, setSortBy] = useState<"updated" | "budget" | "progress" | "risk">("risk");
+  const [view, setView] = useState<"table" | "cards" | "timeline">("table");
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Set<string>>(() => new Set());
   const [detail, setDetail] = useState<WorkspaceProject | null>(null);
   const pageSize = 8;
 
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedQuery(query), 250);
+    return () => window.clearTimeout(timer);
+  }, [query]);
+
+  const metricsBySlug = useMemo(() => {
+    const m = new Map<string, ReturnType<typeof toMetricsProject>>();
+    projects.forEach((p) => m.set(p.slug, toMetricsProject(p)));
+    return m;
+  }, [projects]);
+
+  const tabCounts = useMemo(() => {
+    const all = projects.length;
+    const ongoing = projects.filter((p) => p.status === "ongoing").length;
+    const completed = projects.filter((p) => p.status === "completed").length;
+    const upcoming = projects.filter((p) => p.status === "upcoming").length;
+    const attention = projects.filter((p) => {
+      const mp = metricsBySlug.get(p.slug);
+      return mp ? projectNeedsAttention(mp) : false;
+    }).length;
+    return { all, ongoing, completed, upcoming, attention };
+  }, [projects, metricsBySlug]);
+
   const filtered = useMemo(() => {
-    const normalized = query.trim().toLowerCase();
+    const normalized = debouncedQuery.trim().toLowerCase();
     const base = projects.filter((project) => {
-      if (statusFilter !== "all" && project.status !== statusFilter) return false;
+      const mp = metricsBySlug.get(project.slug);
+      const needsAttention = mp ? projectNeedsAttention(mp) : false;
+      if (tab === "attention" && !needsAttention) return false;
+      if (tab === "ongoing" && project.status !== "ongoing") return false;
+      if (tab === "completed" && project.status !== "completed") return false;
+      if (tab === "upcoming" && project.status !== "upcoming") return false;
       if (categoryFilter !== "all" && project.category !== categoryFilter) return false;
       if (!normalized) return true;
       return [project.title.ar, project.title.en, project.location.ar, project.location.en, project.category]
@@ -1168,14 +1288,12 @@ function ProjectsSection({
       return (b.updatedAt || "").localeCompare(a.updatedAt || "");
     });
     return sorted;
-  }, [categoryFilter, projects, query, sortBy, statusFilter]);
+  }, [categoryFilter, debouncedQuery, projects, sortBy, tab, metricsBySlug]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const currentPage = Math.min(page, totalPages);
   const paged = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-
-  const allSelected =
-    paged.length > 0 && paged.every((project) => selected.has(project.slug));
+  const allSelected = paged.length > 0 && paged.every((project) => selected.has(project.slug));
 
   const toggleSelected = (slug: string) => {
     setSelected((current) => {
@@ -1252,94 +1370,137 @@ function ProjectsSection({
     );
   };
 
+  const budgetHealthLabel = (project: WorkspaceProject) => {
+    const mp = metricsBySlug.get(project.slug);
+    if (!mp) return locale === "ar" ? "لا توجد بيانات" : "No data";
+    const h = getBudgetHealth(mp);
+    if (h.key === "no_data") return locale === "ar" ? "لا توجد بيانات" : "No data";
+    if (h.key === "on_track") return locale === "ar" ? "في المسار" : "On track";
+    if (h.key === "watch") return locale === "ar" ? "تحت المراقبة" : "Watch";
+    if (h.key === "over") return locale === "ar" ? "المصروف أسرع من الإنجاز" : "Spending ahead of progress";
+    if (h.key === "saved") return locale === "ar" ? `مكتمل · وفر ${formatSAR(h.amount, locale)}` : `Completed · Saved ${formatSAR(h.amount, locale)}`;
+    if (h.key === "overrun") return locale === "ar" ? `تجاوز ${formatSAR(h.amount, locale)}` : `Overrun ${formatSAR(h.amount, locale)}`;
+    return locale === "ar" ? "لا توجد بيانات" : "No data";
+  };
+
   return (
     <div className="space-y-5">
-      <div className="flex flex-col justify-between gap-3 xl:flex-row xl:items-end">
-        <div>
-          <h2 className="font-display text-2xl text-ivory">{c.projects}</h2>
-          <p className="mt-1 text-[0.76rem] tabular-nums text-ivory/45">
-            {filtered.length} / {projects.length}
-          </p>
-        </div>
-        <div className="grid w-full gap-2 sm:grid-cols-2 xl:flex xl:w-auto xl:flex-wrap xl:items-center">
-          <input
-            value={query}
-            onChange={(event) => { setQuery(event.target.value); setPage(1); }}
-            placeholder={c.search}
-            className="h-10 w-full border border-white/12 bg-transparent px-3 text-[0.8rem] text-ivory outline-none placeholder:text-ivory/35 focus:border-gold/50 xl:w-56"
-          />
-          <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value as typeof statusFilter); setPage(1); }} className="h-10 border border-white/12 bg-coal px-3 text-[0.74rem] text-ivory/70 outline-none focus:border-gold/50">
-            <option value="all">{locale === "ar" ? "كل الحالات" : "All statuses"}</option>
-            <option value="ongoing">{c.statusLabels.ongoing}</option>
-            <option value="completed">{c.statusLabels.completed}</option>
-            <option value="upcoming">{c.statusLabels.upcoming}</option>
-          </select>
-          <select value={categoryFilter} onChange={(e) => { setCategoryFilter(e.target.value as typeof categoryFilter); setPage(1); }} className="h-10 border border-white/12 bg-coal px-3 text-[0.74rem] text-ivory/70 outline-none focus:border-gold/50">
-            <option value="all">{locale === "ar" ? "كل الفئات" : "All categories"}</option>
-            <option value="commercial">{c.categoryLabels.commercial}</option>
-            <option value="residential">{c.categoryLabels.residential}</option>
-            <option value="infrastructure">{c.categoryLabels.infrastructure}</option>
-            <option value="industrial">{c.categoryLabels.industrial}</option>
-          </select>
-          <select value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)} className="h-10 border border-white/12 bg-coal px-3 text-[0.74rem] text-ivory/70 outline-none focus:border-gold/50">
-            <option value="risk">{locale === "ar" ? "الأعلى خطورة" : "Highest risk"}</option>
-            <option value="budget">{locale === "ar" ? "الميزانية" : "Budget"}</option>
-            <option value="progress">{locale === "ar" ? "الإنجاز" : "Progress"}</option>
-            <option value="updated">{locale === "ar" ? "الأحدث" : "Latest"}</option>
-          </select>
-          <button type="button" onClick={exportCsv} className="inline-flex h-10 items-center justify-center gap-2 border border-white/12 px-3.5 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold">
-            <FileText className="h-3.5 w-3.5" />
-            {c.export}
+      <PageHeader
+        title={c.projects}
+        description={`${filtered.length} / ${projects.length}`}
+        actions={([
+          ["table", locale === "ar" ? "جدول" : "Table"],
+          ["cards", locale === "ar" ? "بطاقات" : "Cards"],
+          ["timeline", locale === "ar" ? "مخطط زمني" : "Timeline"],
+        ] as const).map(([id, label]) => (
+          <Chip key={id} active={view === id} onClick={() => setView(id)}>{label}</Chip>
+        ))}
+      />
+
+      <Card className="flex flex-wrap gap-2 p-3">
+        {([
+          ["all", locale === "ar" ? "الكل" : "All", tabCounts.all],
+          ["ongoing", locale === "ar" ? "جارية" : "Ongoing", tabCounts.ongoing],
+          ["attention", locale === "ar" ? "تحتاج انتباه" : "Needs attention", tabCounts.attention],
+          ["completed", locale === "ar" ? "مكتملة" : "Completed", tabCounts.completed],
+          ["upcoming", locale === "ar" ? "قادمة" : "Upcoming", tabCounts.upcoming],
+        ] as const).map(([id, label, count]) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => { setTab(id); setPage(1); }}
+            className={cn(
+              "min-h-10 px-3 text-[0.72rem] transition-colors",
+              tab === id ? "bg-gold/15 text-gold" : "text-ivory/55 hover:bg-white/[0.04] hover:text-ivory",
+            )}
+          >
+            {label} <span className="tabular-nums opacity-70">({count})</span>
           </button>
-          <button type="button" onClick={onNew} className="inline-flex h-10 items-center justify-center gap-2 bg-gold px-4 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-obsidian transition-colors hover:bg-gold-light">
-            <Plus className="h-4 w-4" />
-            {c.addProject}
-          </button>
-        </div>
+        ))}
+      </Card>
+
+      <div className="grid w-full gap-2 sm:grid-cols-2 xl:flex xl:flex-wrap xl:items-center">
+        <AdminInput
+          value={query}
+          onChange={(event) => { setQuery(event.target.value); setPage(1); }}
+          placeholder={c.search}
+          className="xl:w-56"
+        />
+
+        <AdminSelect value={categoryFilter} onChange={(e) => { setCategoryFilter(e.target.value as typeof categoryFilter); setPage(1); }} className="">
+          <option value="all">{locale === "ar" ? "كل الفئات" : "All categories"}</option>
+          <option value="commercial">{c.categoryLabels.commercial}</option>
+          <option value="residential">{c.categoryLabels.residential}</option>
+          <option value="infrastructure">{c.categoryLabels.infrastructure}</option>
+          <option value="industrial">{c.categoryLabels.industrial}</option>
+        </AdminSelect>
+        <AdminSelect value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)} className="">
+          <option value="risk">{locale === "ar" ? "الأعلى خطورة" : "Highest risk"}</option>
+          <option value="budget">{locale === "ar" ? "الميزانية" : "Budget"}</option>
+          <option value="progress">{locale === "ar" ? "الإنجاز" : "Progress"}</option>
+          <option value="updated">{locale === "ar" ? "الأحدث" : "Latest"}</option>
+        </AdminSelect>
+        <Button variant="secondary" size="sm" onClick={exportCsv}>
+          <FileText className="h-4 w-4" />{c.export}
+        </Button>
+        <Button variant="primary" size="sm" onClick={onNew}>
+          <Plus className="h-4 w-4" />{c.addProject}
+        </Button>
       </div>
 
       {selected.size > 0 ? (
-        <div className="sticky bottom-4 z-20 flex flex-wrap items-center gap-2 border border-gold/25 bg-[#0e1017]/95 px-3 py-2.5 shadow-lux backdrop-blur">
-          <span className="text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-gold tabular-nums">
-            {selected.size} {c.selected}
-          </span>
-          <span className="text-[0.66rem] uppercase tracking-[0.1em] text-ivory/45">{c.bulkStatus}</span>
+        <div className="sticky bottom-20 z-20 flex flex-wrap items-center gap-2 rounded-[20px] border border-[rgba(226,176,74,0.25)] bg-[#14161d]/95 px-4 py-3 shadow-[0_8px_24px_rgba(0,0,0,0.35)] backdrop-blur lg:bottom-4">
+          <span className="text-[14px] font-semibold text-[#F3C86A] tabular-nums">{selected.size} {c.selected}</span>
+          <span className="text-[13px] text-[#A6A9B4]">{c.bulkStatus}</span>
           {(["ongoing", "completed", "upcoming"] as const).map((status) => (
-            <button key={status} type="button" onClick={() => applyBulkStatus(status)} className="h-8 border border-white/12 px-3 text-[0.66rem] font-semibold uppercase tracking-[0.1em] text-ivory/60 transition-colors hover:border-gold/45 hover:text-gold">
+            <button key={status} type="button" onClick={() => applyBulkStatus(status)} className="h-8 border border-white/12 px-3 text-[0.66rem] font-semibold  text-ivory/60 transition-colors hover:border-gold/45 hover:text-gold">
               {c.statusLabels[status]}
             </button>
           ))}
-          <button type="button" onClick={exportCsv} className="h-8 border border-white/12 px-3 text-[0.66rem] font-semibold uppercase tracking-[0.1em] text-ivory/60 transition-colors hover:border-gold/45 hover:text-gold">
-            {locale === "ar" ? "تصدير المحدد" : "Export"}
+          <button type="button" onClick={exportCsv} className="h-8 border border-white/12 px-3 text-[0.66rem] font-semibold  text-ivory/60 transition-colors hover:border-gold/45 hover:text-gold">
+            {locale === "ar" ? "تصدير Excel" : "Export Excel"}
           </button>
-          <button type="button" onClick={() => setSelected(new Set<string>())} className="ms-auto h-8 px-2 text-[0.66rem] uppercase tracking-[0.1em] text-ivory/40 transition-colors hover:text-gold">
-            {c.clearSelection}
-          </button>
+          <button type="button" onClick={() => setSelected(new Set<string>())} className="ms-auto h-8 px-2 text-[0.66rem]  text-ivory/40 transition-colors hover:text-gold">{c.clearSelection}</button>
         </div>
       ) : null}
 
-      {/* Mobile luxury cards */}
-      <div className="grid gap-3 md:hidden">
-        {paged.map((project) => {
-          const risk = budgetRisk(project.spent, project.budget);
-          return (
-            <button key={project.slug} type="button" onClick={() => setDetail(project)} className="border border-white/10 bg-coal p-4 text-start transition-colors hover:border-gold/30">
+      {view === "timeline" ? (
+        <div className="space-y-3 rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018] p-4 sm:p-5">
+          {paged.map((project) => (
+            <button key={project.slug} type="button" onClick={() => setDetail(project)} className="w-full border border-white/10 bg-[#0e1017]/60 p-4 text-start transition-colors hover:border-gold/30">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="truncate text-[0.88rem] font-medium text-ivory">{l(project.title)}</p>
+                  <p className="mt-1 text-[0.7rem] text-ivory/45">{budgetHealthLabel(project)}</p>
+                </div>
+                <span className="text-[0.68rem] tabular-nums text-ivory/45">{c.statusLabels[project.status]}</span>
+              </div>
+              <div className="mt-3 h-2 overflow-hidden bg-white/10">
+                <div className="h-full bg-gold/70" style={{ width: `${project.progress}%` }} />
+              </div>
+              <div className="mt-2 flex items-center justify-between text-[0.68rem] tabular-nums text-ivory/45">
+                <span>{project.progress}%</span>
+                <span>{formatMoney(project.spent, locale)} / {formatMoney(project.budget, locale)}</span>
+              </div>
+            </button>
+          ))}
+          {!paged.length ? <EmptyProjects locale={locale} label={c.noProjects} /> : null}
+        </div>
+      ) : view === "cards" ? (
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {paged.map((project) => (
+            <button key={project.slug} type="button" onClick={() => setDetail(project)} className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018] p-4 text-start transition-colors hover:border-gold/30">
               <div className="flex items-start gap-3">
-                <span className="relative h-16 w-20 shrink-0 overflow-hidden border border-white/10">
-                  <ProjectArt variant={project.art} className="h-full w-full" />
-                </span>
+                <span className="relative h-16 w-20 shrink-0 overflow-hidden border border-white/10"><ProjectArt variant={project.art} className="h-full w-full" /></span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-2">
                     <p className="truncate text-[0.9rem] font-medium text-ivory">{l(project.title)}</p>
-                    <span className={cn("shrink-0 px-2 py-0.5 text-[0.62rem] uppercase tracking-[0.1em]", project.status === "ongoing" ? "bg-gold/15 text-gold" : project.status === "completed" ? "bg-emerald-400/10 text-emerald-300/80" : "bg-sky-400/10 text-sky-300/80")}>
-                      {c.statusLabels[project.status]}
-                    </span>
+                    <span className={cn("shrink-0 px-2 py-0.5 text-[0.62rem] ", project.status === "ongoing" ? "bg-gold/15 text-gold" : project.status === "completed" ? "bg-emerald-400/10 text-emerald-300/80" : "bg-sky-400/10 text-sky-300/80")}>{c.statusLabels[project.status]}</span>
                   </div>
                   <p className="mt-1 truncate text-[0.72rem] text-ivory/45">{l(project.location)}</p>
+                  <p className="mt-1 text-[0.68rem] text-ivory/45">{budgetHealthLabel(project)}</p>
                   <div className="mt-3 flex items-center gap-2">
-                    <span className="h-1.5 flex-1 overflow-hidden bg-white/10">
-                      <span className={cn("block h-full", risk === "critical" ? "bg-red-400/80" : risk === "warning" ? "bg-amber-400/80" : "bg-gold")} style={{ width: `${project.progress}%` }} />
-                    </span>
+                    <span className="h-1.5 flex-1 overflow-hidden bg-white/10"><span className="block h-full bg-gold/70" style={{ width: `${project.progress}%` }} /></span>
                     <span className="tabular-nums text-[0.68rem] text-ivory/45">{project.progress}%</span>
                   </div>
                   <div className="mt-2 flex items-center justify-between text-[0.72rem]">
@@ -1349,101 +1510,104 @@ function ProjectsSection({
                 </div>
               </div>
             </button>
-          );
-        })}
-        {!paged.length ? (
-          <div className="border border-dashed border-white/12 bg-coal/40 p-10 text-center">
-            <p className="font-display text-xl text-ivory/70">{c.noProjects}</p>
-            <p className="mt-2 text-[0.78rem] text-ivory/40">{locale === "ar" ? "جرّب تعديل عوامل التصفية أو أضف مشروعاً جديداً." : "Try adjusting filters or add a new project."}</p>
+          ))}
+          {!paged.length ? <EmptyProjects locale={locale} label={c.noProjects} full /> : null}
+        </div>
+      ) : (
+        <>
+          <div className="grid gap-3 md:hidden">
+            {paged.map((project) => (
+              <button key={project.slug} type="button" onClick={() => setDetail(project)} className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018] p-4 text-start transition-colors hover:border-gold/30">
+                <div className="flex items-start gap-3">
+                  <span className="relative h-16 w-20 shrink-0 overflow-hidden border border-white/10"><ProjectArt variant={project.art} className="h-full w-full" /></span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="truncate text-[0.9rem] font-medium text-ivory">{l(project.title)}</p>
+                      <span className={cn("shrink-0 px-2 py-0.5 text-[0.62rem] ", project.status === "ongoing" ? "bg-gold/15 text-gold" : project.status === "completed" ? "bg-emerald-400/10 text-emerald-300/80" : "bg-sky-400/10 text-sky-300/80")}>{c.statusLabels[project.status]}</span>
+                    </div>
+                    <p className="mt-1 truncate text-[0.72rem] text-ivory/45">{l(project.location)}</p>
+                    <p className="mt-1 text-[0.68rem] text-ivory/45">{budgetHealthLabel(project)}</p>
+                    <div className="mt-3 flex items-center gap-2">
+                      <span className="h-1.5 flex-1 overflow-hidden bg-white/10"><span className="block h-full bg-gold/70" style={{ width: `${project.progress}%` }} /></span>
+                      <span className="tabular-nums text-[0.68rem] text-ivory/45">{project.progress}%</span>
+                    </div>
+                  </div>
+                </div>
+              </button>
+            ))}
+            {!paged.length ? <EmptyProjects locale={locale} label={c.noProjects} /> : null}
           </div>
-        ) : null}
-      </div>
-
-      {/* Desktop/tablet table */}
-      <div className="hidden overflow-x-auto border border-white/10 bg-coal md:block">
-        <table className="w-full min-w-[960px]">
-          <thead>
-            <tr className="border-b border-white/8 text-[0.64rem] uppercase tracking-[0.14em] text-ivory/40">
-              <th className="w-12 px-4 py-4 text-start font-medium">
-                <Checkbox checked={allSelected} onChange={toggleAll} aria-label={c.selectAll} />
-              </th>
-              <th className="px-4 py-4 text-start font-medium">{c.project}</th>
-              <th className="px-4 py-4 text-start font-medium">{c.category}</th>
-              <th className="px-4 py-4 text-start font-medium">{c.status}</th>
-              <th className="px-4 py-4 text-start font-medium">{c.progress}</th>
-              <th className="px-4 py-4 text-end font-medium">{c.value}</th>
-              <th className="px-4 py-4 text-end font-medium">{c.actions}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {paged.map((project) => {
-              const risk = budgetRisk(project.spent, project.budget);
-              return (
-                <tr key={project.slug} onClick={() => setDetail(project)} className={cn("cursor-pointer border-b border-white/6 last:border-0 transition-colors hover:bg-white/[0.02]", selected.has(project.slug) && "bg-gold/[0.045]")}>
-                  <td className="px-4 py-4" onClick={(e) => e.stopPropagation()}>
-                    <Checkbox checked={selected.has(project.slug)} onChange={() => toggleSelected(project.slug)} aria-label={`${c.selectAll}: ${l(project.title)}`} />
-                  </td>
-                  <td className="px-4 py-4">
-                    <span className="flex items-center gap-3">
-                      <span className="relative h-10 w-14 shrink-0 overflow-hidden border border-white/10">
-                        <ProjectArt variant={project.art} className="h-full w-full" />
-                      </span>
-                      <span className="flex min-w-0 flex-col gap-0.5">
-                        <span className="truncate text-[0.82rem] text-ivory/75">{l(project.title)}</span>
-                        <span className="truncate text-[0.7rem] text-ivory/40">{l(project.location)}</span>
-                      </span>
-                    </span>
-                  </td>
-                  <td className="px-4 py-4 text-[0.72rem] text-ivory/50">{c.categoryLabels[project.category]}</td>
-                  <td className="px-4 py-4" onClick={(e) => e.stopPropagation()}>
-                    <button type="button" onClick={() => cycleStatus(project)} title={c.quickStatus} className={cn("inline-flex min-h-8 items-center px-2.5 text-[0.64rem] uppercase tracking-[0.1em] transition-[filter,background-color] duration-150 hover:brightness-125", project.status === "ongoing" ? "bg-gold/15 text-gold" : project.status === "completed" ? "bg-emerald-400/10 text-emerald-300/80" : "bg-sky-400/10 text-sky-300/80")}>
-                      {c.statusLabels[project.status]}
-                    </button>
-                  </td>
-                  <td className="px-4 py-4">
-                    <span className="flex items-center gap-2">
-                      <span className="h-1.5 w-14 overflow-hidden bg-white/10">
-                        <span className={cn("block h-full", risk === "critical" ? "bg-red-400/80" : risk === "warning" ? "bg-amber-400/80" : "bg-gold")} style={{ width: `${project.progress}%` }} />
-                      </span>
-                      <span className="tabular-nums text-[0.7rem] text-ivory/45">{project.progress}%</span>
-                    </span>
-                  </td>
-                  <td className="px-4 py-4 text-end text-[0.72rem] tabular-nums text-ivory/55">{formatMoney(project.contractValue || project.budget, locale)}</td>
-                  <td className="px-4 py-4" onClick={(e) => e.stopPropagation()}>
-                    <span className="flex items-center justify-end gap-2">
-                      <button type="button" onClick={() => onEdit(project)} className="flex h-9 w-9 items-center justify-center border border-white/12 text-ivory/55 transition-colors duration-150 hover:border-gold/50 hover:text-gold" aria-label={`${c.edit} ${l(project.title)}`}>
-                        <Pencil className="h-3.5 w-3.5" />
-                      </button>
-                      <button type="button" onClick={() => handleDelete(project)} className="flex h-9 w-9 items-center justify-center border border-white/12 text-ivory/55 transition-colors duration-150 hover:border-red-400/50 hover:text-red-300" aria-label={`${c.delete} ${l(project.title)}`}>
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </span>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-        {!paged.length ? (
-          <div className="p-10 text-center">
-            <p className="font-display text-xl text-ivory/70">{c.noProjects}</p>
-            <p className="mt-2 text-[0.78rem] text-ivory/40">{locale === "ar" ? "لا توجد نتائج مطابقة — عدّل البحث أو الفلاتر." : "No matching results — adjust search or filters."}</p>
+          <div className="hidden md:block">
+            <DataTable>
+              <Table className="min-w-[1040px]">
+                <THead>
+                  <tr>
+                    <TH className="w-12"><Checkbox checked={allSelected} onChange={toggleAll} aria-label={c.selectAll} /></TH>
+                    <TH>{c.project}</TH>
+                    <TH>{c.category}</TH>
+                    <TH>{c.status}</TH>
+                    <TH>{locale === "ar" ? "صحة الميزانية" : "Budget health"}</TH>
+                    <TH>{c.progress}</TH>
+                    <TH className="text-end">{c.value}</TH>
+                    <TH className="text-end">{c.actions}</TH>
+                  </tr>
+                </THead>
+                <tbody>
+                  {paged.map((project) => {
+                    const mp = metricsBySlug.get(project.slug);
+                    const h = mp ? getBudgetHealth(mp) : { key: "no_data" as const };
+                    const tone: "success" | "warning" | "danger" | "neutral" = h.key === "on_track" || h.key === "saved" ? "success" : h.key === "watch" ? "warning" : h.key === "over" || h.key === "overrun" ? "danger" : "neutral";
+                    const statusTone: "warning" | "success" | "info" = project.status === "ongoing" ? "warning" : project.status === "completed" ? "success" : "info";
+                    const photoSrc = (project as { image?: string; cover?: string }).image || (project as { image?: string; cover?: string }).cover;
+                    return (
+                      <TR key={project.slug} onClick={() => setDetail(project)} className={cn("cursor-pointer", selected.has(project.slug) && "bg-[rgba(226,176,74,0.06)]")}>
+                        <TD onClick={(e) => e.stopPropagation()}><Checkbox checked={selected.has(project.slug)} onChange={() => toggleSelected(project.slug)} aria-label={`${c.selectAll}: ${l(project.title)}`} /></TD>
+                        <TD>
+                          <span className="flex items-center gap-3">
+                            <ProjectPhoto src={photoSrc} alt={l(project.title)} />
+                            <span className="flex min-w-0 flex-col gap-0.5">
+                              <span className="truncate text-[14px] font-medium text-[#F1EEE8]">{l(project.title)}</span>
+                              <span className="truncate text-[13px] text-[#A6A9B4]">{l(project.location)}</span>
+                            </span>
+                          </span>
+                        </TD>
+                        <TD><span className="text-[14px] text-[#C9CAD1]">{c.categoryLabels[project.category]}</span></TD>
+                        <TD onClick={(e) => e.stopPropagation()}>
+                          <button type="button" onClick={() => cycleStatus(project)} title={c.quickStatus} className="admin-focus-ring">
+                            <StatusPill tone={statusTone}>{c.statusLabels[project.status]}</StatusPill>
+                          </button>
+                        </TD>
+                        <TD><StatusPill tone={tone}>{budgetHealthLabel(project)}</StatusPill></TD>
+                        <TD>
+                          <span className="flex items-center gap-2">
+                            <span className="h-1.5 w-16 overflow-hidden rounded-full bg-[#232632]"><span className="block h-full rounded-full bg-[linear-gradient(270deg,#F3C86A,#C98F1E)]" style={{ width: `${project.progress}%` }} /></span>
+                            <span className="tabular-nums text-[13px] text-[#A6A9B4]">{project.progress}%</span>
+                          </span>
+                        </TD>
+                        <TD className="text-end tabular-nums text-[#D7D8DE]">{formatMoney(project.contractValue || project.budget, locale)}</TD>
+                        <TD onClick={(e) => e.stopPropagation()}>
+                          <span className="flex items-center justify-end gap-2">
+                            <Button variant="secondary" size="sm" onClick={() => onEdit(project)} aria-label={`${c.edit} ${l(project.title)}`} className="h-10 w-10 min-h-0 px-0"><Pencil className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="sm" onClick={() => handleDelete(project)} aria-label={`${c.delete} ${l(project.title)}`} className="h-10 w-10 min-h-0 px-0 text-[#FF9A8F] hover:bg-[rgba(255,107,94,0.1)] hover:text-[#FF9A8F]"><Trash2 className="h-4 w-4" /></Button>
+                          </span>
+                        </TD>
+                      </TR>
+                    );
+                  })}
+                </tbody>
+              </Table>
+              {!paged.length ? <div className="p-6"><EmptyState title={c.noProjects} /></div> : null}
+            </DataTable>
           </div>
-        ) : null}
-      </div>
+        </>
+      )}
 
       {totalPages > 1 ? (
-        <div className="flex flex-wrap items-center justify-between gap-3 border border-white/10 bg-coal px-4 py-3">
-          <p className="text-[0.72rem] tabular-nums text-ivory/45">
-            {locale === "ar" ? `صفحة ${currentPage} من ${totalPages}` : `Page ${currentPage} of ${totalPages}`}
-          </p>
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018] px-4 py-3">
+          <p className="text-[0.72rem] tabular-nums text-ivory/45">{locale === "ar" ? `صفحة ${currentPage} من ${totalPages}` : `Page ${currentPage} of ${totalPages}`}</p>
           <div className="flex items-center gap-2">
-            <button type="button" disabled={currentPage <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))} className="h-9 border border-white/12 px-3 text-[0.7rem] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold disabled:opacity-30">
-              {locale === "ar" ? "السابق" : "Previous"}
-            </button>
-            <button type="button" disabled={currentPage >= totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))} className="h-9 border border-white/12 px-3 text-[0.7rem] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold disabled:opacity-30">
-              {locale === "ar" ? "التالي" : "Next"}
-            </button>
+            <button type="button" disabled={currentPage <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))} className="h-9 border border-white/12 px-3 text-[0.7rem] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold disabled:opacity-30">{locale === "ar" ? "السابق" : "Previous"}</button>
+            <button type="button" disabled={currentPage >= totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))} className="h-9 border border-white/12 px-3 text-[0.7rem] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold disabled:opacity-30">{locale === "ar" ? "التالي" : "Next"}</button>
           </div>
         </div>
       ) : null}
@@ -1453,18 +1617,14 @@ function ProjectsSection({
           <aside data-lenis-prevent className="h-full w-full max-w-xl overflow-y-auto overscroll-contain border-s border-white/10 bg-[#0e1017] p-5 shadow-lux sm:p-6">
             <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-4">
               <div className="min-w-0">
-                <p className="text-[0.68rem] uppercase tracking-[0.16em] text-gold">{locale === "ar" ? "تفاصيل المشروع" : "Project details"}</p>
-                <h3 className="mt-1 truncate font-display text-2xl text-ivory">{l(detail.title)}</h3>
+                <p className="text-[0.68rem]  text-gold">{locale === "ar" ? "تفاصيل المشروع" : "Project details"}</p>
+                <h3 className="mt-1 truncate text-[28px] font-bold text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{l(detail.title)}</h3>
                 <p className="mt-1 text-[0.78rem] text-ivory/45">{l(detail.location)}</p>
               </div>
-              <button type="button" onClick={() => setDetail(null)} className="inline-flex h-10 w-10 items-center justify-center border border-white/12 text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold" aria-label="Close">
-                <X className="h-4 w-4" />
-              </button>
+              <button type="button" onClick={() => setDetail(null)} className="inline-flex h-10 w-10 items-center justify-center border border-white/12 text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold" aria-label="Close"><X className="h-4 w-4" /></button>
             </div>
             <div className="mt-5 space-y-4">
-              <div className="relative h-44 overflow-hidden border border-white/10">
-                <ProjectArt variant={detail.art} className="h-full w-full" />
-              </div>
+              <div className="relative h-44 overflow-hidden border border-white/10"><ProjectArt variant={detail.art} className="h-full w-full" /></div>
               <div className="grid grid-cols-2 gap-3">
                 {[
                   [c.status, c.statusLabels[detail.status]],
@@ -1474,19 +1634,19 @@ function ProjectsSection({
                   [c.budget, formatMoney(detail.budget, locale)],
                   [c.spent, formatMoney(detail.spent, locale)],
                 ].map(([label, value]) => (
-                  <div key={String(label)} className="border border-white/10 bg-coal p-3">
-                    <p className="text-[0.64rem] uppercase tracking-[0.12em] text-ivory/40">{label}</p>
+                  <div key={String(label)} className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018] p-3">
+                    <p className="text-[0.64rem]  text-ivory/40">{label}</p>
                     <p className="mt-1 text-[0.86rem] tabular-nums text-ivory">{value}</p>
                   </div>
                 ))}
               </div>
+              <div className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018] p-3">
+                <p className="text-[0.64rem]  text-ivory/40">{locale === "ar" ? "صحة الميزانية" : "Budget health"}</p>
+                <p className="mt-1 text-[0.86rem] text-ivory/80">{budgetHealthLabel(detail)}</p>
+              </div>
               <div className="flex flex-wrap gap-2 pt-2">
-                <button type="button" onClick={() => { onEdit(detail); setDetail(null); }} className="inline-flex h-10 items-center gap-2 bg-gold px-4 text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-obsidian transition-colors hover:bg-gold-light">
-                  <Pencil className="h-3.5 w-3.5" />{c.edit}
-                </button>
-                <button type="button" onClick={() => setDetail(null)} className="inline-flex h-10 items-center gap-2 border border-white/12 px-4 text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold">
-                  {locale === "ar" ? "إغلاق" : "Close"}
-                </button>
+                <button type="button" onClick={() => { onEdit(detail); setDetail(null); }} className="inline-flex h-10 items-center gap-2 bg-gold px-4 text-[0.72rem] font-semibold  text-obsidian transition-colors hover:bg-gold-light"><Pencil className="h-3.5 w-3.5" />{c.edit}</button>
+                <button type="button" onClick={() => setDetail(null)} className="inline-flex h-10 items-center gap-2 border border-white/12 px-4 text-[0.72rem] font-semibold  text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold">{locale === "ar" ? "إغلاق" : "Close"}</button>
               </div>
             </div>
           </aside>
@@ -1496,6 +1656,14 @@ function ProjectsSection({
   );
 }
 
+function EmptyProjects({ locale, label, full }: { locale: "ar" | "en"; label: string; full?: boolean }) {
+  return (
+    <div className={cn("border border-dashed border-white/12 bg-coal/40 p-10 text-center", full && "col-span-full")}>
+      <p className="[font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif] text-xl text-ivory/70">{label}</p>
+      <p className="mt-2 text-[0.78rem] text-ivory/40">{locale === "ar" ? "جرّب تعديل عوامل التصفية أو أضف مشروعاً جديداً." : "Try adjusting filters or add a new project."}</p>
+    </div>
+  );
+}
 function FinancialsSection({ projects }: { projects: WorkspaceProject[] }) {
   const { locale, l } = useI18n();
   const c = copy[locale];
@@ -1545,23 +1713,23 @@ function FinancialsSection({ projects }: { projects: WorkspaceProject[] }) {
           { label: c.profit, value: formatM(totalProfit, locale) },
         ].map((stat) => (
           <div key={stat.label} className="bg-coal p-5">
-            <p className="tabular font-display text-2xl leading-none text-ivory">{stat.value}</p>
-            <p className="mt-2.5 text-[0.7rem] uppercase tracking-[0.14em] text-ivory/40">
+            <p className="tabular text-[28px] font-bold leading-none text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{stat.value}</p>
+            <p className="mt-2.5 text-[0.7rem]  text-ivory/40">
               {stat.label}
             </p>
           </div>
         ))}
       </div>
 
-      <div className="border border-white/10 bg-coal">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-5 py-4">
-          <span className="text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-gold">
+      <div className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018]">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-5 py-2">
+          <span className="text-[0.7rem] font-semibold  text-gold">
             {c.financials}
           </span>
           <button
             type="button"
             onClick={exportCsv}
-            className="inline-flex h-9 items-center gap-2 border border-white/12 px-3.5 text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-ivory/55 transition-colors hover:border-gold/40 hover:text-gold"
+            className="inline-flex h-9 items-center gap-2 border border-white/12 px-3.5 text-[0.68rem] font-semibold  text-ivory/55 transition-colors hover:border-gold/40 hover:text-gold"
           >
             <FileText className="h-3.5 w-3.5" />
             {c.export}
@@ -1570,13 +1738,13 @@ function FinancialsSection({ projects }: { projects: WorkspaceProject[] }) {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[880px]">
             <thead>
-              <tr className="border-b border-white/8 text-[0.64rem] uppercase tracking-[0.14em] text-ivory/40">
-                <th className="px-5 py-4 text-start font-medium">{c.project}</th>
-                <th className="px-4 py-4 text-start font-medium">{c.budget}</th>
-                <th className="px-4 py-4 text-start font-medium">{c.spent}</th>
-                <th className="px-4 py-4 text-start font-medium">{c.profit}</th>
-                <th className="px-4 py-4 text-start font-medium">{c.contract}</th>
-                <th className="px-5 py-4 text-end font-medium">{c.margin}</th>
+              <tr className="border-b border-white/8 text-[0.64rem]  text-ivory/40">
+                <th className="px-5 py-2 text-start font-medium">{c.project}</th>
+                <th className="px-4 py-2 text-start font-medium">{c.budget}</th>
+                <th className="px-4 py-2 text-start font-medium">{c.spent}</th>
+                <th className="px-4 py-2 text-start font-medium">{c.profit}</th>
+                <th className="px-4 py-2 text-start font-medium">{c.contract}</th>
+                <th className="px-5 py-2 text-end font-medium">{c.margin}</th>
               </tr>
             </thead>
             <tbody>
@@ -1586,7 +1754,7 @@ function FinancialsSection({ projects }: { projects: WorkspaceProject[] }) {
                   : 0;
                 return (
                   <tr key={project.slug} className="border-b border-white/6 last:border-0">
-                    <td className="px-5 py-4 text-[0.8rem] text-ivory/70">{l(project.title)}</td>
+                    <td className="px-5 py-2 text-[0.8rem] text-ivory/70">{l(project.title)}</td>
                     {(["budget", "spent", "profit", "contractValue"] as const).map((key) => (
                       <td key={key} className="px-4 py-3">
                         <input
@@ -1600,7 +1768,7 @@ function FinancialsSection({ projects }: { projects: WorkspaceProject[] }) {
                         />
                       </td>
                     ))}
-                    <td className="px-5 py-4 text-end">
+                    <td className="px-5 py-2 text-end">
                       <span
                         className={cn(
                           "tabular text-[0.8rem]",
@@ -1619,8 +1787,8 @@ function FinancialsSection({ projects }: { projects: WorkspaceProject[] }) {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-        <div className="border border-white/10 bg-coal p-6">
-          <span className="text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-gold">
+        <div className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018] p-6">
+          <span className="text-[0.7rem] font-semibold  text-gold">
             {c.budgetVsSpent}
           </span>
           <div className="mt-6 space-y-5">
@@ -1646,9 +1814,9 @@ function FinancialsSection({ projects }: { projects: WorkspaceProject[] }) {
           </div>
         </div>
 
-        <div className="border border-white/10 bg-coal">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-5 py-4">
-            <span className="text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-gold">
+        <div className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018]">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-5 py-2">
+            <span className="text-[0.7rem] font-semibold  text-gold">
               {c.paymentStages}
             </span>
             <select
@@ -1666,7 +1834,7 @@ function FinancialsSection({ projects }: { projects: WorkspaceProject[] }) {
           {selectedProject && selectedProject.invoices.length > 0 ? (
             <div className="divide-y divide-white/6">
               {selectedProject.invoices.map((invoice) => (
-                <div key={invoice.number} className="flex items-center gap-3 px-6 py-4">
+                <div key={invoice.number} className="flex items-center gap-3 px-6 py-2">
                   <FileText className="h-4 w-4 shrink-0 text-gold" />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[0.84rem] text-ivory/65">{l(invoice.title)}</p>
@@ -1678,7 +1846,7 @@ function FinancialsSection({ projects }: { projects: WorkspaceProject[] }) {
                     <p className="tabular text-[0.8rem] text-ivory/65">{invoice.amount}</p>
                     <span
                       className={cn(
-                        "text-[0.64rem] uppercase tracking-[0.1em]",
+                        "text-[0.64rem] ",
                         invoice.status === "paid"
                           ? "text-emerald-300/80"
                           : invoice.status === "due"
@@ -2059,15 +2227,15 @@ function ContentSection() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={saveContent} className="border border-white/10 bg-coal">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-5 py-4">
-          <span className="text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-gold">
+      <form onSubmit={saveContent} className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018]">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-5 py-2">
+          <span className="text-[0.7rem] font-semibold  text-gold">
             {c.heroContent}
           </span>
           <Link
             href="/"
             target="_blank"
-            className="inline-flex items-center gap-1.5 text-[0.68rem] uppercase tracking-[0.12em] text-ivory/45 transition-colors hover:text-gold"
+            className="inline-flex items-center gap-1.5 text-[0.68rem]  text-ivory/45 transition-colors hover:text-gold"
           >
             {c.back}
             <ArrowUpRight className="h-3 w-3" />
@@ -2139,7 +2307,7 @@ function ContentSection() {
         </div>
 
         <div className="border-t border-white/10 p-5">
-          <p className="mb-4 text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-gold/80">
+          <p className="mb-4 text-[0.7rem] font-semibold  text-gold/80">
             {c.promo}
           </p>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -2198,7 +2366,7 @@ function ContentSection() {
           <span className="text-[0.72rem] text-ivory/40">{saved ? c.saved : ""}</span>
           <button
             type="submit"
-            className="inline-flex h-9 items-center gap-2 bg-gold px-4 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-obsidian transition-colors hover:bg-gold-light"
+            className="inline-flex h-9 items-center gap-2 bg-gold px-4 text-[0.7rem] font-semibold  text-obsidian transition-colors hover:bg-gold-light"
           >
             {saved ? <Check className="h-3.5 w-3.5" /> : <Save className="h-3.5 w-3.5" />}
             {c.saveContent}
@@ -2206,9 +2374,9 @@ function ContentSection() {
         </div>
       </form>
 
-      <form onSubmit={saveService} className="border border-white/10 bg-coal">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-5 py-4">
-          <span className="text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-gold">
+      <form onSubmit={saveService} className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018]">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-5 py-2">
+          <span className="text-[0.7rem] font-semibold  text-gold">
             {c.serviceCards}
           </span>
           <select
@@ -2280,17 +2448,17 @@ function ContentSection() {
         <div className="flex justify-end border-t border-white/10 p-4">
           <button
             type="submit"
-            className="inline-flex h-9 items-center gap-2 border border-gold/40 px-4 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-gold transition-colors hover:bg-gold hover:text-obsidian"
+            className="inline-flex h-9 items-center gap-2 border border-gold/40 px-4 text-[0.7rem] font-semibold  text-gold transition-colors hover:bg-gold hover:text-obsidian"
           >
             <Save className="h-3.5 w-3.5" />
             {c.saveService}
           </button>
         </div>
       </form>
-      <form onSubmit={saveCopy} className="border border-white/10 bg-coal">
-        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-white/10 px-5 py-4">
+      <form onSubmit={saveCopy} className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018]">
+        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-white/10 px-5 py-2">
           <div>
-            <span className="flex items-center gap-2 text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-gold">
+            <span className="flex items-center gap-2 text-[0.7rem] font-semibold  text-gold">
               <Sparkles className="h-3.5 w-3.5" />
               {c.siteCopy}
             </span>
@@ -2301,7 +2469,7 @@ function ContentSection() {
           <button
             type="button"
             onClick={resetCopy}
-            className="inline-flex h-8 items-center gap-1.5 border border-white/12 px-3 text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-ivory/50 transition-all duration-300 hover:border-gold/40 hover:text-gold active:scale-[0.98]"
+            className="inline-flex h-8 items-center gap-1.5 border border-white/12 px-3 text-[0.68rem] font-semibold  text-ivory/50 transition-all duration-300 hover:border-gold/40 hover:text-gold active:scale-[0.98]"
           >
             <RotateCcw className="h-3 w-3" />
             {c.resetCopy}
@@ -2351,7 +2519,7 @@ function ContentSection() {
                   open={copyQuery.trim().length > 0 ? true : undefined}
                   className="group/copy border border-white/8 bg-obsidian/25"
                 >
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-ivory/65 transition-colors hover:text-gold [&::-webkit-details-marker]:hidden">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-[0.72rem] font-semibold  text-ivory/65 transition-colors hover:text-gold [&::-webkit-details-marker]:hidden">
                     <span className="flex items-center gap-2">
                       <ChevronDown className="h-3.5 w-3.5 text-gold/60 transition-transform duration-300 group-open/copy:rotate-180" />
                       {label[locale]}
@@ -2374,7 +2542,7 @@ function ContentSection() {
                             </code>
                             <span
                               className={cn(
-                                "mt-0.5 inline-block text-[0.62rem] uppercase tracking-[0.12em]",
+                                "mt-0.5 inline-block text-[0.62rem] ",
                                 customised ? "text-gold/70" : "text-ivory/30",
                               )}
                             >
@@ -2429,7 +2597,7 @@ function ContentSection() {
           <span className="text-[0.72rem] text-ivory/40">{copyNotice ? c.copySaved : ""}</span>
           <button
             type="submit"
-            className="inline-flex h-9 items-center gap-2 bg-gold px-4 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-obsidian transition-all duration-300 hover:bg-gold-light active:scale-[0.98]"
+            className="inline-flex h-9 items-center gap-2 bg-gold px-4 text-[0.7rem] font-semibold  text-obsidian transition-all duration-300 hover:bg-gold-light active:scale-[0.98]"
           >
             {copyNotice ? <Check className="h-3.5 w-3.5" /> : <Save className="h-3.5 w-3.5" />}
             {c.saveCopy}
@@ -2437,10 +2605,10 @@ function ContentSection() {
         </div>
       </form>
 
-      <form onSubmit={saveMedia} className="border border-white/10 bg-coal">
-        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-white/10 px-5 py-4">
+      <form onSubmit={saveMedia} className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018]">
+        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-white/10 px-5 py-2">
           <div>
-            <span className="flex items-center gap-2 text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-gold">
+            <span className="flex items-center gap-2 text-[0.7rem] font-semibold  text-gold">
               <ImageIcon className="h-3.5 w-3.5" />
               {c.mediaAssets}
             </span>
@@ -2448,7 +2616,7 @@ function ContentSection() {
               {c.mediaAssetsText}
             </p>
           </div>
-          <span className="border border-white/10 px-2.5 py-1 text-[0.64rem] uppercase tracking-[0.12em] text-ivory/40">
+          <span className="border border-white/10 px-2.5 py-1 text-[0.64rem]  text-ivory/40">
             {mediaCatalog.length}
           </span>
         </div>
@@ -2462,7 +2630,7 @@ function ContentSection() {
                 key={group}
                 className="group/media border border-white/8 bg-obsidian/25"
               >
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-ivory/65 transition-colors hover:text-gold [&::-webkit-details-marker]:hidden">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-[0.72rem] font-semibold  text-ivory/65 transition-colors hover:text-gold [&::-webkit-details-marker]:hidden">
                   <span className="flex items-center gap-2">
                     <ChevronDown className="h-3.5 w-3.5 text-gold/60 transition-transform duration-300 group-open/media:rotate-180" />
                     {label[locale]}
@@ -2549,7 +2717,7 @@ function ContentSection() {
                               aria-label={`${c.imageAlt} — English`}
                             />
                           </div>
-                          <div className="flex items-center justify-between gap-2 text-[0.62rem] uppercase tracking-[0.1em]">
+                          <div className="flex items-center justify-between gap-2 text-[0.62rem] ">
                             <span className={customised ? "text-gold/70" : "text-ivory/30"}>
                               {customised ? c.customised : c.original}
                             </span>
@@ -2578,7 +2746,7 @@ function ContentSection() {
           <button
             type="submit"
             disabled={mediaValidating}
-            className="inline-flex h-9 items-center gap-2 border border-gold/40 px-4 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-gold transition-all duration-300 hover:bg-gold hover:text-obsidian active:scale-[0.98] disabled:cursor-wait disabled:opacity-60 disabled:hover:bg-transparent disabled:hover:text-gold"
+            className="inline-flex h-9 items-center gap-2 border border-gold/40 px-4 text-[0.7rem] font-semibold  text-gold transition-all duration-300 hover:bg-gold hover:text-obsidian active:scale-[0.98] disabled:cursor-wait disabled:opacity-60 disabled:hover:bg-transparent disabled:hover:text-gold"
           >
             {mediaValidating ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -2602,9 +2770,9 @@ function MediaSection({ projects }: { projects: WorkspaceProject[] }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col justify-between gap-3 border border-white/10 bg-coal p-5 sm:flex-row sm:items-center">
+      <div className="flex flex-col justify-between gap-3 rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018] p-5 sm:flex-row sm:items-center">
         <div>
-          <h2 className="font-display text-2xl text-ivory">{c.mediaTitle}</h2>
+          <h2 className="text-[28px] font-bold text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{c.mediaTitle}</h2>
           <p className="mt-1 max-w-2xl text-[0.76rem] leading-relaxed text-ivory/45">
             {c.mediaText}
           </p>
@@ -2613,10 +2781,10 @@ function MediaSection({ projects }: { projects: WorkspaceProject[] }) {
 
       <div className="grid gap-4 lg:grid-cols-2">
         {projects.map((project) => (
-          <div key={project.slug} className="border border-white/10 bg-coal p-4">
+          <div key={project.slug} className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018] p-4">
             <div className="flex items-center justify-between gap-3">
               <span className="truncate text-[0.82rem] text-ivory/70">{l(project.title)}</span>
-              <span className="text-[0.66rem] uppercase tracking-[0.12em] text-ivory/40">
+              <span className="text-[0.66rem]  text-ivory/40">
                 {c.cover}: {c.artLabels[project.art]}
               </span>
             </div>
@@ -2642,7 +2810,7 @@ function MediaSection({ projects }: { projects: WorkspaceProject[] }) {
                   aria-label={`${c.setCover}: ${c.artLabels[variant]}`}
                 >
                   <ProjectArt variant={variant} className="h-full w-full" />
-                  <span className="absolute inset-x-0 bottom-0 bg-obsidian/75 px-1 py-0.5 text-[0.6rem] uppercase tracking-[0.08em] text-ivory/60">
+                  <span className="absolute inset-x-0 bottom-0 bg-obsidian/75 px-1 py-0.5 text-[0.6rem]  text-ivory/60">
                     {c.artLabels[variant]}
                   </span>
                 </button>
@@ -2684,9 +2852,9 @@ function MessagesSection({ projects }: { projects: WorkspaceProject[] }) {
 
   return (
     <div className="grid gap-6 lg:grid-cols-[0.72fr_1.28fr]">
-      <div className="border border-white/10 bg-coal">
-        <div className="border-b border-white/10 px-5 py-4">
-          <h2 className="font-display text-2xl text-ivory">{c.messagesTitle}</h2>
+      <div className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018]">
+        <div className="border-b border-white/10 px-5 py-2">
+          <h2 className="text-[28px] font-bold text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{c.messagesTitle}</h2>
           <p className="mt-1 text-[0.74rem] leading-relaxed text-ivory/45">{c.messagesText}</p>
         </div>
         <div className="divide-y divide-white/6">
@@ -2722,9 +2890,9 @@ function MessagesSection({ projects }: { projects: WorkspaceProject[] }) {
         </div>
       </div>
 
-      <div className="border border-white/10 bg-coal">
-        <div className="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-4">
-          <span className="text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-gold">
+      <div className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018]">
+        <div className="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-2">
+          <span className="text-[0.7rem] font-semibold  text-gold">
             {c.messagesTitle}
           </span>
           <span className="text-[0.68rem] text-ivory/40">
@@ -2741,7 +2909,7 @@ function MessagesSection({ projects }: { projects: WorkspaceProject[] }) {
                   message.author === "manager" ? "items-end" : "items-start",
                 )}
               >
-                <span className="flex items-center gap-1.5 text-[0.64rem] uppercase tracking-[0.12em] text-ivory/40">
+                <span className="flex items-center gap-1.5 text-[0.64rem]  text-ivory/40">
                   {message.author === "manager" ? c.manager : c.client}
                   <span className="text-ivory/30">{dateFormat.format(new Date(message.at))}</span>
                 </span>
@@ -2762,7 +2930,7 @@ function MessagesSection({ projects }: { projects: WorkspaceProject[] }) {
           )}
         </div>
         <form onSubmit={submit} className="border-t border-white/10 p-4">
-          <p className="mb-2 text-[0.66rem] uppercase tracking-[0.14em] text-ivory/40">{c.reply}</p>
+          <p className="mb-2 text-[0.66rem]  text-ivory/40">{c.reply}</p>
           <div className="flex gap-2">
             <input
               value={draft}
@@ -2772,7 +2940,7 @@ function MessagesSection({ projects }: { projects: WorkspaceProject[] }) {
             />
             <button
               type="submit"
-              className="flex h-10 items-center gap-2 bg-gold px-4 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-obsidian transition-colors hover:bg-gold-light"
+              className="flex h-10 items-center gap-2 bg-gold px-4 text-[0.7rem] font-semibold  text-obsidian transition-colors hover:bg-gold-light"
             >
               <Send className="h-3.5 w-3.5" />
               {c.send}

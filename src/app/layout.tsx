@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Cormorant_Garamond, Manrope, Tajawal } from "next/font/google";
+import { Cormorant_Garamond, Inter, Manrope, Tajawal } from "next/font/google";
 import "./globals.css";
 import { I18nProvider } from "@/components/providers/I18nProvider";
 import { AtmosphereProvider } from "@/components/providers/AtmosphereProvider";
@@ -7,9 +7,7 @@ import { RouteScrollReset } from "@/components/providers/RouteScrollReset";
 import { SmoothScrollProvider } from "@/components/providers/SmoothScroll";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { WorkspaceProvider } from "@/components/providers/WorkspaceProvider";
-import { Navbar } from "@/components/layout/Navbar";
-import { Footer } from "@/components/layout/Footer";
-import { ScrollProgress } from "@/components/layout/ScrollProgress";
+import { RouteChrome } from "@/components/layout/RouteChrome";
 import { ToastProvider } from "@/components/ui/Toast";
 
 const arabic = Tajawal({
@@ -23,6 +21,13 @@ const body = Manrope({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
   variable: "--font-body",
+  display: "swap",
+});
+
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "700", "800"],
+  variable: "--font-inter",
   display: "swap",
 });
 
@@ -91,7 +96,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       lang="ar"
       dir="rtl"
       suppressHydrationWarning
-      className={`${arabic.variable} ${body.variable} ${display.variable} h-full antialiased`}
+      className={`${arabic.variable} ${body.variable} ${display.variable} ${inter.variable} h-full antialiased`}
     >
       <head>
         <script
@@ -115,18 +120,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <AuthProvider>
                   <ToastProvider>
                     <RouteScrollReset />
-                    <ScrollProgress />
                     <a
                       href="#main"
                       className="sr-only z-[300] bg-gold px-5 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-obsidian focus:not-sr-only focus:fixed focus:start-4 focus:top-4"
                     >
                       تجاوز إلى المحتوى / Skip to content
                     </a>
-                    <Navbar />
-                    <main id="main" className="min-h-screen">
-                      {children}
-                    </main>
-                    <Footer />
+                    <RouteChrome>{children}</RouteChrome>
                   </ToastProvider>
                 </AuthProvider>
               </SmoothScrollProvider>

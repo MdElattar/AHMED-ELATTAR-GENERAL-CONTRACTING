@@ -54,7 +54,7 @@ export function ProjectCostVisualizer({
 
   const totalSar = useMemo(() => {
     if (contractValue && contractValue > 0) return contractValue * 1_000_000;
-    return parseSarValue(project.value.en);
+    return parseSarValue(project.value.en) ?? 0;
   }, [contractValue, project.value.en]);
 
   const areaSqm = useMemo(() => parseAreaSqm(project.area.en), [project.area.en]);

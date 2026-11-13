@@ -135,10 +135,10 @@ export function ExecutiveKpiBar() {
     : [];
 
   return (
-    <div className="border border-white/10 bg-coal/60">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-5 py-4">
+    <div className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018]/60">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-5 py-2">
         <div className="flex flex-wrap items-center gap-3">
-          <span className="inline-flex items-center gap-1.5 border border-gold/30 bg-gold/[0.06] px-2.5 py-1.5 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-gold">
+          <span className="inline-flex items-center gap-1.5 border border-gold/30 bg-gold/[0.06] px-2.5 py-1.5 text-[0.68rem] font-semibold  text-gold">
             <span
               aria-hidden="true"
               className="h-1.5 w-1.5 rounded-full bg-gold [animation:live-pulse_3.8s_ease-out_infinite]"
@@ -159,7 +159,7 @@ export function ExecutiveKpiBar() {
           type="button"
           onClick={() => void load(false)}
           disabled={refreshing}
-          className="inline-flex h-10 items-center gap-1.5 border border-white/10 px-3 text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-ivory/50 transition-colors hover:border-gold/40 hover:text-gold disabled:opacity-50"
+          className="inline-flex h-10 items-center gap-1.5 border border-white/10 px-3 text-[0.68rem] font-semibold  text-ivory/50 transition-colors hover:border-gold/40 hover:text-gold disabled:opacity-50"
           aria-label={c.refresh}
         >
           {refreshing ? (
@@ -189,10 +189,10 @@ export function ExecutiveKpiBar() {
           : stats.map(({ label, value, icon: Icon }) => (
               <div key={label} className="min-w-0 bg-coal p-5">
                 <Icon className="h-4 w-4 text-gold" />
-                <p className="mt-3 tabular-nums font-display text-[1.9rem] leading-none text-ivory">
+                <p className="mt-3 tabular-nums [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif] text-[1.9rem] leading-none text-ivory">
                   {value}
                 </p>
-                <p className="mt-2.5 text-[0.72rem] leading-snug uppercase tracking-[0.12em] text-ivory/40">
+                <p className="mt-2.5 text-[0.72rem] leading-snug  text-ivory/40">
                   {label}
                 </p>
               </div>

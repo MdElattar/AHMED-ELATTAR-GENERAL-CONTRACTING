@@ -157,6 +157,9 @@ const copy = {
     upcoming: "قادمة",
     milestoneHint: "اضغط على الحالة لتحديث المرحلة.",
     addMilestone: "إضافة مرحلة",
+    addFirstMilestone: "إضافة أول مرحلة",
+    useTemplate: "استخدام قالب الإنشاء القياسي",
+    noMilestonesHint: "لا توجد مراحل لهذا المشروع بعد.",
     newMilestone: "مرحلة جديدة",
     titleAr: "الاسم (عربي)",
     titleEn: "الاسم (إنجليزي)",
@@ -238,6 +241,9 @@ const copy = {
     upcoming: "Upcoming",
     milestoneHint: "Tap a status to update the milestone.",
     addMilestone: "Add milestone",
+    addFirstMilestone: "Add first milestone",
+    useTemplate: "Use standard construction template",
+    noMilestonesHint: "No milestones for this project yet.",
     newMilestone: "New milestone",
     titleAr: "Title (Arabic)",
     titleEn: "Title (English)",
@@ -338,7 +344,7 @@ function StateBlock({
         <button
           type="button"
           onClick={onRetry}
-          className="inline-flex h-10 items-center gap-2 border border-white/12 px-4 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
+          className="inline-flex h-11 items-center gap-2 rounded-[12px] border border-white/15 bg-white/[0.04] px-4 text-[14px] font-semibold text-[#F1EEE8] transition-colors hover:border-[rgba(226,176,74,0.25)] hover:bg-white/[0.06]"
         >
           <RefreshCcw className="h-3.5 w-3.5" />
           {retry}
@@ -481,16 +487,16 @@ export function InquiriesPanel() {
   };
 
   return (
-    <div className="border border-white/10 bg-coal">
+    <div className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018]">
       <div className="flex flex-col justify-between gap-3 border-b border-white/10 px-6 py-5 sm:flex-row sm:items-center">
         <div>
-          <h2 className="font-display text-2xl text-ivory">{c.inquiriesTitle}</h2>
+          <h2 className="text-[28px] font-bold text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{c.inquiriesTitle}</h2>
           <p className="mt-1 text-[0.74rem] leading-relaxed text-ivory/45">{c.inquiriesText}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <a
             href="/api/admin/export/inquiries"
-            className="inline-flex h-10 items-center gap-2 border border-white/12 px-3.5 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
+            className="inline-flex h-11 items-center gap-2 rounded-[12px] border border-white/15 bg-white/[0.04] px-4 text-[14px] font-semibold text-[#F1EEE8] transition-colors hover:border-[rgba(226,176,74,0.25)] hover:bg-white/[0.06]"
           >
             <Download className="h-3.5 w-3.5" />
             {c.exportInquiries}
@@ -498,7 +504,7 @@ export function InquiriesPanel() {
           <button
             type="button"
             onClick={() => void reload()}
-            className="inline-flex h-10 w-fit items-center gap-2 border border-white/12 px-3.5 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
+            className="inline-flex h-10 w-fit items-center gap-2 border border-white/12 px-3.5 text-[0.7rem] font-semibold  text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
           >
             <RefreshCcw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
             {c.refresh}
@@ -514,7 +520,7 @@ export function InquiriesPanel() {
 
       {items.length ? (
         <div className="flex flex-wrap items-center gap-3 border-b border-white/8 px-6 py-3">
-          <label className="inline-flex items-center gap-2 text-[0.68rem] uppercase tracking-[0.12em] text-ivory/45">
+          <label className="inline-flex items-center gap-2 text-[0.68rem]  text-ivory/45">
             <input
               type="checkbox"
               checked={allSelected}
@@ -531,7 +537,7 @@ export function InquiriesPanel() {
 
       {selected.size > 0 ? (
         <div className="flex flex-wrap items-center gap-2 border-b border-gold/20 bg-gold/[0.05] px-6 py-3">
-          <span className="text-[0.66rem] uppercase tracking-[0.1em] text-ivory/45">
+          <span className="text-[0.66rem]  text-ivory/45">
             {c.bulkStatus}
           </span>
           {statusOrder.map((status) => (
@@ -540,7 +546,7 @@ export function InquiriesPanel() {
               type="button"
               disabled={bulkBusy}
               onClick={() => void applyBulkStatus(status)}
-              className="h-8 border border-white/12 px-2.5 text-[0.66rem] font-semibold uppercase tracking-[0.1em] text-ivory/60 transition-colors hover:border-gold/45 hover:text-gold disabled:opacity-40"
+              className="h-8 border border-white/12 px-2.5 text-[0.66rem] font-semibold  text-ivory/60 transition-colors hover:border-gold/45 hover:text-gold disabled:opacity-40"
             >
               {c[status]}
             </button>
@@ -548,7 +554,7 @@ export function InquiriesPanel() {
           <button
             type="button"
             onClick={() => setSelected(new Set<string>())}
-            className="ms-auto h-8 px-2 text-[0.66rem] uppercase tracking-[0.1em] text-ivory/40 transition-colors hover:text-gold"
+            className="ms-auto h-8 px-2 text-[0.66rem]  text-ivory/40 transition-colors hover:text-gold"
           >
             {c.clearSelection}
           </button>
@@ -589,13 +595,13 @@ export function InquiriesPanel() {
                   <div className="flex flex-wrap items-center gap-2">
                     <span
                       className={cn(
-                        "inline-flex min-h-7 items-center px-2.5 text-[0.64rem] font-semibold uppercase tracking-[0.12em]",
+                        "inline-flex min-h-7 items-center px-2.5 text-[0.64rem] font-semibold ",
                         statusStyles[inquiry.status],
                       )}
                     >
                       {c[inquiry.status]}
                     </span>
-                    <span className="text-[0.66rem] uppercase tracking-[0.14em] text-ivory/40">
+                    <span className="text-[0.66rem]  text-ivory/40">
                       {inquiry.kind === "newsletter" ? c.newsletter : c.contact}
                     </span>
                     {inquiry.reference ? (
@@ -636,7 +642,7 @@ export function InquiriesPanel() {
               ) : null}
 
               <div className="mt-4 flex flex-wrap items-center gap-2">
-                <span className="me-1 text-[0.64rem] uppercase tracking-[0.14em] text-ivory/35">
+                <span className="me-1 text-[0.64rem]  text-ivory/35">
                   {c.mark}
                 </span>
                 {statusOrder.map((status) => (
@@ -646,7 +652,7 @@ export function InquiriesPanel() {
                     disabled={pending !== null || bulkBusy}
                     onClick={() => void updateStatus(inquiry, status)}
                     className={cn(
-                      "h-9 px-3 text-[0.66rem] font-semibold uppercase tracking-[0.1em] transition-colors disabled:opacity-40",
+                      "h-9 px-3 text-[0.66rem] font-semibold  transition-colors disabled:opacity-40",
                       inquiry.status === status
                         ? statusStyles[status]
                         : "border border-white/10 text-ivory/50 hover:border-gold/40 hover:text-gold",
@@ -678,10 +684,10 @@ export function AuditPanel() {
   });
 
   return (
-    <div className="border border-white/10 bg-coal">
+    <div className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018]">
       <div className="flex flex-col justify-between gap-3 border-b border-white/10 px-6 py-5 sm:flex-row sm:items-center">
         <div>
-          <h2 className="flex items-center gap-2 font-display text-2xl text-ivory">
+          <h2 className="flex items-center gap-2 text-[28px] font-bold text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">
             <Activity className="h-4 w-4 text-gold" />
             {c.auditTitle}
           </h2>
@@ -690,7 +696,7 @@ export function AuditPanel() {
         <div className="flex flex-wrap items-center gap-2">
           <a
             href="/api/admin/export/audit"
-            className="inline-flex h-10 items-center gap-2 border border-white/12 px-3.5 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
+            className="inline-flex h-11 items-center gap-2 rounded-[12px] border border-white/15 bg-white/[0.04] px-4 text-[14px] font-semibold text-[#F1EEE8] transition-colors hover:border-[rgba(226,176,74,0.25)] hover:bg-white/[0.06]"
           >
             <Download className="h-3.5 w-3.5" />
             {c.exportAudit}
@@ -698,7 +704,7 @@ export function AuditPanel() {
           <button
             type="button"
             onClick={() => void reload()}
-            className="inline-flex h-10 w-fit items-center gap-2 border border-white/12 px-3.5 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
+            className="inline-flex h-10 w-fit items-center gap-2 border border-white/12 px-3.5 text-[0.7rem] font-semibold  text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
           >
             <RefreshCcw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
             {c.refresh}
@@ -804,10 +810,10 @@ export function ConsultationsPanel() {
   };
 
   return (
-    <div className="border border-white/10 bg-coal">
+    <div className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018]">
       <div className="flex flex-col justify-between gap-3 border-b border-white/10 px-6 py-5 sm:flex-row sm:items-center">
         <div>
-          <h2 className="flex items-center gap-2 font-display text-2xl text-ivory">
+          <h2 className="flex items-center gap-2 text-[28px] font-bold text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">
             <CalendarDays className="h-4 w-4 text-gold" />
             {c.consultationsTitle}
           </h2>
@@ -816,7 +822,7 @@ export function ConsultationsPanel() {
         <button
           type="button"
           onClick={() => void reload()}
-          className="inline-flex h-10 w-fit items-center gap-2 border border-white/12 px-3.5 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
+          className="inline-flex h-10 w-fit items-center gap-2 border border-white/12 px-3.5 text-[0.7rem] font-semibold  text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
         >
           <RefreshCcw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
           {c.refresh}
@@ -844,13 +850,13 @@ export function ConsultationsPanel() {
                     <span className="font-mono text-[0.72rem] text-gold">{record.reference}</span>
                     <span
                       className={cn(
-                        "inline-flex min-h-7 items-center px-2.5 text-[0.62rem] font-semibold uppercase tracking-[0.12em]",
+                        "inline-flex min-h-7 items-center px-2.5 text-[0.62rem] font-semibold ",
                         consultationStatusStyles[record.status],
                       )}
                     >
                       {c[record.status]}
                     </span>
-                    <span className="text-[0.66rem] uppercase tracking-[0.12em] text-ivory/40">
+                    <span className="text-[0.66rem]  text-ivory/40">
                       {c[record.mode]}
                     </span>
                   </div>
@@ -883,7 +889,7 @@ export function ConsultationsPanel() {
                       type="button"
                       disabled={Boolean(pending)}
                       onClick={() => void update(record, "confirmed")}
-                      className="inline-flex h-9 items-center gap-1.5 border border-emerald-400/25 px-2.5 text-[0.66rem] font-semibold uppercase tracking-[0.1em] text-emerald-300 transition-colors hover:bg-emerald-400/10 disabled:opacity-50"
+                      className="inline-flex h-9 items-center gap-1.5 border border-emerald-400/25 px-2.5 text-[0.66rem] font-semibold  text-emerald-300 transition-colors hover:bg-emerald-400/10 disabled:opacity-50"
                     >
                       <Check className="h-3 w-3" />
                       {c.confirm}
@@ -894,7 +900,7 @@ export function ConsultationsPanel() {
                       type="button"
                       disabled={Boolean(pending)}
                       onClick={() => void update(record, "completed")}
-                      className="inline-flex h-9 items-center gap-1.5 border border-gold/25 px-2.5 text-[0.66rem] font-semibold uppercase tracking-[0.1em] text-gold transition-colors hover:bg-gold/10 disabled:opacity-50"
+                      className="inline-flex h-9 items-center gap-1.5 border border-gold/25 px-2.5 text-[0.66rem] font-semibold  text-gold transition-colors hover:bg-gold/10 disabled:opacity-50"
                     >
                       <Check className="h-3 w-3" />
                       {c.complete}
@@ -905,7 +911,7 @@ export function ConsultationsPanel() {
                       type="button"
                       disabled={Boolean(pending)}
                       onClick={() => void update(record, "cancelled")}
-                      className="inline-flex h-9 items-center gap-1.5 border border-red-400/20 px-2.5 text-[0.66rem] font-semibold uppercase tracking-[0.1em] text-red-300 transition-colors hover:bg-red-400/10 disabled:opacity-50"
+                      className="inline-flex h-9 items-center gap-1.5 border border-red-400/20 px-2.5 text-[0.66rem] font-semibold  text-red-300 transition-colors hover:bg-red-400/10 disabled:opacity-50"
                     >
                       <X className="h-3 w-3" />
                       {c.cancel}
@@ -919,7 +925,7 @@ export function ConsultationsPanel() {
       ) : null}
 
       {notice ? (
-        <p className="border-t border-white/8 px-6 py-4 text-[0.74rem] text-gold">{notice}</p>
+        <p className="border-t border-white/8 px-6 py-2 text-[0.74rem] text-gold">{notice}</p>
       ) : null}
     </div>
   );
@@ -951,10 +957,10 @@ export function ContractsPanel() {
   }, [focusId, items.length]);
 
   return (
-    <div className="border border-white/10 bg-coal">
+    <div className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018]">
       <div className="flex flex-col justify-between gap-3 border-b border-white/10 px-6 py-5 sm:flex-row sm:items-center">
         <div>
-          <h2 className="flex items-center gap-2 font-display text-2xl text-ivory">
+          <h2 className="flex items-center gap-2 text-[28px] font-bold text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">
             <FileSignature className="h-4 w-4 text-gold" />
             {c.contractsTitle}
           </h2>
@@ -963,7 +969,7 @@ export function ContractsPanel() {
         <button
           type="button"
           onClick={() => void reload()}
-          className="inline-flex h-10 w-fit items-center gap-2 border border-white/12 px-3.5 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
+          className="inline-flex h-10 w-fit items-center gap-2 border border-white/12 px-3.5 text-[0.7rem] font-semibold  text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
         >
           <RefreshCcw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
           {c.refresh}
@@ -1097,10 +1103,10 @@ export function NotificationsPanel() {
   ];
 
   return (
-    <div className="border border-white/10 bg-coal">
+    <div className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018]">
       <div className="flex flex-col justify-between gap-3 border-b border-white/10 px-6 py-5 sm:flex-row sm:items-center">
         <div>
-          <h2 className="flex items-center gap-2 font-display text-2xl text-ivory">
+          <h2 className="flex items-center gap-2 text-[28px] font-bold text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">
             <BellRing className="h-4 w-4 text-gold" />
             {c.notificationsTitle}
           </h2>
@@ -1110,7 +1116,7 @@ export function NotificationsPanel() {
           type="button"
           onClick={() => void test()}
           disabled={busy}
-          className="inline-flex h-10 w-fit items-center gap-2 border border-gold/30 bg-gold/5 px-3.5 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-gold transition-colors hover:bg-gold/10 disabled:opacity-50"
+          className="inline-flex h-10 w-fit items-center gap-2 border border-gold/30 bg-gold/5 px-3.5 text-[0.7rem] font-semibold  text-gold transition-colors hover:bg-gold/10 disabled:opacity-50"
         >
           {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
           {busy ? c.sendingTest : c.sendTest}
@@ -1129,7 +1135,7 @@ export function NotificationsPanel() {
           <button
             type="button"
             onClick={() => void load()}
-            className="inline-flex h-10 items-center gap-2 border border-white/12 px-4 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
+            className="inline-flex h-11 items-center gap-2 rounded-[12px] border border-white/15 bg-white/[0.04] px-4 text-[14px] font-semibold text-[#F1EEE8] transition-colors hover:border-[rgba(226,176,74,0.25)] hover:bg-white/[0.06]"
           >
             <RefreshCcw className="h-3.5 w-3.5" />
             {c.retry}
@@ -1146,7 +1152,7 @@ export function NotificationsPanel() {
                 </span>
                 <span
                   className={cn(
-                    "inline-flex min-h-7 items-center px-2.5 text-[0.66rem] font-semibold uppercase tracking-[0.12em]",
+                    "inline-flex min-h-7 items-center px-2.5 text-[0.66rem] font-semibold ",
                     configured
                       ? "bg-emerald-400/12 text-emerald-300"
                       : "bg-white/8 text-ivory/45",
@@ -1155,7 +1161,7 @@ export function NotificationsPanel() {
                   {configured ? c.configured : c.notConfigured}
                 </span>
               </div>
-              <p className="mt-4 text-[0.72rem] uppercase tracking-[0.12em] text-ivory/40">
+              <p className="mt-4 text-[0.72rem]  text-ivory/40">
                 {key === "email" ? c.recipient : c.transport}
               </p>
               <p className="mt-1.5 truncate text-[0.8rem] text-ivory/65">{detail}</p>
@@ -1165,7 +1171,7 @@ export function NotificationsPanel() {
       )}
 
       {notice ? (
-        <p className="border-t border-white/8 px-6 py-4 text-[0.74rem] text-gold">{notice}</p>
+        <p className="border-t border-white/8 px-6 py-2 text-[0.74rem] text-gold">{notice}</p>
       ) : null}
     </div>
   );
@@ -1238,10 +1244,10 @@ export function MilestonesPanel() {
   };
 
   return (
-    <div className="border border-white/10 bg-coal">
+    <div className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018]">
       <div className="flex flex-col justify-between gap-3 border-b border-white/10 px-6 py-5 sm:flex-row sm:items-center">
         <div>
-          <h2 className="flex items-center gap-2 font-display text-2xl text-ivory">
+          <h2 className="flex items-center gap-2 text-[28px] font-bold text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">
             <Flag className="h-4 w-4 text-gold" />
             {c.milestonesTitle}
           </h2>
@@ -1250,7 +1256,7 @@ export function MilestonesPanel() {
         <div className="flex flex-wrap items-end gap-2">
           <a
             href="/api/admin/export/milestones"
-            className="inline-flex h-10 items-center gap-1.5 border border-white/12 px-3.5 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
+            className="inline-flex h-10 items-center gap-1.5 border border-white/12 px-3.5 text-[0.7rem] font-semibold  text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
           >
             <Download className="h-3.5 w-3.5" />
             {c.exportMilestones}
@@ -1276,7 +1282,7 @@ export function MilestonesPanel() {
               setAdding(true);
               setFormError("");
             }}
-            className="inline-flex h-10 items-center gap-1.5 border border-gold/40 px-3.5 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-gold transition-colors hover:bg-gold hover:text-obsidian disabled:opacity-40"
+            className="inline-flex h-10 items-center gap-1.5 border border-gold/40 px-3.5 text-[0.7rem] font-semibold  text-gold transition-colors hover:bg-gold hover:text-obsidian disabled:opacity-40"
           >
             <Plus className="h-3.5 w-3.5" />
             {c.addMilestone}
@@ -1292,7 +1298,7 @@ export function MilestonesPanel() {
           }}
           className="border-b border-white/10 bg-obsidian/40 px-6 py-5"
         >
-          <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-gold">
+          <p className="text-[0.68rem] font-semibold  text-gold">
             {c.newMilestone}
           </p>
           <div className="mt-3 grid gap-2 sm:grid-cols-2">
@@ -1331,7 +1337,7 @@ export function MilestonesPanel() {
           <div className="mt-3 flex flex-wrap gap-2">
             <button
               type="submit"
-              className="inline-flex h-10 items-center gap-1.5 bg-gold px-4 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-obsidian transition-colors hover:bg-gold-light"
+              className="inline-flex h-10 items-center gap-1.5 bg-gold px-4 text-[0.7rem] font-semibold  text-obsidian transition-colors hover:bg-gold-light"
             >
               <Check className="h-3.5 w-3.5" />
               {c.saveMilestone}
@@ -1343,7 +1349,7 @@ export function MilestonesPanel() {
                 setDraft(emptyMilestoneDraft);
                 setFormError("");
               }}
-              className="inline-flex h-10 items-center border border-white/12 px-4 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
+              className="inline-flex h-10 items-center border border-white/12 px-4 text-[0.7rem] font-semibold  text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
             >
               {c.cancel}
             </button>
@@ -1391,7 +1397,7 @@ export function MilestonesPanel() {
                       type="button"
                       onClick={() => setStatus(index, status)}
                       className={cn(
-                        "h-9 px-3 text-[0.68rem] font-semibold uppercase tracking-[0.1em] transition-colors",
+                        "h-9 px-3 text-[0.68rem] font-semibold  transition-colors",
                         milestone.status === status
                           ? "bg-gold text-obsidian"
                           : "border border-white/10 text-ivory/50 hover:border-gold/40 hover:text-gold",
@@ -1414,10 +1420,44 @@ export function MilestonesPanel() {
           ))}
         </ol>
       ) : (
-        <p className="py-14 text-center text-[0.76rem] text-ivory/40">{c.noMilestones}</p>
+        <div className="flex flex-col items-center gap-3 px-6 py-14 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] text-ivory/50">
+            <Flag className="h-5 w-5" />
+          </div>
+          <p className="text-[0.8rem] text-ivory/55">{(c as Record<string, string>).noMilestonesHint || (c as Record<string, string>).noMilestones}</p>
+          <div className="mt-1 flex flex-wrap items-center justify-center gap-2">
+            <button
+              type="button"
+              onClick={() => { setAdding(true); setFormError(""); }}
+              className="inline-flex h-10 items-center gap-1.5 bg-gold px-4 text-[0.7rem] font-semibold  text-obsidian transition-colors hover:bg-gold-light"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              {(c as Record<string, string>).addFirstMilestone || (c as Record<string, string>).addMilestone}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (!active) return;
+                const template = [
+                  { title: L("التعبئة والتجهيز", "Mobilization"), date: L("", ""), status: "upcoming" as const },
+                  { title: L("الأعمال التأسيسية", "Foundations"), date: L("", ""), status: "upcoming" as const },
+                  { title: L("الهيكل الإنشائي", "Structure"), date: L("", ""), status: "upcoming" as const },
+                  { title: L("الأعمال الكهروميكانيكية", "MEP"), date: L("", ""), status: "upcoming" as const },
+                  { title: L("التشطيبات", "Finishing"), date: L("", ""), status: "upcoming" as const },
+                  { title: L("التسليم", "Handover"), date: L("", ""), status: "upcoming" as const },
+                ];
+                updateProject(active.slug, { milestones: template });
+                toast(c.updated, "success");
+              }}
+              className="inline-flex h-10 items-center gap-1.5 border border-white/12 px-4 text-[0.7rem] font-semibold  text-ivory/70 transition-colors hover:border-gold/40 hover:text-gold"
+            >
+              {(c as Record<string, string>).useTemplate || (locale === "ar" ? "استخدام قالب الإنشاء القياسي" : "Use standard construction template")}
+            </button>
+          </div>
+        </div>
       )}
 
-      <p className="border-t border-white/8 px-6 py-4 text-[0.68rem] text-ivory/35">
+      <p className="border-t border-white/8 px-6 py-2 text-[0.68rem] text-ivory/35">
         {c.milestoneHint}
       </p>
     </div>

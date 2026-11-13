@@ -391,19 +391,19 @@ export function AdminAccess() {
 
   return (
     <div className="space-y-6">
-      <header className="border border-white/10 bg-coal/70 p-6 sm:p-7">
+      <header className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018]/70 p-6 sm:p-7">
         <div className="flex flex-wrap items-start justify-between gap-5">
           <div className="max-w-2xl">
-            <span className="inline-flex items-center gap-2 text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-gold">
+            <span className="inline-flex items-center gap-2 text-[0.68rem] font-semibold  text-gold">
               <Crown className="h-3.5 w-3.5" />
               {c.primary}
             </span>
-            <h2 className="mt-3 font-display text-2xl leading-tight text-ivory sm:text-3xl">
+            <h2 className="mt-3 text-[28px] font-bold leading-tight text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">
               {c.title}
             </h2>
             <p className="mt-3 text-[0.92rem] leading-relaxed text-ivory/60">{c.subtitle}</p>
           </div>
-          <span className="inline-flex items-center gap-2 border border-gold/25 bg-gold/[0.05] px-3.5 py-2.5 text-[0.7rem] font-medium uppercase tracking-[0.12em] text-gold">
+          <span className="inline-flex items-center gap-2 border border-gold/25 bg-gold/[0.05] px-3.5 py-2.5 text-[0.7rem] font-medium  text-gold">
             <LockKeyhole className="h-3.5 w-3.5" />
             {c.secureNote}
           </span>
@@ -442,11 +442,11 @@ export function AdminAccess() {
 
       {pending ? (
         <form onSubmit={confirmGrant} className="border border-gold/25 bg-coal/70 p-5 sm:p-6">
-          <div className="flex items-center gap-2 text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-gold">
+          <div className="flex items-center gap-2 text-[0.7rem] font-semibold  text-gold">
             <MailCheck className="h-4 w-4" />
             {c.step}
           </div>
-          <h3 className="mt-3 font-display text-2xl text-ivory">{c.otpTitle}</h3>
+          <h3 className="mt-3 text-[28px] font-bold text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{c.otpTitle}</h3>
           <p className="mt-2 max-w-2xl text-[0.88rem] leading-relaxed text-ivory/55">
             {c.otpText}
           </p>
@@ -485,7 +485,7 @@ export function AdminAccess() {
             <button
               type="submit"
               disabled={confirming || code.length !== 6}
-              className="inline-flex h-11 items-center gap-2 bg-gold px-5 text-[0.76rem] font-semibold uppercase tracking-[0.14em] text-obsidian transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex h-11 items-center gap-2 rounded-[12px] bg-[linear-gradient(180deg,#F3C86A,#D9A03A)] px-5 text-[15px] font-bold text-[#1a1205] shadow-[0_8px_24px_rgba(226,176,74,0.28)] transition-all hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {confirming ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
               {confirming ? c.confirming : c.confirm}
@@ -497,14 +497,14 @@ export function AdminAccess() {
                 setCode("");
                 setConfirmError("");
               }}
-              className="inline-flex h-11 items-center border border-white/12 px-5 text-[0.76rem] font-semibold uppercase tracking-[0.14em] text-ivory/55 transition-colors hover:border-white/25 hover:text-ivory"
+              className="inline-flex h-11 items-center border border-white/12 px-5 text-[0.76rem] font-semibold  text-ivory/55 transition-colors hover:border-white/25 hover:text-ivory"
             >
               {c.cancel}
             </button>
           </div>
         </form>
       ) : (
-        <form onSubmit={requestGrant} className="border border-white/10 bg-coal/70">
+        <form onSubmit={requestGrant} className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018]/70">
           <div className="grid gap-2 border-b border-white/10 p-3 sm:grid-cols-2">
             <ModeButton
               active={mode === "promote"}
@@ -618,7 +618,7 @@ export function AdminAccess() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="inline-flex h-11 items-center gap-2 bg-gold px-5 text-[0.76rem] font-semibold uppercase tracking-[0.14em] text-obsidian transition-colors hover:bg-gold-light disabled:cursor-wait disabled:opacity-60"
+                className="inline-flex h-11 items-center gap-2 rounded-[12px] bg-[linear-gradient(180deg,#F3C86A,#D9A03A)] px-5 text-[15px] font-bold text-[#1a1205] shadow-[0_8px_24px_rgba(226,176,74,0.28)] transition-all hover:-translate-y-0.5 disabled:cursor-wait disabled:opacity-60"
               >
                 {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <MailCheck className="h-4 w-4" />}
                 {submitting ? c.sendingCode : c.sendCode}
@@ -628,9 +628,9 @@ export function AdminAccess() {
         </form>
       )}
 
-      <section className="border border-white/10 bg-coal/70">
+      <section className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018]/70">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-6 py-5">
-          <div className="flex items-center gap-2 text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-gold">
+          <div className="flex items-center gap-2 text-[0.7rem] font-semibold  text-gold">
             <ShieldCheck className="h-4 w-4" />
             {c.admins}
           </div>
@@ -638,7 +638,7 @@ export function AdminAccess() {
             type="button"
             onClick={() => void load()}
             disabled={loading}
-            className="inline-flex h-10 items-center gap-1.5 border border-white/10 px-3 text-[0.7rem] uppercase tracking-[0.12em] text-ivory/50 transition-colors hover:border-gold/40 hover:text-gold disabled:opacity-50"
+            className="inline-flex h-10 items-center gap-1.5 border border-white/10 px-3 text-[0.7rem]  text-ivory/50 transition-colors hover:border-gold/40 hover:text-gold disabled:opacity-50"
           >
             <RefreshCw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
             {c.reload}
@@ -673,7 +673,7 @@ export function AdminAccess() {
                       <p className="truncate text-[0.92rem] font-medium text-ivory">
                         {admin.name}
                         {isPrimary ? (
-                          <span className="ms-2 border border-gold/25 px-1.5 py-0.5 text-[0.64rem] uppercase tracking-[0.1em] text-gold">
+                          <span className="ms-2 border border-gold/25 px-1.5 py-0.5 text-[0.64rem]  text-gold">
                             {c.primary}
                           </span>
                         ) : null}
@@ -689,7 +689,7 @@ export function AdminAccess() {
                       {formatDate(admin.lastLoginAt, locale, c.never)}
                     </span>
                     {isPrimary ? (
-                      <span className="inline-flex items-center gap-1 text-[0.7rem] uppercase tracking-[0.1em] text-ivory/35">
+                      <span className="inline-flex items-center gap-1 text-[0.7rem]  text-ivory/35">
                         <LockKeyhole className="h-3 w-3" />
                         {c.protected}
                       </span>
@@ -698,7 +698,7 @@ export function AdminAccess() {
                         type="button"
                         onClick={() => void revoke(admin)}
                         disabled={busyEmail === admin.email}
-                        className="inline-flex h-10 items-center gap-1.5 border border-red-400/25 px-3 text-[0.7rem] uppercase tracking-[0.1em] text-red-300/80 transition-colors hover:border-red-400/50 hover:text-red-200 disabled:opacity-50"
+                        className="inline-flex h-10 items-center gap-1.5 border border-red-400/25 px-3 text-[0.7rem]  text-red-300/80 transition-colors hover:border-red-400/50 hover:text-red-200 disabled:opacity-50"
                       >
                         {busyEmail === admin.email ? (
                           <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -716,8 +716,8 @@ export function AdminAccess() {
         )}
       </section>
 
-      <section className="border border-white/10 bg-coal/70">
-        <div className="border-b border-white/10 px-6 py-5 text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-gold">
+      <section className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018]/70">
+        <div className="border-b border-white/10 px-6 py-5 text-[0.7rem] font-semibold  text-gold">
           <span className="inline-flex items-center gap-2">
             <Users className="h-4 w-4" />
             {c.clients}
@@ -749,7 +749,7 @@ export function AdminAccess() {
                 <button
                   type="button"
                   onClick={() => startPromotion(client)}
-                  className="inline-flex h-10 items-center gap-1.5 border border-gold/30 bg-gold/[0.04] px-3 text-[0.7rem] uppercase tracking-[0.1em] text-gold transition-colors hover:border-gold/55 hover:bg-gold/[0.09]"
+                  className="inline-flex h-10 items-center gap-1.5 border border-gold/30 bg-gold/[0.04] px-3 text-[0.7rem]  text-gold transition-colors hover:border-gold/55 hover:bg-gold/[0.09]"
                 >
                   <UserPlus className="h-3.5 w-3.5" />
                   {c.promote}
@@ -777,10 +777,10 @@ function Stat({
   return (
     <div className="min-w-0 border border-white/10 bg-obsidian/40 px-6 py-5">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[0.72rem] uppercase tracking-[0.14em] text-ivory/45">{label}</span>
+        <span className="text-[0.72rem]  text-ivory/45">{label}</span>
         <Icon className="h-4 w-4 shrink-0 text-gold/60" />
       </div>
-      <p className="mt-2.5 font-display text-[1.7rem] leading-none text-ivory">{value}</p>
+      <p className="mt-2.5 text-[28px] font-bold leading-none text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{value}</p>
       {text ? (
         <p className="mt-2 break-words text-[0.76rem] leading-relaxed text-ivory/38">{text}</p>
       ) : null}
@@ -805,7 +805,7 @@ function ModeButton({
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        "inline-flex h-11 w-full items-center justify-center gap-2 border px-4 text-[0.74rem] font-semibold uppercase tracking-[0.12em] transition-colors",
+        "inline-flex h-11 w-full items-center justify-center gap-2 border px-4 text-[0.74rem] font-semibold  transition-colors",
         active
           ? "border-gold/45 bg-gold/[0.1] text-gold"
           : "border-white/10 text-ivory/50 hover:border-white/20 hover:text-ivory/70",

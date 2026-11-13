@@ -341,7 +341,7 @@ export function AdminCommandPalette({
           ) : groups.length ? (
             groups.map(([group, items]) => (
               <div key={group}>
-                <p className="sticky top-0 z-10 border-b border-white/6 bg-coal px-4 py-2 text-[0.64rem] font-semibold uppercase tracking-[0.16em] text-gold/70">
+                <p className="sticky top-0 z-10 border-b border-white/6 bg-coal px-4 py-2 text-[0.64rem] font-semibold  text-gold/70">
                   {group}
                 </p>
                 <div className="p-1.5">

@@ -361,12 +361,12 @@ export function AdminProjectEditor({
         data-lenis-prevent
         className="relative max-h-[85vh] w-full max-w-4xl overflow-y-auto overscroll-contain border border-white/12 bg-coal text-ivory shadow-[0_40px_120px_-30px_rgba(0,0,0,0.9)]"
       >
-        <div className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-white/10 bg-coal/95 px-5 py-4 backdrop-blur sm:px-7">
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-white/10 bg-coal/95 px-5 py-2 backdrop-blur sm:px-7">
           <div>
-            <span className="text-[0.68rem] uppercase tracking-[0.18em] text-gold">Admin</span>
+            <span className="text-[0.68rem]  text-gold">Admin</span>
             <h2
               id="admin-project-dialog-title"
-              className="mt-1 font-display text-2xl leading-none text-ivory"
+              className="mt-1 text-[28px] font-bold leading-none text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]"
             >
               {title}
             </h2>
@@ -384,7 +384,7 @@ export function AdminProjectEditor({
 
         <div className="space-y-7 p-5 sm:p-7">
           <div>
-            <p className="mb-4 text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-gold/80">
+            <p className="mb-4 text-[0.7rem] font-semibold  text-gold/80">
               {c.identity}
             </p>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -452,7 +452,7 @@ export function AdminProjectEditor({
           </div>
 
           <div>
-            <p className="mb-4 text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-gold/80">
+            <p className="mb-4 text-[0.7rem] font-semibold  text-gold/80">
               {c.location} · {c.client} · {c.area} · {c.value}
             </p>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -520,7 +520,7 @@ export function AdminProjectEditor({
           </div>
 
           <div>
-            <p className="mb-4 text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-gold/80">
+            <p className="mb-4 text-[0.7rem] font-semibold  text-gold/80">
               {c.summary} · {c.description}
             </p>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -562,7 +562,7 @@ export function AdminProjectEditor({
           </div>
 
           <div>
-            <p className="mb-4 text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-gold/80">
+            <p className="mb-4 text-[0.7rem] font-semibold  text-gold/80">
               {c.financials}
             </p>
             <div className="grid gap-4 sm:grid-cols-4">
@@ -587,7 +587,7 @@ export function AdminProjectEditor({
           </div>
 
           <div>
-            <p className="mb-4 text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-gold/80">
+            <p className="mb-4 text-[0.7rem] font-semibold  text-gold/80">
               {c.art} · {c.gallery}
             </p>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -597,7 +597,7 @@ export function AdminProjectEditor({
                   type="button"
                   onClick={() => toggleGallery(variant)}
                   className={cn(
-                    "border px-3 py-2 text-[0.74rem] font-medium uppercase tracking-[0.1em] transition-colors",
+                    "border px-3 py-2 text-[0.74rem] font-medium  transition-colors",
                     form.gallery.includes(variant)
                       ? "border-gold bg-gold/15 text-gold"
                       : "border-white/10 text-ivory/50 hover:border-gold/40 hover:text-ivory/70",
@@ -641,17 +641,17 @@ export function AdminProjectEditor({
           ) : null}
         </div>
 
-        <div className="sticky bottom-0 flex flex-wrap items-center justify-end gap-3 border-t border-white/10 bg-coal/95 px-5 py-4 backdrop-blur sm:px-7">
+        <div className="sticky bottom-0 flex flex-wrap items-center justify-end gap-3 border-t border-white/10 bg-coal/95 px-5 py-2 backdrop-blur sm:px-7">
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex h-10 items-center border border-white/12 px-4 text-[0.74rem] font-semibold uppercase tracking-[0.14em] text-ivory/60 transition-colors hover:border-white/30 hover:text-ivory"
+            className="inline-flex h-10 items-center border border-white/12 px-4 text-[0.74rem] font-semibold  text-ivory/60 transition-colors hover:border-white/30 hover:text-ivory"
           >
             {c.cancel}
           </button>
           <button
             type="submit"
-            className="inline-flex h-10 items-center bg-gold px-5 text-[0.74rem] font-semibold uppercase tracking-[0.14em] text-obsidian transition-colors hover:bg-gold-light"
+            className="inline-flex h-10 items-center bg-gold px-5 text-[0.74rem] font-semibold  text-obsidian transition-colors hover:bg-gold-light"
           >
             {c.save}
           </button>
