@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { AdminDashboard } from "@/components/sections/admin/AdminDashboard";
 
 export const metadata: Metadata = {
   title: "لوحة الإدارة | مركز التحكم",
@@ -8,6 +7,7 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+// The persistent shell is rendered by app/admin/layout.tsx.
 export default function AdminRoute() {
-  return <AdminDashboard />;
+  return null;
 }

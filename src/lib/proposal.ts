@@ -119,6 +119,32 @@ function rule(page: PDFPage, x: number, y: number, width: number, color = hairli
   page.drawLine({ start: { x, y }, end: { x: x + width, y }, thickness: 0.6, color });
 }
 
+/**
+ * Draws the canonical brand mark from `public/brand/logo-mark.svg` as vectors so
+ * the PDF report header stays self-contained and matches the site/favicon.
+ */
+function drawBrandMark(page: PDFPage, x: number, y: number, scale = 0.1) {
+  const polygons: { color: RGB; points: [number, number][] }[] = [
+    { color: rgb(1, 0.827, 0.42), points: [[48, 0], [190, 0], [142, 48], [68, 48]] },
+    { color: rgb(1, 0.753, 0.239), points: [[0, 48], [48, 0], [68, 48], [48, 68]] },
+    { color: rgb(0.969, 0.635, 0.106), points: [[0, 48], [48, 68], [48, 142], [0, 162]] },
+    { color: rgb(0.91, 0.541, 0.063), points: [[0, 162], [48, 142], [68, 162], [48, 210]] },
+    { color: rgb(0.851, 0.471, 0.043), points: [[68, 162], [142, 162], [142, 210], [48, 210]] },
+    { color: rgb(0.639, 0.086, 0.129), points: [[142, 48], [190, 0], [190, 258], [142, 210]] },
+    { color: rgb(1, 0.478, 0.271), points: [[248, 70], [390, 70], [342, 118], [268, 118]] },
+    { color: rgb(0.976, 0.376, 0.184), points: [[200, 118], [248, 70], [268, 118], [248, 138]] },
+    { color: rgb(0.933, 0.29, 0.125), points: [[200, 118], [248, 138], [248, 212], [200, 232]] },
+    { color: rgb(0.867, 0.227, 0.106), points: [[200, 232], [248, 212], [268, 232], [248, 280]] },
+    { color: rgb(0.788, 0.18, 0.094), points: [[268, 232], [342, 232], [342, 280], [248, 280]] },
+    { color: rgb(0.557, 0.067, 0.094), points: [[342, 118], [390, 70], [390, 328], [342, 280]] },
+  ];
+
+  for (const polygon of polygons) {
+    const path = `${polygon.points.map(([px, py], index) => `${index === 0 ? "M" : "L"}${px},${py}`).join(" ")} Z`;
+    page.drawSvgPath(path, { x, y, scale, color: polygon.color, borderWidth: 0 });
+  }
+}
+
 type ArabicFont = {
   font: Font;
   draw: (
@@ -210,15 +236,17 @@ function drawCover(
     borderWidth: 0.35,
   });
 
+  drawBrandMark(page, MARGIN, PAGE_HEIGHT - 108, 0.1);
+
   page.drawText("AHMED ELATTAR", {
-    x: MARGIN,
+    x: MARGIN + 48,
     y: PAGE_HEIGHT - 92,
     size: 11,
     font: helveticaBold,
     color: ivory,
   });
   page.drawText("GENERAL CONTRACTING CO.", {
-    x: MARGIN,
+    x: MARGIN + 48,
     y: PAGE_HEIGHT - 108,
     size: 7.5,
     font: helvetica,

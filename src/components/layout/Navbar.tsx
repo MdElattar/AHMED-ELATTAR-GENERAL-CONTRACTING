@@ -17,7 +17,7 @@ import { isAdminUser, useAuth } from "@/components/providers/AuthProvider";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { useSmoothScroll } from "@/components/providers/SmoothScroll";
 import { ProfileMenu } from "@/components/layout/ProfileMenu";
-import { Logo } from "@/components/ui/Logo";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 import { acquireScrollLock, releaseScrollLock } from "@/lib/scroll/lock";
 import { cn } from "@/lib/utils";
 
@@ -104,7 +104,7 @@ export function Navbar() {
             className="relative z-10 shrink-0"
             onClick={(event) => handleNavigation(event, "/")}
           >
-            <Logo tone="light" priority />
+            <BrandLogo tone="light" priority />
           </Link>
 
           <nav className="hidden items-center gap-0.5 xl:flex" aria-label="Primary">
@@ -218,7 +218,7 @@ export function Navbar() {
               <div className="pointer-events-none absolute -end-16 top-10 h-64 w-64 rounded-full bg-gold/[0.06] blur-[100px]" />
 
               <div className="relative flex items-center border-b border-white/10 px-6 py-5">
-                <Logo priority />
+                <BrandLogo priority />
               </div>
 
               <nav className="relative flex flex-1 flex-col px-6 pb-6 pt-5" aria-label="Mobile">

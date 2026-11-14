@@ -1,3 +1,5 @@
+const BRAND_LOGO_URL = `${(process.env.NEXT_PUBLIC_SITE_URL?.trim() || "https://alattar.sa").replace(/\/$/, "")}/brand/logo-full.svg`;
+
 type SendOtpInput = {
   to: string;
   code: string;
@@ -103,7 +105,7 @@ function template(
       html: `
         <div dir="rtl" style="background:#060708;padding:40px 20px;font-family:Tahoma,Arial,sans-serif;color:#f3eee4">
           <div style="max-width:520px;margin:0 auto;border:1px solid rgba(184,134,11,.25);background:#0b0c0f;padding:36px">
-            <p style="margin:0;color:#b8860b;font-size:12px;letter-spacing:2px">شركة أحمد العطار للمقاولات العامة</p>
+            <img src="${BRAND_LOGO_URL}" alt="أحمد العطار للمقاولات العامة" width="230" style="display:block;height:auto;max-width:230px;margin:0 0 22px" />
             <h1 style="margin:18px 0 0;font-size:26px;font-weight:600">${isDelegation ? "تأكيد تفويض صلاحية إدارية" : "رمز إعادة تعيين كلمة المرور"}</h1>
             <p style="margin:14px 0 0;color:rgba(243,238,228,.62);font-size:14px;line-height:1.8">${isDelegation ? `طلب تفويض صلاحية إدارية للحساب <strong dir="ltr">${target}</strong>. أدخل الرمز التالي للموافقة. الرمز صالح لمدة ${minutes} دقائق ولمرة واحدة فقط.` : `أدخل الرمز التالي لإكمال إعادة التعيين. الرمز صالح لمدة ${minutes} دقائق ولمرة واحدة فقط.`}</p>
             <div style="margin:28px 0;padding:20px;text-align:center;border:1px solid rgba(184,134,11,.35);background:#060708">
@@ -125,7 +127,7 @@ function template(
     html: `
       <div style="background:#060708;padding:40px 20px;font-family:Arial,Helvetica,sans-serif;color:#f3eee4">
         <div style="max-width:520px;margin:0 auto;border:1px solid rgba(184,134,11,.25);background:#0b0c0f;padding:36px">
-          <p style="margin:0;color:#b8860b;font-size:12px;letter-spacing:2px">AHMED ELATTAR GENERAL CONTRACTING</p>
+          <img src="${BRAND_LOGO_URL}" alt="Ahmed Elattar General Contracting" width="230" style="display:block;height:auto;max-width:230px;margin:0 0 22px" />
           <h1 style="margin:18px 0 0;font-size:26px;font-weight:600">${isDelegation ? "Confirm admin delegation" : "Reset your password"}</h1>
           <p style="margin:14px 0 0;color:rgba(243,238,228,.62);font-size:14px;line-height:1.8">${isDelegation ? `A request was made to grant admin access to <strong dir="ltr">${target}</strong>. Enter the code below to approve it. It is valid for ${minutes} minutes and can be used once.` : `Enter the code below to complete the reset. It is valid for ${minutes} minutes and can be used once.`}</p>
           <div style="margin:28px 0;padding:20px;text-align:center;border:1px solid rgba(184,134,11,.35);background:#060708">

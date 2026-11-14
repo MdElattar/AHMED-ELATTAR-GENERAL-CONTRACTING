@@ -7,7 +7,7 @@ import { ArrowUp, ArrowUpRight } from "lucide-react";
 import { isAdminUser, useAuth } from "@/components/providers/AuthProvider";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { useSmoothScroll } from "@/components/providers/SmoothScroll";
-import { Logo } from "@/components/ui/Logo";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 import { cn } from "@/lib/utils";
 
 const CURRENT_YEAR = new Date().getFullYear();
@@ -264,7 +264,7 @@ export function Footer() {
 
         <div className="relative flex flex-col gap-6 py-10">
           <div className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
-            <Logo />
+            <BrandLogo />
             <div className="flex flex-wrap items-center gap-5 text-[0.65rem] text-ivory/45">
               <span>{t.footer.license}</span>
               <Link

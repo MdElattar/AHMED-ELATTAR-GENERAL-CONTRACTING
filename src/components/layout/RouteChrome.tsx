@@ -11,7 +11,8 @@ export function RouteChrome({ children }: { children: ReactNode }) {
   const isAdmin = pathname === "/admin" || pathname.startsWith("/admin/");
 
   if (isAdmin) {
-    return <main id="main" className="min-h-screen bg-obsidian">{children}</main>;
+    // The admin shell owns its own fixed-height scroll container and <main>.
+    return <>{children}</>;
   }
 
   return (

@@ -47,6 +47,11 @@ export const metadata: Metadata = {
   },
   description:
     "شركة أحمد العطار للمقاولات العامة — أربعة عقود من الهندسة الدقيقة والمشاريع الضخمة في المملكة العربية السعودية. من الرؤية الأولى إلى آخر مسمار.",
+  icons: {
+    icon: [{ url: "/brand/logo-mark.svg", type: "image/svg+xml" }],
+    shortcut: "/brand/logo-mark.svg",
+    apple: "/brand/logo-mark.svg",
+  },
   keywords: [
     "مقاولات",
     "إنشاءات",

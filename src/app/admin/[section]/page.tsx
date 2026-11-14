@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import {
-  AdminDashboard,
-  type AdminSection,
-} from "@/components/sections/admin/AdminDashboard";
+import type { AdminSection } from "@/components/sections/admin/AdminDashboard";
 
 // The admin shell reads the authenticated pathname and session in client
 // components. A blocking route keeps prerendering from evaluating those
@@ -112,5 +109,7 @@ export default async function AdminSectionPage({ params }: PageProps) {
   const route = sectionRoutes[section];
   if (!route) notFound();
 
-  return <AdminDashboard key={route.section} initialSection={route.section} />;
+  // The persistent shell is rendered by app/admin/layout.tsx and syncs the
+  // active section from the pathname.
+  return null;
 }

@@ -7,7 +7,7 @@ import { ArrowLeft, ArrowRight, Check, Eye, EyeOff, Fingerprint, ShieldCheck } f
 import { AuthRequestError, useAuth } from "@/components/providers/AuthProvider";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { Field, TextInput } from "@/components/ui/Field";
-import { Logo } from "@/components/ui/Logo";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 import { isSafeInternalPath } from "@/lib/security/validation";
 
 type AuthMode = "sign-in" | "sign-up";
@@ -140,7 +140,7 @@ export function AuthPage({ mode }: AuthPageProps) {
           <div className="pointer-events-none absolute -start-20 bottom-10 h-[420px] w-[420px] rounded-full bg-gold/[0.07] blur-[130px]" />
 
           <div className="relative">
-            <Logo tone="light" />
+            <BrandLogo tone="light" />
             <span className="mt-5 inline-flex items-center gap-2 border border-white/10 px-3 py-1.5 text-[0.52rem] uppercase tracking-[0.18em] text-gold/80">
               <ShieldCheck className="h-3 w-3" />
               {locale === "ar" ? "بوابة العملاء" : "Client portal"}
@@ -179,7 +179,7 @@ export function AuthPage({ mode }: AuthPageProps) {
         <div className="relative flex items-center justify-center px-5 py-16 sm:px-10 lg:py-20">
           <div className="relative w-full max-w-md">
             <div className="flex items-center justify-between gap-4 lg:hidden">
-              <Logo tone="light" />
+              <BrandLogo tone="light" />
               <Link
                 href="/"
                 className="inline-flex items-center gap-1.5 text-[0.58rem] uppercase tracking-[0.16em] text-ivory/50 transition-colors hover:text-gold"

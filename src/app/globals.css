@@ -901,7 +901,8 @@ html[dir="rtl"] .carousel-progress {
 }
 
 .admin-shell {
-  min-height: 100svh;
+  height: 100dvh;
+  min-height: 0;
   background:
     radial-gradient(900px 500px at 85% -5%, var(--admin-bg-glow), transparent),
     var(--admin-bg);

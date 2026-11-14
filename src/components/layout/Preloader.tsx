@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { dictionary } from "@/lib/dictionary";
-import { Logo } from "@/components/ui/Logo";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 import { cn } from "@/lib/utils";
 
 const STORAGE_KEY = "alattar-intro-seen";
@@ -83,10 +83,10 @@ export function Preloader() {
       <div className="blueprint-grid pointer-events-none absolute inset-0 opacity-40" />
       <div className="relative flex flex-col items-center">
         <div className="i18n-ar">
-          <Logo locale="ar" />
+          <BrandLogo locale="ar" />
         </div>
         <div className="i18n-en">
-          <Logo locale="en" />
+          <BrandLogo locale="en" />
         </div>
         <div className="mt-10 h-px w-[180px] overflow-hidden bg-white/10">
           <div

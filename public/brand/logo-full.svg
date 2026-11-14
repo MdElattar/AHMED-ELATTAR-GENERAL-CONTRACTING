@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 200" width="760" height="200" role="img" aria-label="Ahmed Elattar General Contracting">
+  <title>Ahmed Elattar General Contracting</title>
+  <g transform="translate(4 14) scale(0.52)">
+    <polygon points="48,0 190,0 142,48 68,48" fill="#FFD36B"/>
+    <polygon points="0,48 48,0 68,48 48,68" fill="#FFC03D"/>
+    <polygon points="0,48 48,68 48,142 0,162" fill="#F7A21B"/>
+    <polygon points="0,162 48,142 68,162 48,210" fill="#E88A10"/>
+    <polygon points="68,162 142,162 142,210 48,210" fill="#D9780B"/>
+    <polygon points="142,48 190,0 190,258 142,210" fill="#A31621"/>
+    <g transform="translate(200,70)">
+      <polygon points="48,0 190,0 142,48 68,48" fill="#FF7A45"/>
+      <polygon points="0,48 48,0 68,48 48,68" fill="#F9602F"/>
+      <polygon points="0,48 48,68 48,142 0,162" fill="#EE4A20"/>
+      <polygon points="0,162 48,142 68,162 48,210" fill="#DD3A1B"/>
+      <polygon points="68,162 142,162 142,210 48,210" fill="#C92E18"/>
+      <polygon points="142,48 190,0 190,258 142,210" fill="#8E1118"/>
+    </g>
+  </g>
+  <g fill="#F1EEE8" font-family="Tajawal, 'Segoe UI', Tahoma, Arial, sans-serif">
+    <text x="230" y="92" font-size="48" font-weight="800" direction="rtl">أحمد العطار</text>
+    <text x="230" y="127" font-size="19" font-weight="600" letter-spacing="4.4" fill="#E2B04A">AHMED ELATTAR</text>
+    <text x="230" y="159" font-size="17" font-weight="500" fill="#A6A9B4" direction="rtl">للمقاولات العامة</text>
+    <text x="230" y="180" font-size="11" font-weight="500" letter-spacing="2.2" fill="#7E8089">GENERAL CONTRACTING</text>
+  </g>
+</svg>

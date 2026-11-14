@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { LazyMotion, domAnimation, m, useReducedMotion } from "framer-motion";
 import {
   Activity,
@@ -22,7 +22,9 @@ import {
   Inbox,
   LayoutDashboard,
   Loader2,
+  Menu,
   MessageSquare,
+  MoreVertical,
   Pencil,
   Plus,
   RotateCcw,
@@ -54,6 +56,7 @@ import {
   MilestonesPanel,
   NotificationsPanel,
 } from "@/components/sections/admin/AdminOperations";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 import { Field, TextInput, Textarea } from "@/components/ui/Field";
 import { ProjectArt } from "@/components/ui/ProjectArt";
 import { Checkbox } from "@/components/ui/Checkbox";
@@ -117,6 +120,32 @@ const sectionHrefs: Record<Section, string> = {
   audit: "/admin/audit",
   access: "/admin/access",
 };
+
+function sectionFromPath(pathname: string | null): Section | null {
+  if (!pathname || !pathname.startsWith("/admin")) return null;
+  const path = pathname.replace(/\/+$/, "");
+  if (path === "/admin" || path === "/admin/overview") return "overview";
+  const slug = path.slice("/admin/".length);
+  if (slug === "site-content" || slug === "content") return "content";
+  if (slug in sectionHrefs) return slug as Section;
+  return null;
+}
+
+function viewportTier() {
+  if (typeof window === "undefined") return "xl" as const;
+  if (window.innerWidth < 1024) return "mobile" as const;
+  if (window.innerWidth < 1280) return "lg" as const;
+  return "xl" as const;
+}
+
+function focusableElements(container: HTMLElement | null) {
+  if (!container) return [];
+  return Array.from(
+    container.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    ),
+  ).filter((element) => element.offsetParent !== null);
+}
 
 const copy = {
   ar: {
@@ -447,15 +476,21 @@ export function AdminDashboard({
   const { locale, toggleLocale } = useI18n();
   const { user, ready } = useAuth();
   const { projects, messages, addProject, updateProject, deleteProject, ready: workspaceReady } = useWorkspace();
-  const { scrollToTop, stop, start } = useSmoothScroll();
+  const { stop, start } = useSmoothScroll();
   const router = useRouter();
+  const pathname = usePathname();
   const c = copy[locale];
-  const [section, setSection] = useState<Section>(initialSection);
+  const section = sectionFromPath(pathname) ?? initialSection;
   const [editing, setEditing] = useState<WorkspaceProject | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const [tier, setTier] = useState<"mobile" | "lg" | "xl">("xl");
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try { return localStorage.getItem("admin-sidebar-collapsed") === "1"; } catch { return false; }
+  });
   const [fontScale, setFontScale] = useState<"normal" | "large">(() => {
     if (typeof window === "undefined") return "normal";
     try { const f = localStorage.getItem("admin-font-size"); return f === "large" ? "large" : "normal"; } catch { return "normal"; }
@@ -468,9 +503,29 @@ export function AdminDashboard({
     if (typeof window === "undefined") return "dark";
     try { const t = localStorage.getItem("admin-theme"); return t === "light" ? "light" : "dark"; } catch { return "dark"; }
   });
+  const mainRef = useRef<HTMLElement | null>(null);
+  const mobileDrawerRef = useRef<HTMLElement | null>(null);
+  const moreSheetRef = useRef<HTMLDivElement | null>(null);
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const autoCollapsed = tier === "lg";
+  const collapsed = autoCollapsed || sidebarCollapsed;
+  const isRtl = locale === "ar";
+
+  useEffect(() => {
+    const update = () => setTier(viewportTier());
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
+  useEffect(() => {
+    mainRef.current?.scrollTo({ top: 0, behavior: "auto" });
+  }, [pathname]);
 
   useEffect(() => { try { localStorage.setItem("admin-density", density); } catch {} }, [density]);
   useEffect(() => { try { localStorage.setItem("admin-font-size", fontScale); } catch {} }, [fontScale]);
+  useEffect(() => { try { localStorage.setItem("admin-sidebar-collapsed", sidebarCollapsed ? "1" : "0"); } catch {} }, [sidebarCollapsed]);
   useEffect(() => {
     try { localStorage.setItem("admin-theme", theme); } catch {}
     const root = document.documentElement;
@@ -491,32 +546,65 @@ export function AdminDashboard({
   }, [paletteOpen]);
 
   useEffect(() => {
-    if (!mobileNavOpen) return;
+    if (!mobileNavOpen && !moreOpen) return;
     acquireScrollLock(stop);
     return () => releaseScrollLock(start);
-  }, [mobileNavOpen, start, stop]);
+  }, [mobileNavOpen, moreOpen, start, stop]);
 
   useEffect(() => {
     if (!mobileNavOpen) return;
+    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const frame = window.requestAnimationFrame(() => focusableElements(mobileDrawerRef.current)[0]?.focus());
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setMobileNavOpen(false);
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setMobileNavOpen(false);
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const items = focusableElements(mobileDrawerRef.current);
+      if (!items.length) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("keydown", onKeyDown);
+      previous?.focus();
+    };
+  }, [mobileNavOpen]);
+
+  useEffect(() => {
+    if (!moreOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMoreOpen(false);
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [mobileNavOpen]);
+  }, [moreOpen]);
 
   const navigateToSection = (next: Section, focusId?: string) => {
-    setSection(next);
     setMobileNavOpen(false);
+    setMoreOpen(false);
+    if (mainRef.current) mainRef.current.scrollTo({ top: 0, behavior: "smooth" });
     const href = sectionHrefs[next];
     router.push(
       focusId ? `${href}?focus=${encodeURIComponent(focusId)}` : href,
     );
   };
 
+
   if (!ready) {
     return (
-      <section className="flex min-h-[80svh] items-center justify-center bg-obsidian pt-24">
+      <section className="flex h-dvh items-center justify-center bg-obsidian">
         <span className="h-8 w-8 animate-spin rounded-full border border-white/15 border-t-gold" />
       </section>
     );
@@ -526,14 +614,14 @@ export function AdminDashboard({
 
   if (!user || !isAdmin) {
     return (
-      <section className="relative flex min-h-[100svh] items-center overflow-hidden bg-obsidian pt-24">
+      <section className="relative flex h-dvh items-center overflow-hidden bg-obsidian">
         <div className="blueprint-grid pointer-events-none absolute inset-0 opacity-40" />
         <div className="container-lux relative">
           <div className="mx-auto flex max-w-lg flex-col items-center text-center">
             <span className="flex h-12 w-12 items-center justify-center rounded-full border border-gold/30 bg-gold/5 text-gold">
               <ShieldCheck className="h-5 w-5" />
             </span>
-            <h1 className="display-title mt-6 text-[clamp(2.6rem,5vw,4.4rem)] text-ivory">
+            <h1 className="mt-6 text-[clamp(2.2rem,5vw,3.6rem)] font-bold leading-tight text-ivory [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">
               {c.accessTitle}
             </h1>
             <p className="mt-5 max-w-md text-[0.9rem] leading-[1.9] text-ivory/60">
@@ -541,7 +629,7 @@ export function AdminDashboard({
             </p>
             <Link
               href="/sign-in"
-              className="btn-shine mt-9 inline-flex h-12 items-center gap-2.5 bg-gold px-7 text-[0.8rem] font-semibold  text-obsidian transition-colors hover:bg-gold-light"
+              className="btn-shine mt-9 inline-flex min-h-[44px] items-center gap-2.5 rounded-[12px] bg-gold px-7 text-[15px] font-bold text-obsidian transition-colors hover:bg-gold-light"
             >
               {c.signIn}
               <ArrowUpRight className="h-4 w-4" />
@@ -615,139 +703,201 @@ export function AdminDashboard({
     setEditing(null);
   };
 
-  const BrandMark = ({ className }: { className?: string }) => (
-    <svg viewBox="0 0 390 328" aria-hidden="true" className={className}>
-      <g fill="#E2B04A">
-        <polygon points="48,0 190,0 142,48 68,48" /><polygon points="0,48 48,0 68,48 48,68" />
-        <polygon points="0,48 48,68 48,142 0,162" /><polygon points="0,162 48,142 68,162 48,210" />
-        <polygon points="68,162 142,162 142,210 48,210" /><polygon points="142,48 190,0 190,258 142,210" />
-      </g>
-      <g transform="translate(200,70)" fill="#F9602F">
-        <polygon points="48,0 190,0 142,48 68,48" /><polygon points="0,48 48,0 68,48 48,68" />
-        <polygon points="0,48 48,68 48,142 0,162" /><polygon points="0,162 48,142 68,162 48,210" />
-        <polygon points="68,162 142,162 142,210 48,210" /><polygon points="142,48 190,0 190,258 142,210" />
-      </g>
-    </svg>
+  const sidebarBrand = (collapsed: boolean) => (
+    <div className="flex h-[72px] shrink-0 items-center gap-2 border-b border-[var(--admin-card-border)] px-4">
+      <Link
+        href="/admin"
+        onClick={() => { setMobileNavOpen(false); setMoreOpen(false); }}
+        className="min-w-0 flex-1 rounded-[12px] admin-focus-ring"
+        aria-label={locale === "ar" ? "نظرة عامة" : "Overview"}
+      >
+        <BrandLogo variant="full" collapsed={collapsed} tone={theme === "light" ? "dark" : "light"} />
+      </Link>
+      <button
+        type="button"
+        onClick={() => setSidebarCollapsed((value) => !value)}
+        className={cn("admin-focus-ring hidden h-10 w-10 shrink-0 items-center justify-center rounded-[12px] text-[var(--admin-muted)] hover:bg-[var(--admin-pill-surface)] xl:inline-flex", collapsed && "-rotate-90 rtl:rotate-90")}
+        aria-label={collapsed ? (locale === "ar" ? "توسيع الشريط" : "Expand sidebar") : (locale === "ar" ? "طي الشريط" : "Collapse sidebar")}
+      >
+        <ChevronDown className="h-4 w-4 rotate-90 rtl:-rotate-90" />
+      </button>
+      <button
+        type="button"
+        onClick={() => setMobileNavOpen(false)}
+        className="admin-focus-ring inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] text-[var(--admin-muted)] hover:bg-[var(--admin-pill-surface)] lg:hidden"
+        aria-label={locale === "ar" ? "إغلاق" : "Close"}
+      >
+        <X className="h-5 w-5" strokeWidth={1.7} />
+      </button>
+    </div>
   );
 
-  const sidebarContent = (collapsed = false) => (
-    <>
-      <div className={cn("flex items-center gap-3 overflow-hidden px-2 pb-5", collapsed ? "justify-center" : "justify-between")}>
-        <div className="flex min-w-0 items-center gap-3 overflow-hidden">
-          <BrandMark className={cn("h-11 w-auto shrink-0", collapsed ? "h-10" : "h-11")} />
-          <div className={cn("min-w-0 overflow-hidden transition-all duration-200", collapsed ? "w-0 opacity-0" : "w-auto max-w-[180px] opacity-100")}>
-            <p className="truncate text-[19px] font-extrabold leading-tight text-[var(--admin-text)]">{locale === "ar" ? "أحمد العطار" : "Ahmed Elattar"}</p>
-            <p className="truncate text-[12px] text-[var(--admin-muted)]">{locale === "ar" ? "للمقاولات العامة" : "General Contracting"}</p>
+  const sidebarNav = (collapsed: boolean) => (
+    <nav
+      className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-2 [scrollbar-width:thin]"
+      aria-label={locale === "ar" ? "تنقل الإدارة" : "Admin navigation"}
+    >
+      {navGroups.map((group) => (
+        <div key={group.title} className="mt-1 first:mt-0">
+          {!collapsed ? (
+            <p className="px-3 pb-[6px] pt-[18px] text-[12px] text-[var(--admin-muted)]">{group.title}</p>
+          ) : (
+            <div className="my-2 h-px bg-[var(--admin-card-border)]" />
+          )}
+          <div className="flex flex-col gap-[2px]">
+            {group.items.map(({ id, label, icon: Icon }) => {
+              const active = section === id;
+              const badge = id === "messages" ? messages.length : id === "notifications" ? 1 : 0;
+              return (
+                <Link
+                  key={id}
+                  href={sectionHrefs[id]}
+                  title={collapsed ? label : undefined}
+                  aria-label={label}
+                  onClick={() => {
+                    setMobileNavOpen(false);
+                    setMoreOpen(false);
+                    if (active && mainRef.current) mainRef.current.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  aria-current={active ? "page" : undefined}
+                  className={cn(
+                    "admin-focus-ring group relative flex min-h-[44px] items-center gap-3 rounded-[12px] px-3 py-[11px] text-[15px] transition-colors",
+                    collapsed && "justify-center px-0",
+                    active
+                      ? "bg-[linear-gradient(90deg,rgba(226,176,74,0.20),rgba(226,176,74,0.04))] text-[#F3C86A] shadow-[inset_0_0_0_1px_rgba(226,176,74,0.25)]"
+                      : "text-[var(--admin-muted)] hover:bg-[var(--admin-pill-surface)] hover:text-[var(--admin-text)]",
+                  )}
+                >
+                  <Icon className="h-5 w-5 shrink-0" strokeWidth={1.7} />
+                  {!collapsed ? <span className="flex-1 truncate">{label}</span> : null}
+                  {!collapsed && badge > 0 ? <span className="ms-auto rounded-[9px] bg-[var(--admin-red)] px-[7px] py-0 text-[12px] leading-[18px] text-white">{badge}</span> : null}
+                  {collapsed && badge > 0 ? <span className="absolute end-2 top-2 h-2 w-2 rounded-full bg-[var(--admin-red)]" /> : null}
+                </Link>
+              );
+            })}
           </div>
         </div>
-        <button type="button" onClick={() => setMobileNavOpen(false)} className={cn("admin-focus-ring inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[12px] text-[var(--admin-muted)] hover:bg-[var(--admin-pill-surface)] lg:hidden", collapsed && "hidden")} aria-label={locale === "ar" ? "إغلاق" : "Close"}>
-          <X className="h-5 w-5" strokeWidth={1.7} />
-        </button>
-      </div>
-      <nav className="flex flex-1 flex-col" aria-label={locale === "ar" ? "تنقل الإدارة" : "Admin navigation"}>
-        {navGroups.map((group) => (
-          <div key={group.title} className="mt-1 first:mt-0">
-            {!collapsed ? <p className="px-3 pb-[6px] pt-[18px] text-[12px] text-[var(--admin-muted)]">{group.title}</p> : <div className="my-2 h-px bg-[var(--admin-card-border)]" />}
-            <div className="flex flex-col gap-[2px]">
-              {group.items.map(({ id, label, icon: Icon }) => {
-                const active = section === id;
-                const badge = id === "messages" ? messages.length : id === "notifications" ? 1 : 0;
-                return (
-                  <Link
-                    key={id}
-                    href={sectionHrefs[id]}
-                    title={collapsed ? label : undefined}
-                    onClick={() => { setSection(id); setMobileNavOpen(false); if (active) scrollToTop(); }}
-                    aria-current={active ? "page" : undefined}
-                    className={cn(
-                      "admin-focus-ring group relative flex min-h-[44px] items-center gap-3 rounded-[12px] px-3 py-[11px] text-[15px] transition-colors",
-                      collapsed && "justify-center px-0",
-                      active
-                        ? "bg-[linear-gradient(90deg,rgba(226,176,74,0.20),rgba(226,176,74,0.04))] text-[#F3C86A] shadow-[inset_0_0_0_1px_rgba(226,176,74,0.25)]"
-                        : "text-[#CFCFD2] hover:bg-[rgba(255,255,255,0.05)]",
-                    )}
-                  >
-                    <Icon className="h-5 w-5 shrink-0" strokeWidth={1.7} />
-                    {!collapsed ? <span className="flex-1 truncate">{label}</span> : null}
-                    {!collapsed && badge > 0 ? <span className="ms-auto rounded-[9px] bg-[var(--admin-red)] px-[7px] py-0 text-[12px] leading-[18px] text-white">{badge}</span> : null}
-                    {collapsed && badge > 0 ? <span className="absolute end-2 top-2 h-2 w-2 rounded-full bg-[var(--admin-red)]" /> : null}
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        ))}
-      </nav>
-      <div className="mt-auto pt-4">
-        {!collapsed ? (
-          <div className="flex items-center gap-[10px] rounded-[14px] border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] p-3">
-            <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,#F3C86A,#C98F1E)] text-[14px] font-extrabold text-[#1a1205]">
-              {userInitials(user.name)}
-              <span className="absolute bottom-0 end-0 h-[11px] w-[11px] rounded-full border-2 border-[#14161d] bg-[var(--admin-green)]" />
-            </div>
-            <div className="min-w-0">
-              <p className="truncate text-[14px] font-medium text-[var(--admin-text)]">{user.name || (locale === "ar" ? "—" : "—")}</p>
-              <p className="truncate text-[12px] text-[var(--admin-muted)]">{userRoleLabel(user, locale)}</p>
-            </div>
-          </div>
-        ) : (
-          <div className="relative mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-[linear-gradient(135deg,#F3C86A,#C98F1E)] text-[13px] font-extrabold text-[#1a1205]" title={user.name}>
-            {userInitials(user.name)}
-            <span className="absolute bottom-0 end-0 h-[10px] w-[10px] rounded-full border-2 border-[#14161d] bg-[var(--admin-green)]" />
-          </div>
-        )}
-      </div>
-    </>
+      ))}
+    </nav>
   );
+
+  const sidebarUser = (collapsed: boolean) => (
+    <div className="shrink-0 border-t border-[var(--admin-card-border)] p-3">
+      {!collapsed ? (
+        <div className="flex items-center gap-[10px] rounded-[14px] border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] p-3">
+          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,#F3C86A,#C98F1E)] text-[14px] font-extrabold text-[#1a1205]">
+            {userInitials(user.name)}
+            <span className="absolute bottom-0 end-0 h-[11px] w-[11px] rounded-full border-2 border-[var(--admin-bg)] bg-[var(--admin-green)]" />
+          </div>
+          <div className="min-w-0">
+            <p className="truncate text-[14px] font-medium text-[var(--admin-text)]">{user.name || "—"}</p>
+            <p className="truncate text-[12px] text-[var(--admin-muted)]">{userRoleLabel(user, locale)}</p>
+          </div>
+        </div>
+      ) : (
+        <div
+          className="relative mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-[linear-gradient(135deg,#F3C86A,#C98F1E)] text-[13px] font-extrabold text-[#1a1205]"
+          title={user.name || "—"}
+        >
+          {userInitials(user.name)}
+          <span className="absolute bottom-0 end-0 h-[10px] w-[10px] rounded-full border-2 border-[var(--admin-bg)] bg-[var(--admin-green)]" />
+        </div>
+      )}
+    </div>
+  );
+
+  const moreGroups = navGroups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => !["overview", "projects", "notifications"].includes(item.id)),
+    }))
+    .filter((group) => group.items.length > 0);
 
   return (
     <LazyMotion features={domAnimation}>
       <section
         className={cn(
-          "admin-shell relative min-h-[100svh] pb-24 lg:pb-0",
+          "admin-shell relative flex h-dvh min-h-0 overflow-hidden",
           fontScale === "large" ? "text-[18px]" : "text-[16px]",
           density === "compact" && "[--admin-card-gap:16px] [--admin-page-pad:24px]",
         )}
         data-admin-theme={theme}
       >
-        {mobileNavOpen ? (
-          <div className="fixed inset-0 z-[120] lg:hidden" role="dialog" aria-modal="true">
-            <button type="button" className="absolute inset-0 bg-black/60 backdrop-blur-sm" aria-label={locale === "ar" ? "إغلاق" : "Close"} onClick={() => setMobileNavOpen(false)} />
-            <aside data-lenis-prevent className="absolute inset-y-0 start-0 flex h-full w-[min(264px,88vw)] flex-col overflow-y-auto border-e border-[var(--admin-card-border)] bg-[var(--admin-sidebar)] p-[14px] backdrop-blur-md">
-              {sidebarContent(false)}
-            </aside>
-          </div>
-        ) : null}
-
-        <div className="relative mx-auto flex min-h-[100svh] w-full max-w-[1600px]">
-          <aside className={cn("sticky top-0 hidden h-[100svh] shrink-0 flex-col border-e border-[var(--admin-card-border)] bg-[var(--admin-sidebar)] p-[14px] transition-all duration-200 lg:flex", sidebarCollapsed ? "w-[76px]" : "w-[264px]")}>
-            <button type="button" onClick={() => setSidebarCollapsed((v) => !v)} className="admin-focus-ring mb-2 ms-auto inline-flex h-9 w-9 items-center justify-center rounded-[12px] text-[var(--admin-muted)] hover:bg-[var(--admin-pill-surface)]" aria-label={sidebarCollapsed ? (locale === "ar" ? "توسيع الشريط" : "Expand sidebar") : (locale === "ar" ? "طي الشريط" : "Collapse sidebar")}> 
-              <ChevronDown className={cn("h-4 w-4 transition-transform", sidebarCollapsed ? "-rotate-90 rtl:rotate-90" : "rotate-90 rtl:-rotate-90")} />
-            </button>
-            {sidebarContent(sidebarCollapsed)}
+        <div className="relative mx-auto flex h-full min-h-0 w-full max-w-[1600px]">
+          <aside
+            data-collapsed={collapsed ? "true" : "false"}
+            className={cn(
+              "hidden h-dvh w-[264px] shrink-0 flex-col border-e border-[var(--admin-card-border)] bg-[var(--admin-sidebar)] transition-[width] duration-200 data-[collapsed=true]:w-[76px] lg:flex",
+            )}
+          >
+            {sidebarBrand(collapsed)}
+            {sidebarNav(collapsed)}
+            {sidebarUser(collapsed)}
           </aside>
 
           <div className="flex min-w-0 flex-1 flex-col">
-            <header className="flex flex-wrap items-center gap-3 px-4 py-2 sm:px-6 lg:px-[36px]">
-              <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-[14px] text-[var(--admin-muted)]">
+            <header className="flex h-[72px] shrink-0 items-center gap-2 border-b border-[var(--admin-card-border)] px-3 sm:px-6 lg:px-8">
+              <button
+                type="button"
+                onClick={() => setMobileNavOpen(true)}
+                className="admin-focus-ring inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[12px] text-[var(--admin-muted)] hover:bg-[var(--admin-pill-surface)] lg:hidden"
+                aria-label={locale === "ar" ? "فتح القائمة" : "Open menu"}
+              >
+                <Menu className="h-5 w-5" strokeWidth={1.7} />
+              </button>
+
+              <Link
+                href="/admin"
+                onClick={() => setMoreOpen(false)}
+                className="shrink-0 rounded-[12px] admin-focus-ring lg:hidden"
+                aria-label={locale === "ar" ? "نظرة عامة" : "Overview"}
+              >
+                <BrandLogo variant="mark" className="sm:hidden" priority tone={theme === "light" ? "dark" : "light"} />
+                <BrandLogo variant="full" className="hidden sm:flex" priority tone={theme === "light" ? "dark" : "light"} />
+              </Link>
+
+              <nav aria-label="Breadcrumb" className="hidden items-center gap-2 text-[14px] text-[var(--admin-muted)] lg:flex">
                 <span>{locale === "ar" ? "الرئيسية" : "Home"}</span>
-                <span>‹</span>
+                <span aria-hidden="true">‹</span>
                 <span className="text-[var(--admin-text)]/80">{navItems.find((i) => i.id === section)?.label ?? (locale === "ar" ? "نظرة عامة" : "Overview")}</span>
               </nav>
-              <button type="button" onClick={() => setPaletteOpen(true)} className="admin-focus-ring ms-auto flex h-11 w-full max-w-[360px] items-center gap-[10px] rounded-[999px] border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] px-4 text-[14px] text-[var(--admin-muted)]">
+
+              <button
+                type="button"
+                onClick={() => setPaletteOpen(true)}
+                className="admin-focus-ring ms-auto hidden h-11 min-w-0 max-w-[360px] flex-1 items-center gap-[10px] rounded-[999px] border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] px-4 text-[14px] text-[var(--admin-muted)] md:flex"
+              >
                 <Search className="h-5 w-5 shrink-0" strokeWidth={1.7} />
                 <span className="truncate">{locale === "ar" ? "ابحث في المشاريع والعقود…" : "Search projects and contracts…"}</span>
                 <kbd className="ms-auto shrink-0 rounded-[6px] border border-[var(--admin-card-border)] px-[7px] py-[1px] text-[12px]">⌘K</kbd>
               </button>
-              <button type="button" onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))} className="admin-focus-ring inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] text-[13px] font-bold text-[var(--admin-text)]" aria-label={theme === "dark" ? (locale === "ar" ? "الوضع الفاتح" : "Light mode") : (locale === "ar" ? "الوضع الداكن" : "Dark mode")}>{theme === "dark" ? "☀" : "☾"}</button>
-              <button type="button" onClick={toggleLocale} className="admin-focus-ring inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] text-[13px] font-bold text-[var(--admin-text)]" aria-label={locale === "ar" ? "English" : "العربية"}>{locale === "ar" ? "EN" : "AR"}</button>
-              <button type="button" onClick={() => navigateToSection("notifications")} className="admin-focus-ring relative inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] text-[var(--admin-text)]" aria-label={locale === "ar" ? "التنبيهات" : "Notifications"}>
+
+              <button
+                type="button"
+                onClick={() => setPaletteOpen(true)}
+                className="admin-focus-ring ms-auto inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] text-[var(--admin-muted)] md:hidden"
+                aria-label={locale === "ar" ? "بحث" : "Search"}
+              >
+                <Search className="h-5 w-5" strokeWidth={1.7} />
+              </button>
+
+              <button type="button" onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))} className="admin-focus-ring inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] text-[13px] font-bold text-[var(--admin-text)]" aria-label={theme === "dark" ? (locale === "ar" ? "الوضع الفاتح" : "Light mode") : (locale === "ar" ? "الوضع الداكن" : "Dark mode")}>{theme === "dark" ? "☀" : "☾"}</button>
+              <button type="button" onClick={toggleLocale} className="admin-focus-ring inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] text-[13px] font-bold text-[var(--admin-text)]" aria-label={locale === "ar" ? "English" : "العربية"}>{locale === "ar" ? "EN" : "AR"}</button>
+              <button type="button" onClick={() => navigateToSection("notifications")} className="admin-focus-ring relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] text-[var(--admin-text)]" aria-label={locale === "ar" ? "التنبيهات" : "Notifications"}>
                 <Bell className="h-5 w-5" strokeWidth={1.7} />
                 <span className="absolute top-[10px] end-[11px] h-2 w-2 rounded-full bg-[var(--admin-gold)]" />
               </button>
             </header>
 
-            <main className="px-4 pb-10 pt-2 sm:px-6 lg:px-[var(--admin-page-pad)]">
+            <main
+              ref={mainRef}
+              id="main"
+              className="min-h-0 flex-1 overflow-y-auto overscroll-contain scroll-smooth px-4 py-5 pb-[calc(64px+env(safe-area-inset-bottom,0px)+20px)] sm:px-6 md:px-8 md:py-6 md:pb-6 lg:px-[var(--admin-page-pad)]"
+            >
+              <div className="mb-5 hidden items-center justify-between border-b border-[var(--admin-card-border)] pb-4 print:flex">
+                <BrandLogo variant="full" tone="dark" />
+                <span className="text-[12px] text-[var(--admin-muted)]">{formatRiyadhDate(locale)}</span>
+              </div>
               <AdminSectionBoundary label={navItems.find((item) => item.id === section)?.label}>
                 {section === "overview" ? (
                   <OverviewSection projects={projects} ready={workspaceReady} user={user} onNew={openNew} onNavigate={navigateToSection} density={density} setDensity={setDensity} fontScale={fontScale} setFontScale={setFontScale} setPaletteOpen={setPaletteOpen} locale={locale} />
@@ -771,8 +921,104 @@ export function AdminDashboard({
           </div>
         </div>
 
-        <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--admin-card-border)] bg-[var(--admin-bg)]/95 backdrop-blur lg:hidden" aria-label={locale === "ar" ? "تنقل سفلي" : "Bottom navigation"}>
-          <div className="mx-auto grid max-w-3xl grid-cols-4 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2">
+        {mobileNavOpen ? (
+          <div className="fixed inset-0 z-[120] lg:hidden" role="dialog" aria-modal="true" aria-label={locale === "ar" ? "قائمة التنقل" : "Navigation menu"}>
+            <button type="button" className="absolute inset-0 bg-black/60 backdrop-blur-sm" aria-label={locale === "ar" ? "إغلاق" : "Close"} onClick={() => setMobileNavOpen(false)} />
+            <m.aside
+              ref={mobileDrawerRef}
+              data-lenis-prevent
+              initial={{ x: isRtl ? "100%" : "-100%" }}
+              animate={{ x: 0 }}
+              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+              onTouchStart={(event) => {
+                touchStartX.current = event.touches[0]?.clientX ?? null;
+                touchStartY.current = event.touches[0]?.clientY ?? null;
+              }}
+              onTouchEnd={(event) => {
+                const startX = touchStartX.current;
+                const startY = touchStartY.current;
+                const endX = event.changedTouches[0]?.clientX;
+                const endY = event.changedTouches[0]?.clientY;
+                touchStartX.current = null;
+                touchStartY.current = null;
+                if (startX === null || startY === null || endX === undefined || endY === undefined) return;
+                const dx = endX - startX;
+                const dy = endY - startY;
+                if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) && ((isRtl && dx > 0) || (!isRtl && dx < 0))) {
+                  setMobileNavOpen(false);
+                }
+              }}
+              className="absolute inset-y-0 start-0 flex h-dvh w-[min(300px,88vw)] max-w-full flex-col border-e border-[var(--admin-card-border)] bg-[var(--admin-sidebar)] shadow-2xl backdrop-blur-md"
+            >
+              {sidebarBrand(false)}
+              {sidebarNav(false)}
+              {sidebarUser(false)}
+            </m.aside>
+          </div>
+        ) : null}
+
+        {moreOpen ? (
+          <div className="fixed inset-0 z-[125] md:hidden" role="dialog" aria-modal="true" aria-label={locale === "ar" ? "المزيد" : "More"}>
+            <button type="button" className="absolute inset-0 bg-black/60 backdrop-blur-sm" aria-label={locale === "ar" ? "إغلاق" : "Close"} onClick={() => setMoreOpen(false)} />
+            <m.div
+              ref={moreSheetRef}
+              data-lenis-prevent
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+              onTouchStart={(event) => {
+                touchStartY.current = event.touches[0]?.clientY ?? null;
+              }}
+              onTouchEnd={(event) => {
+                const startY = touchStartY.current;
+                const endY = event.changedTouches[0]?.clientY;
+                touchStartY.current = null;
+                if (startY !== null && endY !== undefined && endY - startY > 70) setMoreOpen(false);
+              }}
+              className="absolute inset-x-0 bottom-0 max-h-[82dvh] overflow-y-auto overscroll-contain rounded-t-[24px] border-t border-[var(--admin-card-border)] bg-[var(--admin-bg)] p-4 pb-[calc(20px+env(safe-area-inset-bottom,0px))] shadow-2xl"
+            >
+              <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[var(--admin-card-border)]" />
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <h2 className="m-0 text-[20px] font-bold text-[var(--admin-text)]">{locale === "ar" ? "المزيد" : "More"}</h2>
+                <button type="button" onClick={() => setMoreOpen(false)} className="admin-focus-ring inline-flex h-10 w-10 items-center justify-center rounded-[12px] text-[var(--admin-muted)] hover:bg-[var(--admin-pill-surface)]" aria-label={locale === "ar" ? "إغلاق" : "Close"}>
+                  <X className="h-5 w-5" strokeWidth={1.7} />
+                </button>
+              </div>
+              <div className="flex flex-col gap-4">
+                {moreGroups.map((group) => (
+                  <div key={group.title}>
+                    <p className="mb-1 px-1 text-[12px] text-[var(--admin-muted)]">{group.title}</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {group.items.map(({ id, label, icon: Icon }) => {
+                        const active = section === id;
+                        return (
+                          <Link
+                            key={id}
+                            href={sectionHrefs[id]}
+                            onClick={() => setMoreOpen(false)}
+                            aria-current={active ? "page" : undefined}
+                            className={cn(
+                              "admin-focus-ring flex min-h-[52px] items-center gap-3 rounded-[12px] border px-3 text-[14px]",
+                              active
+                                ? "border-[rgba(226,176,74,0.28)] bg-[rgba(226,176,74,0.12)] text-[var(--admin-gold)]"
+                                : "border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] text-[var(--admin-text)]",
+                            )}
+                          >
+                            <Icon className="h-5 w-5 shrink-0" strokeWidth={1.7} />
+                            <span className="truncate">{label}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </m.div>
+          </div>
+        ) : null}
+
+        <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--admin-card-border)] bg-[var(--admin-bg)]/95 pb-[env(safe-area-inset-bottom,0px)] backdrop-blur md:hidden" aria-label={locale === "ar" ? "تنقل سفلي" : "Bottom navigation"}>
+          <div className="mx-auto grid h-16 max-w-3xl grid-cols-4 px-2">
             {([
               { id: "overview" as Section, label: locale === "ar" ? "نظرة عامة" : "Overview", icon: LayoutDashboard },
               { id: "projects" as Section, label: locale === "ar" ? "المشاريع" : "Projects", icon: FolderKanban },
@@ -780,14 +1026,14 @@ export function AdminDashboard({
             ]).map(({ id, label, icon: Icon }) => {
               const active = section === id;
               return (
-                <button key={id} type="button" onClick={() => navigateToSection(id)} className={cn("admin-focus-ring flex min-h-[52px] flex-col items-center justify-center gap-1 rounded-[12px] px-2 text-[12px]", active ? "text-[var(--admin-gold)]" : "text-[var(--admin-muted)]")}> 
+                <button key={id} type="button" onClick={() => navigateToSection(id)} className={cn("admin-focus-ring flex min-h-[52px] flex-col items-center justify-center gap-1 rounded-[12px] px-2 text-[12px] whitespace-nowrap", active ? "text-[var(--admin-gold)]" : "text-[var(--admin-muted)]")}>
                   <Icon className="h-5 w-5" strokeWidth={1.7} />
                   <span className="truncate">{label}</span>
                 </button>
               );
             })}
-            <button type="button" onClick={() => setMobileNavOpen(true)} className={cn("admin-focus-ring flex min-h-[52px] flex-col items-center justify-center gap-1 rounded-[12px] px-2 text-[12px]", mobileNavOpen ? "text-[var(--admin-gold)]" : "text-[var(--admin-muted)]")}> 
-              <Settings className="h-5 w-5" strokeWidth={1.7} />
+            <button type="button" onClick={() => setMoreOpen(true)} className={cn("admin-focus-ring flex min-h-[52px] flex-col items-center justify-center gap-1 rounded-[12px] px-2 text-[12px] whitespace-nowrap", moreOpen ? "text-[var(--admin-gold)]" : "text-[var(--admin-muted)]")}>
+              <MoreVertical className="h-5 w-5" strokeWidth={1.7} />
               <span className="truncate">{locale === "ar" ? "المزيد" : "More"}</span>
             </button>
           </div>
@@ -874,10 +1120,15 @@ function StatusDonut({ completed, ongoing, upcoming }: { completed: number; ongo
 
 function AdminWatermarkMark() {
   return (
-    <svg className="pointer-events-none absolute -start-[30px] -bottom-[40px] opacity-[0.07]" width="420" height="354" viewBox="0 0 390 328" aria-hidden="true">
-      <g fill="#fff"><polygon points="48,0 190,0 142,48 68,48"/><polygon points="0,48 48,0 68,48 48,68"/><polygon points="0,48 48,68 48,142 0,162"/><polygon points="68,162 142,162 142,210 48,210"/><polygon points="142,48 190,0 190,258 142,210"/></g>
-      <g transform="translate(200,70)" fill="#fff"><polygon points="48,0 190,0 142,48 68,48"/><polygon points="0,48 48,0 68,48 48,68"/><polygon points="0,48 48,68 48,142 0,162"/><polygon points="68,162 142,162 142,210 48,210"/><polygon points="142,48 190,0 190,258 142,210"/></g>
-    </svg>
+    <Image
+      src="/brand/logo-mark.svg"
+      alt=""
+      aria-hidden="true"
+      width={390}
+      height={328}
+      unoptimized
+      className="pointer-events-none absolute -start-[30px] -bottom-[40px] h-[354px] w-auto opacity-[0.07] brightness-0 invert"
+    />
   );
 }
 
@@ -1143,10 +1394,13 @@ function OverviewSection({
             {cities.length === 0 ? (
               <p className="py-2 text-[14px] text-[#A6A9B4]">{isAr ? "لا توجد بيانات مدن." : "No city data."}</p>
             ) : cities.map((c) => (
-              <div key={c.id} className="grid items-center gap-[14px] text-[15px] [grid-template-columns:70px_1fr_110px]">
-                <span className="text-[#F1EEE8]">{isAr ? (c.nameAr || c.nameEn) : c.nameEn}</span>
+              <div key={c.id} className="flex flex-col gap-2 text-[15px] sm:grid sm:items-center sm:gap-[14px] sm:[grid-template-columns:70px_1fr_110px]">
+                <div className="flex items-center justify-between gap-2 sm:block">
+                  <span className="text-[#F1EEE8]">{isAr ? (c.nameAr || c.nameEn) : c.nameEn}</span>
+                  <span className="whitespace-nowrap text-[13px] text-[#D7D8DE] tabular-nums sm:hidden">{formatSAR(c.value, locale)}</span>
+                </div>
                 <div className="relative h-3 rounded-full bg-[#232632]"><div className="absolute inset-y-0 start-0 rounded-full" style={{ width: `${(c.value / maxCity) * 100}%`, background: "linear-gradient(270deg,#F3C86A,#B8801C)" }} /></div>
-                <span className="whitespace-nowrap text-end text-[#D7D8DE] tabular-nums [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{formatSAR(c.value, locale)}</span>
+                <span className="hidden whitespace-nowrap text-end text-[#D7D8DE] tabular-nums [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif] sm:block">{formatSAR(c.value, locale)}</span>
               </div>
             ))}
           </m.section>
@@ -1236,6 +1490,7 @@ function ProjectsSection({
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Set<string>>(() => new Set());
   const [detail, setDetail] = useState<WorkspaceProject | null>(null);
+  const [mobileActions, setMobileActions] = useState<string | null>(null);
   const pageSize = 8;
 
   useEffect(() => {
@@ -1370,6 +1625,11 @@ function ProjectsSection({
     );
   };
 
+  const projectPhotoSrc = (project: WorkspaceProject) => {
+    const record = project as WorkspaceProject & { image?: string; cover?: string };
+    return record.image || record.cover;
+  };
+
   const budgetHealthLabel = (project: WorkspaceProject) => {
     const mp = metricsBySlug.get(project.slug);
     if (!mp) return locale === "ar" ? "لا توجد بيانات" : "No data";
@@ -1405,17 +1665,9 @@ function ProjectsSection({
           ["completed", locale === "ar" ? "مكتملة" : "Completed", tabCounts.completed],
           ["upcoming", locale === "ar" ? "قادمة" : "Upcoming", tabCounts.upcoming],
         ] as const).map(([id, label, count]) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => { setTab(id); setPage(1); }}
-            className={cn(
-              "min-h-10 px-3 text-[0.72rem] transition-colors",
-              tab === id ? "bg-gold/15 text-gold" : "text-ivory/55 hover:bg-white/[0.04] hover:text-ivory",
-            )}
-          >
+          <Chip key={id} active={tab === id} onClick={() => { setTab(id); setPage(1); }} className="whitespace-nowrap">
             {label} <span className="tabular-nums opacity-70">({count})</span>
-          </button>
+          </Chip>
         ))}
       </Card>
 
@@ -1516,25 +1768,49 @@ function ProjectsSection({
       ) : (
         <>
           <div className="grid gap-3 md:hidden">
-            {paged.map((project) => (
-              <button key={project.slug} type="button" onClick={() => setDetail(project)} className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018] p-4 text-start transition-colors hover:border-gold/30">
-                <div className="flex items-start gap-3">
-                  <span className="relative h-16 w-20 shrink-0 overflow-hidden border border-white/10"><ProjectArt variant={project.art} className="h-full w-full" /></span>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="truncate text-[0.9rem] font-medium text-ivory">{l(project.title)}</p>
-                      <span className={cn("shrink-0 px-2 py-0.5 text-[0.62rem] ", project.status === "ongoing" ? "bg-gold/15 text-gold" : project.status === "completed" ? "bg-emerald-400/10 text-emerald-300/80" : "bg-sky-400/10 text-sky-300/80")}>{c.statusLabels[project.status]}</span>
-                    </div>
-                    <p className="mt-1 truncate text-[0.72rem] text-ivory/45">{l(project.location)}</p>
-                    <p className="mt-1 text-[0.68rem] text-ivory/45">{budgetHealthLabel(project)}</p>
-                    <div className="mt-3 flex items-center gap-2">
-                      <span className="h-1.5 flex-1 overflow-hidden bg-white/10"><span className="block h-full bg-gold/70" style={{ width: `${project.progress}%` }} /></span>
-                      <span className="tabular-nums text-[0.68rem] text-ivory/45">{project.progress}%</span>
-                    </div>
+            {paged.map((project) => {
+              const statusTone: "warning" | "success" | "info" = project.status === "ongoing" ? "warning" : project.status === "completed" ? "success" : "info";
+              return (
+                <Card key={project.slug} className="relative p-4">
+                  <div className="flex items-start gap-3">
+                    <ProjectPhoto src={projectPhotoSrc(project)} alt={l(project.title)} art={project.art} className="h-14 w-[70px]" />
+                    <button type="button" onClick={() => setDetail(project)} className="min-w-0 flex-1 text-start admin-focus-ring rounded-[12px]">
+                      <p className="truncate text-[15px] font-medium text-[var(--admin-text)]">{l(project.title)}</p>
+                      <p className="mt-1 truncate text-[13px] text-[var(--admin-muted)]">{l(project.location)}</p>
+                      <span className="mt-3 flex items-center gap-2">
+                        <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-[var(--admin-track)]">
+                          <span className="block h-full rounded-full bg-[linear-gradient(270deg,#F3C86A,#C98F1E)]" style={{ width: `${project.progress}%` }} />
+                        </span>
+                        <span className="whitespace-nowrap tabular-nums text-[13px] text-[var(--admin-muted)]">{project.progress}%</span>
+                      </span>
+                      <span className="mt-2 block whitespace-nowrap text-[14px] tabular-nums text-[var(--admin-gold)]">{formatMoney(project.contractValue || project.budget, locale)}</span>
+                    </button>
+                    <span className="flex shrink-0 flex-col items-end gap-2">
+                      <StatusPill tone={statusTone} className="whitespace-nowrap">{c.statusLabels[project.status]}</StatusPill>
+                      <button
+                        type="button"
+                        onClick={() => setMobileActions((current) => current === project.slug ? null : project.slug)}
+                        className="admin-focus-ring inline-flex h-9 w-9 items-center justify-center rounded-[10px] border border-[var(--admin-card-border)] text-[var(--admin-muted)]"
+                        aria-label={locale === "ar" ? "إجراءات المشروع" : "Project actions"}
+                        aria-expanded={mobileActions === project.slug}
+                      >
+                        <MoreVertical className="h-4 w-4" />
+                      </button>
+                    </span>
                   </div>
-                </div>
-              </button>
-            ))}
+                  {mobileActions === project.slug ? (
+                    <div className="absolute end-4 top-[66px] z-20 flex min-w-[150px] flex-col overflow-hidden rounded-[12px] border border-[var(--admin-card-border)] bg-[var(--admin-bg)] p-1 shadow-2xl">
+                      <button type="button" onClick={() => { setMobileActions(null); onEdit(project); }} className="admin-focus-ring flex min-h-[40px] items-center gap-2 rounded-[8px] px-3 text-start text-[13px] text-[var(--admin-text)] hover:bg-[var(--admin-pill-surface)]">
+                        <Pencil className="h-4 w-4" />{c.edit}
+                      </button>
+                      <button type="button" onClick={() => { setMobileActions(null); handleDelete(project); }} className="admin-focus-ring flex min-h-[40px] items-center gap-2 rounded-[8px] px-3 text-start text-[13px] text-[#FF9A8F] hover:bg-[rgba(255,107,94,0.1)]">
+                        <Trash2 className="h-4 w-4" />{c.delete}
+                      </button>
+                    </div>
+                  ) : null}
+                </Card>
+              );
+            })}
             {!paged.length ? <EmptyProjects locale={locale} label={c.noProjects} /> : null}
           </div>
           <div className="hidden md:block">
@@ -1558,13 +1834,13 @@ function ProjectsSection({
                     const h = mp ? getBudgetHealth(mp) : { key: "no_data" as const };
                     const tone: "success" | "warning" | "danger" | "neutral" = h.key === "on_track" || h.key === "saved" ? "success" : h.key === "watch" ? "warning" : h.key === "over" || h.key === "overrun" ? "danger" : "neutral";
                     const statusTone: "warning" | "success" | "info" = project.status === "ongoing" ? "warning" : project.status === "completed" ? "success" : "info";
-                    const photoSrc = (project as { image?: string; cover?: string }).image || (project as { image?: string; cover?: string }).cover;
+                    const photoSrc = projectPhotoSrc(project);
                     return (
                       <TR key={project.slug} onClick={() => setDetail(project)} className={cn("cursor-pointer", selected.has(project.slug) && "bg-[rgba(226,176,74,0.06)]")}>
                         <TD onClick={(e) => e.stopPropagation()}><Checkbox checked={selected.has(project.slug)} onChange={() => toggleSelected(project.slug)} aria-label={`${c.selectAll}: ${l(project.title)}`} /></TD>
                         <TD>
                           <span className="flex items-center gap-3">
-                            <ProjectPhoto src={photoSrc} alt={l(project.title)} />
+                            <ProjectPhoto src={photoSrc} alt={l(project.title)} art={project.art} />
                             <span className="flex min-w-0 flex-col gap-0.5">
                               <span className="truncate text-[14px] font-medium text-[#F1EEE8]">{l(project.title)}</span>
                               <span className="truncate text-[13px] text-[#A6A9B4]">{l(project.location)}</span>

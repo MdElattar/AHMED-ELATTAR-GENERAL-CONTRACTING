@@ -1,8 +1,9 @@
-import type { ReactNode } from "react";
+import { AdminDashboard } from "@/components/sections/admin/AdminDashboard";
 
-export default function AdminLayout({ children }: { children: ReactNode }) {
-  // Shared admin route wrapper. The admin shell is rendered by the client
-  // dashboard component to enforce auth, live workspace state, and responsive
-  // navigation across every admin sub-page.
-  return <div className="min-h-screen bg-obsidian text-ivory">{children}</div>;
+/**
+ * The admin shell lives at the layout level so the sidebar, its scroll
+ * position, and the mobile navigation stay mounted while section routes change.
+ */
+export default function AdminLayout() {
+  return <AdminDashboard />;
 }
