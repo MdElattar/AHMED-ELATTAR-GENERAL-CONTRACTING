@@ -79,6 +79,11 @@ const sectionRoutes: Record<string, SectionRoute> = {
     title: "سجل النشاط",
     description: "تتبع كل إجراء إداري على المنصة.",
   },
+  maintenance: {
+    section: "maintenance",
+    title: "الصيانة",
+    description: "أدوات لمرة واحدة لاستكمال بيانات الصور والوسائط.",
+  },
   access: {
     section: "access",
     title: "تفويض الصلاحيات",

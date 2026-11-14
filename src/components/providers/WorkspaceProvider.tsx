@@ -22,6 +22,7 @@ import type {
   ProjectCategory,
   ProjectStatus,
 } from "@/data/projects";
+import { projectImageDefaults } from "@/data/project-images";
 import type {
   PortalDocument,
   PortalInvoice,
@@ -37,7 +38,10 @@ export type WorkspaceProject = Project & {
   profit: number;
   contractValue: number;
   updatedAt: string;
-  gallery: ArtVariant[];
+  /** Ordered image URLs. The first entry is the cover. */
+  gallery: string[];
+  /** Art direction variants used by the public project cinema. */
+  artGallery: ArtVariant[];
   milestones: PortalMilestone[];
   documents: PortalDocument[];
   invoices: PortalInvoice[];
@@ -320,11 +324,53 @@ function normalizeProject(value: unknown): WorkspaceProject | null {
   const art = artVariants.includes(value.art as ArtVariant)
     ? (value.art as ArtVariant)
     : "tower";
-  const gallery = Array.isArray(value.gallery)
-    ? value.gallery
+  const rawGallery = Array.isArray(value.gallery)
+    ? value.gallery.filter((item): item is string => typeof item === "string")
+    : [];
+  const legacyArtGallery = rawGallery.filter((item): item is ArtVariant =>
+    artVariants.includes(item as ArtVariant),
+  );
+  const gallery = rawGallery
+    .filter(
+      (item) => !artVariants.includes(item as ArtVariant) && isAllowedMediaSource(item),
+    )
+    .slice(0, 12);
+  const artGallery = Array.isArray(value.artGallery)
+    ? value.artGallery
         .filter((item): item is ArtVariant => artVariants.includes(item as ArtVariant))
         .slice(0, 8)
-    : [];
+    : legacyArtGallery.length
+      ? legacyArtGallery.slice(0, 8)
+      : [art];
+  const imageDefaults = projectImageDefaults[art];
+  const coverUrl =
+    (typeof value.coverUrl === "string" && isAllowedMediaSource(value.coverUrl)
+      ? value.coverUrl
+      : undefined) ??
+    gallery[0] ??
+    imageDefaults.coverUrl;
+  const thumbUrl =
+    typeof value.thumbUrl === "string" && isAllowedMediaSource(value.thumbUrl)
+      ? value.thumbUrl
+      : undefined;
+  const blurDataURL =
+    typeof value.blurDataURL === "string" &&
+    /^data:image\/(?:webp|png|jpeg);base64,/.test(value.blurDataURL) &&
+    value.blurDataURL.length <= 20_000
+      ? value.blurDataURL
+      : undefined;
+  const location = normalizeLocalized(value.location, L("", ""));
+  const [locationCity = "", locationDistrict = ""] = location.en
+    .split("—")
+    .map((part) => part.trim());
+  const city =
+    typeof value.city === "string" && value.city.trim()
+      ? value.city.trim().slice(0, 120)
+      : locationCity;
+  const district =
+    typeof value.district === "string" && value.district.trim()
+      ? value.district.trim().slice(0, 160)
+      : locationDistrict;
 
   const scope = Array.isArray(value.scope)
     ? value.scope
@@ -372,13 +418,19 @@ function normalizeProject(value: unknown): WorkspaceProject | null {
     highlights,
     art,
     ...(value.featured === true ? { featured: true } : {}),
+    coverUrl,
+    ...(thumbUrl ? { thumbUrl } : {}),
+    ...(blurDataURL ? { blurDataURL } : {}),
+    gallery: gallery.length ? gallery : [coverUrl],
+    artGallery,
+    city,
+    district,
     progress: clamp(finiteNumber(value.progress, fallbackProgress), 0, 100),
     budget,
     spent,
     profit,
     contractValue,
     updatedAt,
-    gallery: gallery.length ? gallery : [art],
     milestones: normalizeMilestones(value.milestones),
     documents: normalizeDocuments(value.documents),
     invoices: normalizeInvoices(value.invoices),

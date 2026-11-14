@@ -1,10 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import { forwardRef, type ButtonHTMLAttributes, type HTMLAttributes, type ReactNode, type TdHTMLAttributes, type ThHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
-import { ProjectArt } from "@/components/ui/ProjectArt";
-import type { ArtVariant } from "@/data/projects";
 
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
@@ -206,31 +203,4 @@ export function AdminTextarea({ className, ...props }: React.TextareaHTMLAttribu
   );
 }
 
-export function ProjectPhoto({
-  src,
-  alt,
-  art,
-  className,
-}: {
-  src?: string;
-  alt: string;
-  art?: ArtVariant;
-  className?: string;
-}) {
-  return (
-    <span
-      className={cn(
-        "relative block h-12 w-16 overflow-hidden rounded-[12px] border border-[var(--admin-card-border)] bg-[var(--admin-track,#232632)]",
-        className,
-      )}
-    >
-      {src ? (
-        <Image src={src} alt={alt} fill sizes="72px" className="object-cover" />
-      ) : art ? (
-        <ProjectArt variant={art} className="h-full w-full" />
-      ) : (
-        <span className="flex h-full w-full items-center justify-center text-[12px] text-[var(--admin-muted,#A6A9B4)]">—</span>
-      )}
-    </span>
-  );
-}
+

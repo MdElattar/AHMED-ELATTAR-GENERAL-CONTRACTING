@@ -6,6 +6,7 @@ import { useI18n } from "@/components/providers/I18nProvider";
 import { useSmoothScroll } from "@/components/providers/SmoothScroll";
 import type { WorkspaceProject } from "@/components/providers/WorkspaceProvider";
 import { Field, Select, TextInput, Textarea } from "@/components/ui/Field";
+import { ImageUpload } from "@/components/ui/ImageUpload";
 import type { ArtVariant, ProjectCategory, ProjectStatus } from "@/data/projects";
 import { L } from "@/lib/dictionary";
 import { acquireScrollLock, releaseScrollLock } from "@/lib/scroll/lock";
@@ -31,6 +32,10 @@ const copy = {
     location: "الموقع",
     locationAr: "الموقع (عربي)",
     locationEn: "الموقع (إنجليزي)",
+    city: "المدينة",
+    district: "الحي / المنطقة",
+    images: "صور المشروع",
+    imagesHint: "الصورة الأولى هي الغلاف. اسحب لإعادة الترتيب.",
     client: "العميل",
     clientAr: "العميل (عربي)",
     clientEn: "العميل (إنجليزي)",
@@ -93,6 +98,10 @@ const copy = {
     location: "Location",
     locationAr: "Location (Arabic)",
     locationEn: "Location (English)",
+    city: "City",
+    district: "District",
+    images: "Project images",
+    imagesHint: "The first image is the cover. Drag to reorder.",
     client: "Client",
     clientAr: "Client (Arabic)",
     clientEn: "Client (English)",
@@ -158,6 +167,12 @@ type FormState = {
   year: string;
   locationAr: string;
   locationEn: string;
+  city: string;
+  district: string;
+  coverUrl: string;
+  thumbUrl: string;
+  blurDataURL: string;
+  imageGallery: string[];
   clientAr: string;
   clientEn: string;
   areaAr: string;
@@ -196,6 +211,12 @@ function initialForm(project: WorkspaceProject | null): FormState {
       year: "2026",
       locationAr: "",
       locationEn: "",
+      city: "",
+      district: "",
+      coverUrl: "",
+      thumbUrl: "",
+      blurDataURL: "",
+      imageGallery: [],
       clientAr: "",
       clientEn: "",
       areaAr: "",
@@ -224,6 +245,12 @@ function initialForm(project: WorkspaceProject | null): FormState {
     year: project.year,
     locationAr: project.location.ar,
     locationEn: project.location.en,
+    city: project.city ?? "",
+    district: project.district ?? "",
+    coverUrl: project.coverUrl ?? "",
+    thumbUrl: project.thumbUrl ?? "",
+    blurDataURL: project.blurDataURL ?? "",
+    imageGallery: project.gallery ?? [],
     clientAr: project.client.ar,
     clientEn: project.client.en,
     areaAr: project.area.ar,
@@ -240,7 +267,7 @@ function initialForm(project: WorkspaceProject | null): FormState {
     contractValue: project.contractValue,
     featured: Boolean(project.featured),
     art: project.art,
-    gallery: project.gallery.length ? project.gallery : [project.art],
+    gallery: project.artGallery.length ? project.artGallery : [project.art],
   };
 }
 
@@ -308,13 +335,23 @@ export function AdminProjectEditor({
     if (!project && existingSlugs.includes(slug)) {
       slug = `${baseSlug}-${Date.now().toString(36).slice(-4)}`;
     }
-    const gallery = form.gallery.length ? form.gallery : [form.art];
+    const artGallery = form.gallery.length ? form.gallery : [form.art];
+    const imageGallery = form.imageGallery;
+    const coverUrl = form.coverUrl || imageGallery[0] || undefined;
     const next: WorkspaceProject = {
       slug,
       title: L(form.titleAr, form.titleEn),
       category: form.category,
       status: form.status,
       location: L(form.locationAr, form.locationEn),
+      city: form.city.trim() || form.locationEn.split("—")[0]?.trim() || "",
+      district:
+        form.district.trim() || form.locationEn.split("—")[1]?.trim() || "",
+      coverUrl,
+      ...(form.thumbUrl ? { thumbUrl: form.thumbUrl } : {}),
+      ...(form.blurDataURL ? { blurDataURL: form.blurDataURL } : {}),
+      gallery: imageGallery,
+      artGallery,
       year: form.year,
       client: L(form.clientAr, form.clientEn),
       area: L(form.areaAr, form.areaEn),
@@ -333,7 +370,6 @@ export function AdminProjectEditor({
       profit: Math.max(0, Number(form.profit) || 0),
       contractValue: Math.max(0, Number(form.contractValue) || 0),
       updatedAt: new Date().toISOString().slice(0, 10),
-      gallery,
       milestones: project?.milestones ?? [],
       documents: project?.documents ?? [],
       invoices: project?.invoices ?? [],
@@ -471,6 +507,20 @@ export function AdminProjectEditor({
                   onChange={(event) => set("locationEn", event.target.value)}
                 />
               </Field>
+              <Field label={c.city} htmlFor="admin-city">
+                <TextInput
+                  id="admin-city"
+                  value={form.city}
+                  onChange={(event) => set("city", event.target.value)}
+                />
+              </Field>
+              <Field label={c.district} htmlFor="admin-district">
+                <TextInput
+                  id="admin-district"
+                  value={form.district}
+                  onChange={(event) => set("district", event.target.value)}
+                />
+              </Field>
               <Field label={c.clientAr} htmlFor="admin-client-ar">
                 <TextInput
                   id="admin-client-ar"
@@ -584,6 +634,34 @@ export function AdminProjectEditor({
                 </Field>
               ))}
             </div>
+          </div>
+
+          <div>
+            <p className="mb-1 text-[0.7rem] font-semibold  text-gold/80">
+              {c.images}
+            </p>
+            <p className="mb-4 text-[0.72rem] text-ivory/40">{c.imagesHint}</p>
+            <ImageUpload
+              value={{
+                gallery: form.imageGallery,
+                coverUrl: form.coverUrl || undefined,
+                thumbUrl: form.thumbUrl || undefined,
+                blurDataURL: form.blurDataURL || undefined,
+              }}
+              titleAr={form.titleAr}
+              titleEn={form.titleEn}
+              category={form.category}
+              art={form.art}
+              onChange={(next) =>
+                setForm((current) => ({
+                  ...current,
+                  imageGallery: next.gallery,
+                  coverUrl: next.coverUrl ?? "",
+                  thumbUrl: next.thumbUrl ?? "",
+                  blurDataURL: next.blurDataURL ?? "",
+                }))
+              }
+            />
           </div>
 
           <div>

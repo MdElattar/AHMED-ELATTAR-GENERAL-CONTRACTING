@@ -1,4 +1,5 @@
 import { L, type Localized } from "@/lib/dictionary";
+import { projectImageDefaults } from "@/data/project-images";
 
 export type ProjectCategory = "commercial" | "residential" | "infrastructure" | "industrial";
 export type ProjectStatus = "completed" | "ongoing" | "upcoming";
@@ -28,9 +29,23 @@ export type Project = {
   highlights: { value: string; label: Localized }[];
   art: ArtVariant;
   featured?: boolean;
+  /** Project-specific cover image. Falls back to the canonical art photography. */
+  coverUrl?: string;
+  /** 400px-wide derivative used by compact admin thumbs. */
+  thumbUrl?: string;
+  /** Tiny inline WebP used by next/image while the cover loads. */
+  blurDataURL?: string;
+  /** Ordered project gallery. The first entry is always the cover. */
+  gallery?: string[];
+  /** Photography/art variants used by the public project cinema. */
+  artGallery?: ArtVariant[];
+  /** Canonical city (English storage value; the public site still renders `location`). */
+  city?: string;
+  /** Canonical district (English storage value). */
+  district?: string;
 };
 
-export const projects: Project[] = [
+const projectSeeds: Project[] = [
   {
     slug: "aurora-tower",
     title: L("برج الشفق", "Aurora Tower"),
@@ -294,6 +309,19 @@ export const projects: Project[] = [
     art: "solar",
   },
 ];
+
+export const projects: Project[] = projectSeeds.map((project) => {
+  const [city = "", district = ""] = project.location.en
+    .split("—")
+    .map((part) => part.trim());
+
+  return {
+    ...project,
+    ...projectImageDefaults[project.art],
+    city,
+    district,
+  };
+});
 
 export const projectCategories: ProjectCategory[] = [
   "commercial",

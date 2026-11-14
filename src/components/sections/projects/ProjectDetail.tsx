@@ -15,7 +15,8 @@ import type { ArtVariant, Project } from "@/data/projects";
 import { cn } from "@/lib/utils";
 
 type DetailProject = Project & {
-  gallery?: ArtVariant[];
+  artGallery?: ArtVariant[];
+  gallery?: string[];
   progress?: number;
   contractValue?: number;
 };
@@ -54,7 +55,7 @@ export function ProjectDetail({ project }: { project: DetailProject }) {
     });
   }
 
-  const gallery = project.gallery?.length ? project.gallery : [project.art];
+  const gallery = project.artGallery?.length ? project.artGallery : [project.art];
 
   return (
     <>

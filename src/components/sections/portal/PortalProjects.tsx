@@ -257,13 +257,13 @@ export function PortalProjects() {
                 ))}
               </div>
 
-              {project.gallery.length ? (
+              {project.artGallery.length ? (
                 <div className="border-t border-white/10 p-4">
                   <p className="mb-3 text-[0.5rem] uppercase tracking-[0.14em] text-ivory/45">
                     {c.gallery}
                   </p>
                   <div className="grid grid-cols-3 gap-2">
-                    {project.gallery.slice(0, 3).map((variant, index) => (
+                    {project.artGallery.slice(0, 3).map((variant, index) => (
                       <div
                         key={`${variant}-${index}`}
                         className="relative aspect-[4/3] overflow-hidden border border-white/10"

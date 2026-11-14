@@ -14,9 +14,9 @@ const contentSecurityPolicy = [
   // future injection cannot execute markup-level script.
   "script-src-attr 'none'",
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
+  "img-src 'self' data: blob: https://firebasestorage.googleapis.com https://storage.googleapis.com",
   "font-src 'self' data:",
-  `connect-src 'self'${isDev ? " ws: wss:" : ""}`,
+  `connect-src 'self' https://firebasestorage.googleapis.com https://storage.googleapis.com${isDev ? " ws: wss:" : ""}`,
   "media-src 'self' blob:",
   "worker-src 'self' blob:",
   "manifest-src 'self'",
@@ -70,6 +70,18 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "images.unsplash.com",
+        pathname: "/**",
+      },
+      // Project imagery can be served from Firebase Storage or Google Cloud
+      // Storage when the optional production media backend is configured.
+      {
+        protocol: "https",
+        hostname: "firebasestorage.googleapis.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "storage.googleapis.com",
         pathname: "/**",
       },
       // CMS-controlled art direction may point at any approved https host.

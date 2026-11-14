@@ -71,6 +71,30 @@ export type StoredProject = {
   updatedAt: string;
 };
 
+/**
+ * Binary media stored alongside the repository. This is the additive fallback
+ * for deployments that do not configure Firebase Storage: uploads still work,
+ * remain same-origin, and survive serverless/container restarts because the
+ * bytes live in MongoDB. `data` is base64 in the public shape and a Buffer in
+ * MongoDB.
+ */
+export type StoredAsset = {
+  id: string;
+  mime: string;
+  size: number;
+  width?: number;
+  height?: number;
+  data: string;
+  createdAt: string;
+};
+
+export type NewAsset = {
+  mime: string;
+  data: Buffer;
+  width?: number;
+  height?: number;
+};
+
 export type InquiryStatus = "new" | "read" | "won" | "lost";
 
 export type StoredInquiry = {
@@ -176,6 +200,7 @@ type MemoryDb = {
   passkeys: Map<string, StoredPasskey>;
   adminGrants: Map<string, StoredAdminGrant>;
   projects: Map<string, StoredProject>;
+  assets: Map<string, StoredAsset>;
   inquiries: Map<string, StoredInquiry>;
   audit: StoredAudit[];
   otps: Map<string, StoredOtp>;
@@ -198,6 +223,7 @@ type MongoModels = {
   Passkey: LeanModel;
   AdminGrant: LeanModel;
   Project: LeanModel;
+  Asset: LeanModel;
   Inquiry: LeanModel;
   AuditLog: LeanModel;
   OtpToken: LeanModel;
@@ -219,6 +245,7 @@ function memory(): MemoryDb {
       passkeys: new Map(),
       adminGrants: new Map(),
       projects: new Map(),
+      assets: new Map(),
       inquiries: new Map(),
       audit: [],
       otps: new Map(),
@@ -388,7 +415,7 @@ async function mongoModels(): Promise<MongoModels> {
     // During development a hot reload can retain an older model cache. Rebuild
     // it when a newly added collection is missing instead of throwing at the
     // first passkey or delegation request.
-    if (models.Passkey && models.AdminGrant) return models;
+    if (models.Passkey && models.AdminGrant && models.Asset) return models;
     cached.models = null;
   }
 
@@ -459,6 +486,18 @@ async function mongoModels(): Promise<MongoModels> {
         payload: { type: mongoose.Schema.Types.Mixed, required: true },
       },
       { timestamps: true, versionKey: false, strict: false },
+    );
+
+    const assetSchema = new mongoose.Schema(
+      {
+        assetId: { type: String, required: true, unique: true, index: true },
+        mime: { type: String, required: true },
+        size: { type: Number, required: true },
+        width: Number,
+        height: Number,
+        data: { type: Buffer, required: true },
+      },
+      { timestamps: true, versionKey: false },
     );
 
     const inquirySchema = new mongoose.Schema(
@@ -576,6 +615,8 @@ async function mongoModels(): Promise<MongoModels> {
       mongoose.model("AdminGrant", adminGrantSchema)) as unknown as LeanModel;
     const Project = (mongoose.models.Project ??
       mongoose.model("Project", projectSchema)) as unknown as LeanModel;
+    const Asset = (mongoose.models.Asset ??
+      mongoose.model("Asset", assetSchema)) as unknown as LeanModel;
     const Inquiry = (mongoose.models.Inquiry ??
       mongoose.model("Inquiry", inquirySchema)) as unknown as LeanModel;
     const AuditLog = (mongoose.models.AuditLog ??
@@ -592,6 +633,7 @@ async function mongoModels(): Promise<MongoModels> {
       Passkey,
       AdminGrant,
       Project,
+      Asset,
       Inquiry,
       AuditLog,
       OtpToken,
@@ -1325,6 +1367,68 @@ export async function deleteProject(slug: string): Promise<boolean> {
   const { Project } = await mongoModels();
   const result = await Project.deleteOne({ slug: normalized });
   return (result.deletedCount ?? 0) > 0;
+}
+
+/* ------------------------------------------------------------------ media */
+
+export async function createAsset(input: NewAsset): Promise<StoredAsset> {
+  const assetId = crypto.randomUUID();
+  const timestamp = now();
+  const shared = {
+    id: assetId,
+    mime: input.mime,
+    size: input.data.byteLength,
+    ...(input.width ? { width: input.width } : {}),
+    ...(input.height ? { height: input.height } : {}),
+    createdAt: timestamp,
+  };
+
+  if ((await activeMode()) === "memory") {
+    const asset: StoredAsset = { ...shared, data: input.data.toString("base64") };
+    memory().assets.set(assetId, asset);
+    return asset;
+  }
+
+  const { Asset } = await mongoModels();
+  await Asset.create({ ...shared, assetId, data: input.data });
+  return { ...shared, data: input.data.toString("base64") };
+}
+
+function toBuffer(value: unknown): Buffer {
+  if (Buffer.isBuffer(value)) return value;
+  if (value instanceof Uint8Array) return Buffer.from(value);
+  if (value && typeof value === "object" && "buffer" in value) {
+    // Mongo/Mongoose 9 lean() decodes BSON Binary as `{ buffer, sub_type }`
+    // rather than a Node Buffer.
+    const inner = (value as { buffer?: unknown }).buffer;
+    if (Buffer.isBuffer(inner)) return inner;
+    if (inner instanceof Uint8Array) return Buffer.from(inner);
+  }
+  if (typeof value === "string") return Buffer.from(value, "base64");
+  return Buffer.alloc(0);
+}
+
+export async function getAsset(assetId: string): Promise<StoredAsset | null> {
+  const id = assetId.trim();
+  if (!/^[a-f0-9-]{20,64}$/i.test(id)) return null;
+
+  if ((await activeMode()) === "memory") {
+    return memory().assets.get(id) ?? null;
+  }
+
+  const { Asset } = await mongoModels();
+  const doc = (await Asset.findOne({ assetId: id }).lean()) as LeanDoc | null;
+  if (!doc) return null;
+  const data = toBuffer(doc.data);
+  return {
+    id,
+    mime: str(doc.mime, "application/octet-stream"),
+    size: typeof doc.size === "number" ? doc.size : data.byteLength,
+    ...(typeof doc.width === "number" ? { width: doc.width } : {}),
+    ...(typeof doc.height === "number" ? { height: doc.height } : {}),
+    data: data.toString("base64"),
+    createdAt: iso(doc.createdAt),
+  };
 }
 
 /* -------------------------------------------------------------- inquiries */

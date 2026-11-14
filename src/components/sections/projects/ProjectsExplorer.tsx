@@ -66,8 +66,8 @@ export function ProjectsExplorer() {
   };
 
   const gallery = selected
-    ? selected.gallery.length
-      ? selected.gallery
+    ? selected.artGallery.length
+      ? selected.artGallery
       : [selected.art]
     : [];
   const activeArtVariant = gallery[Math.min(activeArt, gallery.length - 1)] ?? "tower";

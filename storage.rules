@@ -1,0 +1,21 @@
+rules_version = '2';
+
+// Production media rules for the optional Firebase Storage backend.
+//
+// The app persists uploads through the authenticated Next.js admin route by
+// default (MongoDB-backed media store). If a deployment opts into Firebase
+// Storage, project imagery stays publicly readable while writes are limited
+// to Firebase-authenticated admins. Browser clients never receive a service
+// account, so wildcard writes are explicitly denied.
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /projects/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.token.admin == true;
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

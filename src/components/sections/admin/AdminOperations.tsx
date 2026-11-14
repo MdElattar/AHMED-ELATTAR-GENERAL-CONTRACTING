@@ -26,6 +26,7 @@ import {
 import { useI18n } from "@/components/providers/I18nProvider";
 import { useWorkspace } from "@/components/providers/WorkspaceProvider";
 import { useToast } from "@/components/ui/Toast";
+import { ProjectImage } from "@/components/ui/ProjectImage";
 import type { PortalMilestone } from "@/data/portal";
 import { L } from "@/lib/dictionary";
 import { cn } from "@/lib/utils";
@@ -1254,6 +1255,14 @@ export function MilestonesPanel() {
           <p className="mt-1 text-[0.74rem] leading-relaxed text-ivory/45">{c.milestonesText}</p>
         </div>
         <div className="flex flex-wrap items-end gap-2">
+          {active ? (
+            <ProjectImage
+              project={active}
+              variant="thumb"
+              sizes="56px"
+              className="h-11 w-14 shrink-0 rounded-[10px] border border-white/12"
+            />
+          ) : null}
           <a
             href="/api/admin/export/milestones"
             className="inline-flex h-10 items-center gap-1.5 border border-white/12 px-3.5 text-[0.7rem] font-semibold  text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"

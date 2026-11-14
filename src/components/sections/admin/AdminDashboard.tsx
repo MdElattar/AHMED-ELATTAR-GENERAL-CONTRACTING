@@ -36,6 +36,7 @@ import {
   Sparkles,
   Trash2,
   Wallet,
+  Wrench,
   X,
 } from "lucide-react";
 import { isAdminUser, useAuth } from "@/components/providers/AuthProvider";
@@ -48,6 +49,7 @@ import {
 import { AdminAccess } from "@/components/sections/admin/AdminAccess";
 import { AdminCommandPalette } from "@/components/sections/admin/AdminCommandPalette";
 import { AdminProjectEditor } from "@/components/sections/admin/AdminProjectEditor";
+import { AdminMaintenance } from "@/components/sections/admin/AdminMaintenance";
 import {
   AuditPanel,
   ConsultationsPanel,
@@ -61,7 +63,8 @@ import { Field, TextInput, Textarea } from "@/components/ui/Field";
 import { ProjectArt } from "@/components/ui/ProjectArt";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { AdminSectionBoundary } from "@/components/system/AdminSectionBoundary";
-import { Button, Card, Chip, DataTable, EmptyState, PageHeader, ProjectPhoto, StatusPill, Table, TD, TH, THead, TR, AdminInput, AdminSelect } from "@/components/ui/admin";
+import { Button, Card, Chip, DataTable, EmptyState, PageHeader, StatusPill, Table, TD, TH, THead, TR, AdminInput, AdminSelect } from "@/components/ui/admin";
+import { ProjectImage } from "@/components/ui/ProjectImage";
 import { useToast } from "@/components/ui/Toast";
 import type { ArtVariant } from "@/data/projects";
 import { dictionary, L, type Localized } from "@/lib/dictionary";
@@ -101,6 +104,7 @@ export type AdminSection =
   | "media"
   | "messages"
   | "audit"
+  | "maintenance"
   | "access";
 
 type Section = AdminSection;
@@ -118,6 +122,7 @@ const sectionHrefs: Record<Section, string> = {
   media: "/admin/media",
   messages: "/admin/messages",
   audit: "/admin/audit",
+  maintenance: "/admin/maintenance",
   access: "/admin/access",
 };
 
@@ -672,6 +677,11 @@ export function AdminDashboard({
       items: [
         { id: "notifications", label: c.notifications, icon: BellRing },
         { id: "audit", label: c.audit, icon: Activity },
+        {
+          id: "maintenance",
+          label: locale === "ar" ? "الصيانة" : "Maintenance",
+          icon: Wrench,
+        },
         ...(user.primaryAdmin
           ? ([{ id: "access", label: c.access, icon: ShieldCheck }] satisfies {
               id: Section;
@@ -915,6 +925,7 @@ export function AdminDashboard({
                 {section === "media" ? <MediaSection projects={projects} /> : null}
                 {section === "messages" ? <MessagesSection projects={projects} /> : null}
                 {section === "audit" ? <AuditPanel /> : null}
+                {section === "maintenance" ? <AdminMaintenance /> : null}
                 {section === "access" ? <AdminAccess /> : null}
               </AdminSectionBoundary>
             </main>
@@ -1448,11 +1459,18 @@ function OverviewSection({
       ) : (
         <m.section variants={stagger} className="grid gap-[18px] sm:grid-cols-2 xl:grid-cols-4">
           {activeUpcoming.map((p, idx) => {
-            const grads = ["linear-gradient(160deg,#33415A,#141824)", "linear-gradient(160deg,#3A4A44,#141C1A)", "linear-gradient(160deg,#5A4636,#1D1612)", "linear-gradient(160deg,#2D4A6B,#121A26)"];
             const statusLabel = p.status === "ongoing" ? (isAr ? "قيد التنفيذ" : "Ongoing") : p.status === "upcoming" ? (isAr ? "قادم" : "Upcoming") : (isAr ? "مكتمل" : "Completed");
             return (
               <m.button key={p.id} variants={fadeUp} type="button" onClick={() => onNavigate("projects")} className="admin-focus-ring overflow-hidden rounded-[20px] border border-white/[.07] bg-[#12141B] text-start transition-all duration-[160ms] hover:-translate-y-0.5 hover:border-[rgba(226,176,74,0.25)]">
-                <div className="relative h-[130px]" style={{ background: grads[idx % grads.length] }}><span className="absolute top-3 start-3 rounded-[999px] bg-[rgba(11,12,16,0.7)] px-[10px] py-1 text-[12px]" style={{ color: p.status === "upcoming" ? "#8CC7FF" : "#F3C86A" }}>{statusLabel}</span></div>
+                <div className="relative">
+                  <ProjectImage
+                    project={p}
+                    className="aspect-[16/10] w-full rounded-t-[20px]"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 25vw"
+                    priority={idx === 0}
+                  />
+                  <span className="absolute top-3 start-3 rounded-[999px] bg-[rgba(11,12,16,0.7)] px-[10px] py-1 text-[12px]" style={{ color: p.status === "upcoming" ? "#8CC7FF" : "#F3C86A" }}>{statusLabel}</span>
+                </div>
                 <div className="flex flex-col gap-[10px] p-[14px_16px] text-[15px] text-[#F1EEE8]">
                   <div>{projectName(p, locale)}<small className="block text-[13px] text-[#A6A9B4]">{projectCity(p, locale)}</small></div>
                   <div className="h-[6px] overflow-hidden rounded-[9px] bg-[#232632]"><span className="block h-full rounded-[9px] bg-[linear-gradient(270deg,#F3C86A,#C98F1E)]" style={{ width: `${Math.min(100, Math.max(0, p.progress || 0))}%` }} /></div>
@@ -1625,11 +1643,6 @@ function ProjectsSection({
     );
   };
 
-  const projectPhotoSrc = (project: WorkspaceProject) => {
-    const record = project as WorkspaceProject & { image?: string; cover?: string };
-    return record.image || record.cover;
-  };
-
   const budgetHealthLabel = (project: WorkspaceProject) => {
     const mp = metricsBySlug.get(project.slug);
     if (!mp) return locale === "ar" ? "لا توجد بيانات" : "No data";
@@ -1740,10 +1753,15 @@ function ProjectsSection({
         </div>
       ) : view === "cards" ? (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {paged.map((project) => (
-            <button key={project.slug} type="button" onClick={() => setDetail(project)} className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018] p-4 text-start transition-colors hover:border-gold/30">
-              <div className="flex items-start gap-3">
-                <span className="relative h-16 w-20 shrink-0 overflow-hidden border border-white/10"><ProjectArt variant={project.art} className="h-full w-full" /></span>
+          {paged.map((project, index) => (
+            <button key={project.slug} type="button" onClick={() => setDetail(project)} className="overflow-hidden rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018] text-start transition-colors hover:border-gold/30">
+              <ProjectImage
+                project={project}
+                sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw"
+                priority={index === 0}
+                className="aspect-[16/10] w-full rounded-t-[22px]"
+              />
+              <div className="p-4">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-2">
                     <p className="truncate text-[0.9rem] font-medium text-ivory">{l(project.title)}</p>
@@ -1768,12 +1786,12 @@ function ProjectsSection({
       ) : (
         <>
           <div className="grid gap-3 md:hidden">
-            {paged.map((project) => {
+            {paged.map((project, index) => {
               const statusTone: "warning" | "success" | "info" = project.status === "ongoing" ? "warning" : project.status === "completed" ? "success" : "info";
               return (
                 <Card key={project.slug} className="relative p-4">
                   <div className="flex items-start gap-3">
-                    <ProjectPhoto src={projectPhotoSrc(project)} alt={l(project.title)} art={project.art} className="h-14 w-[70px]" />
+                    <ProjectImage project={project} variant="thumb" sizes="70px" priority={index === 0} className="h-14 w-[70px] shrink-0 rounded-xl border border-[var(--admin-card-border)]" />
                     <button type="button" onClick={() => setDetail(project)} className="min-w-0 flex-1 text-start admin-focus-ring rounded-[12px]">
                       <p className="truncate text-[15px] font-medium text-[var(--admin-text)]">{l(project.title)}</p>
                       <p className="mt-1 truncate text-[13px] text-[var(--admin-muted)]">{l(project.location)}</p>
@@ -1829,18 +1847,17 @@ function ProjectsSection({
                   </tr>
                 </THead>
                 <tbody>
-                  {paged.map((project) => {
+                  {paged.map((project, index) => {
                     const mp = metricsBySlug.get(project.slug);
                     const h = mp ? getBudgetHealth(mp) : { key: "no_data" as const };
                     const tone: "success" | "warning" | "danger" | "neutral" = h.key === "on_track" || h.key === "saved" ? "success" : h.key === "watch" ? "warning" : h.key === "over" || h.key === "overrun" ? "danger" : "neutral";
                     const statusTone: "warning" | "success" | "info" = project.status === "ongoing" ? "warning" : project.status === "completed" ? "success" : "info";
-                    const photoSrc = projectPhotoSrc(project);
                     return (
                       <TR key={project.slug} onClick={() => setDetail(project)} className={cn("cursor-pointer", selected.has(project.slug) && "bg-[rgba(226,176,74,0.06)]")}>
                         <TD onClick={(e) => e.stopPropagation()}><Checkbox checked={selected.has(project.slug)} onChange={() => toggleSelected(project.slug)} aria-label={`${c.selectAll}: ${l(project.title)}`} /></TD>
                         <TD>
                           <span className="flex items-center gap-3">
-                            <ProjectPhoto src={photoSrc} alt={l(project.title)} art={project.art} />
+                            <ProjectImage project={project} variant="thumb" sizes="64px" priority={index === 0} className="h-12 w-16 shrink-0 rounded-xl border border-[var(--admin-card-border)]" />
                             <span className="flex min-w-0 flex-col gap-0.5">
                               <span className="truncate text-[14px] font-medium text-[#F1EEE8]">{l(project.title)}</span>
                               <span className="truncate text-[13px] text-[#A6A9B4]">{l(project.location)}</span>
@@ -1900,7 +1917,7 @@ function ProjectsSection({
               <button type="button" onClick={() => setDetail(null)} className="inline-flex h-10 w-10 items-center justify-center border border-white/12 text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold" aria-label="Close"><X className="h-4 w-4" /></button>
             </div>
             <div className="mt-5 space-y-4">
-              <div className="relative h-44 overflow-hidden border border-white/10"><ProjectArt variant={detail.art} className="h-full w-full" /></div>
+              <ProjectImage project={detail} sizes="(max-width: 640px) 100vw, 560px" priority className="aspect-[16/9] w-full rounded-[14px] border border-white/10" />
               <div className="grid grid-cols-2 gap-3">
                 {[
                   [c.status, c.statusLabels[detail.status]],
@@ -3072,9 +3089,9 @@ function MediaSection({ projects }: { projects: WorkspaceProject[] }) {
                   onClick={() =>
                     updateProject(project.slug, {
                       art: variant,
-                      gallery: project.gallery.includes(variant)
-                        ? project.gallery
-                        : [...project.gallery, variant],
+                      artGallery: project.artGallery.includes(variant)
+                        ? project.artGallery
+                        : [...project.artGallery, variant],
                     })
                   }
                   className={cn(
