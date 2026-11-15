@@ -9,10 +9,17 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "seed": "tsx --env-file=.env scripts/seed.ts",
+    "migrate:cities": "tsx --env-file=.env scripts/migrate-project-cities.ts",
     "smoke:proposal": "tsx --env-file=.env scripts/proposal-smoke.ts"
   },
   "dependencies": {
+    "@hookform/resolvers": "^7.0.6",
     "@pdf-lib/fontkit": "^1.1.1",
+    "@radix-ui/react-dialog": "^1.3.1",
+    "@radix-ui/react-popover": "^1.3.1",
+    "@radix-ui/react-select": "^2.4.1",
+    "@radix-ui/react-slider": "^1.6.1",
+    "@radix-ui/react-switch": "^1.4.1",
     "@simplewebauthn/browser": "^14.0.0",
     "@simplewebauthn/server": "^14.1.0",
     "bcryptjs": "^3.0.3",
@@ -26,7 +33,9 @@
     "pdf-lib": "^1.17.1",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "react-hook-form": "^7.92.0",
     "sharp": "^0.34.5",
+    "sonner": "^2.0.8",
     "tailwind-merge": "^3.7.0",
     "zod": "^4.6.7"
   },

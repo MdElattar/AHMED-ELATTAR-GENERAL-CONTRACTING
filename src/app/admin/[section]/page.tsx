@@ -84,6 +84,11 @@ const sectionRoutes: Record<string, SectionRoute> = {
     title: "الصيانة",
     description: "أدوات لمرة واحدة لاستكمال بيانات الصور والوسائط.",
   },
+  profile: {
+    section: "profile",
+    title: "الملف الشخصي",
+    description: "الاسم واللقب والاسم العربي المستخدم في التحية ولوحة التحكم.",
+  },
   access: {
     section: "access",
     title: "تفويض الصلاحيات",

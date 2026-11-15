@@ -17,6 +17,9 @@ import { isEmail } from "@/lib/security/validation";
 
 export type PortalUser = {
   name: string;
+  nameAr?: string;
+  honorific?: string;
+  honorificAr?: string;
   email: string;
   company: string;
   accountId: string;
@@ -33,7 +36,9 @@ export type PortalPasskey = {
   deviceType?: string;
 };
 
-type ProfilePatch = Partial<Pick<PortalUser, "name" | "company" | "phone">>;
+type ProfilePatch = Partial<
+  Pick<PortalUser, "name" | "nameAr" | "honorific" | "honorificAr" | "company" | "phone">
+>;
 
 type AuthContextValue = {
   user: PortalUser | null;
@@ -87,6 +92,12 @@ function parseUser(value: unknown, verified: boolean): PortalUser | null {
   if (!isRecord(value)) return null;
 
   const name = typeof value.name === "string" ? value.name.trim().slice(0, 120) : "";
+  const nameAr =
+    typeof value.nameAr === "string" ? value.nameAr.trim().slice(0, 120) : "";
+  const honorific =
+    typeof value.honorific === "string" ? value.honorific.trim().slice(0, 30) : "";
+  const honorificAr =
+    typeof value.honorificAr === "string" ? value.honorificAr.trim().slice(0, 30) : "";
   const email =
     typeof value.email === "string" ? value.email.trim().toLowerCase().slice(0, 254) : "";
   const company =
@@ -99,6 +110,9 @@ function parseUser(value: unknown, verified: boolean): PortalUser | null {
 
   return {
     name,
+    ...(nameAr ? { nameAr } : {}),
+    ...(honorific ? { honorific } : {}),
+    ...(honorificAr ? { honorificAr } : {}),
     email,
     company,
     accountId,

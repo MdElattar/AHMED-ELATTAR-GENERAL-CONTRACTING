@@ -18,6 +18,7 @@ async function loadProject(slug: string) {
   try {
     const record = await getProjectBySlug(slug);
     if (!record || record.slug.startsWith("__")) return null;
+    if (record.payload.archivedAt || record.payload.published === false) return null;
     return record.payload as unknown as Project;
   } catch (error) {
     console.error("[project] failed to load", slug, error);

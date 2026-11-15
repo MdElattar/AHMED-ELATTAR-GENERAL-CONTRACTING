@@ -25,9 +25,14 @@ export async function GET() {
   const session = await requireAdmin();
   if (!session) return unauthorized();
 
-  const projects = (await listProjects()).filter(
-    (project) => !project.slug.startsWith("__"),
-  );
+  const projects = (await listProjects())
+    .filter((project) => !project.slug.startsWith("__"))
+    .map((project) => ({
+      ...project.payload,
+      slug: project.slug,
+      featured: project.featured,
+      updatedAt: project.updatedAt,
+    }));
   return NextResponse.json({ projects }, { headers: NO_STORE_HEADERS });
 }
 

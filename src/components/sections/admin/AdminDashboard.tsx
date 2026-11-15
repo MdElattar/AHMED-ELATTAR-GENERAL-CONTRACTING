@@ -1,12 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { LazyMotion, domAnimation, m, useReducedMotion } from "framer-motion";
+import { toast as sonnerToast } from "sonner";
 import {
   Activity,
+  Archive,
   ArrowUpRight,
   Building2,
   Bell,
@@ -14,10 +16,13 @@ import {
   CalendarDays,
   Check,
   ChevronDown,
+  Copy,
+  ExternalLink,
   FileSignature,
   FileText,
   Flag,
   FolderKanban,
+  Eye,
   Image as ImageIcon,
   Inbox,
   LayoutDashboard,
@@ -35,19 +40,22 @@ import {
   ShieldCheck,
   Sparkles,
   Trash2,
+  UserRound,
   Wallet,
   Wrench,
   X,
 } from "lucide-react";
-import { isAdminUser, useAuth } from "@/components/providers/AuthProvider";
+import { isAdminUser, useAuth, type PortalUser } from "@/components/providers/AuthProvider";
 import { useI18n } from "@/components/providers/I18nProvider";
-import { useSmoothScroll } from "@/components/providers/SmoothScroll";
+
 import {
   useWorkspace,
   type WorkspaceProject,
 } from "@/components/providers/WorkspaceProvider";
 import { AdminAccess } from "@/components/sections/admin/AdminAccess";
 import { AdminCommandPalette } from "@/components/sections/admin/AdminCommandPalette";
+import { AdminProfile, AdminProfilePrompt } from "@/components/sections/admin/AdminProfile";
+import { AdminNotificationsDrawer } from "@/components/sections/admin/AdminNotificationsDrawer";
 import { AdminProjectEditor } from "@/components/sections/admin/AdminProjectEditor";
 import { AdminMaintenance } from "@/components/sections/admin/AdminMaintenance";
 import {
@@ -64,6 +72,8 @@ import { ProjectArt } from "@/components/ui/ProjectArt";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { AdminSectionBoundary } from "@/components/system/AdminSectionBoundary";
 import { Button, Card, Chip, DataTable, EmptyState, PageHeader, StatusPill, Table, TD, TH, THead, TR, AdminInput, AdminSelect } from "@/components/ui/admin";
+import { ConfirmDialog, Drawer, Modal, Popover } from "@/components/ui/admin/overlay";
+import { Input as FieldInput, Select as FieldSelect, Slider } from "@/components/ui/admin/form";
 import { ProjectImage } from "@/components/ui/ProjectImage";
 import { useToast } from "@/components/ui/Toast";
 import type { ArtVariant } from "@/data/projects";
@@ -77,10 +87,11 @@ import {
   type CopyField,
   type MediaOverride,
 } from "@/lib/cms";
-import { acquireScrollLock, releaseScrollLock } from "@/lib/scroll/lock";
+
 import { cn } from "@/lib/utils";
 import {
   buildAlerts,
+  budgetHealthCopy,
   byCity,
   formatSAR,
   getBudgetHealth,
@@ -105,6 +116,7 @@ export type AdminSection =
   | "messages"
   | "audit"
   | "maintenance"
+  | "profile"
   | "access";
 
 type Section = AdminSection;
@@ -123,6 +135,7 @@ const sectionHrefs: Record<Section, string> = {
   messages: "/admin/messages",
   audit: "/admin/audit",
   maintenance: "/admin/maintenance",
+  profile: "/admin/profile",
   access: "/admin/access",
 };
 
@@ -143,15 +156,6 @@ function viewportTier() {
   return "xl" as const;
 }
 
-function focusableElements(container: HTMLElement | null) {
-  if (!container) return [];
-  return Array.from(
-    container.querySelectorAll<HTMLElement>(
-      'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
-    ),
-  ).filter((element) => element.offsetParent !== null);
-}
-
 const copy = {
   ar: {
     admin: "لوحة الإدارة",
@@ -169,6 +173,7 @@ const copy = {
     contracts: "العقود",
     notifications: "التنبيهات",
     access: "تفويض الصلاحيات",
+    profile: "الملف الشخصي",
     accessNavHint: "للمسؤول الرئيسي فقط",
     primaryAdmin: "المسؤول الرئيسي",
     back: "العودة للموقع",
@@ -194,7 +199,16 @@ const copy = {
     value: "القيمة",
     actions: "إجراءات",
     edit: "تعديل",
+    cancel: "إلغاء",
     delete: "حذف",
+    archive: "أرشفة",
+    archived: "المؤرشفة",
+    restore: "استعادة",
+    undo: "تراجع",
+    archiveTitle: "أرشفة المشروع؟",
+    archiveBody: "سيُخفى المشروع من الموقع العام ويمكنك استعادته من تبويب المؤرشفة.",
+    archivedToast: "تمت أرشفة المشروع",
+    restoredToast: "تمت استعادة المشروع",
     deleteConfirm: "هل أنت متأكد من حذف هذا المشروع؟",
     noProjects: "لا توجد مشاريع مطابقة.",
     selected: "محدد",
@@ -321,6 +335,7 @@ const copy = {
     contracts: "Contracts",
     notifications: "Alerts",
     access: "Admin delegation",
+    profile: "Profile",
     accessNavHint: "Primary admin only",
     primaryAdmin: "Primary admin",
     back: "Back to site",
@@ -346,7 +361,16 @@ const copy = {
     value: "Value",
     actions: "Actions",
     edit: "Edit",
+    cancel: "Cancel",
     delete: "Delete",
+    archive: "Archive",
+    archived: "Archived",
+    restore: "Restore",
+    undo: "Undo",
+    archiveTitle: "Archive project?",
+    archiveBody: "The project will be hidden from the public site. Restore it any time from the Archived tab.",
+    archivedToast: "Project archived",
+    restoredToast: "Project restored",
     deleteConfirm: "Delete this project?",
     noProjects: "No matching projects.",
     selected: "selected",
@@ -480,8 +504,7 @@ export function AdminDashboard({
 }) {
   const { locale, toggleLocale } = useI18n();
   const { user, ready } = useAuth();
-  const { projects, messages, addProject, updateProject, deleteProject, ready: workspaceReady } = useWorkspace();
-  const { stop, start } = useSmoothScroll();
+  const { projects, messages, addProject, updateProject, ready: workspaceReady } = useWorkspace();
   const router = useRouter();
   const pathname = usePathname();
   const c = copy[locale];
@@ -489,6 +512,8 @@ export function AdminDashboard({
   const [editing, setEditing] = useState<WorkspaceProject | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [tier, setTier] = useState<"mobile" | "lg" | "xl">("xl");
@@ -509,13 +534,8 @@ export function AdminDashboard({
     try { const t = localStorage.getItem("admin-theme"); return t === "light" ? "light" : "dark"; } catch { return "dark"; }
   });
   const mainRef = useRef<HTMLElement | null>(null);
-  const mobileDrawerRef = useRef<HTMLElement | null>(null);
-  const moreSheetRef = useRef<HTMLDivElement | null>(null);
-  const touchStartX = useRef<number | null>(null);
-  const touchStartY = useRef<number | null>(null);
   const autoCollapsed = tier === "lg";
   const collapsed = autoCollapsed || sidebarCollapsed;
-  const isRtl = locale === "ar";
 
   useEffect(() => {
     const update = () => setTier(viewportTier());
@@ -525,7 +545,23 @@ export function AdminDashboard({
   }, []);
 
   useEffect(() => {
-    mainRef.current?.scrollTo({ top: 0, behavior: "auto" });
+    const main = mainRef.current;
+    if (!main) return;
+    main.scrollTo({ top: 0, behavior: "auto" });
+  }, []);
+
+  const scrollPositions = useRef(new Map<string, number>());
+
+  useEffect(() => {
+    const main = mainRef.current;
+    if (!main) return;
+    const saved = scrollPositions.current.get(pathname) ?? 0;
+    main.scrollTo({ top: saved, behavior: "auto" });
+    const onScroll = () => {
+      scrollPositions.current.set(pathname, main.scrollTop);
+    };
+    main.addEventListener("scroll", onScroll, { passive: true });
+    return () => main.removeEventListener("scroll", onScroll);
   }, [pathname]);
 
   useEffect(() => { try { localStorage.setItem("admin-density", density); } catch {} }, [density]);
@@ -538,79 +574,120 @@ export function AdminDashboard({
     else root.removeAttribute("data-theme");
   }, [theme]);
 
-  useEffect(() => {
-    if (paletteOpen) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
-        event.preventDefault();
-        setPaletteOpen(true);
-      }
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [paletteOpen]);
-
-  useEffect(() => {
-    if (!mobileNavOpen && !moreOpen) return;
-    acquireScrollLock(stop);
-    return () => releaseScrollLock(start);
-  }, [mobileNavOpen, moreOpen, start, stop]);
-
-  useEffect(() => {
-    if (!mobileNavOpen) return;
-    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    const frame = window.requestAnimationFrame(() => focusableElements(mobileDrawerRef.current)[0]?.focus());
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        setMobileNavOpen(false);
-        return;
-      }
-      if (event.key !== "Tab") return;
-      const items = focusableElements(mobileDrawerRef.current);
-      if (!items.length) return;
-      const first = items[0];
-      const last = items[items.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => {
-      window.cancelAnimationFrame(frame);
-      window.removeEventListener("keydown", onKeyDown);
-      previous?.focus();
-    };
-  }, [mobileNavOpen]);
-
-  useEffect(() => {
-    if (!moreOpen) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setMoreOpen(false);
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [moreOpen]);
-
-  const navigateToSection = (next: Section, focusId?: string) => {
+  const navigateToSection = useCallback((next: Section, focusId?: string) => {
     setMobileNavOpen(false);
     setMoreOpen(false);
-    if (mainRef.current) mainRef.current.scrollTo({ top: 0, behavior: "smooth" });
     const href = sectionHrefs[next];
     router.push(
       focusId ? `${href}?focus=${encodeURIComponent(focusId)}` : href,
     );
-  };
+  }, [router]);
 
+  useEffect(() => {
+    if (paletteOpen || shortcutsOpen) return;
+    let gPressed = false;
+    let gTimer = 0;
+    const isTyping = (target: EventTarget | null) => {
+      const element = target as HTMLElement | null;
+      if (!element) return false;
+      return Boolean(
+        element.closest("input, textarea, select, [contenteditable='true']"),
+      );
+    };
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setPaletteOpen(true);
+        return;
+      }
+      if (event.metaKey || event.ctrlKey || event.altKey || isTyping(event.target)) {
+        return;
+      }
+      if (event.key === "/") {
+        event.preventDefault();
+        setPaletteOpen(true);
+        return;
+      }
+      if (event.key === "?") {
+        event.preventDefault();
+        setShortcutsOpen(true);
+        return;
+      }
+      if (event.key.toLowerCase() === "n") {
+        event.preventDefault();
+        navigateToSection("projects");
+        setEditing(null);
+        setEditorOpen(true);
+        return;
+      }
+      if (event.key.toLowerCase() === "g") {
+        gPressed = true;
+        window.clearTimeout(gTimer);
+        gTimer = window.setTimeout(() => {
+          gPressed = false;
+        }, 900);
+        return;
+      }
+      if (gPressed) {
+        const key = event.key.toLowerCase();
+        gPressed = false;
+        window.clearTimeout(gTimer);
+        if (key === "p") {
+          event.preventDefault();
+          navigateToSection("projects");
+        } else if (key === "o") {
+          event.preventDefault();
+          navigateToSection("overview");
+        } else if (key === "i") {
+          event.preventDefault();
+          navigateToSection("inquiries");
+        } else if (key === "c") {
+          event.preventDefault();
+          navigateToSection("contracts");
+        }
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.clearTimeout(gTimer);
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [paletteOpen, shortcutsOpen, navigateToSection]);
 
   if (!ready) {
     return (
-      <section className="flex h-dvh items-center justify-center bg-obsidian">
-        <span className="h-8 w-8 animate-spin rounded-full border border-white/15 border-t-gold" />
+      <section className="admin-shell flex h-dvh min-h-0 overflow-hidden bg-[var(--admin-bg)]">
+        <div className="relative mx-auto flex h-full min-h-0 w-full max-w-[1600px]">
+          <aside className="hidden w-[264px] shrink-0 flex-col border-e border-[var(--admin-card-border)] bg-[var(--admin-sidebar)] lg:flex">
+            <div className="h-[72px] border-b border-[var(--admin-card-border)]" />
+            <div className="flex flex-col gap-2 p-3">
+              {Array.from({ length: 8 }).map((_, index) => (
+                <div key={index} className="h-11 animate-pulse rounded-[12px] bg-white/[0.045]" />
+              ))}
+            </div>
+          </aside>
+          <div className="flex min-w-0 flex-1 flex-col">
+            <header className="flex h-[72px] shrink-0 items-center gap-3 border-b border-[var(--admin-card-border)] px-4 sm:px-8">
+              <div className="h-11 w-11 animate-pulse rounded-full bg-white/[0.05] lg:hidden" />
+              <div className="h-10 w-48 animate-pulse rounded-full bg-white/[0.05]" />
+              <div className="ms-auto h-11 w-36 animate-pulse rounded-full bg-white/[0.05]" />
+            </header>
+            <main className="flex-1 space-y-5 overflow-hidden p-4 sm:p-6 lg:p-8" aria-busy="true" aria-label="Loading admin dashboard">
+              <div className="h-44 animate-pulse rounded-[24px] bg-white/[0.04]" />
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <div key={index} className="h-36 animate-pulse rounded-[20px] bg-white/[0.04]" />
+                ))}
+              </div>
+              <div className="grid gap-4 xl:grid-cols-[1.7fr_1fr]">
+                <div className="h-64 animate-pulse rounded-[22px] bg-white/[0.04]" />
+                <div className="h-64 animate-pulse rounded-[22px] bg-white/[0.04]" />
+              </div>
+            </main>
+          </div>
+        </div>
       </section>
     );
   }
@@ -675,6 +752,7 @@ export function AdminDashboard({
     {
       title: locale === "ar" ? "النظام" : "System",
       items: [
+        { id: "profile", label: c.profile, icon: UserRound },
         { id: "notifications", label: c.notifications, icon: BellRing },
         { id: "audit", label: c.audit, icon: Activity },
         {
@@ -709,8 +787,6 @@ export function AdminDashboard({
   const saveProject = (project: WorkspaceProject) => {
     if (editing) updateProject(editing.slug, project);
     else addProject(project);
-    setEditorOpen(false);
-    setEditing(null);
   };
 
   const sidebarBrand = (collapsed: boolean) => (
@@ -762,6 +838,7 @@ export function AdminDashboard({
                 <Link
                   key={id}
                   href={sectionHrefs[id]}
+                  prefetch
                   title={collapsed ? label : undefined}
                   aria-label={label}
                   onClick={() => {
@@ -796,20 +873,20 @@ export function AdminDashboard({
       {!collapsed ? (
         <div className="flex items-center gap-[10px] rounded-[14px] border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] p-3">
           <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,#F3C86A,#C98F1E)] text-[14px] font-extrabold text-[#1a1205]">
-            {userInitials(user.name)}
+            {profileMonogram(user, locale)}
             <span className="absolute bottom-0 end-0 h-[11px] w-[11px] rounded-full border-2 border-[var(--admin-bg)] bg-[var(--admin-green)]" />
           </div>
           <div className="min-w-0">
-            <p className="truncate text-[14px] font-medium text-[var(--admin-text)]">{user.name || "—"}</p>
+            <p className="truncate text-[14px] font-medium text-[var(--admin-text)]">{profileName(user, locale) || "—"}</p>
             <p className="truncate text-[12px] text-[var(--admin-muted)]">{userRoleLabel(user, locale)}</p>
           </div>
         </div>
       ) : (
         <div
           className="relative mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-[linear-gradient(135deg,#F3C86A,#C98F1E)] text-[13px] font-extrabold text-[#1a1205]"
-          title={user.name || "—"}
+          title={profileName(user, locale) || "—"}
         >
-          {userInitials(user.name)}
+          {profileMonogram(user, locale)}
           <span className="absolute bottom-0 end-0 h-[10px] w-[10px] rounded-full border-2 border-[var(--admin-bg)] bg-[var(--admin-green)]" />
         </div>
       )}
@@ -893,7 +970,7 @@ export function AdminDashboard({
 
               <button type="button" onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))} className="admin-focus-ring inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] text-[13px] font-bold text-[var(--admin-text)]" aria-label={theme === "dark" ? (locale === "ar" ? "الوضع الفاتح" : "Light mode") : (locale === "ar" ? "الوضع الداكن" : "Dark mode")}>{theme === "dark" ? "☀" : "☾"}</button>
               <button type="button" onClick={toggleLocale} className="admin-focus-ring inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] text-[13px] font-bold text-[var(--admin-text)]" aria-label={locale === "ar" ? "English" : "العربية"}>{locale === "ar" ? "EN" : "AR"}</button>
-              <button type="button" onClick={() => navigateToSection("notifications")} className="admin-focus-ring relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] text-[var(--admin-text)]" aria-label={locale === "ar" ? "التنبيهات" : "Notifications"}>
+              <button type="button" onClick={() => setNotificationsOpen(true)} className="admin-focus-ring relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] text-[var(--admin-text)]" aria-label={locale === "ar" ? "التنبيهات" : "Notifications"} aria-haspopup="dialog">
                 <Bell className="h-5 w-5" strokeWidth={1.7} />
                 <span className="absolute top-[10px] end-[11px] h-2 w-2 rounded-full bg-[var(--admin-gold)]" />
               </button>
@@ -913,7 +990,7 @@ export function AdminDashboard({
                   <OverviewSection projects={projects} ready={workspaceReady} user={user} onNew={openNew} onNavigate={navigateToSection} density={density} setDensity={setDensity} fontScale={fontScale} setFontScale={setFontScale} setPaletteOpen={setPaletteOpen} locale={locale} />
                 ) : null}
                 {section === "projects" ? (
-                  <ProjectsSection projects={projects} onNew={openNew} onEdit={openEdit} onDelete={(p) => deleteProject(p.slug)} />
+                  <ProjectsSection projects={projects} onNew={openNew} onEdit={openEdit} />
                 ) : null}
                 {section === "milestones" ? <MilestonesPanel /> : null}
                 {section === "consultations" ? <ConsultationsPanel /> : null}
@@ -926,107 +1003,68 @@ export function AdminDashboard({
                 {section === "messages" ? <MessagesSection projects={projects} /> : null}
                 {section === "audit" ? <AuditPanel /> : null}
                 {section === "maintenance" ? <AdminMaintenance /> : null}
+                {section === "profile" ? <AdminProfile /> : null}
                 {section === "access" ? <AdminAccess /> : null}
               </AdminSectionBoundary>
             </main>
           </div>
         </div>
 
-        {mobileNavOpen ? (
-          <div className="fixed inset-0 z-[120] lg:hidden" role="dialog" aria-modal="true" aria-label={locale === "ar" ? "قائمة التنقل" : "Navigation menu"}>
-            <button type="button" className="absolute inset-0 bg-black/60 backdrop-blur-sm" aria-label={locale === "ar" ? "إغلاق" : "Close"} onClick={() => setMobileNavOpen(false)} />
-            <m.aside
-              ref={mobileDrawerRef}
-              data-lenis-prevent
-              initial={{ x: isRtl ? "100%" : "-100%" }}
-              animate={{ x: 0 }}
-              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-              onTouchStart={(event) => {
-                touchStartX.current = event.touches[0]?.clientX ?? null;
-                touchStartY.current = event.touches[0]?.clientY ?? null;
-              }}
-              onTouchEnd={(event) => {
-                const startX = touchStartX.current;
-                const startY = touchStartY.current;
-                const endX = event.changedTouches[0]?.clientX;
-                const endY = event.changedTouches[0]?.clientY;
-                touchStartX.current = null;
-                touchStartY.current = null;
-                if (startX === null || startY === null || endX === undefined || endY === undefined) return;
-                const dx = endX - startX;
-                const dy = endY - startY;
-                if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) && ((isRtl && dx > 0) || (!isRtl && dx < 0))) {
-                  setMobileNavOpen(false);
-                }
-              }}
-              className="absolute inset-y-0 start-0 flex h-dvh w-[min(300px,88vw)] max-w-full flex-col border-e border-[var(--admin-card-border)] bg-[var(--admin-sidebar)] shadow-2xl backdrop-blur-md"
-            >
-              {sidebarBrand(false)}
-              {sidebarNav(false)}
-              {sidebarUser(false)}
-            </m.aside>
-          </div>
-        ) : null}
+        <Drawer
+          open={mobileNavOpen}
+          onOpenChange={setMobileNavOpen}
+          title={locale === "ar" ? "قائمة التنقل" : "Navigation menu"}
+          closeLabel={locale === "ar" ? "إغلاق" : "Close"}
+          side="start"
+          bare
+          widthClassName="w-[min(300px,88vw)]!"
+          className="bg-[var(--admin-sidebar)] bg-none lg:hidden"
+          bodyClassName="flex min-h-0 flex-1 flex-col overflow-y-auto p-0"
+        >
+          {sidebarBrand(false)}
+          {sidebarNav(false)}
+          {sidebarUser(false)}
+        </Drawer>
 
-        {moreOpen ? (
-          <div className="fixed inset-0 z-[125] md:hidden" role="dialog" aria-modal="true" aria-label={locale === "ar" ? "المزيد" : "More"}>
-            <button type="button" className="absolute inset-0 bg-black/60 backdrop-blur-sm" aria-label={locale === "ar" ? "إغلاق" : "Close"} onClick={() => setMoreOpen(false)} />
-            <m.div
-              ref={moreSheetRef}
-              data-lenis-prevent
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-              onTouchStart={(event) => {
-                touchStartY.current = event.touches[0]?.clientY ?? null;
-              }}
-              onTouchEnd={(event) => {
-                const startY = touchStartY.current;
-                const endY = event.changedTouches[0]?.clientY;
-                touchStartY.current = null;
-                if (startY !== null && endY !== undefined && endY - startY > 70) setMoreOpen(false);
-              }}
-              className="absolute inset-x-0 bottom-0 max-h-[82dvh] overflow-y-auto overscroll-contain rounded-t-[24px] border-t border-[var(--admin-card-border)] bg-[var(--admin-bg)] p-4 pb-[calc(20px+env(safe-area-inset-bottom,0px))] shadow-2xl"
-            >
-              <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[var(--admin-card-border)]" />
-              <div className="mb-2 flex items-center justify-between gap-3">
-                <h2 className="m-0 text-[20px] font-bold text-[var(--admin-text)]">{locale === "ar" ? "المزيد" : "More"}</h2>
-                <button type="button" onClick={() => setMoreOpen(false)} className="admin-focus-ring inline-flex h-10 w-10 items-center justify-center rounded-[12px] text-[var(--admin-muted)] hover:bg-[var(--admin-pill-surface)]" aria-label={locale === "ar" ? "إغلاق" : "Close"}>
-                  <X className="h-5 w-5" strokeWidth={1.7} />
-                </button>
+        <Modal
+          open={moreOpen}
+          onOpenChange={setMoreOpen}
+          title={locale === "ar" ? "المزيد" : "More"}
+          closeLabel={locale === "ar" ? "إغلاق" : "Close"}
+          size="sm"
+          className="md:hidden"
+        >
+          <div className="flex flex-col gap-4">
+            {moreGroups.map((group) => (
+              <div key={group.title}>
+                <p className="mb-1 px-1 text-[13px] text-[var(--admin-muted)]">{group.title}</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {group.items.map(({ id, label, icon: Icon }) => {
+                    const active = section === id;
+                    return (
+                      <Link
+                        key={id}
+                        href={sectionHrefs[id]}
+                        prefetch
+                        onClick={() => setMoreOpen(false)}
+                        aria-current={active ? "page" : undefined}
+                        className={cn(
+                          "admin-focus-ring flex min-h-[52px] items-center gap-3 rounded-xl border px-3 text-[14px]",
+                          active
+                            ? "border-[rgba(226,176,74,0.28)] bg-[rgba(226,176,74,0.12)] text-[var(--admin-gold)]"
+                            : "border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] text-[var(--admin-text)]",
+                        )}
+                      >
+                        <Icon className="h-5 w-5 shrink-0" strokeWidth={1.7} />
+                        <span className="truncate">{label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
               </div>
-              <div className="flex flex-col gap-4">
-                {moreGroups.map((group) => (
-                  <div key={group.title}>
-                    <p className="mb-1 px-1 text-[12px] text-[var(--admin-muted)]">{group.title}</p>
-                    <div className="grid grid-cols-2 gap-2">
-                      {group.items.map(({ id, label, icon: Icon }) => {
-                        const active = section === id;
-                        return (
-                          <Link
-                            key={id}
-                            href={sectionHrefs[id]}
-                            onClick={() => setMoreOpen(false)}
-                            aria-current={active ? "page" : undefined}
-                            className={cn(
-                              "admin-focus-ring flex min-h-[52px] items-center gap-3 rounded-[12px] border px-3 text-[14px]",
-                              active
-                                ? "border-[rgba(226,176,74,0.28)] bg-[rgba(226,176,74,0.12)] text-[var(--admin-gold)]"
-                                : "border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] text-[var(--admin-text)]",
-                            )}
-                          >
-                            <Icon className="h-5 w-5 shrink-0" strokeWidth={1.7} />
-                            <span className="truncate">{label}</span>
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </m.div>
+            ))}
           </div>
-        ) : null}
+        </Modal>
 
         <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--admin-card-border)] bg-[var(--admin-bg)]/95 pb-[env(safe-area-inset-bottom,0px)] backdrop-blur md:hidden" aria-label={locale === "ar" ? "تنقل سفلي" : "Bottom navigation"}>
           <div className="mx-auto grid h-16 max-w-3xl grid-cols-4 px-2">
@@ -1051,12 +1089,55 @@ export function AdminDashboard({
         </nav>
       </section>
 
+      <AdminNotificationsDrawer
+        open={notificationsOpen}
+        onOpenChange={setNotificationsOpen}
+        projects={projects}
+        onNavigate={(target) => {
+          setNotificationsOpen(false);
+          navigateToSection(target);
+        }}
+      />
+      {shortcutsOpen ? (
+        <Modal
+          open
+          onOpenChange={(open) => {
+            if (!open) setShortcutsOpen(false);
+          }}
+          title={locale === "ar" ? "اختصارات لوحة المفاتيح" : "Keyboard shortcuts"}
+          closeLabel={locale === "ar" ? "إغلاق" : "Close"}
+          size="sm"
+        >
+          <dl className="divide-y divide-[var(--admin-card-border)]">
+            {[
+              ["⌘ / Ctrl + K", locale === "ar" ? "فتح الأوامر السريعة" : "Open command palette"],
+              ["/", locale === "ar" ? "التركيز على البحث" : "Focus search"],
+              ["g p", locale === "ar" ? "الانتقال إلى المشاريع" : "Go to projects"],
+              ["g o", locale === "ar" ? "الانتقال إلى النظرة العامة" : "Go to overview"],
+              ["g i", locale === "ar" ? "الانتقال إلى الاستفسارات" : "Go to inquiries"],
+              ["g c", locale === "ar" ? "الانتقال إلى العقود" : "Go to contracts"],
+              ["n", locale === "ar" ? "مشروع جديد" : "New project"],
+              ["?", locale === "ar" ? "عرض هذه القائمة" : "Show this list"],
+            ].map(([keys, label]) => (
+              <div key={keys} className="flex items-center justify-between gap-4 py-2.5">
+                <dt className="text-[14px] text-[var(--admin-text)]">{label}</dt>
+                <dd>
+                  <kbd className="whitespace-nowrap rounded-md border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] px-2 py-1 font-mono text-[12px] text-[var(--admin-muted)]">
+                    {keys}
+                  </kbd>
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </Modal>
+      ) : null}
       {paletteOpen ? (
         <AdminCommandPalette projects={projects} sections={paletteSections} onClose={() => setPaletteOpen(false)} onOpenProject={openEdit} onNavigate={navigateToSection} />
       ) : null}
       {editorOpen ? (
         <AdminProjectEditor key={editing?.slug ?? "new"} project={editing} existingSlugs={projects.map((project) => project.slug)} onClose={() => { setEditorOpen(false); setEditing(null); }} onSave={saveProject} />
       ) : null}
+      {ready && isAdmin ? <AdminProfilePrompt /> : null}
     </LazyMotion>
   );
 }
@@ -1074,6 +1155,17 @@ function userRoleLabel(user: { role?: string; primaryAdmin?: boolean; company?: 
   if (user.role === "admin") return locale === "ar" ? "مسؤول" : "Admin";
   if (user.role === "client") return locale === "ar" ? "عميل" : "Client";
   return user.company || (locale === "ar" ? "مستخدم" : "User");
+}
+
+/** The signed-in profile's name, not a hardcoded role or placeholder. */
+function profileName(user: PortalUser, locale: "ar" | "en") {
+  const name = locale === "ar" ? user.nameAr || user.name : user.name;
+  const honorific = locale === "ar" ? user.honorificAr || user.honorific : user.honorific;
+  return [honorific, name].filter(Boolean).join(" ").trim();
+}
+
+function profileMonogram(user: PortalUser, locale: "ar" | "en") {
+  return userInitials(locale === "ar" ? user.nameAr || user.name : user.name);
 }
 
 function riyadhHour() {
@@ -1158,7 +1250,7 @@ function OverviewSection({
 }: {
   projects: WorkspaceProject[];
   ready: boolean;
-  user: { name: string; role?: string; primaryAdmin?: boolean; company?: string };
+  user: PortalUser;
   onNew: () => void;
   onNavigate: (section: Section) => void;
   density: "comfortable" | "compact";
@@ -1175,6 +1267,56 @@ function OverviewSection({
   const metrics = useMemo(() => projects.map(toMetricsProject), [projects]);
   const alerts = useMemo(() => buildAlerts(metrics), [metrics]);
   const byId = useMemo(() => new Map(metrics.map((p) => [p.id, p])), [metrics]);
+  const [kpiState, setKpiState] = useState<
+    | { status: "loading"; newInquiries: number | null; signedContracts: number | null }
+    | { status: "ready"; newInquiries: number; signedContracts: number }
+    | { status: "error"; newInquiries: null; signedContracts: null }
+  >({ status: "loading", newInquiries: null, signedContracts: null });
+
+  const refreshKpis = useCallback(async () => {
+    try {
+      const response = await fetch("/api/admin/kpis", {
+        cache: "no-store",
+        credentials: "same-origin",
+      });
+      if (!response.ok) throw new Error("kpi_unavailable");
+      const data = (await response.json().catch(() => null)) as
+        | { kpis?: { newInquiries?: unknown; signedContracts?: unknown } }
+        | null;
+      const newInquiries = data?.kpis?.newInquiries;
+      const signedContracts = data?.kpis?.signedContracts;
+      if (
+        typeof newInquiries !== "number" ||
+        !Number.isFinite(newInquiries) ||
+        typeof signedContracts !== "number" ||
+        !Number.isFinite(signedContracts)
+      ) {
+        throw new Error("kpi_invalid");
+      }
+      setKpiState({ status: "ready", newInquiries, signedContracts });
+    } catch {
+      setKpiState({ status: "error", newInquiries: null, signedContracts: null });
+    }
+  }, []);
+
+  useEffect(() => {
+    const initial = window.setTimeout(() => void refreshKpis(), 0);
+    const timer = window.setInterval(() => void refreshKpis(), 60_000);
+    const onFocus = () => {
+      if (document.visibilityState === "visible") void refreshKpis();
+    };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onFocus);
+    return () => {
+      window.clearTimeout(initial);
+      window.clearInterval(timer);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onFocus);
+    };
+  }, [refreshKpis]);
+
+  const kpiNumber = (value: number | null) =>
+    kpiState.status === "error" || value == null ? "—" : nf.format(value);
 
   const completed = metrics.filter((p) => p.status === "completed").length;
   const ongoing = metrics.filter((p) => p.status === "ongoing").length;
@@ -1210,7 +1352,8 @@ function OverviewSection({
         : `One project needs your attention today: ${alertText(topAlert)}`)
     : (isAr ? "جميع المشاريع في المسار الصحيح." : "All projects are on track.");
 
-  const greeting = `${greetingFor(locale)}${user.name ? (isAr ? ` يا ${user.name}` : `, ${user.name}`) : ""}`;
+  const greetingName = profileName(user, locale);
+  const greeting = `${greetingFor(locale)}${greetingName ? (isAr ? `، ${greetingName}` : `, ${greetingName}`) : ""}`;
   const dateStr = formatRiyadhDate(locale);
 
 
@@ -1235,12 +1378,16 @@ function OverviewSection({
   );
 
   const pillFor = (h: ReturnType<typeof getBudgetHealth>) => {
-    if (h.key === "on_track") return { text: isAr ? "في المسار" : "On track", cls: "bg-[rgba(76,203,150,0.14)] text-[#7BE0B4]" };
-    if (h.key === "watch") return { text: isAr ? "تحت المراقبة" : "Watch", cls: "bg-[rgba(226,176,74,0.14)] text-[#F3C86A]" };
-    if (h.key === "over") return { text: isAr ? "المصروف أسرع من الإنجاز" : "Spending ahead of progress", cls: "bg-[rgba(255,107,94,0.14)] text-[#FF9A8F]" };
-    if (h.key === "saved") return { text: isAr ? `مكتمل · وفر ${formatSAR(h.amount, locale)}` : `Completed · Saved ${formatSAR(h.amount, locale)}`, cls: "bg-[rgba(76,203,150,0.14)] text-[#7BE0B4]" };
-    if (h.key === "overrun") return { text: isAr ? `تجاوز ${formatSAR(h.amount, locale)}` : `Overrun ${formatSAR(h.amount, locale)}`, cls: "bg-[rgba(255,107,94,0.14)] text-[#FF9A8F]" };
-    return { text: isAr ? "لا توجد بيانات" : "No data", cls: "bg-white/10 text-[#A6A9B4]" };
+    const copy = budgetHealthCopy(h, locale);
+    const cls =
+      copy.tone === "success"
+        ? "bg-[rgba(76,203,150,0.14)] text-[#7BE0B4]"
+        : copy.tone === "warning"
+          ? "bg-[rgba(226,176,74,0.14)] text-[#F3C86A]"
+          : copy.tone === "danger"
+            ? "bg-[rgba(255,107,94,0.14)] text-[#FF9A8F]"
+            : "bg-white/10 text-[#A6A9B4]";
+    return { text: copy.short, tooltip: copy.tooltip, cls };
   };
 
   const insight = useMemo(() => {
@@ -1360,14 +1507,34 @@ function OverviewSection({
 
         <m.div variants={fadeUp} className={card}>
           <div className="flex items-center gap-[10px] text-[14px] text-[#A6A9B4]"><MessageSquare className="h-5 w-5 text-[#E2B04A]" strokeWidth={1.7} />{isAr ? "استفسارات جديدة" : "New inquiries"}</div>
-          <div className="whitespace-nowrap text-[28px] font-extrabold tabular-nums text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">—</div>
-          <p className="text-[13px] text-[#A6A9B4]">{isAr ? "بيانات الاستفسارات غير متاحة هنا" : "Inquiry data unavailable here"}</p>
+          <div className="whitespace-nowrap text-[28px] font-extrabold tabular-nums text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{kpiNumber(kpiState.newInquiries)}</div>
+          {kpiState.status === "error" ? (
+            <button type="button" onClick={() => void refreshKpis()} className="admin-focus-ring w-fit text-start text-[13px] text-[#E2B04A] underline-offset-4 hover:underline">
+              {isAr ? "تعذر التحميل — إعادة المحاولة" : "Could not load — retry"}
+            </button>
+          ) : (
+            <p className="text-[13px] text-[#A6A9B4]">
+              {kpiState.status === "loading"
+                ? (isAr ? "جارٍ التحميل…" : "Loading…")
+                : (isAr ? "حسب الحالة: جديد" : "Counted where status is new")}
+            </p>
+          )}
         </m.div>
 
         <m.div variants={fadeUp} className={card}>
           <div className="flex items-center gap-[10px] text-[14px] text-[#A6A9B4]"><FileSignature className="h-5 w-5 text-[#E2B04A]" strokeWidth={1.7} />{isAr ? "عقود موقّعة" : "Signed contracts"}</div>
-          <div className="whitespace-nowrap text-[28px] font-extrabold tabular-nums text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">—</div>
-          <p className="text-[13px] text-[#A6A9B4]">{isAr ? "بيانات العقود غير متاحة هنا" : "Contract data unavailable here"}</p>
+          <div className="whitespace-nowrap text-[28px] font-extrabold tabular-nums text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{kpiNumber(kpiState.signedContracts)}</div>
+          {kpiState.status === "error" ? (
+            <button type="button" onClick={() => void refreshKpis()} className="admin-focus-ring w-fit text-start text-[13px] text-[#E2B04A] underline-offset-4 hover:underline">
+              {isAr ? "تعذر التحميل — إعادة المحاولة" : "Could not load — retry"}
+            </button>
+          ) : (
+            <p className="text-[13px] text-[#A6A9B4]">
+              {kpiState.status === "loading"
+                ? (isAr ? "جارٍ التحميل…" : "Loading…")
+                : (isAr ? "العقود الموقّعة المؤكدة" : "Verified signed contracts")}
+            </p>
+          )}
         </m.div>
       </m.section>
 
@@ -1394,7 +1561,7 @@ function OverviewSection({
                     <div className="absolute inset-y-0 start-0 rounded-full" style={{ width: `${spentPct}%`, background: color }} />
                     <div className="absolute -top-[5px] h-[22px] w-[3px] rounded-sm bg-white" style={{ insetInlineStart: `${progressPct}%` }} />
                   </div>
-                  <div className={cn("rounded-full px-3 py-[5px] text-center text-[13px] font-medium", pill.cls)}>{pill.text}</div>
+                  <div title={pill.tooltip} className={cn("whitespace-nowrap rounded-full px-3 py-[5px] text-center text-[13px] font-medium", pill.cls)}>{pill.text}</div>
                 </div>
               );
             })}
@@ -1489,33 +1656,83 @@ function ProjectsSection({
   projects,
   onNew,
   onEdit,
-  onDelete,
 }: {
   projects: WorkspaceProject[];
   onNew: () => void;
   onEdit: (project: WorkspaceProject) => void;
-  onDelete: (project: WorkspaceProject) => void;
 }) {
   const { locale, l } = useI18n();
   const c = copy[locale];
-  const { updateProject } = useWorkspace();
+  const { updateProject, addProject } = useWorkspace();
   const { toast } = useToast();
-  const [query, setQuery] = useState("");
-  const [debouncedQuery, setDebouncedQuery] = useState("");
-  const [tab, setTab] = useState<"all" | "ongoing" | "attention" | "completed" | "upcoming">("all");
-  const [categoryFilter, setCategoryFilter] = useState<"all" | WorkspaceProject["category"]>("all");
-  const [sortBy, setSortBy] = useState<"updated" | "budget" | "progress" | "risk">("risk");
-  const [view, setView] = useState<"table" | "cards" | "timeline">("table");
-  const [page, setPage] = useState(1);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const urlStatus = searchParams.get("status") ?? "all";
+  const urlCategory = searchParams.get("category") ?? "all";
+  const urlSort = searchParams.get("sort") ?? "risk";
+  const urlView = searchParams.get("view") ?? "table";
+  const urlQuery = searchParams.get("q") ?? "";
+  const urlPage = Number(searchParams.get("page") ?? "1");
+  const validStatuses = ["all", "ongoing", "attention", "completed", "upcoming", "archived"] as const;
+  const validCategories = ["all", "commercial", "residential", "infrastructure", "industrial"] as const;
+  const validSorts = ["updated", "budget", "progress", "risk"] as const;
+  const validViews = ["table", "cards", "timeline"] as const;
+  const [query, setQuery] = useState(urlQuery);
+  const [debouncedQuery, setDebouncedQuery] = useState(urlQuery);
+  const deferredQuery = useDeferredValue(debouncedQuery);
+  const [tab, setTab] = useState<(typeof validStatuses)[number]>(
+    validStatuses.includes(urlStatus as (typeof validStatuses)[number])
+      ? (urlStatus as (typeof validStatuses)[number])
+      : "all",
+  );
+  const [categoryFilter, setCategoryFilter] = useState<(typeof validCategories)[number]>(
+    validCategories.includes(urlCategory as (typeof validCategories)[number])
+      ? (urlCategory as (typeof validCategories)[number])
+      : "all",
+  );
+  const [sortBy, setSortBy] = useState<(typeof validSorts)[number]>(
+    validSorts.includes(urlSort as (typeof validSorts)[number])
+      ? (urlSort as (typeof validSorts)[number])
+      : "risk",
+  );
+  const [view, setView] = useState<(typeof validViews)[number]>(
+    validViews.includes(urlView as (typeof validViews)[number])
+      ? (urlView as (typeof validViews)[number])
+      : "table",
+  );
+  const [page, setPage] = useState(() =>
+    Number.isFinite(urlPage) && urlPage > 0 ? Math.floor(urlPage) : 1,
+  );
   const [selected, setSelected] = useState<Set<string>>(() => new Set());
   const [detail, setDetail] = useState<WorkspaceProject | null>(null);
+  const [detailTab, setDetailTab] = useState<"overview" | "milestones" | "documents" | "financials">("overview");
+  const [rowActions, setRowActions] = useState<string | null>(null);
   const [mobileActions, setMobileActions] = useState<string | null>(null);
+  const [archiveTarget, setArchiveTarget] = useState<WorkspaceProject | null>(null);
+  const [archiving, setArchiving] = useState(false);
   const pageSize = 8;
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDebouncedQuery(query), 250);
     return () => window.clearTimeout(timer);
   }, [query]);
+
+  // Filters, sort, view and page live in the URL so a refresh (or a shared
+  // link) restores the exact table state instead of resetting to defaults.
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (tab !== "all") params.set("status", tab);
+    if (categoryFilter !== "all") params.set("category", categoryFilter);
+    if (sortBy !== "risk") params.set("sort", sortBy);
+    if (view !== "table") params.set("view", view);
+    if (debouncedQuery.trim()) params.set("q", debouncedQuery.trim());
+    if (page > 1) params.set("page", String(page));
+    const next = params.toString();
+    const current = window.location.search.replace(/^\?/, "");
+    if (next === current) return;
+    router.replace(`${pathname}${next ? `?${next}` : ""}`, { scroll: false });
+  }, [tab, categoryFilter, sortBy, view, debouncedQuery, page, pathname, router]);
 
   const metricsBySlug = useMemo(() => {
     const m = new Map<string, ReturnType<typeof toMetricsProject>>();
@@ -1524,20 +1741,27 @@ function ProjectsSection({
   }, [projects]);
 
   const tabCounts = useMemo(() => {
-    const all = projects.length;
-    const ongoing = projects.filter((p) => p.status === "ongoing").length;
-    const completed = projects.filter((p) => p.status === "completed").length;
-    const upcoming = projects.filter((p) => p.status === "upcoming").length;
-    const attention = projects.filter((p) => {
+    const live = projects.filter((p) => !p.archivedAt);
+    const all = live.length;
+    const ongoing = live.filter((p) => p.status === "ongoing").length;
+    const completed = live.filter((p) => p.status === "completed").length;
+    const upcoming = live.filter((p) => p.status === "upcoming").length;
+    const archived = projects.filter((p) => Boolean(p.archivedAt)).length;
+    const attention = live.filter((p) => {
       const mp = metricsBySlug.get(p.slug);
       return mp ? projectNeedsAttention(mp) : false;
     }).length;
-    return { all, ongoing, completed, upcoming, attention };
+    return { all, ongoing, completed, upcoming, attention, archived };
   }, [projects, metricsBySlug]);
 
   const filtered = useMemo(() => {
-    const normalized = debouncedQuery.trim().toLowerCase();
+    const normalized = deferredQuery.trim().toLowerCase();
     const base = projects.filter((project) => {
+      if (tab === "archived") {
+        if (!project.archivedAt) return false;
+      } else if (project.archivedAt) {
+        return false;
+      }
       const mp = metricsBySlug.get(project.slug);
       const needsAttention = mp ? projectNeedsAttention(mp) : false;
       if (tab === "attention" && !needsAttention) return false;
@@ -1562,7 +1786,7 @@ function ProjectsSection({
       return (b.updatedAt || "").localeCompare(a.updatedAt || "");
     });
     return sorted;
-  }, [categoryFilter, debouncedQuery, projects, sortBy, tab, metricsBySlug]);
+  }, [categoryFilter, deferredQuery, projects, sortBy, tab, metricsBySlug]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const currentPage = Math.min(page, totalPages);
@@ -1590,13 +1814,82 @@ function ProjectsSection({
     });
   };
 
-  const cycleStatus = (project: WorkspaceProject) => {
-    const nextStatus: Record<WorkspaceProject["status"], WorkspaceProject["status"]> = {
-      ongoing: "completed",
-      completed: "upcoming",
-      upcoming: "ongoing",
+  const openDetail = (
+    project: WorkspaceProject,
+    tab: "overview" | "milestones" | "documents" | "financials" = "overview",
+  ) => {
+    setDetailTab(tab);
+    setDetail(project);
+  };
+
+  const applyInline = (
+    project: WorkspaceProject,
+    patch: Partial<Pick<WorkspaceProject, "status" | "progress">>,
+  ) => {
+    const previous = {
+      status: project.status,
+      progress: project.progress,
     };
-    updateProject(project.slug, { status: nextStatus[project.status] });
+    updateProject(project.slug, patch);
+    sonnerToast.success(locale === "ar" ? "تم تحديث المشروع" : "Project updated", {
+      duration: 7000,
+      action: {
+        label: c.undo,
+        onClick: () => {
+          updateProject(project.slug, previous);
+          sonnerToast.success(locale === "ar" ? "تم التراجع" : "Change undone");
+        },
+      },
+    });
+  };
+
+  const duplicateProject = (project: WorkspaceProject) => {
+    const base = `${project.slug}-copy`;
+    let slug = base;
+    let index = 2;
+    while (projects.some((item) => item.slug === slug)) {
+      slug = `${base}-${index}`;
+      index += 1;
+    }
+    const { archivedAt: _archivedAt, ...copy } = project;
+    void _archivedAt;
+    addProject({
+      ...copy,
+      slug,
+      featured: false,
+      title: {
+        ar: `${project.title.ar || project.title.en} (نسخة)`,
+        en: `${project.title.en || project.title.ar} (copy)`,
+      },
+    });
+    setRowActions(null);
+    toast(locale === "ar" ? "تم نسخ المشروع" : "Project duplicated", "success");
+  };
+
+  const bulkArchive = () => {
+    const archived = [...selected]
+      .map((slug) => projects.find((project) => project.slug === slug))
+      .filter((project): project is WorkspaceProject => Boolean(project && !project.archivedAt));
+    if (!archived.length) {
+      toast(locale === "ar" ? "المشاريع محددة مؤرشفة بالفعل" : "Selected projects are already archived", "success");
+      return;
+    }
+    const stamp = new Date().toISOString();
+    archived.forEach((project) => updateProject(project.slug, { archivedAt: stamp }));
+    setSelected(new Set<string>());
+    sonnerToast.success(
+      locale === "ar" ? `تمت أرشفة ${archived.length} مشروع` : `${archived.length} projects archived`,
+      {
+        duration: 8000,
+        action: {
+          label: c.undo,
+          onClick: () => {
+            archived.forEach((project) => updateProject(project.slug, { archivedAt: null }));
+            sonnerToast.success(locale === "ar" ? "تمت الاستعادة" : "Projects restored");
+          },
+        },
+      },
+    );
   };
 
   const applyBulkStatus = (status: WorkspaceProject["status"]) => {
@@ -1633,28 +1926,35 @@ function ProjectsSection({
     toast(locale === "ar" ? "تم التصدير" : "Export ready", "success");
   };
 
-  const handleDelete = (project: WorkspaceProject) => {
-    if (!window.confirm(c.deleteConfirm)) return;
-    onDelete(project);
-    toast(
-      locale === "ar"
-        ? "تمت إزالة المشروع. يمكنك إعادة الإضافة عند الحاجة."
-        : "Project removed. You can restore/recreate it if needed.",
-      "success",
-    );
+  const archiveProject = (project: WorkspaceProject) => {
+    setArchiving(true);
+    updateProject(project.slug, { archivedAt: new Date().toISOString() });
+    setArchiving(false);
+    setArchiveTarget(null);
+    setDetail(null);
+    setMobileActions(null);
+    sonnerToast.success(c.archivedToast, {
+      duration: 8000,
+      action: {
+        label: c.undo,
+        onClick: () => {
+          updateProject(project.slug, { archivedAt: null });
+          sonnerToast.success(c.restoredToast);
+        },
+      },
+    });
   };
 
-  const budgetHealthLabel = (project: WorkspaceProject) => {
+  const restoreProject = (project: WorkspaceProject) => {
+    updateProject(project.slug, { archivedAt: null });
+    setMobileActions(null);
+    sonnerToast.success(c.restoredToast);
+  };
+
+  const budgetHealthFor = (project: WorkspaceProject) => {
     const mp = metricsBySlug.get(project.slug);
-    if (!mp) return locale === "ar" ? "لا توجد بيانات" : "No data";
-    const h = getBudgetHealth(mp);
-    if (h.key === "no_data") return locale === "ar" ? "لا توجد بيانات" : "No data";
-    if (h.key === "on_track") return locale === "ar" ? "في المسار" : "On track";
-    if (h.key === "watch") return locale === "ar" ? "تحت المراقبة" : "Watch";
-    if (h.key === "over") return locale === "ar" ? "المصروف أسرع من الإنجاز" : "Spending ahead of progress";
-    if (h.key === "saved") return locale === "ar" ? `مكتمل · وفر ${formatSAR(h.amount, locale)}` : `Completed · Saved ${formatSAR(h.amount, locale)}`;
-    if (h.key === "overrun") return locale === "ar" ? `تجاوز ${formatSAR(h.amount, locale)}` : `Overrun ${formatSAR(h.amount, locale)}`;
-    return locale === "ar" ? "لا توجد بيانات" : "No data";
+    if (!mp) return budgetHealthCopy({ key: "no_data" }, locale);
+    return budgetHealthCopy(getBudgetHealth(mp), locale);
   };
 
   return (
@@ -1678,6 +1978,7 @@ function ProjectsSection({
           ["attention", locale === "ar" ? "تحتاج انتباه" : "Needs attention", tabCounts.attention],
           ["completed", locale === "ar" ? "مكتملة" : "Completed", tabCounts.completed],
           ["upcoming", locale === "ar" ? "قادمة" : "Upcoming", tabCounts.upcoming],
+          ["archived", c.archived, tabCounts.archived],
         ] as const).map(([id, label, count]) => (
           <Chip key={id} active={tab === id} onClick={() => { setTab(id); setPage(1); }} className="whitespace-nowrap">
             {label} <span className="tabular-nums opacity-70">({count})</span>
@@ -1726,6 +2027,9 @@ function ProjectsSection({
           <button type="button" onClick={exportCsv} className="h-8 border border-white/12 px-3 text-[0.66rem] font-semibold  text-ivory/60 transition-colors hover:border-gold/45 hover:text-gold">
             {locale === "ar" ? "تصدير Excel" : "Export Excel"}
           </button>
+          <button type="button" onClick={bulkArchive} className="h-8 border border-[rgba(255,107,94,0.3)] px-3 text-[0.66rem] font-semibold text-[#FF9A8F] transition-colors hover:bg-[rgba(255,107,94,0.1)]">
+            {c.archive}
+          </button>
           <button type="button" onClick={() => setSelected(new Set<string>())} className="ms-auto h-8 px-2 text-[0.66rem]  text-ivory/40 transition-colors hover:text-gold">{c.clearSelection}</button>
         </div>
       ) : null}
@@ -1733,11 +2037,11 @@ function ProjectsSection({
       {view === "timeline" ? (
         <div className="space-y-3 rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018] p-4 sm:p-5">
           {paged.map((project) => (
-            <button key={project.slug} type="button" onClick={() => setDetail(project)} className="w-full border border-white/10 bg-[#0e1017]/60 p-4 text-start transition-colors hover:border-gold/30">
+            <button key={project.slug} type="button" onClick={() => openDetail(project)} className="w-full border border-white/10 bg-[#0e1017]/60 p-4 text-start transition-colors hover:border-gold/30">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="min-w-0">
                   <p className="truncate text-[0.88rem] font-medium text-ivory">{l(project.title)}</p>
-                  <p className="mt-1 text-[0.7rem] text-ivory/45">{budgetHealthLabel(project)}</p>
+                  <p className="mt-1 text-[0.7rem] text-ivory/45" title={budgetHealthFor(project).tooltip}>{budgetHealthFor(project).short}</p>
                 </div>
                 <span className="text-[0.68rem] tabular-nums text-ivory/45">{c.statusLabels[project.status]}</span>
               </div>
@@ -1755,7 +2059,7 @@ function ProjectsSection({
       ) : view === "cards" ? (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {paged.map((project, index) => (
-            <button key={project.slug} type="button" onClick={() => setDetail(project)} className="overflow-hidden rounded-[20px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018] text-start transition-colors hover:border-gold/30">
+            <button key={project.slug} type="button" onClick={() => openDetail(project)} className="overflow-hidden rounded-[20px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018] text-start transition-colors hover:border-gold/30">
               <ProjectImage
                 project={project}
                 sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw"
@@ -1769,7 +2073,7 @@ function ProjectsSection({
                     <span className={cn("shrink-0 px-2 py-0.5 text-[0.62rem] ", project.status === "ongoing" ? "bg-gold/15 text-gold" : project.status === "completed" ? "bg-emerald-400/10 text-emerald-300/80" : "bg-sky-400/10 text-sky-300/80")}>{c.statusLabels[project.status]}</span>
                   </div>
                   <p className="mt-1 truncate text-[0.72rem] text-ivory/45">{l(project.location)}</p>
-                  <p className="mt-1 text-[0.68rem] text-ivory/45">{budgetHealthLabel(project)}</p>
+                  <p className="mt-1 text-[0.68rem] text-ivory/45" title={budgetHealthFor(project).tooltip}>{budgetHealthFor(project).short}</p>
                   <div className="mt-3 flex items-center gap-2">
                     <span className="h-1.5 flex-1 overflow-hidden bg-white/10"><span className="block h-full bg-gold/70" style={{ width: `${project.progress}%` }} /></span>
                     <span className="tabular-nums text-[0.68rem] text-ivory/45">{project.progress}%</span>
@@ -1793,7 +2097,7 @@ function ProjectsSection({
                 <Card key={project.slug} className="relative p-4">
                   <div className="flex items-start gap-3">
                     <ProjectImage project={project} variant="thumb" sizes="70px" priority={index === 0} className="h-14 w-[70px] shrink-0 rounded-xl border border-[var(--admin-card-border)]" />
-                    <button type="button" onClick={() => setDetail(project)} className="min-w-0 flex-1 text-start admin-focus-ring rounded-[12px]">
+                    <button type="button" onClick={() => openDetail(project)} className="min-w-0 flex-1 text-start admin-focus-ring rounded-[12px]">
                       <p className="truncate text-[15px] font-medium text-[var(--admin-text)]">{l(project.title)}</p>
                       <p className="mt-1 truncate text-[13px] text-[var(--admin-muted)]">{l(project.location)}</p>
                       <span className="mt-3 flex items-center gap-2">
@@ -1806,27 +2110,37 @@ function ProjectsSection({
                     </button>
                     <span className="flex shrink-0 flex-col items-end gap-2">
                       <StatusPill tone={statusTone} className="whitespace-nowrap">{c.statusLabels[project.status]}</StatusPill>
-                      <button
-                        type="button"
-                        onClick={() => setMobileActions((current) => current === project.slug ? null : project.slug)}
-                        className="admin-focus-ring inline-flex h-9 w-9 items-center justify-center rounded-[10px] border border-[var(--admin-card-border)] text-[var(--admin-muted)]"
-                        aria-label={locale === "ar" ? "إجراءات المشروع" : "Project actions"}
-                        aria-expanded={mobileActions === project.slug}
+                      <Popover
+                        open={mobileActions === project.slug}
+                        onOpenChange={(open) => setMobileActions(open ? project.slug : null)}
+                        align="end"
+                        trigger={
+                          <button
+                            type="button"
+                            className="admin-focus-ring inline-flex h-9 w-9 items-center justify-center rounded-[10px] border border-[var(--admin-card-border)] text-[var(--admin-muted)]"
+                            aria-label={locale === "ar" ? "إجراءات المشروع" : "Project actions"}
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </button>
+                        }
                       >
-                        <MoreVertical className="h-4 w-4" />
-                      </button>
+                        {project.archivedAt ? (
+                          <button type="button" onClick={() => restoreProject(project)} className="admin-focus-ring flex min-h-[40px] w-full items-center gap-2 rounded-lg px-3 text-start text-[13px] text-[var(--admin-text)] hover:bg-[var(--admin-pill-surface)]">
+                            <RotateCcw className="h-4 w-4" />{c.restore}
+                          </button>
+                        ) : (
+                          <>
+                            <button type="button" onClick={() => { setMobileActions(null); onEdit(project); }} className="admin-focus-ring flex min-h-[40px] w-full items-center gap-2 rounded-lg px-3 text-start text-[13px] text-[var(--admin-text)] hover:bg-[var(--admin-pill-surface)]">
+                              <Pencil className="h-4 w-4" />{c.edit}
+                            </button>
+                            <button type="button" onClick={() => { setMobileActions(null); setArchiveTarget(project); }} className="admin-focus-ring flex min-h-[40px] w-full items-center gap-2 rounded-lg px-3 text-start text-[13px] text-[#FF9A8F] hover:bg-[rgba(255,107,94,0.1)]">
+                              <Trash2 className="h-4 w-4" />{c.archive}
+                            </button>
+                          </>
+                        )}
+                      </Popover>
                     </span>
                   </div>
-                  {mobileActions === project.slug ? (
-                    <div className="absolute end-4 top-[66px] z-20 flex min-w-[150px] flex-col overflow-hidden rounded-[12px] border border-[var(--admin-card-border)] bg-[var(--admin-bg)] p-1 shadow-2xl">
-                      <button type="button" onClick={() => { setMobileActions(null); onEdit(project); }} className="admin-focus-ring flex min-h-[40px] items-center gap-2 rounded-[8px] px-3 text-start text-[13px] text-[var(--admin-text)] hover:bg-[var(--admin-pill-surface)]">
-                        <Pencil className="h-4 w-4" />{c.edit}
-                      </button>
-                      <button type="button" onClick={() => { setMobileActions(null); handleDelete(project); }} className="admin-focus-ring flex min-h-[40px] items-center gap-2 rounded-[8px] px-3 text-start text-[13px] text-[#FF9A8F] hover:bg-[rgba(255,107,94,0.1)]">
-                        <Trash2 className="h-4 w-4" />{c.delete}
-                      </button>
-                    </div>
-                  ) : null}
                 </Card>
               );
             })}
@@ -1854,7 +2168,7 @@ function ProjectsSection({
                     const tone: "success" | "warning" | "danger" | "neutral" = h.key === "on_track" || h.key === "saved" ? "success" : h.key === "watch" ? "warning" : h.key === "over" || h.key === "overrun" ? "danger" : "neutral";
                     const statusTone: "warning" | "success" | "info" = project.status === "ongoing" ? "warning" : project.status === "completed" ? "success" : "info";
                     return (
-                      <TR key={project.slug} onClick={() => setDetail(project)} className={cn("cursor-pointer", selected.has(project.slug) && "bg-[rgba(226,176,74,0.06)]")}>
+                      <TR key={project.slug} onClick={() => openDetail(project)} className={cn("cursor-pointer", selected.has(project.slug) && "bg-[rgba(226,176,74,0.06)]")}>
                         <TD onClick={(e) => e.stopPropagation()}><Checkbox checked={selected.has(project.slug)} onChange={() => toggleSelected(project.slug)} aria-label={`${c.selectAll}: ${l(project.title)}`} /></TD>
                         <TD>
                           <span className="flex items-center gap-3">
@@ -1867,11 +2181,23 @@ function ProjectsSection({
                         </TD>
                         <TD><span className="text-[14px] text-[#C9CAD1]">{c.categoryLabels[project.category]}</span></TD>
                         <TD onClick={(e) => e.stopPropagation()}>
-                          <button type="button" onClick={() => cycleStatus(project)} title={c.quickStatus} className="admin-focus-ring">
-                            <StatusPill tone={statusTone}>{c.statusLabels[project.status]}</StatusPill>
-                          </button>
+                          <Popover
+                            align="start"
+                            trigger={
+                              <button type="button" title={locale === "ar" ? "تعديل الحالة والإنجاز" : "Edit status and progress"} className="admin-focus-ring">
+                                <StatusPill tone={statusTone}>{c.statusLabels[project.status]}</StatusPill>
+                              </button>
+                            }
+                          >
+                            <InlineProjectControls
+                              key={`${project.status}-${project.progress}`}
+                              project={project}
+                              locale={locale}
+                              onApply={(patch) => applyInline(project, patch)}
+                            />
+                          </Popover>
                         </TD>
-                        <TD><StatusPill tone={tone}>{budgetHealthLabel(project)}</StatusPill></TD>
+                        <TD><StatusPill tone={tone} title={budgetHealthFor(project).tooltip} className="whitespace-nowrap">{budgetHealthFor(project).short}</StatusPill></TD>
                         <TD>
                           <span className="flex items-center gap-2">
                             <span className="h-1.5 w-16 overflow-hidden rounded-full bg-[#232632]"><span className="block h-full rounded-full bg-[linear-gradient(270deg,#F3C86A,#C98F1E)]" style={{ width: `${project.progress}%` }} /></span>
@@ -1880,9 +2206,46 @@ function ProjectsSection({
                         </TD>
                         <TD className="text-end tabular-nums text-[#D7D8DE]">{formatMoney(project.contractValue || project.budget, locale)}</TD>
                         <TD onClick={(e) => e.stopPropagation()}>
-                          <span className="flex items-center justify-end gap-2">
-                            <Button variant="secondary" size="sm" onClick={() => onEdit(project)} aria-label={`${c.edit} ${l(project.title)}`} className="h-10 w-10 min-h-0 px-0"><Pencil className="h-4 w-4" /></Button>
-                            <Button variant="ghost" size="sm" onClick={() => handleDelete(project)} aria-label={`${c.delete} ${l(project.title)}`} className="h-10 w-10 min-h-0 px-0 text-[#FF9A8F] hover:bg-[rgba(255,107,94,0.1)] hover:text-[#FF9A8F]"><Trash2 className="h-4 w-4" /></Button>
+                          <span className="flex items-center justify-end">
+                            <Popover
+                              open={rowActions === project.slug}
+                              onOpenChange={(open) => setRowActions(open ? project.slug : null)}
+                              trigger={
+                                <button
+                                  type="button"
+                                  className="admin-focus-ring inline-flex h-10 w-10 items-center justify-center rounded-[10px] border border-[var(--admin-card-border)] text-[var(--admin-muted)] transition-colors hover:border-[rgba(226,176,74,0.25)] hover:text-[var(--admin-text)]"
+                                  aria-label={`${locale === "ar" ? "إجراءات" : "Actions"}: ${l(project.title)}`}
+                                >
+                                  <MoreVertical className="h-4 w-4" />
+                                </button>
+                              }
+                            >
+                              <div className="flex min-w-[190px] flex-col gap-0.5">
+                                {project.archivedAt ? (
+                                  <button type="button" onClick={() => { setRowActions(null); restoreProject(project); }} className="admin-focus-ring flex min-h-11 w-full items-center gap-2 rounded-lg px-3 text-start text-[13px] text-[var(--admin-text)] hover:bg-[var(--admin-pill-surface)]">
+                                    <RotateCcw className="h-4 w-4" />{c.restore}
+                                  </button>
+                                ) : (
+                                  <>
+                                    <button type="button" onClick={() => { setRowActions(null); setDetailTab("overview"); setDetail(project); }} className="admin-focus-ring flex min-h-11 w-full items-center gap-2 rounded-lg px-3 text-start text-[13px] text-[var(--admin-text)] hover:bg-[var(--admin-pill-surface)]">
+                                      <Eye className="h-4 w-4" />{locale === "ar" ? "عرض سريع" : "Quick view"}
+                                    </button>
+                                    <button type="button" onClick={() => { setRowActions(null); onEdit(project); }} className="admin-focus-ring flex min-h-11 w-full items-center gap-2 rounded-lg px-3 text-start text-[13px] text-[var(--admin-text)] hover:bg-[var(--admin-pill-surface)]">
+                                      <Pencil className="h-4 w-4" />{c.edit}
+                                    </button>
+                                    <button type="button" onClick={() => duplicateProject(project)} className="admin-focus-ring flex min-h-11 w-full items-center gap-2 rounded-lg px-3 text-start text-[13px] text-[var(--admin-text)] hover:bg-[var(--admin-pill-surface)]">
+                                      <Copy className="h-4 w-4" />{locale === "ar" ? "نسخ" : "Duplicate"}
+                                    </button>
+                                    <Link href={`/projects/${project.slug}`} target="_blank" onClick={() => setRowActions(null)} className="admin-focus-ring flex min-h-11 w-full items-center gap-2 rounded-lg px-3 text-start text-[13px] text-[var(--admin-text)] hover:bg-[var(--admin-pill-surface)]">
+                                      <ExternalLink className="h-4 w-4" />{locale === "ar" ? "فتح الصفحة" : "Open public page"}
+                                    </Link>
+                                    <button type="button" onClick={() => { setRowActions(null); setArchiveTarget(project); }} className="admin-focus-ring flex min-h-11 w-full items-center gap-2 rounded-lg px-3 text-start text-[13px] text-[#FF9A8F] hover:bg-[rgba(255,107,94,0.1)]">
+                                      <Archive className="h-4 w-4" />{c.archive}
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            </Popover>
                           </span>
                         </TD>
                       </TR>
@@ -1906,46 +2269,280 @@ function ProjectsSection({
         </div>
       ) : null}
 
-      {detail ? (
-        <div className="fixed inset-0 z-[230] flex justify-end bg-obsidian/70 backdrop-blur-sm" onMouseDown={(e) => { if (e.target === e.currentTarget) setDetail(null); }}>
-          <aside data-lenis-prevent className="h-full w-full max-w-xl overflow-y-auto overscroll-contain border-s border-white/10 bg-[#0e1017] p-5 shadow-lux sm:p-6">
-            <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-4">
-              <div className="min-w-0">
-                <p className="text-[0.68rem]  text-gold">{locale === "ar" ? "تفاصيل المشروع" : "Project details"}</p>
-                <h3 className="mt-1 truncate text-[28px] font-bold text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{l(detail.title)}</h3>
-                <p className="mt-1 text-[0.78rem] text-ivory/45">{l(detail.location)}</p>
-              </div>
-              <button type="button" onClick={() => setDetail(null)} className="inline-flex h-10 w-10 items-center justify-center border border-white/12 text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold" aria-label="Close"><X className="h-4 w-4" /></button>
+      <Drawer
+        open={Boolean(detail)}
+        onOpenChange={(open) => {
+          if (!open) setDetail(null);
+        }}
+        title={locale === "ar" ? "تفاصيل المشروع" : "Project details"}
+        description={detail ? `${l(detail.location)} · ${c.statusLabels[detail.status]}` : undefined}
+        closeLabel={locale === "ar" ? "إغلاق" : "Close"}
+        footer={
+          detail ? (
+            <>
+              <Button variant="ghost" onClick={() => setDetail(null)}>
+                {locale === "ar" ? "إغلاق" : "Close"}
+              </Button>
+              <Link
+                href={`/projects/${detail.slug}`}
+                target="_blank"
+                className="admin-focus-ring inline-flex min-h-[44px] items-center justify-center gap-2 rounded-[12px] border border-[var(--admin-card-border)] px-4 text-[14px] font-medium text-[var(--admin-text)]"
+              >
+                <ExternalLink className="h-4 w-4" />
+                {locale === "ar" ? "الصفحة الكاملة" : "Open full page"}
+              </Link>
+              {detail.archivedAt ? (
+                <Button variant="primary" onClick={() => restoreProject(detail)}>
+                  <RotateCcw className="h-4 w-4" />
+                  {c.restore}
+                </Button>
+              ) : (
+                <Button
+                  variant="primary"
+                  onClick={() => {
+                    onEdit(detail);
+                    setDetail(null);
+                  }}
+                >
+                  <Pencil className="h-4 w-4" />
+                  {c.edit}
+                </Button>
+              )}
+            </>
+          ) : undefined
+        }
+      >
+        {detail ? (
+          <div className="space-y-4">
+            <ProjectImage
+              project={detail}
+              sizes="(max-width: 640px) 100vw, 560px"
+              priority
+              className="aspect-[16/9] w-full rounded-2xl border border-white/10"
+            />
+            <div>
+              <h3 className="truncate text-[24px] font-bold text-[var(--admin-text,#F1EEE8)]">
+                {l(detail.title)}
+              </h3>
+              <p className="mt-1 text-[14px] text-[var(--admin-muted,#A6A9B4)]">
+                {l(detail.location)}
+              </p>
             </div>
-            <div className="mt-5 space-y-4">
-              <ProjectImage project={detail} sizes="(max-width: 640px) 100vw, 560px" priority className="aspect-[16/9] w-full rounded-[14px] border border-white/10" />
-              <div className="grid grid-cols-2 gap-3">
+
+            <div
+              role="tablist"
+              aria-label={locale === "ar" ? "أقسام المشروع" : "Project sections"}
+              className="flex flex-wrap gap-1 rounded-xl border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] p-1"
+            >
+              {([
+                ["overview", locale === "ar" ? "نظرة عامة" : "Overview"],
+                ["milestones", locale === "ar" ? "المراحل" : "Milestones"],
+                ["documents", locale === "ar" ? "المستندات" : "Documents"],
+                ["financials", locale === "ar" ? "المالية" : "Financials"],
+              ] as const).map(([id, label]) => (
+                <button
+                  key={id}
+                  type="button"
+                  role="tab"
+                  aria-selected={detailTab === id}
+                  onClick={() => setDetailTab(id)}
+                  className={cn(
+                    "admin-focus-ring min-h-10 rounded-lg px-3 text-[13px] font-medium transition-colors",
+                    detailTab === id
+                      ? "bg-[rgba(226,176,74,0.14)] text-[#F3C86A]"
+                      : "text-[var(--admin-muted)] hover:bg-[var(--admin-pill-surface)] hover:text-[var(--admin-text)]",
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {detailTab === "overview" ? (
+              <>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    [c.status, c.statusLabels[detail.status]],
+                    [c.category, c.categoryLabels[detail.category]],
+                    [c.progress, `${detail.progress}%`],
+                    [c.value, formatMoney(detail.contractValue || detail.budget, locale)],
+                    [c.budget, formatMoney(detail.budget, locale)],
+                    [c.spent, formatMoney(detail.spent, locale)],
+                  ].map(([label, value]) => (
+                    <div
+                      key={String(label)}
+                      className="rounded-2xl border border-white/[.07] bg-white/[.025] p-3.5"
+                    >
+                      <p className="text-[13px] text-[var(--admin-muted,#A6A9B4)]">{label}</p>
+                      <p className="mt-1 text-[14px] tabular-nums text-[var(--admin-text,#F1EEE8)]">
+                        {value}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+                <div className="rounded-2xl border border-white/[.07] bg-white/[.025] p-3.5">
+                  <p className="text-[13px] text-[var(--admin-muted,#A6A9B4)]">
+                    {locale === "ar" ? "صحة الميزانية" : "Budget health"}
+                  </p>
+                  <p className="mt-1 text-[14px] text-[var(--admin-text,#F1EEE8)]/80" title={budgetHealthFor(detail).tooltip}>
+                    {budgetHealthFor(detail).short}
+                  </p>
+                </div>
+              </>
+            ) : null}
+
+            {detailTab === "milestones" ? (
+              detail.milestones.length ? (
+                <ol className="space-y-2">
+                  {detail.milestones.map((milestone, index) => (
+                    <li key={`${milestone.title.en}-${index}`} className="flex items-start gap-3 rounded-xl border border-white/[.07] bg-white/[.025] p-3.5">
+                      <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[#E2B04A]/30 bg-[#E2B04A]/10 text-[12px] text-[#F3C86A] tabular-nums">{index + 1}</span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[14px] text-[var(--admin-text)]">{l(milestone.title)}</p>
+                        <p className="mt-0.5 text-[13px] text-[var(--admin-muted)]">{l(milestone.date)}</p>
+                      </div>
+                      <span className="rounded-full border border-white/10 px-2 py-0.5 text-[11px] text-[var(--admin-muted)]">
+                        {milestone.status === "complete" ? (locale === "ar" ? "مكتملة" : "Complete") : milestone.status === "current" ? (locale === "ar" ? "الحالية" : "Current") : (locale === "ar" ? "قادمة" : "Upcoming")}
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                <div className="rounded-2xl border border-dashed border-[var(--admin-card-border)] p-6 text-center">
+                  <Flag className="mx-auto h-6 w-6 text-[var(--admin-muted)]" />
+                  <p className="mt-2 text-[14px] text-[var(--admin-text)]">{locale === "ar" ? "لا توجد مراحل بعد." : "No milestones yet."}</p>
+                  <Button variant="secondary" size="sm" className="mt-3" onClick={() => { onEdit(detail); setDetail(null); }}>
+                    <Plus className="h-4 w-4" />{locale === "ar" ? "إضافة أول مرحلة" : "Add first milestone"}
+                  </Button>
+                </div>
+              )
+            ) : null}
+
+            {detailTab === "documents" ? (
+              detail.documents.length ? (
+                <ul className="divide-y divide-[var(--admin-card-border)] rounded-2xl border border-white/[.07] bg-white/[.025]">
+                  {detail.documents.map((document, index) => (
+                    <li key={`${document.name.en}-${index}`} className="flex items-center gap-3 p-3.5">
+                      <FileText className="h-4 w-4 shrink-0 text-[#E2B04A]" />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[14px] text-[var(--admin-text)]">{l(document.name)}</p>
+                        <p className="text-[12px] text-[var(--admin-muted)]">{document.date} · {document.size}</p>
+                      </div>
+                      <span className="text-[12px] text-[var(--admin-muted)]">{document.type}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="rounded-2xl border border-dashed border-[var(--admin-card-border)] p-6 text-center text-[14px] text-[var(--admin-muted)]">{locale === "ar" ? "لا توجد مستندات." : "No documents."}</p>
+              )
+            ) : null}
+
+            {detailTab === "financials" ? (
+              <div className="space-y-3">
                 {[
-                  [c.status, c.statusLabels[detail.status]],
-                  [c.category, c.categoryLabels[detail.category]],
-                  [c.progress, `${detail.progress}%`],
                   [c.value, formatMoney(detail.contractValue || detail.budget, locale)],
                   [c.budget, formatMoney(detail.budget, locale)],
                   [c.spent, formatMoney(detail.spent, locale)],
+                  [c.profit, formatMoney(detail.profit, locale)],
                 ].map(([label, value]) => (
-                  <div key={String(label)} className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018] p-3">
-                    <p className="text-[0.64rem]  text-ivory/40">{label}</p>
-                    <p className="mt-1 text-[0.86rem] tabular-nums text-ivory">{value}</p>
+                  <div key={label} className="flex items-center justify-between rounded-xl border border-white/[.07] bg-white/[.025] px-4 py-3">
+                    <span className="text-[13px] text-[var(--admin-muted)]">{label}</span>
+                    <span className="tabular-nums text-[14px] text-[var(--admin-text)]">{value}</span>
                   </div>
                 ))}
+                {detail.invoices.length ? (
+                  <div className="rounded-xl border border-white/[.07] bg-white/[.025] p-3.5">
+                    <p className="mb-2 text-[13px] text-[var(--admin-muted)]">{locale === "ar" ? "الفواتير" : "Invoices"}</p>
+                    {detail.invoices.map((invoice) => (
+                      <div key={invoice.number} className="flex items-center justify-between gap-3 border-t border-white/[.06] py-2 first:border-0">
+                        <span className="truncate text-[13px] text-[var(--admin-text)]">{l(invoice.title)}</span>
+                        <span className="whitespace-nowrap tabular-nums text-[13px] text-[var(--admin-muted)]">{invoice.amount}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
               </div>
-              <div className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018] p-3">
-                <p className="text-[0.64rem]  text-ivory/40">{locale === "ar" ? "صحة الميزانية" : "Budget health"}</p>
-                <p className="mt-1 text-[0.86rem] text-ivory/80">{budgetHealthLabel(detail)}</p>
-              </div>
-              <div className="flex flex-wrap gap-2 pt-2">
-                <button type="button" onClick={() => { onEdit(detail); setDetail(null); }} className="inline-flex h-10 items-center gap-2 bg-gold px-4 text-[0.72rem] font-semibold  text-obsidian transition-colors hover:bg-gold-light"><Pencil className="h-3.5 w-3.5" />{c.edit}</button>
-                <button type="button" onClick={() => setDetail(null)} className="inline-flex h-10 items-center gap-2 border border-white/12 px-4 text-[0.72rem] font-semibold  text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold">{locale === "ar" ? "إغلاق" : "Close"}</button>
-              </div>
-            </div>
-          </aside>
-        </div>
-      ) : null}
+            ) : null}
+          </div>
+        ) : null}
+      </Drawer>
+
+      <ConfirmDialog
+        open={Boolean(archiveTarget)}
+        onOpenChange={(open) => {
+          if (!open) setArchiveTarget(null);
+        }}
+        title={c.archiveTitle}
+        description={archiveTarget ? `${c.archiveBody} ${l(archiveTarget.title)}` : c.archiveBody}
+        confirmLabel={c.archive}
+        cancelLabel={c.cancel}
+        destructive
+        requireText={archiveTarget ? l(archiveTarget.title) : undefined}
+        busy={archiving}
+        onConfirm={() => {
+          if (archiveTarget) archiveProject(archiveTarget);
+        }}
+      />
+    </div>
+  );
+}
+
+function InlineProjectControls({
+  project,
+  locale,
+  onApply,
+}: {
+  project: WorkspaceProject;
+  locale: "ar" | "en";
+  onApply: (patch: Partial<Pick<WorkspaceProject, "status" | "progress">>) => void;
+}) {
+  const [status, setStatus] = useState(project.status);
+  const [progress, setProgress] = useState(project.progress);
+
+  const labels: Record<WorkspaceProject["status"], string> =
+    locale === "ar"
+      ? { ongoing: "قيد التنفيذ", completed: "مكتمل", upcoming: "قادم" }
+      : { ongoing: "Ongoing", completed: "Completed", upcoming: "Upcoming" };
+
+  return (
+    <div className="w-[260px] p-2.5">
+      <p className="mb-2 text-[13px] font-medium text-[var(--admin-muted)]">
+        {locale === "ar" ? "الحالة" : "Status"}
+      </p>
+      <div className="grid grid-cols-3 gap-1.5">
+        {(["ongoing", "completed", "upcoming"] as const).map((option) => (
+          <button
+            key={option}
+            type="button"
+            onClick={() => setStatus(option)}
+            className={cn(
+              "admin-focus-ring min-h-10 rounded-lg border px-2 text-[12px] transition-colors",
+              status === option
+                ? "border-[rgba(226,176,74,0.35)] bg-[rgba(226,176,74,0.14)] text-[#F3C86A]"
+                : "border-white/10 text-[var(--admin-muted)] hover:border-white/20",
+            )}
+          >
+            {labels[option]}
+          </button>
+        ))}
+      </div>
+      <div className="mt-4 flex items-center justify-between gap-3">
+        <p className="text-[13px] font-medium text-[var(--admin-muted)]">
+          {locale === "ar" ? "الإنجاز" : "Progress"}
+        </p>
+        <span className="tabular-nums text-[13px] text-[var(--admin-text)]">{progress}%</span>
+      </div>
+      <Slider value={progress} onValueChange={setProgress} label={locale === "ar" ? "الإنجاز" : "Progress"} />
+      <div className="mt-3 flex justify-end gap-2">
+        <Button
+          variant="primary"
+          size="sm"
+          onClick={() => onApply({ status, progress })}
+          disabled={status === project.status && progress === project.progress}
+        >
+          {locale === "ar" ? "حفظ" : "Save"}
+        </Button>
+      </div>
     </div>
   );
 }
@@ -2051,14 +2648,15 @@ function FinancialsSection({ projects }: { projects: WorkspaceProject[] }) {
                     <td className="px-5 py-2 text-[0.8rem] text-ivory/70">{l(project.title)}</td>
                     {(["budget", "spent", "profit", "contractValue"] as const).map((key) => (
                       <td key={key} className="px-4 py-3">
-                        <input
+                        <FieldInput
                           type="number"
                           min={0}
                           value={project[key]}
                           onChange={(event) =>
                             updateProject(project.slug, { [key]: Number(event.target.value) })
                           }
-                          className="h-10 w-24 border border-white/10 bg-transparent px-3 text-[0.78rem] text-ivory/70 outline-none focus:border-gold/50"
+                          className="h-10 w-24 text-[13px]"
+                          aria-label={l(project.title)}
                         />
                       </td>
                     ))}
@@ -2113,17 +2711,13 @@ function FinancialsSection({ projects }: { projects: WorkspaceProject[] }) {
             <span className="text-[0.7rem] font-semibold  text-gold">
               {c.paymentStages}
             </span>
-            <select
+            <FieldSelect
               value={activeSlug}
-              onChange={(event) => setSelected(event.target.value)}
-              className="h-10 max-w-full border border-white/12 bg-coal px-3 text-[0.74rem] text-ivory/60 outline-none focus:border-gold/50"
-            >
-              {projects.map((project) => (
-                <option key={project.slug} value={project.slug}>
-                  {l(project.title)}
-                </option>
-              ))}
-            </select>
+              onValueChange={setSelected}
+              options={projects.map((project) => ({ value: project.slug, label: l(project.title) }))}
+              className="h-10 max-w-full text-[13px]"
+              aria-label={c.project}
+            />
           </div>
           {selectedProject && selectedProject.invoices.length > 0 ? (
             <div className="divide-y divide-white/6">
@@ -2673,18 +3267,20 @@ function ContentSection() {
           <span className="text-[0.7rem] font-semibold  text-gold">
             {c.serviceCards}
           </span>
-          <select
+          <FieldSelect
             value={activeServiceSlug}
-            onChange={(event) => selectService(event.target.value)}
-            className="h-8 border border-white/12 bg-coal px-2 text-[0.74rem] text-ivory/60 outline-none focus:border-gold/50"
-          >
-            {services.map((service) => (
-              <option key={service.slug} value={service.slug}>
-                {l(content.serviceOverrides[service.slug]?.title ?? service.title)}
-              </option>
-            ))}
-            {services.length === 0 ? <option value="">—</option> : null}
-          </select>
+            onValueChange={selectService}
+            options={
+              services.length
+                ? services.map((service) => ({
+                    value: service.slug,
+                    label: l(content.serviceOverrides[service.slug]?.title ?? service.title),
+                  }))
+                : [{ value: "none", label: "—" }]
+            }
+            className="h-9 max-w-full text-[13px]"
+            aria-label={c.serviceCards}
+          />
         </div>
         <div className="grid gap-4 p-5 sm:grid-cols-2">
           <Field label={c.serviceTitle} htmlFor="service-title-ar">
@@ -2781,19 +3377,19 @@ function ContentSection() {
               aria-label={c.searchCopy}
             />
           </label>
-          <select
+          <FieldSelect
             value={copyGroup}
-            onChange={(event) => setCopyGroup(event.target.value)}
-            className="h-10 border border-white/12 bg-coal px-3 text-[0.76rem] text-ivory/60 outline-none transition-colors focus:border-gold/50"
+            onValueChange={setCopyGroup}
+            options={[
+              { value: "all", label: c.allGroups },
+              ...copyGroups.map((group) => ({
+                value: group,
+                label: (copyGroupLabels[group] ?? { ar: group, en: group })[locale],
+              })),
+            ]}
+            className="h-10 text-[13px]"
             aria-label={c.allGroups}
-          >
-            <option value="all">{c.allGroups}</option>
-            {copyGroups.map((group) => (
-              <option key={group} value={group}>
-                {(copyGroupLabels[group] ?? { ar: group, en: group })[locale]}
-              </option>
-            ))}
-          </select>
+          />
           <span className="text-[0.7rem] text-ivory/40">
             {filteredCopyFields.length} / {copyFields.length}
           </span>
@@ -3226,11 +3822,12 @@ function MessagesSection({ projects }: { projects: WorkspaceProject[] }) {
         <form onSubmit={submit} className="border-t border-white/10 p-4">
           <p className="mb-2 text-[0.66rem]  text-ivory/40">{c.reply}</p>
           <div className="flex gap-2">
-            <input
+            <FieldInput
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
               placeholder={c.replyPlaceholder}
-              className="h-10 min-w-0 flex-1 border border-white/12 bg-transparent px-3 text-[0.8rem] text-ivory outline-none placeholder:text-ivory/35 focus:border-gold/50"
+              className="h-10 min-w-0 flex-1 text-[13px]"
+              aria-label={c.replyPlaceholder}
             />
             <button
               type="submit"

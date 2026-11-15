@@ -97,6 +97,9 @@ export function seedAdminIdentity() {
     email,
     password,
     name: process.env.ADMIN_NAME?.trim() || "Platform Administrator",
+    nameAr: process.env.ADMIN_NAME_AR?.trim() || "",
+    honorific: process.env.ADMIN_HONORIFIC?.trim() || "",
+    honorificAr: process.env.ADMIN_HONORIFIC_AR?.trim() || "",
     company: process.env.ADMIN_COMPANY?.trim() || "Ahmed Elattar General Contracting",
   };
 }

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import {
   ArrowUpRight,
   Command as CommandIcon,
@@ -14,10 +13,9 @@ import {
   Settings,
 } from "lucide-react";
 import { useI18n } from "@/components/providers/I18nProvider";
-import { useSmoothScroll } from "@/components/providers/SmoothScroll";
 import type { WorkspaceProject } from "@/components/providers/WorkspaceProvider";
 import type { AdminSection } from "@/components/sections/admin/AdminDashboard";
-import { acquireScrollLock, releaseScrollLock } from "@/lib/scroll/lock";
+import { Modal } from "@/components/ui/admin/overlay";
 import { cn } from "@/lib/utils";
 
 type InquiryRecord = {
@@ -100,8 +98,6 @@ export function AdminCommandPalette({
 }) {
   const { locale, l } = useI18n();
   const c = copy[locale];
-  const { stop, start } = useSmoothScroll();
-  const [mounted, setMounted] = useState(false);
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
   const [inquiries, setInquiries] = useState<InquiryRecord[]>([]);
@@ -113,17 +109,6 @@ export function AdminCommandPalette({
   useEffect(() => {
     onCloseRef.current = onClose;
   }, [onClose]);
-
-  useEffect(() => {
-    // SDK portals need the DOM; render only after hydration.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    acquireScrollLock(stop);
-    return () => releaseScrollLock(start);
-  }, [start, stop]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -266,11 +251,6 @@ export function AdminCommandPalette({
         onCloseRef.current();
         return;
       }
-      if (event.key === "Escape") {
-        event.preventDefault();
-        onCloseRef.current();
-        return;
-      }
       if (event.key === "ArrowDown") {
         event.preventDefault();
         setActiveIndex((current) => (filtered.length ? (current + 1) % filtered.length : 0));
@@ -297,25 +277,22 @@ export function AdminCommandPalette({
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [activeIndex, filtered]);
 
-  if (!mounted || typeof document === "undefined") return null;
-
-  return createPortal(
-    <div
-      className="fixed inset-0 z-[250] flex items-start justify-center bg-obsidian/75 p-3 pt-[10vh] backdrop-blur-md sm:p-6 sm:pt-[12vh]"
-      role="presentation"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
+  return (
+    <Modal
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose();
       }}
+      title={c.title}
+      closeLabel={locale === "ar" ? "إغلاق" : "Close"}
+      size="md"
+      bare
+      className="md:w-[min(680px,92vw)]!"
+      bodyClassName="flex min-h-0 flex-1 flex-col overflow-hidden p-0"
     >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={c.title}
-        data-lenis-prevent
-        className="flex max-h-[76vh] w-full max-w-2xl flex-col overflow-hidden border border-gold/25 bg-coal shadow-[0_40px_120px_-28px_rgba(0,0,0,0.95)]"
-      >
-        <div className="flex items-center gap-3 border-b border-white/10 px-4 py-3">
-          <Search className="h-4 w-4 shrink-0 text-gold" />
+      <div className="flex min-h-0 flex-1 flex-col">
+        <div className="flex items-center gap-3 border-b border-white/10 px-4 py-3 sm:px-5">
+          <Search className="h-4 w-4 shrink-0 text-[#E2B04A]" />
           <input
             autoFocus
             value={query}
@@ -325,23 +302,23 @@ export function AdminCommandPalette({
             }}
             placeholder={c.placeholder}
             aria-label={c.placeholder}
-            className="h-10 min-w-0 flex-1 bg-transparent text-[0.94rem] text-ivory outline-none placeholder:text-ivory/35"
+            className="h-10 min-w-0 flex-1 bg-transparent text-[15px] text-[var(--admin-text,#F1EEE8)] outline-none placeholder:text-white/35"
           />
-          <span className="hidden items-center gap-1 border border-white/10 px-2 py-1 text-[0.64rem] text-ivory/40 sm:flex">
+          <span className="hidden items-center gap-1 rounded-md border border-white/10 px-2 py-1 text-[12px] text-white/40 sm:flex">
             <CommandIcon className="h-3 w-3" /> K
           </span>
         </div>
 
-        <div ref={listRef} className="overflow-y-auto overscroll-contain">
+        <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
           {loadingIndex ? (
-            <div className="flex items-center justify-center gap-2 px-4 py-10 text-[0.76rem] text-ivory/45">
-              <Loader2 className="h-4 w-4 animate-spin text-gold" />
+            <div className="flex items-center justify-center gap-2 px-4 py-10 text-[13px] text-white/45">
+              <Loader2 className="h-4 w-4 animate-spin text-[#E2B04A]" />
               {c.loading}
             </div>
           ) : groups.length ? (
             groups.map(([group, items]) => (
               <div key={group}>
-                <p className="sticky top-0 z-10 border-b border-white/6 bg-coal px-4 py-2 text-[0.64rem] font-semibold  text-gold/70">
+                <p className="sticky top-0 z-10 border-b border-white/[.06] bg-[#161820] px-4 py-2 text-[12px] font-medium text-[#E2B04A]/75 sm:px-5">
                   {group}
                 </p>
                 <div className="p-1.5">
@@ -360,30 +337,32 @@ export function AdminCommandPalette({
                           onClose();
                         }}
                         className={cn(
-                          "flex min-h-12 w-full items-center gap-3 px-3 py-2.5 text-start transition-colors",
-                          active ? "bg-gold/12 text-ivory" : "text-ivory/65 hover:bg-white/[0.04]",
+                          "flex min-h-12 w-full items-center gap-3 rounded-lg px-3 py-2.5 text-start transition-colors",
+                          active
+                            ? "bg-[#E2B04A]/12 text-[var(--admin-text,#F1EEE8)]"
+                            : "text-white/65 hover:bg-white/[0.04]",
                         )}
                       >
                         <span
                           className={cn(
-                            "flex h-8 w-8 shrink-0 items-center justify-center border",
+                            "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border",
                             active
-                              ? "border-gold/45 bg-gold/10 text-gold"
-                              : "border-white/10 text-ivory/45",
+                              ? "border-[#E2B04A]/45 bg-[#E2B04A]/10 text-[#E2B04A]"
+                              : "border-white/10 text-white/45",
                           )}
                         >
                           <Icon className="h-3.5 w-3.5" />
                         </span>
                         <span className="min-w-0 flex-1">
-                          <span className="block truncate text-[0.82rem]">{command.label}</span>
-                          <span className="block truncate text-[0.66rem] text-ivory/40">
+                          <span className="block truncate text-[14px]">{command.label}</span>
+                          <span className="block truncate text-[12px] text-white/40">
                             {command.meta}
                           </span>
                         </span>
                         <ArrowUpRight
                           className={cn(
                             "h-3.5 w-3.5 shrink-0",
-                            active ? "text-gold" : "text-ivory/20",
+                            active ? "text-[#E2B04A]" : "text-white/20",
                           )}
                         />
                       </button>
@@ -393,16 +372,15 @@ export function AdminCommandPalette({
               </div>
             ))
           ) : (
-            <p className="px-4 py-10 text-center text-[0.76rem] text-ivory/40">{c.empty}</p>
+            <p className="px-4 py-10 text-center text-[13px] text-white/40">{c.empty}</p>
           )}
         </div>
 
-        <div className="flex items-center justify-between gap-3 border-t border-white/10 px-4 py-2.5 text-[0.64rem] text-ivory/35">
+        <div className="flex items-center justify-between gap-3 border-t border-white/10 px-4 py-2.5 text-[12px] text-white/35 sm:px-5">
           <span>{c.hint}</span>
           <span className="hidden sm:inline">{c.open}</span>
         </div>
       </div>
-    </div>,
-    document.body,
+    </Modal>
   );
 }

@@ -10,6 +10,9 @@ export type SessionPayload = {
   sub: string;
   email: string;
   name: string;
+  nameAr?: string;
+  honorific?: string;
+  honorificAr?: string;
   company: string;
   accountId: string;
   phone?: string;
@@ -24,6 +27,9 @@ export type SessionInput = Omit<SessionPayload, "iat" | "exp">;
 
 export type PublicSessionUser = {
   name: string;
+  nameAr?: string;
+  honorific?: string;
+  honorificAr?: string;
   email: string;
   company: string;
   accountId: string;
@@ -187,6 +193,9 @@ export async function verifySession(token: string): Promise<SessionPayload | nul
     const now = Math.floor(Date.now() / 1000);
     const email = safeText(parsed.email, 254).toLowerCase();
     const name = safeText(parsed.name, 120);
+    const nameAr = safeText(parsed.nameAr, 120);
+    const honorific = safeText(parsed.honorific, 30);
+    const honorificAr = safeText(parsed.honorificAr, 30);
     const company = safeText(parsed.company, 160);
     const accountId = safeText(parsed.accountId, 32);
     const phone = safeText(parsed.phone, 40);
@@ -207,6 +216,9 @@ export async function verifySession(token: string): Promise<SessionPayload | nul
       sub: safeText(parsed.sub, 64) || accountId,
       email,
       name,
+      ...(nameAr ? { nameAr } : {}),
+      ...(honorific ? { honorific } : {}),
+      ...(honorificAr ? { honorificAr } : {}),
       company,
       accountId,
       ...(phone ? { phone } : {}),
@@ -223,6 +235,9 @@ export async function verifySession(token: string): Promise<SessionPayload | nul
 export function publicSessionUser(session: SessionPayload): PublicSessionUser {
   return {
     name: session.name,
+    ...(session.nameAr ? { nameAr: session.nameAr } : {}),
+    ...(session.honorific ? { honorific: session.honorific } : {}),
+    ...(session.honorificAr ? { honorificAr: session.honorificAr } : {}),
     email: session.email,
     company: session.company,
     accountId: session.accountId,

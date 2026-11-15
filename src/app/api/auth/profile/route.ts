@@ -49,10 +49,17 @@ export async function PATCH(request: NextRequest) {
   }
 
   const name = cleanString(body.name, 120);
+  const nameAr = cleanString(body.nameAr, 120);
+  const honorific = cleanString(body.honorific, 30);
+  const honorificAr = cleanString(body.honorificAr, 30);
   const company = cleanString(body.company, 160);
   const phone = cleanString(body.phone, 40);
 
-  if (!isDisplayName(name) || (phone.length > 0 && !isPhone(phone))) {
+  if (
+    !isDisplayName(name) ||
+    (nameAr.length > 0 && !isDisplayName(nameAr)) ||
+    (phone.length > 0 && !isPhone(phone))
+  ) {
     return NextResponse.json(
       { error: "invalid_input" },
       { status: 400, headers: NO_STORE_HEADERS },
@@ -62,10 +69,16 @@ export async function PATCH(request: NextRequest) {
   // Email, role, and accountId are intentionally immutable here. Letting a
   // client change them would allow privilege escalation or account takeover.
   const nextCompany = company || session.company;
+  const nextNameAr = nameAr || undefined;
+  const nextHonorific = honorific || undefined;
+  const nextHonorificAr = honorificAr || undefined;
   const stored = await getUserByEmail(session.email);
   if (stored) {
     await updateUser(session.email, {
       name,
+      nameAr: nameAr,
+      honorific: honorific,
+      honorificAr: honorificAr,
       company: nextCompany,
       ...(phone ? { phone } : {}),
     });
@@ -84,6 +97,9 @@ export async function PATCH(request: NextRequest) {
       sub: session.sub,
       email: session.email,
       name,
+      ...(nextNameAr ? { nameAr: nextNameAr } : {}),
+      ...(nextHonorific ? { honorific: nextHonorific } : {}),
+      ...(nextHonorificAr ? { honorificAr: nextHonorificAr } : {}),
       company: nextCompany,
       accountId: session.accountId,
       ...(phone ? { phone } : {}),

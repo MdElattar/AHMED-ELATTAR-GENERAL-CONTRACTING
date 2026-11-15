@@ -371,6 +371,15 @@ function normalizeProject(value: unknown): WorkspaceProject | null {
     typeof value.district === "string" && value.district.trim()
       ? value.district.trim().slice(0, 160)
       : locationDistrict;
+  const districtAr = safeText(value.districtAr, 160);
+  const districtEn = safeText(value.districtEn, 160);
+  const startDate = safeText(value.startDate, 20);
+  const endDate = safeText(value.endDate, 20);
+  const contact = safeText(value.contact, 160);
+  const archivedAt =
+    typeof value.archivedAt === "string" && !Number.isNaN(Date.parse(value.archivedAt))
+      ? value.archivedAt.slice(0, 40)
+      : "";
 
   const scope = Array.isArray(value.scope)
     ? value.scope
@@ -425,6 +434,13 @@ function normalizeProject(value: unknown): WorkspaceProject | null {
     artGallery,
     city,
     district,
+    ...(districtAr ? { districtAr } : {}),
+    ...(districtEn ? { districtEn } : {}),
+    published: value.published !== false,
+    ...(archivedAt ? { archivedAt } : {}),
+    ...(startDate ? { startDate } : {}),
+    ...(endDate ? { endDate } : {}),
+    ...(contact ? { contact } : {}),
     progress: clamp(finiteNumber(value.progress, fallbackProgress), 0, 100),
     budget,
     spent,
@@ -610,9 +626,15 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
     const hydrate = async () => {
       try {
+        // The admin shell needs archived rows for the Archived filter. Public
+        // and portal visitors stay on the published-only portfolio feed.
+        const projectsEndpoint =
+          typeof window !== "undefined" && window.location.pathname.startsWith("/admin")
+            ? "/api/admin/projects"
+            : "/api/projects";
         const [contentResponse, projectsResponse] = await Promise.all([
           fetch("/api/content", { cache: "no-store" }),
-          fetch("/api/projects", { cache: "no-store" }),
+          fetch(projectsEndpoint, { cache: "no-store", credentials: "same-origin" }),
         ]);
 
         if (cancelled) return;
@@ -712,7 +734,13 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       const current = stateRef.current;
       const projects = current.projects.map((project) => {
         if (project.slug !== slug) return project;
-        return normalizeProject({ ...project, ...patch }) ?? project;
+        const normalized = normalizeProject({ ...project, ...patch });
+        if (!normalized) return project;
+        // `null` is the explicit “clear archive” signal that must reach the
+        // server. normalizeProject intentionally omits it for legacy records.
+        return patch.archivedAt === null
+          ? { ...normalized, archivedAt: null }
+          : normalized;
       });
       const updated = projects.find((project) => project.slug === slug);
 
@@ -724,17 +752,11 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
   const deleteProject = useCallback(
     (slug: string) => {
-      const current = stateRef.current;
-      commit({
-        ...current,
-        projects: current.projects.filter((project) => project.slug !== slug),
-      });
-      void fetch(`/api/admin/projects/${encodeURIComponent(slug)}`, {
-        method: "DELETE",
-        credentials: "same-origin",
-      }).catch(() => undefined);
+      // The delete contract is now a recoverable archive, never a hard
+      // removal that would make a row silently disappear.
+      updateProject(slug, { archivedAt: new Date().toISOString() });
     },
-    [commit],
+    [updateProject],
   );
 
   const updateContent = useCallback(

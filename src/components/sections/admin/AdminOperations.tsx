@@ -27,6 +27,7 @@ import { useI18n } from "@/components/providers/I18nProvider";
 import { useWorkspace } from "@/components/providers/WorkspaceProvider";
 import { useToast } from "@/components/ui/Toast";
 import { ProjectImage } from "@/components/ui/ProjectImage";
+import { Field, Input, Select } from "@/components/ui/admin/form";
 import type { PortalMilestone } from "@/data/portal";
 import { L } from "@/lib/dictionary";
 import { cn } from "@/lib/utils";
@@ -505,7 +506,7 @@ export function InquiriesPanel() {
           <button
             type="button"
             onClick={() => void reload()}
-            className="inline-flex h-10 w-fit items-center gap-2 border border-white/12 px-3.5 text-[0.7rem] font-semibold  text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
+            className="inline-flex h-10 w-fit items-center gap-2 rounded-xl border border-white/12 px-3.5 text-[0.7rem] font-semibold  text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
           >
             <RefreshCcw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
             {c.refresh}
@@ -705,7 +706,7 @@ export function AuditPanel() {
           <button
             type="button"
             onClick={() => void reload()}
-            className="inline-flex h-10 w-fit items-center gap-2 border border-white/12 px-3.5 text-[0.7rem] font-semibold  text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
+            className="inline-flex h-10 w-fit items-center gap-2 rounded-xl border border-white/12 px-3.5 text-[0.7rem] font-semibold  text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
           >
             <RefreshCcw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
             {c.refresh}
@@ -823,7 +824,7 @@ export function ConsultationsPanel() {
         <button
           type="button"
           onClick={() => void reload()}
-          className="inline-flex h-10 w-fit items-center gap-2 border border-white/12 px-3.5 text-[0.7rem] font-semibold  text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
+          className="inline-flex h-10 w-fit items-center gap-2 rounded-xl border border-white/12 px-3.5 text-[0.7rem] font-semibold  text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
         >
           <RefreshCcw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
           {c.refresh}
@@ -890,7 +891,7 @@ export function ConsultationsPanel() {
                       type="button"
                       disabled={Boolean(pending)}
                       onClick={() => void update(record, "confirmed")}
-                      className="inline-flex h-9 items-center gap-1.5 border border-emerald-400/25 px-2.5 text-[0.66rem] font-semibold  text-emerald-300 transition-colors hover:bg-emerald-400/10 disabled:opacity-50"
+                      className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-emerald-400/25 px-2.5 text-[0.66rem] font-semibold  text-emerald-300 transition-colors hover:bg-emerald-400/10 disabled:opacity-50"
                     >
                       <Check className="h-3 w-3" />
                       {c.confirm}
@@ -901,7 +902,7 @@ export function ConsultationsPanel() {
                       type="button"
                       disabled={Boolean(pending)}
                       onClick={() => void update(record, "completed")}
-                      className="inline-flex h-9 items-center gap-1.5 border border-gold/25 px-2.5 text-[0.66rem] font-semibold  text-gold transition-colors hover:bg-gold/10 disabled:opacity-50"
+                      className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-gold/25 px-2.5 text-[0.66rem] font-semibold  text-gold transition-colors hover:bg-gold/10 disabled:opacity-50"
                     >
                       <Check className="h-3 w-3" />
                       {c.complete}
@@ -912,7 +913,7 @@ export function ConsultationsPanel() {
                       type="button"
                       disabled={Boolean(pending)}
                       onClick={() => void update(record, "cancelled")}
-                      className="inline-flex h-9 items-center gap-1.5 border border-red-400/20 px-2.5 text-[0.66rem] font-semibold  text-red-300 transition-colors hover:bg-red-400/10 disabled:opacity-50"
+                      className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-red-400/20 px-2.5 text-[0.66rem] font-semibold  text-red-300 transition-colors hover:bg-red-400/10 disabled:opacity-50"
                     >
                       <X className="h-3 w-3" />
                       {c.cancel}
@@ -970,7 +971,7 @@ export function ContractsPanel() {
         <button
           type="button"
           onClick={() => void reload()}
-          className="inline-flex h-10 w-fit items-center gap-2 border border-white/12 px-3.5 text-[0.7rem] font-semibold  text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
+          className="inline-flex h-10 w-fit items-center gap-2 rounded-xl border border-white/12 px-3.5 text-[0.7rem] font-semibold  text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
         >
           <RefreshCcw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
           {c.refresh}
@@ -1117,7 +1118,7 @@ export function NotificationsPanel() {
           type="button"
           onClick={() => void test()}
           disabled={busy}
-          className="inline-flex h-10 w-fit items-center gap-2 border border-gold/30 bg-gold/5 px-3.5 text-[0.7rem] font-semibold  text-gold transition-colors hover:bg-gold/10 disabled:opacity-50"
+          className="inline-flex h-10 w-fit items-center gap-2 rounded-xl border border-gold/30 bg-gold/5 px-3.5 text-[0.7rem] font-semibold  text-gold transition-colors hover:bg-gold/10 disabled:opacity-50"
         >
           {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
           {busy ? c.sendingTest : c.sendTest}
@@ -1153,7 +1154,7 @@ export function NotificationsPanel() {
                 </span>
                 <span
                   className={cn(
-                    "inline-flex min-h-7 items-center px-2.5 text-[0.66rem] font-semibold ",
+                    "inline-flex min-h-7 items-center rounded-full px-2.5 text-[0.66rem] font-semibold ",
                     configured
                       ? "bg-emerald-400/12 text-emerald-300"
                       : "bg-white/8 text-ivory/45",
@@ -1265,25 +1266,22 @@ export function MilestonesPanel() {
           ) : null}
           <a
             href="/api/admin/export/milestones"
-            className="inline-flex h-10 items-center gap-1.5 border border-white/12 px-3.5 text-[0.7rem] font-semibold  text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
+            className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-white/12 px-3.5 text-[0.7rem] font-semibold  text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
           >
             <Download className="h-3.5 w-3.5" />
             {c.exportMilestones}
           </a>
-          <label className="block">
-            <span className="sr-only">{c.selectProject}</span>
-            <select
-              value={active?.slug ?? ""}
-              onChange={(event) => selectProject(event.target.value)}
-              className="h-10 w-full min-w-44 border border-white/12 bg-coal px-3 text-[0.76rem] text-ivory outline-none focus:border-gold/50 sm:w-auto"
-            >
-              {projects.map((project) => (
-                <option key={project.slug} value={project.slug}>
-                  {l(project.title)}
-                </option>
-              ))}
-            </select>
-          </label>
+          <Select
+            value={active?.slug ?? ""}
+            onValueChange={selectProject}
+            options={projects.map((project) => ({
+              value: project.slug,
+              label: l(project.title),
+            }))}
+            className="h-10 min-w-44 text-[13px] sm:w-auto"
+            aria-label={c.selectProject}
+            placeholder={c.selectProject}
+          />
           <button
             type="button"
             disabled={!active || adding}
@@ -1291,7 +1289,7 @@ export function MilestonesPanel() {
               setAdding(true);
               setFormError("");
             }}
-            className="inline-flex h-10 items-center gap-1.5 border border-gold/40 px-3.5 text-[0.7rem] font-semibold  text-gold transition-colors hover:bg-gold hover:text-obsidian disabled:opacity-40"
+            className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-gold/40 px-3.5 text-[0.7rem] font-semibold  text-gold transition-colors hover:bg-gold hover:text-obsidian disabled:opacity-40"
           >
             <Plus className="h-3.5 w-3.5" />
             {c.addMilestone}
@@ -1310,35 +1308,43 @@ export function MilestonesPanel() {
           <p className="text-[0.68rem] font-semibold  text-gold">
             {c.newMilestone}
           </p>
-          <div className="mt-3 grid gap-2 sm:grid-cols-2">
-            <input
-              value={draft.titleAr}
-              onChange={(event) => setDraft((current) => ({ ...current, titleAr: event.target.value }))}
-              placeholder={c.titleAr}
-              dir="rtl"
-              className="h-10 w-full border border-white/12 bg-transparent px-3 text-[0.78rem] text-ivory outline-none placeholder:text-ivory/35 focus:border-gold/50"
-            />
-            <input
-              value={draft.titleEn}
-              onChange={(event) => setDraft((current) => ({ ...current, titleEn: event.target.value }))}
-              placeholder={c.titleEn}
-              dir="ltr"
-              className="h-10 w-full border border-white/12 bg-transparent px-3 text-[0.78rem] text-ivory outline-none placeholder:text-ivory/35 focus:border-gold/50"
-            />
-            <input
-              value={draft.dateAr}
-              onChange={(event) => setDraft((current) => ({ ...current, dateAr: event.target.value }))}
-              placeholder={c.dateAr}
-              dir="rtl"
-              className="h-10 w-full border border-white/12 bg-transparent px-3 text-[0.78rem] text-ivory outline-none placeholder:text-ivory/35 focus:border-gold/50"
-            />
-            <input
-              value={draft.dateEn}
-              onChange={(event) => setDraft((current) => ({ ...current, dateEn: event.target.value }))}
-              placeholder={c.dateEn}
-              dir="ltr"
-              className="h-10 w-full border border-white/12 bg-transparent px-3 text-[0.78rem] text-ivory outline-none placeholder:text-ivory/35 focus:border-gold/50"
-            />
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <Field label={c.titleAr} htmlFor="milestone-title-ar" required>
+              <Input
+                id="milestone-title-ar"
+                value={draft.titleAr}
+                onChange={(event) => setDraft((current) => ({ ...current, titleAr: event.target.value }))}
+                placeholder={c.titleAr}
+                dir="rtl"
+              />
+            </Field>
+            <Field label={c.titleEn} htmlFor="milestone-title-en" required>
+              <Input
+                id="milestone-title-en"
+                value={draft.titleEn}
+                onChange={(event) => setDraft((current) => ({ ...current, titleEn: event.target.value }))}
+                placeholder={c.titleEn}
+                dir="ltr"
+              />
+            </Field>
+            <Field label={c.dateAr} htmlFor="milestone-date-ar">
+              <Input
+                id="milestone-date-ar"
+                value={draft.dateAr}
+                onChange={(event) => setDraft((current) => ({ ...current, dateAr: event.target.value }))}
+                placeholder={c.dateAr}
+                dir="rtl"
+              />
+            </Field>
+            <Field label={c.dateEn} htmlFor="milestone-date-en">
+              <Input
+                id="milestone-date-en"
+                value={draft.dateEn}
+                onChange={(event) => setDraft((current) => ({ ...current, dateEn: event.target.value }))}
+                placeholder={c.dateEn}
+                dir="ltr"
+              />
+            </Field>
           </div>
           {formError ? (
             <p className="mt-2 text-[0.7rem] text-red-300">{formError}</p>
@@ -1358,7 +1364,7 @@ export function MilestonesPanel() {
                 setDraft(emptyMilestoneDraft);
                 setFormError("");
               }}
-              className="inline-flex h-10 items-center border border-white/12 px-4 text-[0.7rem] font-semibold  text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
+              className="inline-flex h-10 items-center rounded-xl border border-white/12 px-4 text-[0.7rem] font-semibold  text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
             >
               {c.cancel}
             </button>
@@ -1458,7 +1464,7 @@ export function MilestonesPanel() {
                 updateProject(active.slug, { milestones: template });
                 toast(c.updated, "success");
               }}
-              className="inline-flex h-10 items-center gap-1.5 border border-white/12 px-4 text-[0.7rem] font-semibold  text-ivory/70 transition-colors hover:border-gold/40 hover:text-gold"
+              className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-white/12 px-4 text-[0.7rem] font-semibold  text-ivory/70 transition-colors hover:border-gold/40 hover:text-gold"
             >
               {(c as Record<string, string>).useTemplate || (locale === "ar" ? "استخدام قالب الإنشاء القياسي" : "Use standard construction template")}
             </button>

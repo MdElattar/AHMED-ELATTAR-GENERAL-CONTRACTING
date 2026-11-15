@@ -4,6 +4,7 @@ import type {
   SelectHTMLAttributes,
   TextareaHTMLAttributes,
 } from "react";
+import { AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Tone = "dark" | "light";
@@ -34,20 +35,29 @@ export function Field({
       <label
         htmlFor={htmlFor}
         className={cn(
-          "flex items-center gap-1.5 text-[0.65rem] font-medium uppercase tracking-[0.18em]",
-          tone === "light" ? "text-ink/55" : "text-ivory/55",
+          "flex items-center gap-1.5 text-[14px] font-medium",
+          tone === "light" ? "text-ink/75" : "text-[var(--admin-text,#F1EEE8)]/85",
         )}
       >
-        {label}
-        {required ? <span className="text-gold">*</span> : null}
+        <span>{label}</span>
+        {required ? <span className="text-[#E2B04A]" aria-hidden="true">*</span> : null}
       </label>
       {children}
       {error ? (
-        <p className="text-[0.68rem] text-[#d98572]" role="alert">
-          {error}
+        <p
+          role="alert"
+          className="flex items-start gap-1.5 text-[13px] leading-relaxed text-red-300"
+        >
+          <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          <span>{error}</span>
         </p>
       ) : hint ? (
-        <p className={cn("text-[0.68rem]", tone === "light" ? "text-ink/40" : "text-ivory/40")}>
+        <p
+          className={cn(
+            "text-[13px] leading-relaxed",
+            tone === "light" ? "text-ink/45" : "text-[var(--admin-muted,#A6A9B4)]",
+          )}
+        >
           {hint}
         </p>
       ) : null}
@@ -93,7 +103,7 @@ export function Textarea({ className, tone = "dark", ...props }: TextareaProps) 
   return (
     <textarea
       {...props}
-      className={cn("field resize-none", tone === "light" && "field-light", className)}
+      className={cn("field min-h-24 resize-y", tone === "light" && "field-light", className)}
     />
   );
 }

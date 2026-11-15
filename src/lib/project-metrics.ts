@@ -38,19 +38,118 @@ export function getBudgetHealth(p: Project): Health {
 export const needsAttention = (p: Project) =>
   ["over", "watch", "overrun"].includes(getBudgetHealth(p).key);
 
-export const byCity = (ps: Project[]) =>
-  Object.entries(
-    ps.reduce<Record<string, { value: number; nameEn: string; nameAr?: string }>>((a, p) => {
-      const key = p.city || p.id;
-      const prev = a[key] || { value: 0, nameEn: p.city, nameAr: p.cityAr };
-      prev.value += Number.isFinite(p.value) ? p.value : 0;
-      if (!prev.nameAr && p.cityAr) prev.nameAr = p.cityAr;
-      a[key] = prev;
-      return a;
-    }, {}),
-  )
-    .map(([id, v]) => ({ id, ...v }))
+/**
+ * Locations used to be stored as a single display string such as
+ * "Jeddah — Waterfront". Grouping on that value produced one city per
+ * district. Always reduce a city/display value to its canonical city segment
+ * before aggregating or comparing.
+ */
+export function normalizeCityName(value: string | null | undefined) {
+  const raw = (value ?? "").trim();
+  if (!raw) return "";
+  const [city] = raw.split(/\s*[—–]\s*/);
+  return (city || raw).replace(/\s+/g, " ").trim().slice(0, 120);
+}
+
+export function byCity(ps: Project[]) {
+  const grouped = new Map<string, { value: number; nameEn: string; nameAr?: string }>();
+
+  for (const project of ps) {
+    const city = normalizeCityName(project.city);
+    if (!city) continue;
+
+    const key = city.toLocaleLowerCase("en");
+    const previous = grouped.get(key) ?? { value: 0, nameEn: city };
+    previous.value += Number.isFinite(project.value) ? project.value : 0;
+    if (!previous.nameAr && project.cityAr) {
+      previous.nameAr = normalizeCityName(project.cityAr);
+    }
+    grouped.set(key, previous);
+  }
+
+  return [...grouped.entries()]
+    .map(([id, value]) => ({ id, ...value }))
     .sort((x, y) => y.value - x.value);
+}
+
+export type BudgetHealthCopy = {
+  /** Short, nowrap-safe label for pills and table cells. */
+  short: string;
+  /** Full explanation for a tooltip or accessible description. */
+  tooltip: string;
+  tone: "success" | "warning" | "danger" | "neutral";
+};
+
+/**
+ * One shared vocabulary for budget health. Every surface (overview, table,
+ * drawer, alerts, editor) uses this so a project cannot be "Watch" in one
+ * place and "Spending ahead of progress" in another.
+ */
+export function budgetHealthCopy(
+  health: Health,
+  locale: "ar" | "en" = "en",
+): BudgetHealthCopy {
+  const isAr = locale === "ar";
+  const gap = (value: number) => {
+    const rounded = Math.max(0, Math.round(value));
+    return isAr ? `${rounded} نقطة` : `${rounded} pts`;
+  };
+
+  switch (health.key) {
+    case "on_track":
+      return {
+        short: isAr ? "في المسار" : "On track",
+        tooltip: isAr
+          ? "المصروف متوافق مع نسبة الإنجاز."
+          : "Spending is in line with progress.",
+        tone: "success",
+      };
+    case "watch":
+      return {
+        short: isAr ? `متقدم +${gap(health.gap)}` : `Ahead +${gap(health.gap)}`,
+        tooltip: isAr
+          ? `المصروف يسبق الإنجاز بـ ${gap(health.gap)}. راقب الدفعات القادمة.`
+          : `Spending is ${gap(health.gap)} ahead of progress. Watch upcoming payments.`,
+        tone: "warning",
+      };
+    case "over":
+      return {
+        short: isAr ? `متقدم +${gap(health.gap)}` : `Ahead +${gap(health.gap)}`,
+        tooltip: isAr
+          ? `المصروف يسبق الإنجاز بـ ${gap(health.gap)}. راجع الدفعات القادمة.`
+          : `Spending is ${gap(health.gap)} ahead of progress. Review upcoming payments.`,
+        tone: "danger",
+      };
+    case "saved": {
+      const amount = formatSAR(health.amount, locale);
+      return {
+        short: isAr ? `وفر ${amount}` : `Saved ${amount}`,
+        tooltip: isAr
+          ? `اكتمل المشروع دون الميزانية بمقدار ${amount}.`
+          : `Completed under budget by ${amount}.`,
+        tone: "success",
+      };
+    }
+    case "overrun": {
+      const amount = formatSAR(health.amount, locale);
+      return {
+        short: isAr ? `تجاوز ${amount}` : `Over ${amount}`,
+        tooltip: isAr
+          ? `اكتمل المشروع متجاوزاً الميزانية بمقدار ${amount}.`
+          : `Completed over budget by ${amount}.`,
+        tone: "danger",
+      };
+    }
+    default:
+      return {
+        short: isAr ? "لا توجد بيانات" : "No data",
+        tooltip: isAr
+          ? "أضف الميزانية والمصروف لعرض صحة الميزانية."
+          : "Add a budget and spend to show budget health.",
+        tone: "neutral",
+      };
+  }
+}
 
 /**
  * Format a monetary amount for display.
@@ -127,12 +226,15 @@ export function buildAlerts(ps: Project[]): Alert[] {
 }
 
 export function toMetricsProject(p: WorkspaceProject): Project {
+  const city = normalizeCityName(p.city || p.location?.en);
+  const cityAr = normalizeCityName(p.location?.ar);
+
   return {
     id: p.slug,
     nameEn: p.title?.en || p.slug,
     nameAr: p.title?.ar || undefined,
-    city: p.location?.en || "",
-    cityAr: p.location?.ar || undefined,
+    city,
+    cityAr: cityAr || undefined,
     category: p.category,
     status: p.status,
     progress: Number.isFinite(p.progress) ? p.progress : 0,

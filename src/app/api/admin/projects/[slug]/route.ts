@@ -122,14 +122,14 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 
     await recordAudit({
       actor: guarded.email,
-      action: "project.deleted",
+      action: "project.archived",
       entity: "project",
       entityId: slug,
       ip: clientIp(request),
     });
 
     revalidatePublicContent(slug);
-    return NextResponse.json({ ok: true }, { headers: NO_STORE_HEADERS });
+    return NextResponse.json({ ok: true, archived: true }, { headers: NO_STORE_HEADERS });
   } catch (error) {
     console.error("[admin] failed to delete project", error);
     return NextResponse.json(

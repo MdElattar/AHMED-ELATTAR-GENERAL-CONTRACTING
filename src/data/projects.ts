@@ -43,6 +43,18 @@ export type Project = {
   city?: string;
   /** Canonical district (English storage value). */
   district?: string;
+  /** Localized district labels used by the admin project form. */
+  districtAr?: string;
+  districtEn?: string;
+  /** Public visibility. Undefined is treated as published for legacy records. */
+  published?: boolean;
+  /** Archive timestamp used by soft delete for the admin table. Null clears it. */
+  archivedAt?: string | null;
+  /** Delivery schedule dates (ISO YYYY-MM-DD). */
+  startDate?: string;
+  endDate?: string;
+  /** Optional client contact shown in the admin record only. */
+  contact?: string;
 };
 
 const projectSeeds: Project[] = [

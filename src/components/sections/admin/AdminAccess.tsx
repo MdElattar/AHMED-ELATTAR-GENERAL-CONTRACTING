@@ -18,6 +18,7 @@ import {
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { Field, TextInput } from "@/components/ui/Field";
+import { ConfirmDialog } from "@/components/ui/admin/overlay";
 import { cn } from "@/lib/utils";
 
 type DirectoryUser = {
@@ -189,6 +190,7 @@ export function AdminAccess() {
   const [notice, setNotice] = useState("");
   const [noticeError, setNoticeError] = useState(false);
   const [busyEmail, setBusyEmail] = useState("");
+  const [revokeTarget, setRevokeTarget] = useState<DirectoryUser | null>(null);
 
   const primary = user?.primaryAdmin === true;
 
@@ -338,8 +340,6 @@ export function AdminAccess() {
   };
 
   const revoke = async (target: DirectoryUser) => {
-    if (!window.confirm(c.revokeConfirm)) return;
-
     setBusyEmail(target.email);
     setNotice("");
     try {
@@ -382,7 +382,7 @@ export function AdminAccess() {
 
   if (!primary) {
     return (
-      <div className="flex items-start gap-3 border border-gold/25 bg-gold/[0.05] p-5">
+      <div className="flex items-start gap-3 rounded-2xl border border-gold/25 bg-gold/[0.05] p-5">
         <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-gold" />
         <p className="text-[0.88rem] leading-relaxed text-ivory/65">{c.onlyPrimary}</p>
       </div>
@@ -403,7 +403,7 @@ export function AdminAccess() {
             </h2>
             <p className="mt-3 text-[0.92rem] leading-relaxed text-ivory/60">{c.subtitle}</p>
           </div>
-          <span className="inline-flex items-center gap-2 border border-gold/25 bg-gold/[0.05] px-3.5 py-2.5 text-[0.7rem] font-medium  text-gold">
+          <span className="inline-flex items-center gap-2 rounded-full border border-gold/25 bg-gold/[0.05] px-3.5 py-2.5 text-[0.7rem] font-medium  text-gold">
             <LockKeyhole className="h-3.5 w-3.5" />
             {c.secureNote}
           </span>
@@ -425,7 +425,7 @@ export function AdminAccess() {
         <div
           role={noticeError ? "alert" : "status"}
           className={cn(
-            "flex items-center gap-2 border px-4 py-3 text-[0.82rem]",
+            "flex items-center gap-2 rounded-xl border px-4 py-3 text-[0.82rem]",
             noticeError
               ? "border-red-400/25 bg-red-400/[0.05] text-red-200"
               : "border-emerald-400/20 bg-emerald-400/[0.05] text-emerald-200",
@@ -441,7 +441,7 @@ export function AdminAccess() {
       ) : null}
 
       {pending ? (
-        <form onSubmit={confirmGrant} className="border border-gold/25 bg-coal/70 p-5 sm:p-6">
+        <form onSubmit={confirmGrant} className="rounded-2xl border border-gold/25 bg-coal/70 p-5 sm:p-6">
           <div className="flex items-center gap-2 text-[0.7rem] font-semibold  text-gold">
             <MailCheck className="h-4 w-4" />
             {c.step}
@@ -451,10 +451,10 @@ export function AdminAccess() {
             {c.otpText}
           </p>
           <div className="mt-4 flex flex-wrap gap-2 text-[0.76rem]">
-            <span className="border border-white/10 px-3 py-1.5 text-ivory/50">
+            <span className="rounded-lg border border-white/10 px-3 py-1.5 text-ivory/50">
               {c.otpTarget}: <strong className="font-medium text-ivory/75">{pending.targetEmail}</strong>
             </span>
-            <span className="border border-white/10 px-3 py-1.5 text-ivory/50">
+            <span className="rounded-lg border border-white/10 px-3 py-1.5 text-ivory/50">
               {pending.mode === "promote" ? c.promote : c.create}
             </span>
           </div>
@@ -497,7 +497,7 @@ export function AdminAccess() {
                 setCode("");
                 setConfirmError("");
               }}
-              className="inline-flex h-11 items-center border border-white/12 px-5 text-[0.76rem] font-semibold  text-ivory/55 transition-colors hover:border-white/25 hover:text-ivory"
+              className="inline-flex h-11 items-center rounded-xl border border-white/12 px-5 text-[0.76rem] font-semibold  text-ivory/55 transition-colors hover:border-white/25 hover:text-ivory"
             >
               {c.cancel}
             </button>
@@ -638,7 +638,7 @@ export function AdminAccess() {
             type="button"
             onClick={() => void load()}
             disabled={loading}
-            className="inline-flex h-10 items-center gap-1.5 border border-white/10 px-3 text-[0.7rem]  text-ivory/50 transition-colors hover:border-gold/40 hover:text-gold disabled:opacity-50"
+            className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-white/10 px-3 text-[0.7rem]  text-ivory/50 transition-colors hover:border-gold/40 hover:text-gold disabled:opacity-50"
           >
             <RefreshCw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
             {c.reload}
@@ -666,14 +666,14 @@ export function AdminAccess() {
                   className="flex flex-wrap items-center justify-between gap-3 px-6 py-5"
                 >
                   <div className="flex min-w-0 items-center gap-3">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center border border-gold/25 bg-gold/[0.06] text-gold">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-gold/25 bg-gold/[0.06] text-gold">
                       {isPrimary ? <Crown className="h-4 w-4" /> : <ShieldCheck className="h-4 w-4" />}
                     </span>
                     <div className="min-w-0">
                       <p className="truncate text-[0.92rem] font-medium text-ivory">
                         {admin.name}
                         {isPrimary ? (
-                          <span className="ms-2 border border-gold/25 px-1.5 py-0.5 text-[0.64rem]  text-gold">
+                          <span className="ms-2 rounded-full border border-gold/25 px-1.5 py-0.5 text-[0.64rem]  text-gold">
                             {c.primary}
                           </span>
                         ) : null}
@@ -696,9 +696,9 @@ export function AdminAccess() {
                     ) : (
                       <button
                         type="button"
-                        onClick={() => void revoke(admin)}
+                        onClick={() => setRevokeTarget(admin)}
                         disabled={busyEmail === admin.email}
-                        className="inline-flex h-10 items-center gap-1.5 border border-red-400/25 px-3 text-[0.7rem]  text-red-300/80 transition-colors hover:border-red-400/50 hover:text-red-200 disabled:opacity-50"
+                        className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-red-400/25 px-3 text-[0.7rem]  text-red-300/80 transition-colors hover:border-red-400/50 hover:text-red-200 disabled:opacity-50"
                       >
                         {busyEmail === admin.email ? (
                           <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -749,7 +749,7 @@ export function AdminAccess() {
                 <button
                   type="button"
                   onClick={() => startPromotion(client)}
-                  className="inline-flex h-10 items-center gap-1.5 border border-gold/30 bg-gold/[0.04] px-3 text-[0.7rem]  text-gold transition-colors hover:border-gold/55 hover:bg-gold/[0.09]"
+                  className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-gold/30 bg-gold/[0.04] px-3 text-[0.7rem]  text-gold transition-colors hover:border-gold/55 hover:bg-gold/[0.09]"
                 >
                   <UserPlus className="h-3.5 w-3.5" />
                   {c.promote}
@@ -759,6 +759,24 @@ export function AdminAccess() {
           </ul>
         )}
       </section>
+
+      <ConfirmDialog
+        open={Boolean(revokeTarget)}
+        onOpenChange={(open) => {
+          if (!open) setRevokeTarget(null);
+        }}
+        title={c.revoke}
+        description={c.revokeConfirm}
+        confirmLabel={c.revoke}
+        cancelLabel={c.cancel}
+        destructive
+        busy={Boolean(revokeTarget && busyEmail === revokeTarget.email)}
+        onConfirm={async () => {
+          if (!revokeTarget) return;
+          await revoke(revokeTarget);
+          setRevokeTarget(null);
+        }}
+      />
     </div>
   );
 }
@@ -775,7 +793,7 @@ function Stat({
   text?: string;
 }) {
   return (
-    <div className="min-w-0 border border-white/10 bg-obsidian/40 px-6 py-5">
+    <div className="min-w-0 rounded-2xl border border-white/10 bg-obsidian/40 px-6 py-5">
       <div className="flex items-center justify-between gap-2">
         <span className="text-[0.72rem]  text-ivory/45">{label}</span>
         <Icon className="h-4 w-4 shrink-0 text-gold/60" />
@@ -805,7 +823,7 @@ function ModeButton({
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        "inline-flex h-11 w-full items-center justify-center gap-2 border px-4 text-[0.74rem] font-semibold  transition-colors",
+        "inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border px-4 text-[0.74rem] font-semibold  transition-colors",
         active
           ? "border-gold/45 bg-gold/[0.1] text-gold"
           : "border-white/10 text-ivory/50 hover:border-white/20 hover:text-ivory/70",

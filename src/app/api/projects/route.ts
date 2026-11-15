@@ -6,9 +6,12 @@ import { NO_STORE_HEADERS } from "@/lib/security/http";
 export async function GET() {
   await connection();
   try {
-    const projects = (await listProjects()).filter(
-      (project) => !project.slug.startsWith("__"),
-    );
+    const projects = (await listProjects()).filter((project) => {
+      if (project.slug.startsWith("__")) return false;
+      if (project.payload.archivedAt) return false;
+      if (project.payload.published === false) return false;
+      return true;
+    });
 
     return NextResponse.json(
       {

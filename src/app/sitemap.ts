@@ -23,7 +23,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let projectRoutes: MetadataRoute.Sitemap = [];
   try {
     const projects = (await listProjects()).filter(
-      (project) => !project.slug.startsWith("__"),
+      (project) =>
+        !project.slug.startsWith("__") &&
+        !project.payload.archivedAt &&
+        project.payload.published !== false,
     );
     projectRoutes = projects.map((project) => ({
       url: `${baseUrl}/projects/${project.slug}`,

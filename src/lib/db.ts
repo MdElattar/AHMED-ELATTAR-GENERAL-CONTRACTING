@@ -14,6 +14,12 @@ export type StoredUser = {
   id: string;
   email: string;
   name: string;
+  /** Optional Arabic display name used by the admin greeting and sidebar. */
+  nameAr?: string;
+  /** Optional honorific such as "Eng." or "Dr.". */
+  honorific?: string;
+  /** Arabic equivalent of the honorific, e.g. "م." or "د.". */
+  honorificAr?: string;
   company: string;
   phone?: string;
   passwordHash: string;
@@ -183,6 +189,9 @@ export type StoredSignoff = {
 export type NewUser = {
   email: string;
   name: string;
+  nameAr?: string;
+  honorific?: string;
+  honorificAr?: string;
   company: string;
   phone?: string;
   passwordHash: string;
@@ -329,6 +338,15 @@ async function seedMemory() {
         id: existing?.id ?? id(),
         email: identity.email,
         name: identity.name,
+        ...(identity.nameAr || existing?.nameAr
+          ? { nameAr: identity.nameAr || existing?.nameAr }
+          : {}),
+        ...(identity.honorific || existing?.honorific
+          ? { honorific: identity.honorific || existing?.honorific }
+          : {}),
+        ...(identity.honorificAr || existing?.honorificAr
+          ? { honorificAr: identity.honorificAr || existing?.honorificAr }
+          : {}),
         company: identity.company,
         ...(existing?.phone ? { phone: existing.phone } : {}),
         passwordHash,
@@ -427,6 +445,9 @@ async function mongoModels(): Promise<MongoModels> {
       {
         email: { type: String, required: true, unique: true, index: true, lowercase: true },
         name: { type: String, required: true },
+        nameAr: { type: String },
+        honorific: { type: String },
+        honorificAr: { type: String },
         company: { type: String, required: true },
         phone: { type: String },
         passwordHash: { type: String, required: true },
@@ -676,6 +697,9 @@ function mapUser(doc: LeanDoc): StoredUser {
     id: docId(doc),
     email: str(doc.email),
     name: str(doc.name),
+    ...(str(doc.nameAr) ? { nameAr: str(doc.nameAr) } : {}),
+    ...(str(doc.honorific) ? { honorific: str(doc.honorific) } : {}),
+    ...(str(doc.honorificAr) ? { honorificAr: str(doc.honorificAr) } : {}),
     company: str(doc.company),
     ...(str(doc.phone) ? { phone: str(doc.phone) } : {}),
     passwordHash: str(doc.passwordHash),
@@ -1145,6 +1169,9 @@ export async function createUser(input: NewUser): Promise<StoredUser> {
     id: id(),
     email: input.email.trim().toLowerCase(),
     name: input.name,
+    ...(input.nameAr ? { nameAr: input.nameAr } : {}),
+    ...(input.honorific ? { honorific: input.honorific } : {}),
+    ...(input.honorificAr ? { honorificAr: input.honorificAr } : {}),
     company: input.company,
     ...(input.phone ? { phone: input.phone } : {}),
     passwordHash: input.passwordHash,
@@ -1167,6 +1194,9 @@ export async function createUser(input: NewUser): Promise<StoredUser> {
   const created = await User.create({
     email: user.email,
     name: user.name,
+    ...(user.nameAr ? { nameAr: user.nameAr } : {}),
+    ...(user.honorific ? { honorific: user.honorific } : {}),
+    ...(user.honorificAr ? { honorificAr: user.honorificAr } : {}),
     company: user.company,
     ...(user.phone ? { phone: user.phone } : {}),
     passwordHash: user.passwordHash,
@@ -1184,6 +1214,9 @@ export async function updateUser(
     Pick<
       StoredUser,
       | "name"
+      | "nameAr"
+      | "honorific"
+      | "honorificAr"
       | "company"
       | "phone"
       | "passwordHash"
@@ -1358,15 +1391,17 @@ export async function upsertProject(
 
 export async function deleteProject(slug: string): Promise<boolean> {
   const normalized = slug.trim().toLowerCase();
+  const existing = await getProjectBySlug(normalized);
+  if (!existing) return false;
 
-  if ((await activeMode()) === "memory") {
-    await seedMemory();
-    return memory().projects.delete(normalized);
-  }
-
-  const { Project } = await mongoModels();
-  const result = await Project.deleteOne({ slug: normalized });
-  return (result.deletedCount ?? 0) > 0;
+  // Deletes are intentionally soft. The public feed excludes archivedAt,
+  // while the admin Archived filter keeps the record recoverable.
+  await upsertProject(normalized, {
+    ...existing.payload,
+    featured: existing.featured,
+    archivedAt: new Date().toISOString(),
+  });
+  return true;
 }
 
 /* ------------------------------------------------------------------ media */
@@ -1880,6 +1915,9 @@ export async function seedDatabase(): Promise<{
       admin = await createUser({
         email: identity.email,
         name: identity.name,
+        ...(identity.nameAr ? { nameAr: identity.nameAr } : {}),
+        ...(identity.honorific ? { honorific: identity.honorific } : {}),
+        ...(identity.honorificAr ? { honorificAr: identity.honorificAr } : {}),
         company: identity.company,
         passwordHash,
         role: "admin",
@@ -1901,6 +1939,9 @@ export async function seedDatabase(): Promise<{
       role: "admin",
       passwordHash,
       name: identity.name,
+      ...(identity.nameAr ? { nameAr: identity.nameAr } : {}),
+      ...(identity.honorific ? { honorific: identity.honorific } : {}),
+      ...(identity.honorificAr ? { honorificAr: identity.honorificAr } : {}),
       company: identity.company,
     })) ?? admin;
 
