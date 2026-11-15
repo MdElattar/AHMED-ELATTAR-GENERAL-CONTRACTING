@@ -1460,11 +1460,12 @@ function OverviewSection({
         <m.section variants={stagger} className="grid gap-[18px] sm:grid-cols-2 xl:grid-cols-4">
           {activeUpcoming.map((p, idx) => {
             const statusLabel = p.status === "ongoing" ? (isAr ? "قيد التنفيذ" : "Ongoing") : p.status === "upcoming" ? (isAr ? "قادم" : "Upcoming") : (isAr ? "مكتمل" : "Completed");
+            const sourceProject = projects.find((project) => project.slug === p.id);
             return (
               <m.button key={p.id} variants={fadeUp} type="button" onClick={() => onNavigate("projects")} className="admin-focus-ring overflow-hidden rounded-[20px] border border-white/[.07] bg-[#12141B] text-start transition-all duration-[160ms] hover:-translate-y-0.5 hover:border-[rgba(226,176,74,0.25)]">
                 <div className="relative">
                   <ProjectImage
-                    project={p}
+                    project={sourceProject ?? p}
                     className="aspect-[16/10] w-full rounded-t-[20px]"
                     sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 25vw"
                     priority={idx === 0}
@@ -1754,12 +1755,12 @@ function ProjectsSection({
       ) : view === "cards" ? (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {paged.map((project, index) => (
-            <button key={project.slug} type="button" onClick={() => setDetail(project)} className="overflow-hidden rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018] text-start transition-colors hover:border-gold/30">
+            <button key={project.slug} type="button" onClick={() => setDetail(project)} className="overflow-hidden rounded-[20px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018] text-start transition-colors hover:border-gold/30">
               <ProjectImage
                 project={project}
                 sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw"
                 priority={index === 0}
-                className="aspect-[16/10] w-full rounded-t-[22px]"
+                className="aspect-[16/10] w-full rounded-t-[20px]"
               />
               <div className="p-4">
                 <div className="min-w-0 flex-1">

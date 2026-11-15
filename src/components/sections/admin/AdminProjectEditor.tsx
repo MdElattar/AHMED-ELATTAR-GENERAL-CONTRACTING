@@ -250,7 +250,11 @@ function initialForm(project: WorkspaceProject | null): FormState {
     coverUrl: project.coverUrl ?? "",
     thumbUrl: project.thumbUrl ?? "",
     blurDataURL: project.blurDataURL ?? "",
-    imageGallery: project.gallery ?? [],
+    imageGallery: project.gallery.length
+      ? project.gallery
+      : project.coverUrl
+        ? [project.coverUrl]
+        : [],
     clientAr: project.client.ar,
     clientEn: project.client.en,
     areaAr: project.area.ar,
@@ -336,7 +340,11 @@ export function AdminProjectEditor({
       slug = `${baseSlug}-${Date.now().toString(36).slice(-4)}`;
     }
     const artGallery = form.gallery.length ? form.gallery : [form.art];
-    const imageGallery = form.imageGallery;
+    const imageGallery = form.imageGallery.length
+      ? form.imageGallery
+      : form.coverUrl
+        ? [form.coverUrl]
+        : [];
     const coverUrl = form.coverUrl || imageGallery[0] || undefined;
     const next: WorkspaceProject = {
       slug,

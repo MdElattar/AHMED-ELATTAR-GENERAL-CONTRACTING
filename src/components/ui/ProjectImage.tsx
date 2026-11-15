@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useState } from "react";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { BrandLogo } from "@/components/ui/BrandLogo";
 import type { ArtVariant, ProjectCategory } from "@/data/projects";
@@ -115,18 +116,20 @@ export function ProjectImage({
   imageClassName,
 }: ProjectImageProps) {
   const { locale } = useI18n();
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const source =
     variant === "thumb"
       ? project.thumbUrl || project.coverUrl
       : project.coverUrl || project.thumbUrl;
   const src = source && isAllowedMediaSource(source) ? source : "";
+  const hasImage = Boolean(src) && failedSrc !== src;
   const title = plainTitle(project.title, locale);
   const tone = toneFor(project);
   const initials = initialsFor(title);
 
   return (
     <span className={cn("relative block overflow-hidden bg-[#171A22]", className)}>
-      {src ? (
+      {hasImage ? (
         <Image
           src={src}
           alt={alt ?? title}
@@ -136,6 +139,7 @@ export function ProjectImage({
           blurDataURL={project.blurDataURL}
           priority={priority}
           loading={priority ? undefined : "lazy"}
+          onError={() => setFailedSrc(src)}
           className={cn("object-cover", imageClassName)}
         />
       ) : (

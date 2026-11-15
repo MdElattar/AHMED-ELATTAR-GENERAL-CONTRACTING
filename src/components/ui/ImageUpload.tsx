@@ -117,6 +117,14 @@ async function prepareImage(file: File) {
       if (cover.size <= MAX_FINAL_BYTES) break;
     }
   }
+  // Even the lowest quality can stay above the byte budget for extremely
+  // detailed photos. Step the width down only when that actually happens.
+  if (cover.size > MAX_FINAL_BYTES) {
+    for (const width of [1280, 1024, 800, 640]) {
+      cover = await canvasToBlob(bitmap, width, 0.55);
+      if (cover.size <= MAX_FINAL_BYTES) break;
+    }
+  }
 
   const thumb = await canvasToBlob(bitmap, 400, 0.78);
   const blur = await canvasToBlob(bitmap, 20, 0.4);
@@ -212,8 +220,10 @@ export function ImageUpload({
   );
 
   const acceptFiles = useCallback(
-    async (files: File[]) => {
-      const remaining = Math.max(0, maxFiles - value.gallery.length);
+    async (files: File[], replaceAt?: number) => {
+      const target = typeof replaceAt === "number" ? replaceAt : null;
+      const remaining =
+        target === null ? Math.max(0, maxFiles - value.gallery.length) : 1;
       if (!remaining) {
         setErrors([
           isAr
@@ -276,7 +286,12 @@ export function ImageUpload({
 
         const nextMeta = { ...meta, ...uploadedMeta };
         setUploadedMeta((current) => ({ ...current, ...uploadedMeta }));
-        const nextGallery = [...value.gallery, ...uploaded].slice(0, maxFiles);
+        const nextGallery =
+          target === null
+            ? [...value.gallery, ...uploaded].slice(0, maxFiles)
+            : value.gallery.map((item, index) =>
+                index === target ? (uploaded[0] ?? item) : item,
+              );
         commitGallery(nextGallery, nextMeta);
         setProgress(100);
       } catch (error) {
@@ -305,7 +320,9 @@ export function ImageUpload({
 
   const onPick = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files ?? []);
-    if (files.length) void acceptFiles(files);
+    const target = replaceIndex.current;
+    replaceIndex.current = null;
+    if (files.length) void acceptFiles(files, target ?? undefined);
   };
 
   const onDrop = (event: React.DragEvent<HTMLDivElement>) => {
@@ -358,7 +375,10 @@ export function ImageUpload({
           </div>
           <button
             type="button"
-            onClick={() => inputRef.current?.click()}
+            onClick={() => {
+              replaceIndex.current = null;
+              inputRef.current?.click();
+            }}
             disabled={busy || value.gallery.length >= maxFiles}
             className="admin-focus-ring inline-flex min-h-[44px] shrink-0 items-center justify-center gap-2 rounded-[12px] border border-gold/35 bg-gold/10 px-4 text-[0.78rem] font-semibold text-gold transition-colors hover:bg-gold/15 disabled:cursor-not-allowed disabled:opacity-45"
           >
@@ -454,7 +474,7 @@ export function ImageUpload({
                 <GripVertical className="h-3 w-3" />
                 {index === 0 ? (isAr ? "الغلاف" : "Cover") : index + 1}
               </span>
-              <span className="absolute inset-x-1 bottom-1 flex items-center justify-center gap-1 rounded-[8px] bg-obsidian/80 p-1 opacity-0 backdrop-blur transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
+              <span className="absolute inset-x-1 bottom-1 flex items-center justify-center gap-1 rounded-[8px] bg-obsidian/80 p-1 opacity-100 backdrop-blur transition-opacity sm:opacity-0 sm:group-focus-within:opacity-100 sm:group-hover:opacity-100">
                 <button
                   type="button"
                   onClick={() => commitGallery(moveItem(value.gallery, index, index - 1))}
@@ -475,7 +495,20 @@ export function ImageUpload({
                 </button>
                 <button
                   type="button"
-                  onClick={() => commitGallery(value.gallery.filter((item) => item !== url))}
+                  onClick={() => {
+                    replaceIndex.current = index;
+                    inputRef.current?.click();
+                  }}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-[6px] text-ivory/70 hover:bg-white/10 hover:text-ivory"
+                  aria-label={isAr ? "استبدال الصورة" : "Replace image"}
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    commitGallery(value.gallery.filter((_, itemIndex) => itemIndex !== index))
+                  }
                   className="inline-flex h-8 w-8 items-center justify-center rounded-[6px] text-[#FF9A8F] hover:bg-red-400/10"
                   aria-label={isAr ? "إزالة الصورة" : "Remove image"}
                 >
