@@ -14,6 +14,7 @@ type BrandLogoProps = {
   priority?: boolean;
   collapsed?: boolean;
   className?: string;
+  markClassName?: string;
 };
 
 /**
@@ -30,6 +31,7 @@ export function BrandLogo({
   priority = false,
   collapsed = false,
   className,
+  markClassName,
 }: BrandLogoProps) {
   const { locale: contextLocale } = useI18n();
   const locale = localeOverride ?? contextLocale;
@@ -47,7 +49,7 @@ export function BrandLogo({
         height={328}
         priority={priority}
         unoptimized
-        className="h-9 w-auto shrink-0 object-contain"
+        className={cn("h-9 w-auto shrink-0 object-contain", markClassName)}
       />
 
       {variant === "full" ? (

@@ -106,7 +106,7 @@ function OverlaySurface({
       <div
         data-lenis-prevent
         className={cn(
-          "min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-5 [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,.16)_transparent]",
+          "scroll-area min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-5",
           bodyClassName,
         )}
       >
@@ -377,7 +377,7 @@ export function Popover({
           side={side}
           sideOffset={8}
           className={cn(
-            "z-[280] min-w-[180px] rounded-xl border border-white/10 bg-[#161820] p-1.5 text-[var(--admin-text,#F1EEE8)] shadow-[0_18px_60px_rgba(0,0,0,.55)] outline-none",
+            "scroll-area z-[280] min-w-[180px] rounded-xl border border-white/10 bg-[#161820] p-1.5 text-[var(--admin-text,#F1EEE8)] shadow-[0_18px_60px_rgba(0,0,0,.55)] outline-none",
             className,
           )}
         >

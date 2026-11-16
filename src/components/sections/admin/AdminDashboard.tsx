@@ -16,6 +16,7 @@ import {
   CalendarDays,
   Check,
   ChevronDown,
+  ChevronLeft,
   Columns3,
   Copy,
   ExternalLink,
@@ -24,13 +25,17 @@ import {
   Flag,
   FolderKanban,
   Eye,
+  Globe2,
   Image as ImageIcon,
   Inbox,
   LayoutDashboard,
+  Languages,
   Loader2,
+  LogOut,
   Menu,
   MessageSquare,
   MoreVertical,
+  Moon,
   Pencil,
   Plus,
   RotateCcw,
@@ -40,13 +45,15 @@ import {
   Settings,
   ShieldCheck,
   Sparkles,
+  Sun,
   Trash2,
   UserRound,
   Wallet,
   Wrench,
   X,
 } from "lucide-react";
-import { isAdminUser, useAuth, type PortalUser } from "@/components/providers/AuthProvider";
+import { isAdminUser, useAuth } from "@/components/providers/AuthProvider";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useI18n } from "@/components/providers/I18nProvider";
 
 import {
@@ -504,7 +511,8 @@ export function AdminDashboard({
   initialSection?: AdminSection;
 }) {
   const { locale, toggleLocale } = useI18n();
-  const { user, ready } = useAuth();
+  const { signOut } = useAuth();
+  const { user, ready, loading: userLoading, email, displayName, monogram, roleLabel } = useCurrentUser();
   const { projects, messages, addProject, updateProject, ready: workspaceReady } = useWorkspace();
   const router = useRouter();
   const pathname = usePathname();
@@ -517,6 +525,8 @@ export function AdminDashboard({
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [topbarScrolled, setTopbarScrolled] = useState(false);
   const [tier, setTier] = useState<"mobile" | "lg" | "xl">("xl");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     if (typeof window === "undefined") return false;
@@ -535,6 +545,7 @@ export function AdminDashboard({
     try { const t = localStorage.getItem("admin-theme"); return t === "light" ? "light" : "dark"; } catch { return "dark"; }
   });
   const mainRef = useRef<HTMLElement | null>(null);
+  const topSentinelRef = useRef<HTMLDivElement | null>(null);
   const autoCollapsed = tier === "lg";
   const collapsed = autoCollapsed || sidebarCollapsed;
 
@@ -549,21 +560,21 @@ export function AdminDashboard({
     const main = mainRef.current;
     if (!main) return;
     main.scrollTo({ top: 0, behavior: "auto" });
-  }, []);
-
-  const scrollPositions = useRef(new Map<string, number>());
+    main.focus({ preventScroll: true });
+  }, [pathname, ready]);
 
   useEffect(() => {
+    if (!ready) return;
     const main = mainRef.current;
-    if (!main) return;
-    const saved = scrollPositions.current.get(pathname) ?? 0;
-    main.scrollTo({ top: saved, behavior: "auto" });
-    const onScroll = () => {
-      scrollPositions.current.set(pathname, main.scrollTop);
-    };
-    main.addEventListener("scroll", onScroll, { passive: true });
-    return () => main.removeEventListener("scroll", onScroll);
-  }, [pathname]);
+    const sentinel = topSentinelRef.current;
+    if (!main || !sentinel) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setTopbarScrolled(!entry.isIntersecting),
+      { root: main, threshold: 0 },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [ready]);
 
   useEffect(() => { try { localStorage.setItem("admin-density", density); } catch {} }, [density]);
   useEffect(() => { try { localStorage.setItem("admin-font-size", fontScale); } catch {} }, [fontScale]);
@@ -608,6 +619,11 @@ export function AdminDashboard({
       if (event.key === "/") {
         event.preventDefault();
         setPaletteOpen(true);
+        return;
+      }
+      if (event.key === "[") {
+        event.preventDefault();
+        setSidebarCollapsed((value) => !value);
         return;
       }
       if (event.key === "?") {
@@ -790,28 +806,52 @@ export function AdminDashboard({
     else addProject(project);
   };
 
+  const handleSignOut = async () => {
+    setUserMenuOpen(false);
+    setMobileNavOpen(false);
+    setMoreOpen(false);
+    await signOut();
+    router.replace("/sign-in");
+  };
+
   const sidebarBrand = (collapsed: boolean) => (
-    <div className="flex h-[72px] shrink-0 items-center gap-2 border-b border-[var(--admin-card-border)] px-4">
+    <div
+      className={cn(
+        "flex h-[72px] shrink-0 items-center border-b border-[var(--admin-card-border)]",
+        collapsed ? "justify-center px-0" : "min-w-0 gap-2 px-4",
+      )}
+    >
       <Link
         href="/admin"
         onClick={() => { setMobileNavOpen(false); setMoreOpen(false); }}
-        className="min-w-0 flex-1 rounded-[12px] admin-focus-ring"
+        className={cn(
+          "admin-focus-ring rounded-[12px]",
+          collapsed ? "flex h-11 w-11 items-center justify-center" : "flex min-w-0 flex-1 items-center",
+        )}
         aria-label={locale === "ar" ? "نظرة عامة" : "Overview"}
       >
-        <BrandLogo variant="full" collapsed={collapsed} tone={theme === "light" ? "dark" : "light"} />
+        {collapsed ? (
+          <span data-testid="admin-sidebar-mark" className="flex h-10 w-10 items-center justify-center">
+            <BrandLogo
+              variant="mark"
+              collapsed
+              priority
+              markClassName="h-10 w-10"
+              tone={theme === "light" ? "dark" : "light"}
+            />
+          </span>
+        ) : (
+          <BrandLogo
+            variant="full"
+            priority
+            tone={theme === "light" ? "dark" : "light"}
+          />
+        )}
       </Link>
       <button
         type="button"
-        onClick={() => setSidebarCollapsed((value) => !value)}
-        className={cn("admin-focus-ring hidden h-10 w-10 shrink-0 items-center justify-center rounded-[12px] text-[var(--admin-muted)] hover:bg-[var(--admin-pill-surface)] xl:inline-flex", collapsed && "-rotate-90 rtl:rotate-90")}
-        aria-label={collapsed ? (locale === "ar" ? "توسيع الشريط" : "Expand sidebar") : (locale === "ar" ? "طي الشريط" : "Collapse sidebar")}
-      >
-        <ChevronDown className="h-4 w-4 rotate-90 rtl:-rotate-90" />
-      </button>
-      <button
-        type="button"
         onClick={() => setMobileNavOpen(false)}
-        className="admin-focus-ring inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] text-[var(--admin-muted)] hover:bg-[var(--admin-pill-surface)] lg:hidden"
+        className="admin-focus-ring inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[12px] text-[var(--admin-muted)] hover:bg-[var(--admin-pill-surface)] lg:hidden"
         aria-label={locale === "ar" ? "إغلاق" : "Close"}
       >
         <X className="h-5 w-5" strokeWidth={1.7} />
@@ -821,7 +861,8 @@ export function AdminDashboard({
 
   const sidebarNav = (collapsed: boolean) => (
     <nav
-      className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-2 [scrollbar-width:thin]"
+      data-scroll-root="sidebar"
+      className="scroll-area scroll-area--autohide min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-2 [touch-action:pan-y]"
       aria-label={locale === "ar" ? "تنقل الإدارة" : "Admin navigation"}
     >
       {navGroups.map((group) => (
@@ -869,27 +910,142 @@ export function AdminDashboard({
     </nav>
   );
 
+  const userMenuContent = (close: () => void) => {
+    const isAr = locale === "ar";
+    return (
+      <div className="w-[230px]" role="menu" aria-label={isAr ? "قائمة المستخدم" : "User menu"}>
+        <div className="border-b border-[var(--admin-card-border)] px-2.5 pb-2.5 pt-1.5">
+          <p className="truncate text-[14px] font-semibold text-[var(--admin-text)]">{displayName || "—"}</p>
+          <p className="mt-0.5 truncate text-[12px] text-[var(--admin-muted)]" dir="ltr">{email || "—"}</p>
+        </div>
+        <Link
+          href="/admin/profile"
+          role="menuitem"
+          prefetch
+          onClick={close}
+          className="admin-focus-ring mt-1 flex min-h-[44px] items-center gap-3 rounded-[10px] px-3 text-[14px] text-[var(--admin-text)] hover:bg-[var(--admin-pill-surface)]"
+        >
+          <UserRound className="h-4 w-4 text-[var(--admin-muted)]" strokeWidth={1.7} />
+          {isAr ? "الملف الشخصي" : "Profile"}
+        </Link>
+        <Link
+          href="/"
+          target="_blank"
+          rel="noopener noreferrer"
+          role="menuitem"
+          onClick={close}
+          className="admin-focus-ring flex min-h-[44px] items-center gap-3 rounded-[10px] px-3 text-[14px] text-[var(--admin-text)] hover:bg-[var(--admin-pill-surface)]"
+        >
+          <Globe2 className="h-4 w-4 text-[var(--admin-muted)]" strokeWidth={1.7} />
+          <span className="flex-1">{isAr ? "عرض الموقع" : "View website"}</span>
+          <ArrowUpRight className="h-3.5 w-3.5 text-[var(--admin-muted)]" strokeWidth={1.7} />
+        </Link>
+        <Link
+          href="/portal"
+          role="menuitem"
+          prefetch
+          onClick={close}
+          className="admin-focus-ring flex min-h-[44px] items-center gap-3 rounded-[10px] px-3 text-[14px] text-[var(--admin-text)] hover:bg-[var(--admin-pill-surface)]"
+        >
+          <LayoutDashboard className="h-4 w-4 text-[var(--admin-muted)]" strokeWidth={1.7} />
+          {isAr ? "بوابة العملاء" : "Client portal"}
+        </Link>
+        <button
+          type="button"
+          role="menuitem"
+          onClick={() => {
+            toggleLocale();
+            close();
+          }}
+          className="admin-focus-ring flex min-h-[44px] w-full items-center gap-3 rounded-[10px] px-3 text-start text-[14px] text-[var(--admin-text)] hover:bg-[var(--admin-pill-surface)]"
+        >
+          <Languages className="h-4 w-4 text-[var(--admin-muted)]" strokeWidth={1.7} />
+          <span className="flex-1">{isAr ? "اللغة" : "Language"}</span>
+          <span className="text-[12px] text-[var(--admin-muted)]">{isAr ? "EN" : "AR"}</span>
+        </button>
+        <button
+          type="button"
+          role="menuitem"
+          onClick={() => {
+            setTheme((value) => (value === "dark" ? "light" : "dark"));
+            close();
+          }}
+          className="admin-focus-ring flex min-h-[44px] w-full items-center gap-3 rounded-[10px] px-3 text-start text-[14px] text-[var(--admin-text)] hover:bg-[var(--admin-pill-surface)]"
+        >
+          {theme === "dark" ? (
+            <Sun className="h-4 w-4 text-[var(--admin-muted)]" strokeWidth={1.7} />
+          ) : (
+            <Moon className="h-4 w-4 text-[var(--admin-muted)]" strokeWidth={1.7} />
+          )}
+          <span className="flex-1">{isAr ? "المظهر" : "Theme"}</span>
+          <span className="text-[12px] text-[var(--admin-muted)]">
+            {theme === "dark" ? (isAr ? "داكن" : "Dark") : isAr ? "فاتح" : "Light"}
+          </span>
+        </button>
+        <div className="my-1 border-t border-[var(--admin-card-border)]" />
+        <button
+          type="button"
+          role="menuitem"
+          onClick={() => {
+            close();
+            void handleSignOut();
+          }}
+          className="admin-focus-ring flex min-h-[44px] w-full items-center gap-3 rounded-[10px] px-3 text-start text-[14px] text-[var(--admin-red)] hover:bg-[var(--admin-red)]/10"
+        >
+          <LogOut className="h-4 w-4" strokeWidth={1.7} />
+          {isAr ? "تسجيل الخروج" : "Sign out"}
+        </button>
+      </div>
+    );
+  };
+
   const sidebarUser = (collapsed: boolean) => (
     <div className="shrink-0 border-t border-[var(--admin-card-border)] p-3">
-      {!collapsed ? (
-        <div className="flex items-center gap-[10px] rounded-[14px] border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] p-3">
-          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,#F3C86A,#C98F1E)] text-[14px] font-extrabold text-[#1a1205]">
-            {profileMonogram(user, locale)}
-            <span className="absolute bottom-0 end-0 h-[11px] w-[11px] rounded-full border-2 border-[var(--admin-bg)] bg-[var(--admin-green)]" />
-          </div>
-          <div className="min-w-0">
-            <p className="truncate text-[14px] font-medium text-[var(--admin-text)]">{profileName(user, locale) || "—"}</p>
-            <p className="truncate text-[12px] text-[var(--admin-muted)]">{userRoleLabel(user, locale)}</p>
-          </div>
-        </div>
-      ) : (
+      {userLoading ? (
         <div
-          className="relative mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-[linear-gradient(135deg,#F3C86A,#C98F1E)] text-[13px] font-extrabold text-[#1a1205]"
-          title={profileName(user, locale) || "—"}
+          className={cn(
+            "animate-pulse bg-white/[0.05]",
+            collapsed ? "mx-auto h-10 w-10 rounded-full" : "h-[68px] rounded-[14px]",
+          )}
+          aria-hidden="true"
+        />
+      ) : (
+        <Popover
+          open={userMenuOpen}
+          onOpenChange={setUserMenuOpen}
+          align={collapsed ? "center" : "start"}
+          side="top"
+          className="scroll-area max-h-[min(70dvh,460px)] overflow-y-auto"
+          trigger={
+            <button
+              type="button"
+              aria-haspopup="menu"
+              aria-expanded={userMenuOpen}
+              aria-label={`${locale === "ar" ? "قائمة المستخدم" : "User menu"}: ${displayName || email || "—"}`}
+              title={displayName || "—"}
+              className={cn(
+                "admin-focus-ring w-full text-start transition-colors",
+                collapsed
+                  ? "mx-auto flex h-11 w-11 items-center justify-center rounded-full"
+                  : "flex items-center gap-[10px] rounded-[14px] border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] p-3 hover:border-white/20",
+              )}
+            >
+              <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,#F3C86A,#C98F1E)] text-[14px] font-extrabold text-[#1a1205]">
+                {monogram}
+                <span className="absolute bottom-0 end-0 h-[11px] w-[11px] rounded-full border-2 border-[var(--admin-bg)] bg-[var(--admin-green)]" />
+              </span>
+              {!collapsed ? (
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[14px] font-medium text-[var(--admin-text)]">{displayName || "—"}</span>
+                  <span className="block truncate text-[12px] text-[var(--admin-muted)]">{roleLabel}</span>
+                </span>
+              ) : null}
+              {!collapsed ? <ChevronDown className="h-4 w-4 shrink-0 text-[var(--admin-muted)]" strokeWidth={1.7} /> : null}
+            </button>
+          }
         >
-          {profileMonogram(user, locale)}
-          <span className="absolute bottom-0 end-0 h-[10px] w-[10px] rounded-full border-2 border-[var(--admin-bg)] bg-[var(--admin-green)]" />
-        </div>
+          {userMenuContent(() => setUserMenuOpen(false))}
+        </Popover>
       )}
     </div>
   );
@@ -900,6 +1056,15 @@ export function AdminDashboard({
       items: group.items.filter((item) => !["overview", "projects", "notifications"].includes(item.id)),
     }))
     .filter((group) => group.items.length > 0);
+
+  const siteLinks = [
+    { href: "/", en: "Home", ar: "الرئيسية" },
+    { href: "/projects", en: "Projects", ar: "المشاريع" },
+    { href: "/services", en: "Services", ar: "الخدمات" },
+    { href: "/about", en: "About", ar: "من نحن" },
+    { href: "/contact", en: "Contact", ar: "اتصل بنا" },
+    { href: "/portal", en: "Client portal", ar: "بوابة العملاء" },
+  ] as const;
 
   return (
     <LazyMotion features={domAnimation}>
@@ -915,16 +1080,47 @@ export function AdminDashboard({
           <aside
             data-collapsed={collapsed ? "true" : "false"}
             className={cn(
-              "hidden h-dvh w-[264px] shrink-0 flex-col border-e border-[var(--admin-card-border)] bg-[var(--admin-sidebar)] transition-[width] duration-200 data-[collapsed=true]:w-[76px] lg:flex",
+              "relative hidden h-dvh w-[264px] shrink-0 flex-col border-e border-[var(--admin-card-border)] bg-[var(--admin-sidebar)] transition-[width] duration-200 data-[collapsed=true]:w-[76px] lg:flex",
             )}
           >
             {sidebarBrand(collapsed)}
             {sidebarNav(collapsed)}
             {sidebarUser(collapsed)}
+            <button
+              type="button"
+              onClick={() => setSidebarCollapsed((value) => !value)}
+              data-testid="admin-sidebar-toggle"
+              aria-keyshortcuts="["
+              aria-label={
+                collapsed
+                  ? locale === "ar"
+                    ? "توسيع الشريط"
+                    : "Expand sidebar"
+                  : locale === "ar"
+                    ? "طي الشريط"
+                    : "Collapse sidebar"
+              }
+              className="admin-focus-ring absolute -end-3.5 top-[22px] z-20 hidden h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-[#161820] text-[var(--admin-muted)] shadow-[0_6px_18px_rgba(0,0,0,.35)] transition-colors hover:border-[rgba(226,176,74,.35)] hover:text-[var(--admin-gold)] lg:flex"
+            >
+              <ChevronLeft
+                className={cn(
+                  "h-3.5 w-3.5 transition-transform duration-200",
+                  collapsed ? "rotate-180 rtl:rotate-0" : "rtl:rotate-180",
+                )}
+                strokeWidth={2}
+              />
+            </button>
           </aside>
 
           <div className="flex min-w-0 flex-1 flex-col">
-            <header className="flex h-[72px] shrink-0 items-center gap-2 border-b border-[var(--admin-card-border)] px-3 sm:px-6 lg:px-8">
+            <header
+              className={cn(
+                "flex h-[72px] shrink-0 items-center gap-2 border-b px-3 transition-[background-color,border-color,backdrop-filter] duration-200 sm:px-6 lg:px-8",
+                topbarScrolled
+                  ? "border-[var(--admin-card-border)] bg-[var(--admin-bg)]/80 backdrop-blur-xl"
+                  : "border-transparent bg-transparent",
+              )}
+            >
               <button
                 type="button"
                 onClick={() => setMobileNavOpen(true)}
@@ -969,6 +1165,48 @@ export function AdminDashboard({
                 <Search className="h-5 w-5" strokeWidth={1.7} />
               </button>
 
+              <div className="flex h-11 shrink-0 items-center rounded-full border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)]">
+                <Link
+                  href="/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={locale === "ar" ? "عرض الموقع" : "View website"}
+                  className="admin-focus-ring inline-flex h-full w-11 items-center justify-center gap-2 rounded-full text-[13px] font-semibold text-[var(--admin-text)] transition-colors hover:bg-white/[0.06] lg:w-auto lg:justify-start lg:px-4"
+                >
+                  <Globe2 className="h-4 w-4 shrink-0" strokeWidth={1.7} />
+                  <span className="hidden whitespace-nowrap lg:inline">{locale === "ar" ? "عرض الموقع" : "View website"}</span>
+                </Link>
+                <Popover
+                  align="end"
+                  className="scroll-area w-[190px]"
+                  trigger={
+                    <button
+                      type="button"
+                      aria-label={locale === "ar" ? "روابط الموقع" : "Website links"}
+                      className="admin-focus-ring hidden h-full w-8 items-center justify-center rounded-e-full border-s border-[var(--admin-card-border)] text-[var(--admin-muted)] transition-colors hover:text-[var(--admin-text)] sm:inline-flex"
+                    >
+                      <ChevronDown className="h-3.5 w-3.5" strokeWidth={2} />
+                    </button>
+                  }
+                >
+                  <div role="menu" aria-label={locale === "ar" ? "روابط الموقع" : "Website links"}>
+                    {siteLinks.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        role="menuitem"
+                        className="admin-focus-ring flex min-h-[44px] items-center justify-between gap-3 rounded-[10px] px-3 text-[14px] text-[var(--admin-text)] hover:bg-[var(--admin-pill-surface)]"
+                      >
+                        {locale === "ar" ? item.ar : item.en}
+                        <ArrowUpRight className="h-3.5 w-3.5 text-[var(--admin-muted)]" strokeWidth={1.7} />
+                      </Link>
+                    ))}
+                  </div>
+                </Popover>
+              </div>
+
               <button type="button" onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))} className="admin-focus-ring inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] text-[13px] font-bold text-[var(--admin-text)]" aria-label={theme === "dark" ? (locale === "ar" ? "الوضع الفاتح" : "Light mode") : (locale === "ar" ? "الوضع الداكن" : "Dark mode")}>{theme === "dark" ? "☀" : "☾"}</button>
               <button type="button" onClick={toggleLocale} className="admin-focus-ring inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] text-[13px] font-bold text-[var(--admin-text)]" aria-label={locale === "ar" ? "English" : "العربية"}>{locale === "ar" ? "EN" : "AR"}</button>
               <button type="button" onClick={() => setNotificationsOpen(true)} className="admin-focus-ring relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] text-[var(--admin-text)]" aria-label={locale === "ar" ? "التنبيهات" : "Notifications"} aria-haspopup="dialog">
@@ -980,15 +1218,22 @@ export function AdminDashboard({
             <main
               ref={mainRef}
               id="main"
-              className="min-h-0 flex-1 overflow-y-auto overscroll-contain scroll-smooth px-4 py-5 pb-[calc(64px+env(safe-area-inset-bottom,0px)+20px)] sm:px-6 md:px-8 md:py-6 md:pb-6 lg:px-[var(--admin-page-pad)]"
+              tabIndex={-1}
+              data-scroll-root="main"
+              className="scroll-area relative min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-5 pb-[calc(64px+env(safe-area-inset-bottom,0px)+20px)] focus:outline-none sm:px-6 md:px-8 md:py-6 md:pb-6 lg:px-[var(--admin-page-pad)]"
             >
+              <div
+                ref={topSentinelRef}
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-x-0 top-0 h-px"
+              />
               <div className="mb-5 hidden items-center justify-between border-b border-[var(--admin-card-border)] pb-4 print:flex">
                 <BrandLogo variant="full" tone="dark" />
                 <span className="text-[12px] text-[var(--admin-muted)]">{formatRiyadhDate(locale)}</span>
               </div>
               <AdminSectionBoundary label={navItems.find((item) => item.id === section)?.label}>
                 {section === "overview" ? (
-                  <OverviewSection projects={projects} ready={workspaceReady} user={user} onNew={openNew} onNavigate={navigateToSection} density={density} setDensity={setDensity} fontScale={fontScale} setFontScale={setFontScale} setPaletteOpen={setPaletteOpen} locale={locale} />
+                  <OverviewSection projects={projects} ready={workspaceReady} displayName={displayName} onNew={openNew} onNavigate={navigateToSection} density={density} setDensity={setDensity} fontScale={fontScale} setFontScale={setFontScale} setPaletteOpen={setPaletteOpen} locale={locale} />
                 ) : null}
                 {section === "projects" ? (
                   <ProjectsSection projects={projects} onNew={openNew} onEdit={openEdit} density={density} setDensity={setDensity} />
@@ -1020,7 +1265,7 @@ export function AdminDashboard({
           bare
           widthClassName="w-[min(300px,88vw)]!"
           className="bg-[var(--admin-sidebar)] bg-none lg:hidden"
-          bodyClassName="flex min-h-0 flex-1 flex-col overflow-y-auto p-0"
+          bodyClassName="scroll-area flex min-h-0 flex-1 flex-col overflow-y-auto p-0"
         >
           {sidebarBrand(false)}
           {sidebarNav(false)}
@@ -1064,6 +1309,78 @@ export function AdminDashboard({
                 </div>
               </div>
             ))}
+
+            <div>
+              <p className="mb-1 px-1 text-[13px] text-[var(--admin-muted)]">{locale === "ar" ? "الموقع" : "Website"}</p>
+              <Link
+                href="/"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setMoreOpen(false)}
+                className="admin-focus-ring flex min-h-[52px] items-center gap-3 rounded-xl border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] px-3 text-[14px] text-[var(--admin-text)]"
+              >
+                <Globe2 className="h-5 w-5 shrink-0" strokeWidth={1.7} />
+                <span className="flex-1">{locale === "ar" ? "عرض الموقع" : "View website"}</span>
+                <ArrowUpRight className="h-4 w-4 text-[var(--admin-muted)]" strokeWidth={1.7} />
+              </Link>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                {siteLinks
+                  .filter((item) => item.href !== "/")
+                  .map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setMoreOpen(false)}
+                      className="admin-focus-ring flex min-h-[48px] items-center justify-between gap-2 rounded-xl border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] px-3 text-[14px] text-[var(--admin-text)]"
+                    >
+                      <span className="truncate">{locale === "ar" ? item.ar : item.en}</span>
+                      <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-[var(--admin-muted)]" strokeWidth={1.7} />
+                    </Link>
+                  ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={toggleLocale}
+                className="admin-focus-ring flex min-h-[48px] items-center justify-center gap-2 rounded-xl border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] px-3 text-[14px] text-[var(--admin-text)]"
+              >
+                <Languages className="h-4 w-4" strokeWidth={1.7} />
+                {locale === "ar" ? "English" : "العربية"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setTheme((value) => (value === "dark" ? "light" : "dark"))}
+                className="admin-focus-ring flex min-h-[48px] items-center justify-center gap-2 rounded-xl border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] px-3 text-[14px] text-[var(--admin-text)]"
+              >
+                {theme === "dark" ? (
+                  <Sun className="h-4 w-4" strokeWidth={1.7} />
+                ) : (
+                  <Moon className="h-4 w-4" strokeWidth={1.7} />
+                )}
+                {theme === "dark"
+                  ? locale === "ar"
+                    ? "فاتح"
+                    : "Light"
+                  : locale === "ar"
+                    ? "داكن"
+                    : "Dark"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMoreOpen(false);
+                  void handleSignOut();
+                }}
+                className="admin-focus-ring col-span-2 flex min-h-[48px] items-center justify-center gap-2 rounded-xl border border-[var(--admin-red)]/30 bg-[var(--admin-red)]/10 px-3 text-[14px] text-[var(--admin-red)]"
+              >
+                <LogOut className="h-4 w-4" strokeWidth={1.7} />
+                {locale === "ar" ? "تسجيل الخروج" : "Sign out"}
+              </button>
+            </div>
           </div>
         </Modal>
 
@@ -1145,30 +1462,6 @@ export function AdminDashboard({
 
 
 
-function userInitials(name: string) {
-  const parts = (name || "").trim().split(/\s+/).filter(Boolean);
-  if (!parts.length) return "—";
-  return parts.slice(0, 2).map((p) => Array.from(p)[0] || "").join("").toUpperCase();
-}
-
-function userRoleLabel(user: { role?: string; primaryAdmin?: boolean; company?: string }, locale: "ar" | "en") {
-  if (user.primaryAdmin) return locale === "ar" ? "المسؤول الرئيسي" : "Primary admin";
-  if (user.role === "admin") return locale === "ar" ? "مسؤول" : "Admin";
-  if (user.role === "client") return locale === "ar" ? "عميل" : "Client";
-  return user.company || (locale === "ar" ? "مستخدم" : "User");
-}
-
-/** The signed-in profile's name, not a hardcoded role or placeholder. */
-function profileName(user: PortalUser, locale: "ar" | "en") {
-  const name = locale === "ar" ? user.nameAr || user.name : user.name;
-  const honorific = locale === "ar" ? user.honorificAr || user.honorific : user.honorific;
-  return [honorific, name].filter(Boolean).join(" ").trim();
-}
-
-function profileMonogram(user: PortalUser, locale: "ar" | "en") {
-  return userInitials(locale === "ar" ? user.nameAr || user.name : user.name);
-}
-
 function riyadhHour() {
   try {
     const parts = new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Riyadh", hour: "numeric", hour12: false }).formatToParts(new Date());
@@ -1231,7 +1524,7 @@ function AdminWatermarkMark() {
       width={390}
       height={328}
       unoptimized
-      className="pointer-events-none absolute -start-[30px] -bottom-[40px] h-[354px] w-auto opacity-[0.07] brightness-0 invert"
+      className="pointer-events-none absolute -start-[30px] -bottom-[40px] h-[354px] w-auto opacity-[0.045] brightness-0 invert"
     />
   );
 }
@@ -1239,7 +1532,7 @@ function AdminWatermarkMark() {
 function OverviewSection({
   projects,
   ready,
-  user,
+  displayName,
   onNew,
   onNavigate,
   density,
@@ -1251,7 +1544,7 @@ function OverviewSection({
 }: {
   projects: WorkspaceProject[];
   ready: boolean;
-  user: PortalUser;
+  displayName: string;
   onNew: () => void;
   onNavigate: (section: Section) => void;
   density: "comfortable" | "compact";
@@ -1353,7 +1646,7 @@ function OverviewSection({
         : `One project needs your attention today: ${alertText(topAlert)}`)
     : (isAr ? "جميع المشاريع في المسار الصحيح." : "All projects are on track.");
 
-  const greetingName = profileName(user, locale);
+  const greetingName = displayName;
   const greeting = `${greetingFor(locale)}${greetingName ? (isAr ? `، ${greetingName}` : `, ${greetingName}`) : ""}`;
   const dateStr = formatRiyadhDate(locale);
 

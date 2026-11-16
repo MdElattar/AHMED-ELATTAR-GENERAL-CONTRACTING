@@ -3,8 +3,6 @@ import { Cormorant_Garamond, Inter, Manrope, Tajawal } from "next/font/google";
 import "./globals.css";
 import { I18nProvider } from "@/components/providers/I18nProvider";
 import { AtmosphereProvider } from "@/components/providers/AtmosphereProvider";
-import { RouteScrollReset } from "@/components/providers/RouteScrollReset";
-import { SmoothScrollProvider } from "@/components/providers/SmoothScroll";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { WorkspaceProvider } from "@/components/providers/WorkspaceProvider";
 import { RouteChrome } from "@/components/layout/RouteChrome";
@@ -122,21 +120,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <WorkspaceProvider>
           <I18nProvider>
             <AtmosphereProvider>
-              <SmoothScrollProvider>
-                <AuthProvider>
-                  <ToastProvider>
-                    <RouteScrollReset />
-                    <a
-                      href="#main"
-                      className="sr-only z-[300] bg-gold px-5 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-obsidian focus:not-sr-only focus:fixed focus:start-4 focus:top-4"
-                    >
-                      تجاوز إلى المحتوى / Skip to content
-                    </a>
-                    <RouteChrome>{children}</RouteChrome>
-                    <SpeedInsights />
-                  </ToastProvider>
-                </AuthProvider>
-              </SmoothScrollProvider>
+              <AuthProvider>
+                <ToastProvider>
+                  <a
+                    href="#main"
+                    className="sr-only z-[300] bg-gold px-5 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-obsidian focus:not-sr-only focus:fixed focus:start-4 focus:top-4"
+                  >
+                    تجاوز إلى المحتوى / Skip to content
+                  </a>
+                  <RouteChrome>{children}</RouteChrome>
+                  <SpeedInsights />
+                </ToastProvider>
+              </AuthProvider>
             </AtmosphereProvider>
           </I18nProvider>
         </WorkspaceProvider>

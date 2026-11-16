@@ -142,7 +142,7 @@ export function EmptyState({
 export function DataTable({ className, children }: { className?: string; children: ReactNode }) {
   return (
     <Card className={cn("overflow-hidden p-0", className)}>
-      <div className="overflow-x-auto md:overflow-visible">{children}</div>
+      <div className="scroll-area overflow-x-auto md:overflow-visible">{children}</div>
     </Card>
   );
 }

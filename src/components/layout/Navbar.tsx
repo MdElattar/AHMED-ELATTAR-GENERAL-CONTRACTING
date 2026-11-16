@@ -212,7 +212,8 @@ export function Navbar() {
               animate={{ x: 0 }}
               exit={{ x: isRTL ? "-100%" : "100%" }}
               transition={{ duration: 0.42, ease: [0.16, 1, 0.3, 1] }}
-              className="fixed bottom-0 end-0 top-[76px] z-[85] flex w-[min(88vw,420px)] flex-col overflow-y-auto overscroll-contain border-s border-white/10 bg-obsidian/97 backdrop-blur-2xl xl:hidden"
+              data-lenis-prevent
+              className="scroll-area fixed bottom-0 end-0 top-[76px] z-[85] flex w-[min(88vw,420px)] flex-col overflow-y-auto overscroll-contain border-s border-white/10 bg-obsidian/97 backdrop-blur-2xl xl:hidden"
             >
               <div className="blueprint-grid pointer-events-none absolute inset-0 opacity-25" />
               <div className="pointer-events-none absolute -end-16 top-10 h-64 w-64 rounded-full bg-gold/[0.06] blur-[100px]" />
