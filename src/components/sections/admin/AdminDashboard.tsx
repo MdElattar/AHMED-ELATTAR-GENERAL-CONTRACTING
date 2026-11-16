@@ -16,6 +16,7 @@ import {
   CalendarDays,
   Check,
   ChevronDown,
+  Columns3,
   Copy,
   ExternalLink,
   FileSignature,
@@ -990,7 +991,7 @@ export function AdminDashboard({
                   <OverviewSection projects={projects} ready={workspaceReady} user={user} onNew={openNew} onNavigate={navigateToSection} density={density} setDensity={setDensity} fontScale={fontScale} setFontScale={setFontScale} setPaletteOpen={setPaletteOpen} locale={locale} />
                 ) : null}
                 {section === "projects" ? (
-                  <ProjectsSection projects={projects} onNew={openNew} onEdit={openEdit} />
+                  <ProjectsSection projects={projects} onNew={openNew} onEdit={openEdit} density={density} setDensity={setDensity} />
                 ) : null}
                 {section === "milestones" ? <MilestonesPanel /> : null}
                 {section === "consultations" ? <ConsultationsPanel /> : null}
@@ -1656,10 +1657,14 @@ function ProjectsSection({
   projects,
   onNew,
   onEdit,
+  density,
+  setDensity,
 }: {
   projects: WorkspaceProject[];
   onNew: () => void;
   onEdit: (project: WorkspaceProject) => void;
+  density: "comfortable" | "compact";
+  setDensity: (value: "comfortable" | "compact") => void;
 }) {
   const { locale, l } = useI18n();
   const c = copy[locale];
@@ -1711,12 +1716,68 @@ function ProjectsSection({
   const [mobileActions, setMobileActions] = useState<string | null>(null);
   const [archiveTarget, setArchiveTarget] = useState<WorkspaceProject | null>(null);
   const [archiving, setArchiving] = useState(false);
+  // Column visibility is part of the shareable table state, so it lives in the
+  // URL next to status/sort instead of a second, hidden persistence layer.
+  const [columns, setColumns] = useState<Record<"category" | "health" | "progress" | "value", boolean>>(() => {
+    const urlCols = searchParams.get("cols");
+    if (!urlCols) return { category: true, health: true, progress: true, value: true };
+    if (urlCols === "none") return { category: false, health: false, progress: false, value: false };
+    const active = new Set(urlCols.split(","));
+    return {
+      category: active.has("category"),
+      health: active.has("health"),
+      progress: active.has("progress"),
+      value: active.has("value"),
+    };
+  });
   const pageSize = 8;
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDebouncedQuery(query), 250);
     return () => window.clearTimeout(timer);
   }, [query]);
+
+  // Browser Back/Forward changes the URL without remounting this client
+  // component, so mirror the incoming query string back into local state.
+  useEffect(() => {
+    const syncFromUrl = () => {
+      const params = new URLSearchParams(window.location.search);
+      const statuses = ["all", "ongoing", "attention", "completed", "upcoming", "archived"];
+      const categories = ["all", "commercial", "residential", "infrastructure", "industrial"];
+      const sorts = ["updated", "budget", "progress", "risk"];
+      const views = ["table", "cards", "timeline"];
+      const status = params.get("status") ?? "all";
+      const category = params.get("category") ?? "all";
+      const sort = params.get("sort") ?? "risk";
+      const incomingView = params.get("view") ?? "table";
+      const q = params.get("q") ?? "";
+      const pageParam = Number(params.get("page") ?? "1");
+      const cols = params.get("cols");
+
+      setTab(statuses.includes(status) ? (status as typeof tab) : "all");
+      setCategoryFilter(categories.includes(category) ? (category as typeof categoryFilter) : "all");
+      setSortBy(sorts.includes(sort) ? (sort as typeof sortBy) : "risk");
+      setView(views.includes(incomingView) ? (incomingView as typeof view) : "table");
+      setQuery(q);
+      setDebouncedQuery(q);
+      setPage(Number.isFinite(pageParam) && pageParam > 0 ? Math.floor(pageParam) : 1);
+      if (!cols) {
+        setColumns({ category: true, health: true, progress: true, value: true });
+      } else if (cols === "none") {
+        setColumns({ category: false, health: false, progress: false, value: false });
+      } else {
+        const active = new Set(cols.split(","));
+        setColumns({
+          category: active.has("category"),
+          health: active.has("health"),
+          progress: active.has("progress"),
+          value: active.has("value"),
+        });
+      }
+    };
+    window.addEventListener("popstate", syncFromUrl);
+    return () => window.removeEventListener("popstate", syncFromUrl);
+  }, []);
 
   // Filters, sort, view and page live in the URL so a refresh (or a shared
   // link) restores the exact table state instead of resetting to defaults.
@@ -1728,11 +1789,13 @@ function ProjectsSection({
     if (view !== "table") params.set("view", view);
     if (debouncedQuery.trim()) params.set("q", debouncedQuery.trim());
     if (page > 1) params.set("page", String(page));
+    const visibleColumns = (Object.keys(columns) as Array<keyof typeof columns>).filter((key) => columns[key]);
+    if (visibleColumns.length < 4) params.set("cols", visibleColumns.length ? visibleColumns.join(",") : "none");
     const next = params.toString();
     const current = window.location.search.replace(/^\?/, "");
     if (next === current) return;
     router.replace(`${pathname}${next ? `?${next}` : ""}`, { scroll: false });
-  }, [tab, categoryFilter, sortBy, view, debouncedQuery, page, pathname, router]);
+  }, [tab, categoryFilter, sortBy, view, debouncedQuery, page, columns, pathname, router]);
 
   const metricsBySlug = useMemo(() => {
     const m = new Map<string, ReturnType<typeof toMetricsProject>>();
@@ -2007,6 +2070,36 @@ function ProjectsSection({
           <option value="progress">{locale === "ar" ? "الإنجاز" : "Progress"}</option>
           <option value="updated">{locale === "ar" ? "الأحدث" : "Latest"}</option>
         </AdminSelect>
+        <div className="flex items-center gap-1" role="group" aria-label={locale === "ar" ? "كثافة الجدول" : "Table density"}>
+          <button type="button" onClick={() => setDensity("comfortable")} aria-pressed={density === "comfortable"} className={cn("admin-focus-ring min-h-11 rounded-[999px] border px-3 text-[12px]", density === "comfortable" ? "border-[rgba(226,176,74,0.3)] bg-[rgba(226,176,74,0.14)] text-[#F3C86A]" : "border-[var(--admin-card-border)] text-[var(--admin-muted)]")}>{locale === "ar" ? "مريح" : "Comfortable"}</button>
+          <button type="button" onClick={() => setDensity("compact")} aria-pressed={density === "compact"} className={cn("admin-focus-ring min-h-11 rounded-[999px] border px-3 text-[12px]", density === "compact" ? "border-[rgba(226,176,74,0.3)] bg-[rgba(226,176,74,0.14)] text-[#F3C86A]" : "border-[var(--admin-card-border)] text-[var(--admin-muted)]")}>{locale === "ar" ? "مضغوط" : "Compact"}</button>
+        </div>
+        <Popover
+          align="end"
+          trigger={
+            <Button variant="secondary" size="sm">
+              <Columns3 className="h-4 w-4" />{locale === "ar" ? "الأعمدة" : "Columns"}
+            </Button>
+          }
+        >
+          <div className="flex min-w-[180px] flex-col gap-1">
+            {([
+              ["category", c.category],
+              ["health", locale === "ar" ? "صحة الميزانية" : "Budget health"],
+              ["progress", c.progress],
+              ["value", c.value],
+            ] as const).map(([id, label]) => (
+              <label key={id} className="flex min-h-11 cursor-pointer items-center gap-2 rounded-lg px-2 text-[13px] text-[var(--admin-text)] hover:bg-[var(--admin-pill-surface)]">
+                <Checkbox
+                  checked={columns[id]}
+                  onChange={() => setColumns((current) => ({ ...current, [id]: !current[id] }))}
+                  aria-label={label}
+                />
+                {label}
+              </label>
+            ))}
+          </div>
+        </Popover>
         <Button variant="secondary" size="sm" onClick={exportCsv}>
           <FileText className="h-4 w-4" />{c.export}
         </Button>
@@ -2020,17 +2113,17 @@ function ProjectsSection({
           <span className="text-[14px] font-semibold text-[#F3C86A] tabular-nums">{selected.size} {c.selected}</span>
           <span className="text-[13px] text-[#A6A9B4]">{c.bulkStatus}</span>
           {(["ongoing", "completed", "upcoming"] as const).map((status) => (
-            <button key={status} type="button" onClick={() => applyBulkStatus(status)} className="h-8 border border-white/12 px-3 text-[0.66rem] font-semibold  text-ivory/60 transition-colors hover:border-gold/45 hover:text-gold">
+            <button key={status} type="button" onClick={() => applyBulkStatus(status)} className="min-h-11 border border-white/12 px-3 text-[0.66rem] font-semibold  text-ivory/60 transition-colors hover:border-gold/45 hover:text-gold">
               {c.statusLabels[status]}
             </button>
           ))}
-          <button type="button" onClick={exportCsv} className="h-8 border border-white/12 px-3 text-[0.66rem] font-semibold  text-ivory/60 transition-colors hover:border-gold/45 hover:text-gold">
+          <button type="button" onClick={exportCsv} className="min-h-11 border border-white/12 px-3 text-[0.66rem] font-semibold  text-ivory/60 transition-colors hover:border-gold/45 hover:text-gold">
             {locale === "ar" ? "تصدير Excel" : "Export Excel"}
           </button>
-          <button type="button" onClick={bulkArchive} className="h-8 border border-[rgba(255,107,94,0.3)] px-3 text-[0.66rem] font-semibold text-[#FF9A8F] transition-colors hover:bg-[rgba(255,107,94,0.1)]">
+          <button type="button" onClick={bulkArchive} className="min-h-11 border border-[rgba(255,107,94,0.3)] px-3 text-[0.66rem] font-semibold text-[#FF9A8F] transition-colors hover:bg-[rgba(255,107,94,0.1)]">
             {c.archive}
           </button>
-          <button type="button" onClick={() => setSelected(new Set<string>())} className="ms-auto h-8 px-2 text-[0.66rem]  text-ivory/40 transition-colors hover:text-gold">{c.clearSelection}</button>
+          <button type="button" onClick={() => setSelected(new Set<string>())} className="ms-auto min-h-11 px-2 text-[0.66rem]  text-ivory/40 transition-colors hover:text-gold">{c.clearSelection}</button>
         </div>
       ) : null}
 
@@ -2117,7 +2210,7 @@ function ProjectsSection({
                         trigger={
                           <button
                             type="button"
-                            className="admin-focus-ring inline-flex h-9 w-9 items-center justify-center rounded-[10px] border border-[var(--admin-card-border)] text-[var(--admin-muted)]"
+                            className="admin-focus-ring inline-flex h-11 w-11 items-center justify-center rounded-[10px] border border-[var(--admin-card-border)] text-[var(--admin-muted)]"
                             aria-label={locale === "ar" ? "إجراءات المشروع" : "Project actions"}
                           >
                             <MoreVertical className="h-4 w-4" />
@@ -2148,16 +2241,16 @@ function ProjectsSection({
           </div>
           <div className="hidden md:block">
             <DataTable>
-              <Table className="min-w-[1040px]">
+              <Table className={cn("min-w-[1040px]", density === "compact" && "[&_tr]:h-12 [&_th]:h-10 [&_td]:py-1 [&_th]:py-1")}>
                 <THead>
                   <tr>
                     <TH className="w-12"><Checkbox checked={allSelected} onChange={toggleAll} aria-label={c.selectAll} /></TH>
                     <TH>{c.project}</TH>
-                    <TH>{c.category}</TH>
+                    {columns.category ? <TH>{c.category}</TH> : null}
                     <TH>{c.status}</TH>
-                    <TH>{locale === "ar" ? "صحة الميزانية" : "Budget health"}</TH>
-                    <TH>{c.progress}</TH>
-                    <TH className="text-end">{c.value}</TH>
+                    {columns.health ? <TH>{locale === "ar" ? "صحة الميزانية" : "Budget health"}</TH> : null}
+                    {columns.progress ? <TH>{c.progress}</TH> : null}
+                    {columns.value ? <TH className="text-end">{c.value}</TH> : null}
                     <TH className="text-end">{c.actions}</TH>
                   </tr>
                 </THead>
@@ -2179,7 +2272,7 @@ function ProjectsSection({
                             </span>
                           </span>
                         </TD>
-                        <TD><span className="text-[14px] text-[#C9CAD1]">{c.categoryLabels[project.category]}</span></TD>
+                        {columns.category ? <TD><span className="text-[14px] text-[#C9CAD1]">{c.categoryLabels[project.category]}</span></TD> : null}
                         <TD onClick={(e) => e.stopPropagation()}>
                           <Popover
                             align="start"
@@ -2197,14 +2290,16 @@ function ProjectsSection({
                             />
                           </Popover>
                         </TD>
-                        <TD><StatusPill tone={tone} title={budgetHealthFor(project).tooltip} className="whitespace-nowrap">{budgetHealthFor(project).short}</StatusPill></TD>
-                        <TD>
-                          <span className="flex items-center gap-2">
-                            <span className="h-1.5 w-16 overflow-hidden rounded-full bg-[#232632]"><span className="block h-full rounded-full bg-[linear-gradient(270deg,#F3C86A,#C98F1E)]" style={{ width: `${project.progress}%` }} /></span>
-                            <span className="tabular-nums text-[13px] text-[#A6A9B4]">{project.progress}%</span>
-                          </span>
-                        </TD>
-                        <TD className="text-end tabular-nums text-[#D7D8DE]">{formatMoney(project.contractValue || project.budget, locale)}</TD>
+                        {columns.health ? <TD><StatusPill tone={tone} title={budgetHealthFor(project).tooltip} className="whitespace-nowrap">{budgetHealthFor(project).short}</StatusPill></TD> : null}
+                        {columns.progress ? (
+                          <TD>
+                            <span className="flex items-center gap-2">
+                              <span className="h-1.5 w-16 overflow-hidden rounded-full bg-[#232632]"><span className="block h-full rounded-full bg-[linear-gradient(270deg,#F3C86A,#C98F1E)]" style={{ width: `${project.progress}%` }} /></span>
+                              <span className="tabular-nums text-[13px] text-[#A6A9B4]">{project.progress}%</span>
+                            </span>
+                          </TD>
+                        ) : null}
+                        {columns.value ? <TD className="text-end tabular-nums text-[#D7D8DE]">{formatMoney(project.contractValue || project.budget, locale)}</TD> : null}
                         <TD onClick={(e) => e.stopPropagation()}>
                           <span className="flex items-center justify-end">
                             <Popover
@@ -2213,7 +2308,7 @@ function ProjectsSection({
                               trigger={
                                 <button
                                   type="button"
-                                  className="admin-focus-ring inline-flex h-10 w-10 items-center justify-center rounded-[10px] border border-[var(--admin-card-border)] text-[var(--admin-muted)] transition-colors hover:border-[rgba(226,176,74,0.25)] hover:text-[var(--admin-text)]"
+                                  className="admin-focus-ring inline-flex h-11 w-11 items-center justify-center rounded-[10px] border border-[var(--admin-card-border)] text-[var(--admin-muted)] transition-colors hover:border-[rgba(226,176,74,0.25)] hover:text-[var(--admin-text)]"
                                   aria-label={`${locale === "ar" ? "إجراءات" : "Actions"}: ${l(project.title)}`}
                                 >
                                   <MoreVertical className="h-4 w-4" />
@@ -2263,8 +2358,8 @@ function ProjectsSection({
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018] px-4 py-3">
           <p className="text-[0.72rem] tabular-nums text-ivory/45">{locale === "ar" ? `صفحة ${currentPage} من ${totalPages}` : `Page ${currentPage} of ${totalPages}`}</p>
           <div className="flex items-center gap-2">
-            <button type="button" disabled={currentPage <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))} className="h-9 border border-white/12 px-3 text-[0.7rem] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold disabled:opacity-30">{locale === "ar" ? "السابق" : "Previous"}</button>
-            <button type="button" disabled={currentPage >= totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))} className="h-9 border border-white/12 px-3 text-[0.7rem] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold disabled:opacity-30">{locale === "ar" ? "التالي" : "Next"}</button>
+            <button type="button" disabled={currentPage <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))} className="min-h-11 border border-white/12 px-3 text-[0.7rem] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold disabled:opacity-30">{locale === "ar" ? "السابق" : "Previous"}</button>
+            <button type="button" disabled={currentPage >= totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))} className="min-h-11 border border-white/12 px-3 text-[0.7rem] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold disabled:opacity-30">{locale === "ar" ? "التالي" : "Next"}</button>
           </div>
         </div>
       ) : null}

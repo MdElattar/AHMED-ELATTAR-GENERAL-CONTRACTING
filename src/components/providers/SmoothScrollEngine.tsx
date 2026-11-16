@@ -16,7 +16,7 @@ type SmoothScrollEngineProps = {
  * input and then steps out of the way; touch devices keep their native
  * momentum, reduced-motion users get the browser default, and every section
  * remains a normal document flow. The module is loaded through `next/dynamic`
- * with `ssr: false` so it never enters the server bundle.
+ * so the Lenis engine never enters the critical path.
  */
 export function SmoothScrollEngine({ lenisRef, lockedRef }: SmoothScrollEngineProps) {
   useEffect(() => {

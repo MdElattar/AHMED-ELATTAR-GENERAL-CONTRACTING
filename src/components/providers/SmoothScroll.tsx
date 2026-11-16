@@ -12,7 +12,6 @@ import type Lenis from "lenis";
 
 const SmoothScrollEngine = dynamic(
   () => import("./SmoothScrollEngine").then((module) => module.SmoothScrollEngine),
-  { ssr: false },
 );
 
 type SmoothScrollContextValue = {

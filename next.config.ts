@@ -9,14 +9,14 @@ const contentSecurityPolicy = [
   "frame-ancestors 'none'",
   "frame-src 'none'",
   "form-action 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
+  `script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com${isDev ? " 'unsafe-eval'" : ""}`,
   // Inline event-handler attributes are never used; block them outright so a
   // future injection cannot execute markup-level script.
   "script-src-attr 'none'",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https://firebasestorage.googleapis.com https://storage.googleapis.com",
   "font-src 'self' data:",
-  `connect-src 'self' https://firebasestorage.googleapis.com https://storage.googleapis.com${isDev ? " ws: wss:" : ""}`,
+  `connect-src 'self' https://va.vercel-scripts.com https://vitals.vercel-insights.com https://firebasestorage.googleapis.com https://storage.googleapis.com${isDev ? " ws: wss:" : ""}`,
   "media-src 'self' blob:",
   "worker-src 'self' blob:",
   "manifest-src 'self'",

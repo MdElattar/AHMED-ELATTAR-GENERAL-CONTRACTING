@@ -9,6 +9,7 @@ import { AuthProvider } from "@/components/providers/AuthProvider";
 import { WorkspaceProvider } from "@/components/providers/WorkspaceProvider";
 import { RouteChrome } from "@/components/layout/RouteChrome";
 import { ToastProvider } from "@/components/ui/Toast";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const arabic = Tajawal({
   subsets: ["arabic", "latin"],
@@ -132,6 +133,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                       تجاوز إلى المحتوى / Skip to content
                     </a>
                     <RouteChrome>{children}</RouteChrome>
+                    <SpeedInsights />
                   </ToastProvider>
                 </AuthProvider>
               </SmoothScrollProvider>

@@ -948,6 +948,20 @@ html[dir="rtl"] .carousel-progress {
   outline-offset: 2px;
 }
 
+/* Consistent, snappy press feedback for every interactive admin control. */
+.admin-shell button,
+.admin-shell a {
+  transition-duration: 160ms;
+}
+.admin-shell button:active:not(:disabled) {
+  scale: 0.98;
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-shell button:active:not(:disabled) {
+    scale: 1;
+  }
+}
+
 .admin-skeleton {
   position: relative;
   overflow: hidden;
