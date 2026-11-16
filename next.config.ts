@@ -53,6 +53,9 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
   poweredByHeader: false,
+  // Keep the viewport clean during development; compile/runtime errors still
+  // surface. The badge overlaps the admin sidebar edge toggle.
+  devIndicators: false,
   reactStrictMode: true,
   // The workspace lives outside a git repository, so tracing otherwise walks
   // up to the home directory.

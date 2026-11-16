@@ -112,10 +112,19 @@ export function SmoothScrollProvider({ children }: { children: ReactNode }) {
   );
 }
 
+const noopSmoothScroll: SmoothScrollContextValue = {
+  scrollTo: () => {},
+  scrollToTop: () => {},
+  stop: () => {},
+  start: () => {},
+};
+
+/**
+ * Public chrome mounts the Lenis engine. The admin shell deliberately does
+ * not, because it owns fixed, nested scroll containers. Admin overlays still
+ * call this hook, so outside the provider it resolves to a harmless no-op
+ * instead of throwing.
+ */
 export function useSmoothScroll() {
-  const context = useContext(SmoothScrollContext);
-  if (!context) {
-    throw new Error("useSmoothScroll must be used within a SmoothScrollProvider");
-  }
-  return context;
+  return useContext(SmoothScrollContext) ?? noopSmoothScroll;
 }

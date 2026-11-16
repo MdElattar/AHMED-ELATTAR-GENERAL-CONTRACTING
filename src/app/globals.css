@@ -36,6 +36,9 @@
   --foreground: #f3eee4;
   --gold: #b8860b;
   --nav-height: 84px;
+  --scroll-thumb: rgba(255, 255, 255, 0.14);
+  --scroll-thumb-hover: rgba(255, 255, 255, 0.28);
+  color-scheme: dark;
 
   /*
    * Atmosphere tokens. The default is a golden-hour grade; the navigation
@@ -123,19 +126,72 @@ html[lang="ar"] body {
   color: #060708;
 }
 
+/* ---------- Scrollbars ---------- */
+/*
+ * The admin shell and every overlay use `.scroll-area`. The track is always
+ * transparent and the thumb follows the theme, so no white native bar can
+ * appear when a platform switches `color-scheme`.
+ */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scroll-thumb) transparent;
+}
+
 ::-webkit-scrollbar {
   width: 10px;
+  height: 10px;
 }
 ::-webkit-scrollbar-track {
-  background: #0a0b0e;
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #2a2e35;
-  border-radius: 99px;
-  border: 2px solid #060708;
+  background: var(--scroll-thumb);
+  border-radius: 999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #996515;
+  background: var(--scroll-thumb-hover);
+}
+
+.scroll-area {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scroll-thumb) transparent;
+}
+.scroll-area::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.scroll-area::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scroll-area::-webkit-scrollbar-thumb {
+  background: var(--scroll-thumb);
+  border-radius: 999px;
+}
+.scroll-area::-webkit-scrollbar-thumb:hover {
+  background: var(--scroll-thumb-hover);
+}
+
+/* The sidebar keeps its rail invisible until the pointer enters it. */
+.scroll-area--autohide {
+  scrollbar-color: transparent transparent;
+}
+.scroll-area--autohide:hover {
+  scrollbar-color: var(--scroll-thumb) transparent;
+}
+.scroll-area--autohide::-webkit-scrollbar-thumb {
+  background: transparent;
+}
+.scroll-area--autohide:hover::-webkit-scrollbar-thumb {
+  background: var(--scroll-thumb);
+}
+.scroll-area--autohide:hover::-webkit-scrollbar-thumb:hover {
+  background: var(--scroll-thumb-hover);
+}
+
+[data-theme="light"] {
+  --scroll-thumb: rgba(20, 18, 10, 0.22);
+  --scroll-thumb-hover: rgba(20, 18, 10, 0.34);
+  color-scheme: light;
 }
 
 :focus-visible {

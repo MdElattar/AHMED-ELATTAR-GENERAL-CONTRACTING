@@ -309,7 +309,7 @@ export function AdminCommandPalette({
           </span>
         </div>
 
-        <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        <div ref={listRef} className="scroll-area min-h-0 flex-1 overflow-y-auto overscroll-contain">
           {loadingIndex ? (
             <div className="flex items-center justify-center gap-2 px-4 py-10 text-[13px] text-white/45">
               <Loader2 className="h-4 w-4 animate-spin text-[#E2B04A]" />

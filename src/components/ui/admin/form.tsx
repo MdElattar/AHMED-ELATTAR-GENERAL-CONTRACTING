@@ -166,9 +166,9 @@ export function Select({
         <SelectPrimitive.Content
           position="popper"
           sideOffset={6}
-          className="z-[300] max-h-72 min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-xl border border-white/10 bg-[#161820] p-1 text-[var(--admin-text,#F1EEE8)] shadow-[0_18px_60px_rgba(0,0,0,.55)]"
+          className="scroll-area z-[300] max-h-72 min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-xl border border-white/10 bg-[#161820] p-1 text-[var(--admin-text,#F1EEE8)] shadow-[0_18px_60px_rgba(0,0,0,.55)]"
         >
-          <SelectPrimitive.Viewport className="p-0">
+          <SelectPrimitive.Viewport className="scroll-area p-0">
             {options.map((option) => (
               <SelectPrimitive.Item
                 key={option.value}
@@ -502,7 +502,7 @@ export function Combobox({
         <div
           id={listId}
           role="listbox"
-          className="absolute inset-x-0 top-[calc(100%+6px)] z-[310] max-h-56 overflow-y-auto rounded-xl border border-white/10 bg-[#161820] p-1 shadow-[0_18px_60px_rgba(0,0,0,.55)]"
+          className="scroll-area absolute inset-x-0 top-[calc(100%+6px)] z-[310] max-h-56 overflow-y-auto rounded-xl border border-white/10 bg-[#161820] p-1 shadow-[0_18px_60px_rgba(0,0,0,.55)]"
         >
           {filtered.length ? (
             filtered.map((option) => (

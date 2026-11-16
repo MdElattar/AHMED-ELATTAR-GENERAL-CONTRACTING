@@ -14,6 +14,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { isAdminUser, useAuth } from "@/components/providers/AuthProvider";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { cn } from "@/lib/utils";
 
@@ -23,18 +24,10 @@ type ProfileMenuProps = {
   onNavigate?: () => void;
 };
 
-function initials(name: string) {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part.charAt(0).toUpperCase())
-    .join("");
-}
-
 export function ProfileMenu({ tone = "dark", compact = false, onNavigate }: ProfileMenuProps) {
   const { t, isRTL } = useI18n();
-  const { user, signOut } = useAuth();
+  const { signOut } = useAuth();
+  const { user, loading, email, displayName, firstName, monogram } = useCurrentUser();
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const light = tone === "light";
@@ -93,12 +86,24 @@ export function ProfileMenu({ tone = "dark", compact = false, onNavigate }: Prof
             light ? "bg-ink text-ivory" : "bg-gold text-obsidian",
           )}
         >
-          {user ? initials(user.name) : <UserRound className="h-3.5 w-3.5" />}
+          {loading ? (
+            <span className="h-3 w-3 animate-pulse rounded-full bg-current opacity-40" aria-hidden="true" />
+          ) : user ? (
+            monogram
+          ) : (
+            <UserRound className="h-3.5 w-3.5" />
+          )}
         </span>
         {!compact ? (
           <>
             <span className="max-w-[7.5rem] truncate text-[0.62rem] font-medium uppercase tracking-[0.14em]">
-              {user ? user.name.split(" ")[0] : t.nav.signIn}
+              {loading ? (
+                <span className="block h-2.5 w-16 animate-pulse rounded bg-current opacity-25" aria-hidden="true" />
+              ) : user ? (
+                firstName
+              ) : (
+                t.nav.signIn
+              )}
             </span>
             <ChevronDown
               className={cn(
@@ -130,10 +135,22 @@ export function ProfileMenu({ tone = "dark", compact = false, onNavigate }: Prof
                 {user ? t.nav.account : t.nav.guest}
               </p>
               <p className="mt-2 truncate text-sm font-semibold">
-                {user ? user.name : t.nav.portal}
+                {loading ? (
+                  <span className="block h-3 w-32 animate-pulse rounded bg-current opacity-25" aria-hidden="true" />
+                ) : user ? (
+                  displayName
+                ) : (
+                  t.nav.portal
+                )}
               </p>
               <p className={cn("mt-0.5 truncate text-[0.68rem]", light ? "text-ink/45" : "text-ivory/50")}>
-                {user ? user.email : t.nav.signIn}
+                {loading ? (
+                  <span className="block h-2.5 w-40 animate-pulse rounded bg-current opacity-20" aria-hidden="true" />
+                ) : user ? (
+                  email
+                ) : (
+                  t.nav.signIn
+                )}
               </p>
             </div>
 
