@@ -77,7 +77,7 @@ import { Field, TextInput, Textarea } from "@/components/ui/Field";
 import { ProjectArt } from "@/components/ui/ProjectArt";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { AdminSectionBoundary } from "@/components/system/AdminSectionBoundary";
-import { Button, Card, Chip, EmptyState, PageHeader, StatusPill, TD, TH, THead, TR, AdminInput, AdminSelect } from "@/components/ui/admin";
+import { Button, Card, Chip, EmptyState, PageHeader, StatusPill, TD, TH, THead, TR, AdminInput } from "@/components/ui/admin";
 import { ConfirmDialog, Drawer, Modal, Popover } from "@/components/ui/admin/overlay";
 import { Input as FieldInput, SegmentedControl, Select as FieldSelect, Slider } from "@/components/ui/admin/form";
 import { ProjectImage } from "@/components/ui/ProjectImage";
@@ -522,6 +522,7 @@ export function AdminDashboard({
     if (typeof window === "undefined") return false;
     try { return localStorage.getItem("admin-sidebar-collapsed") === "1"; } catch { return false; }
   });
+  const [viewportWidth, setViewportWidth] = useState(0);
   const [fontScale, setFontScale] = useState<"normal" | "large">(() => {
     if (typeof window === "undefined") return "normal";
     try { const f = localStorage.getItem("admin-font-size"); return f === "large" ? "large" : "normal"; } catch { return "normal"; }
@@ -536,7 +537,18 @@ export function AdminDashboard({
   });
   const mainRef = useRef<HTMLElement | null>(null);
   const topSentinelRef = useRef<HTMLDivElement | null>(null);
-  const collapsed = sidebarCollapsed;
+
+  // The rail is always icon-only between the drawer and desktop breakpoints.
+  // Above 1280px the stored preference controls whether it expands.
+  const autoCollapsed = viewportWidth >= 1024 && viewportWidth < 1280;
+  const collapsed = sidebarCollapsed || autoCollapsed;
+
+  useEffect(() => {
+    const syncViewport = () => setViewportWidth(window.innerWidth);
+    syncViewport();
+    window.addEventListener("resize", syncViewport);
+    return () => window.removeEventListener("resize", syncViewport);
+  }, []);
 
   useEffect(() => {
     const main = mainRef.current;
@@ -1068,30 +1080,32 @@ export function AdminDashboard({
             {sidebarBrand(collapsed)}
             {sidebarNav(collapsed)}
             {sidebarUser(collapsed)}
-            <button
-              type="button"
-              onClick={() => setSidebarCollapsed((value) => !value)}
-              data-testid="admin-sidebar-toggle"
-              aria-keyshortcuts="["
-              aria-label={
-                collapsed
-                  ? locale === "ar"
-                    ? "توسيع الشريط"
-                    : "Expand sidebar"
-                  : locale === "ar"
-                    ? "طي الشريط"
-                    : "Collapse sidebar"
-              }
-              className="admin-focus-ring absolute -end-3.5 top-[22px] z-20 hidden h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-[#161820] text-[var(--admin-muted)] shadow-[0_6px_18px_rgba(0,0,0,.35)] transition-colors hover:border-[rgba(226,176,74,.35)] hover:text-[var(--admin-gold)] lg:flex"
-            >
-              <ChevronLeft
-                className={cn(
-                  "h-3.5 w-3.5 transition-transform duration-200",
-                  collapsed ? "rotate-180 rtl:rotate-0" : "rtl:rotate-180",
-                )}
-                strokeWidth={2}
-              />
-            </button>
+            {!autoCollapsed ? (
+              <button
+                type="button"
+                onClick={() => setSidebarCollapsed((value) => !value)}
+                data-testid="admin-sidebar-toggle"
+                aria-keyshortcuts="["
+                aria-label={
+                  collapsed
+                    ? locale === "ar"
+                      ? "توسيع الشريط"
+                      : "Expand sidebar"
+                    : locale === "ar"
+                      ? "طي الشريط"
+                      : "Collapse sidebar"
+                }
+                className="admin-focus-ring absolute -end-3.5 top-[22px] z-20 hidden h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-[#161820] text-[var(--admin-muted)] shadow-[0_6px_18px_rgba(0,0,0,.35)] transition-colors hover:border-[rgba(226,176,74,.35)] hover:text-[var(--admin-gold)] lg:flex"
+              >
+                <ChevronLeft
+                  className={cn(
+                    "h-3.5 w-3.5 transition-transform duration-200",
+                    collapsed ? "rotate-180 rtl:rotate-0" : "rtl:rotate-180",
+                  )}
+                  strokeWidth={2}
+                />
+              </button>
+            ) : null}
           </aside>
 
           <div className="flex min-w-0 flex-1 flex-col">
@@ -1131,7 +1145,7 @@ export function AdminDashboard({
               <button
                 type="button"
                 onClick={() => setPaletteOpen(true)}
-                className="admin-focus-ring ms-auto hidden h-11 min-w-0 max-w-[360px] flex-1 items-center gap-[10px] rounded-[999px] border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] px-4 text-[14px] text-[var(--admin-muted)] md:flex"
+                className="admin-focus-ring ms-auto hidden h-11 min-w-0 max-w-[360px] flex-1 items-center gap-[10px] rounded-[999px] border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] px-4 text-[14px] text-[var(--admin-muted)] min-[900px]:flex"
               >
                 <Search className="h-5 w-5 shrink-0" strokeWidth={1.7} />
                 <span className="truncate">{locale === "ar" ? "ابحث في المشاريع والعقود…" : "Search projects and contracts…"}</span>
@@ -1141,7 +1155,7 @@ export function AdminDashboard({
               <button
                 type="button"
                 onClick={() => setPaletteOpen(true)}
-                className="admin-focus-ring ms-auto inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] text-[var(--admin-muted)] md:hidden"
+                className="admin-focus-ring ms-auto inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] text-[var(--admin-muted)] min-[900px]:hidden"
                 aria-label={locale === "ar" ? "بحث" : "Search"}
               >
                 <Search className="h-5 w-5" strokeWidth={1.7} />
@@ -1988,9 +2002,11 @@ function ProjectsSection({
   const [archiveTarget, setArchiveTarget] = useState<WorkspaceProject | null>(null);
   const [bulkArchiveOpen, setBulkArchiveOpen] = useState(false);
   const [bulkStatusOpen, setBulkStatusOpen] = useState(false);
-  const [bulkMoreOpen, setBulkMoreOpen] = useState(false);
   const [archiving, setArchiving] = useState(false);
   const [tableWidthRef, tableWidth] = useContainerWidth<HTMLDivElement>();
+  const [toolbarWidthRef, toolbarWidth] = useContainerWidth<HTMLDivElement>();
+  const [bulkBarRef, bulkBarWidth] = useContainerWidth<HTMLDivElement>();
+  const chipRowRef = useRef<HTMLDivElement | null>(null);
   const selectAllRef = useRef<HTMLInputElement | null>(null);
   const lastSelectedRef = useRef<string | null>(null);
   const shiftHandledRef = useRef(false);
@@ -2105,6 +2121,8 @@ function ProjectsSection({
   const allSelected = paged.length > 0 && paged.every((project) => selected.has(project.slug));
   const someSelected = paged.some((project) => selected.has(project.slug));
   const tableMode = tableWidth >= 1100 ? "full" : tableWidth >= 760 ? "compact" : "cards";
+  const toolbarLayout = toolbarWidth >= 900 ? "wide" : toolbarWidth >= 560 ? "medium" : "narrow";
+  const bulkLayout = bulkBarWidth >= 780 ? "wide" : bulkBarWidth >= 520 ? "medium" : "narrow";
 
   useEffect(() => {
     if (selectAllRef.current) {
@@ -2123,6 +2141,18 @@ function ProjectsSection({
     window.addEventListener("keydown", clearSelection);
     return () => window.removeEventListener("keydown", clearSelection);
   }, [selected.size]);
+
+  useEffect(() => {
+    const row = chipRowRef.current;
+    if (!row) return;
+    const active = row.querySelector<HTMLElement>('[data-active="true"]');
+    if (!active) return;
+    const rowRect = row.getBoundingClientRect();
+    const activeRect = active.getBoundingClientRect();
+    if (activeRect.left < rowRect.left + 16 || activeRect.right > rowRect.right - 16) {
+      active.scrollIntoView({ block: "nearest", inline: "nearest" });
+    }
+  }, [tab]);
 
   const toggleSelected = (slug: string) => {
     setSelected((current) => {
@@ -2257,7 +2287,6 @@ function ProjectsSection({
 
   const applyBulkStatus = (status: WorkspaceProject["status"]) => {
     setBulkStatusOpen(false);
-    setBulkMoreOpen(false);
     const targets = [...selected]
       .map((slug) => projects.find((project) => project.slug === slug))
       .filter((project): project is WorkspaceProject => Boolean(project));
@@ -2407,195 +2436,405 @@ function ProjectsSection({
         ))}
       />
 
-      <Card className="flex flex-wrap gap-2 p-3">
-        {([
-          ["all", locale === "ar" ? "الكل" : "All", tabCounts.all],
-          ["ongoing", locale === "ar" ? "جارية" : "Ongoing", tabCounts.ongoing],
-          ["attention", locale === "ar" ? "تحتاج انتباه" : "Needs attention", tabCounts.attention],
-          ["completed", locale === "ar" ? "مكتملة" : "Completed", tabCounts.completed],
-          ["upcoming", locale === "ar" ? "قادمة" : "Upcoming", tabCounts.upcoming],
-          ["archived", c.archived, tabCounts.archived],
-        ] as const).map(([id, label, count]) => (
-          <Chip key={id} active={tab === id} onClick={() => { setTab(id); setPage(1); }} className="whitespace-nowrap">
-            {label} <span className="tabular-nums opacity-70">({count})</span>
-          </Chip>
-        ))}
+      <Card className="min-w-0 p-3">
+        <div
+          ref={chipRowRef}
+          data-testid="projects-status-chips"
+          className="scroll-area--autohide chips-fade flex w-full min-w-0 flex-nowrap items-center gap-2 overflow-x-auto overscroll-x-contain scroll-px-4 px-4"
+        >
+          {([
+            ["all", locale === "ar" ? "الكل" : "All", tabCounts.all],
+            ["ongoing", locale === "ar" ? "جارية" : "Ongoing", tabCounts.ongoing],
+            ["attention", locale === "ar" ? "تحتاج انتباه" : "Needs attention", tabCounts.attention],
+            ["completed", locale === "ar" ? "مكتملة" : "Completed", tabCounts.completed],
+            ["upcoming", locale === "ar" ? "قادمة" : "Upcoming", tabCounts.upcoming],
+            ["archived", c.archived, tabCounts.archived],
+          ] as const).map(([id, label, count]) => (
+            <Chip
+              key={id}
+              active={tab === id}
+              data-active={tab === id}
+              onClick={() => { setTab(id); setPage(1); }}
+              className="shrink-0 whitespace-nowrap"
+            >
+              {label} <span className="tabular-nums opacity-70">({count})</span>
+            </Chip>
+          ))}
+        </div>
       </Card>
 
-      <div className="grid w-full min-w-0 gap-2 sm:grid-cols-2 xl:flex xl:flex-wrap xl:items-center">
-        <AdminInput
-          value={query}
-          onChange={(event) => { setQuery(event.target.value); setPage(1); }}
-          placeholder={c.search}
-          className="xl:w-56"
-        />
-
-        <AdminSelect value={categoryFilter} onChange={(e) => { setCategoryFilter(e.target.value as typeof categoryFilter); setPage(1); }} className="">
-          <option value="all">{locale === "ar" ? "كل الفئات" : "All categories"}</option>
-          <option value="commercial">{c.categoryLabels.commercial}</option>
-          <option value="residential">{c.categoryLabels.residential}</option>
-          <option value="infrastructure">{c.categoryLabels.infrastructure}</option>
-          <option value="industrial">{c.categoryLabels.industrial}</option>
-        </AdminSelect>
-        <AdminSelect value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)} className="">
-          <option value="risk">{locale === "ar" ? "الأعلى خطورة" : "Highest risk"}</option>
-          <option value="budget">{locale === "ar" ? "الميزانية" : "Budget"}</option>
-          <option value="progress">{locale === "ar" ? "الإنجاز" : "Progress"}</option>
-          <option value="updated">{locale === "ar" ? "الأحدث" : "Latest"}</option>
-        </AdminSelect>
-        <Button variant="secondary" size="sm" onClick={() => exportCsv()}>
-          <FileText className="h-4 w-4" />{c.export}
-        </Button>
-        <Button variant="primary" size="sm" onClick={onNew}>
-          <Plus className="h-4 w-4" />{c.addProject}
-        </Button>
+      <div ref={toolbarWidthRef} data-testid="projects-toolbar" className="w-full min-w-0">
+        {toolbarLayout === "wide" ? (
+          <div className="flex w-full min-w-0 flex-nowrap items-center gap-2">
+            <div className="min-w-[240px] flex-1">
+              <AdminInput
+                value={query}
+                onChange={(event) => { setQuery(event.target.value); setPage(1); }}
+                placeholder={c.search}
+                className="h-10 w-full rounded-xl"
+                aria-label={c.search}
+              />
+            </div>
+            <div className="w-[180px] shrink-0">
+              <FieldSelect
+                value={categoryFilter}
+                onValueChange={(value) => { setCategoryFilter(value as typeof categoryFilter); setPage(1); }}
+                aria-label={locale === "ar" ? "تصفية حسب الفئة" : "Filter by category"}
+                className="h-10 whitespace-nowrap rounded-xl border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] text-[14px]"
+                options={[
+                  { value: "all", label: locale === "ar" ? "كل الفئات" : "All categories" },
+                  { value: "commercial", label: c.categoryLabels.commercial },
+                  { value: "residential", label: c.categoryLabels.residential },
+                  { value: "infrastructure", label: c.categoryLabels.infrastructure },
+                  { value: "industrial", label: c.categoryLabels.industrial },
+                ]}
+              />
+            </div>
+            <div className="w-[170px] shrink-0">
+              <FieldSelect
+                value={sortBy}
+                onValueChange={(value) => setSortBy(value as typeof sortBy)}
+                aria-label={locale === "ar" ? "ترتيب المشاريع" : "Sort projects"}
+                className="h-10 whitespace-nowrap rounded-xl border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] text-[14px]"
+                options={[
+                  { value: "risk", label: locale === "ar" ? "الأعلى خطورة" : "Highest risk" },
+                  { value: "budget", label: locale === "ar" ? "الميزانية" : "Budget" },
+                  { value: "progress", label: locale === "ar" ? "الإنجاز" : "Progress" },
+                  { value: "updated", label: locale === "ar" ? "الأحدث" : "Latest" },
+                ]}
+              />
+            </div>
+            <Button variant="secondary" size="sm" onClick={() => exportCsv()} className="h-10 shrink-0 whitespace-nowrap rounded-xl px-3.5 text-[14px]">
+              <FileText className="h-4 w-4" />{c.export}
+            </Button>
+            <Button variant="primary" size="sm" onClick={onNew} className="h-10 shrink-0 whitespace-nowrap rounded-xl px-3.5 text-[14px]">
+              <Plus className="h-4 w-4" />{c.addProject}
+            </Button>
+          </div>
+        ) : toolbarLayout === "medium" ? (
+          <div className="flex w-full min-w-0 flex-col gap-2">
+            <AdminInput
+              value={query}
+              onChange={(event) => { setQuery(event.target.value); setPage(1); }}
+              placeholder={c.search}
+              className="h-10 w-full rounded-xl"
+              aria-label={c.search}
+            />
+            <div className="flex w-full min-w-0 items-center gap-2">
+              <div className="min-w-0 flex-1">
+                <FieldSelect
+                  value={categoryFilter}
+                  onValueChange={(value) => { setCategoryFilter(value as typeof categoryFilter); setPage(1); }}
+                  aria-label={locale === "ar" ? "تصفية حسب الفئة" : "Filter by category"}
+                  className="h-10 whitespace-nowrap rounded-xl border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] text-[14px]"
+                  options={[
+                    { value: "all", label: locale === "ar" ? "كل الفئات" : "All categories" },
+                    { value: "commercial", label: c.categoryLabels.commercial },
+                    { value: "residential", label: c.categoryLabels.residential },
+                    { value: "infrastructure", label: c.categoryLabels.infrastructure },
+                    { value: "industrial", label: c.categoryLabels.industrial },
+                  ]}
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                <FieldSelect
+                  value={sortBy}
+                  onValueChange={(value) => setSortBy(value as typeof sortBy)}
+                  aria-label={locale === "ar" ? "ترتيب المشاريع" : "Sort projects"}
+                  className="h-10 whitespace-nowrap rounded-xl border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] text-[14px]"
+                  options={[
+                    { value: "risk", label: locale === "ar" ? "الأعلى خطورة" : "Highest risk" },
+                    { value: "budget", label: locale === "ar" ? "الميزانية" : "Budget" },
+                    { value: "progress", label: locale === "ar" ? "الإنجاز" : "Progress" },
+                    { value: "updated", label: locale === "ar" ? "الأحدث" : "Latest" },
+                  ]}
+                />
+              </div>
+              <Button variant="secondary" size="sm" onClick={() => exportCsv()} className="h-10 w-10 shrink-0 rounded-xl p-0" aria-label={c.export} title={c.export}>
+                <FileText className="h-4 w-4" />
+              </Button>
+              <Button variant="primary" size="sm" onClick={onNew} className="h-10 shrink-0 whitespace-nowrap rounded-xl px-3.5 text-[14px]">
+                <Plus className="h-4 w-4" />{c.addProject}
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex w-full min-w-0 flex-col gap-2">
+            <AdminInput
+              value={query}
+              onChange={(event) => { setQuery(event.target.value); setPage(1); }}
+              placeholder={c.search}
+              className="h-10 w-full rounded-xl"
+              aria-label={c.search}
+            />
+            <div className="grid min-w-0 grid-cols-2 gap-2">
+              <div className="min-w-0">
+                <FieldSelect
+                  value={categoryFilter}
+                  onValueChange={(value) => { setCategoryFilter(value as typeof categoryFilter); setPage(1); }}
+                  aria-label={locale === "ar" ? "تصفية حسب الفئة" : "Filter by category"}
+                  className="h-10 whitespace-nowrap rounded-xl border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] text-[14px]"
+                  options={[
+                    { value: "all", label: locale === "ar" ? "كل الفئات" : "All categories" },
+                    { value: "commercial", label: c.categoryLabels.commercial },
+                    { value: "residential", label: c.categoryLabels.residential },
+                    { value: "infrastructure", label: c.categoryLabels.infrastructure },
+                    { value: "industrial", label: c.categoryLabels.industrial },
+                  ]}
+                />
+              </div>
+              <div className="min-w-0">
+                <FieldSelect
+                  value={sortBy}
+                  onValueChange={(value) => setSortBy(value as typeof sortBy)}
+                  aria-label={locale === "ar" ? "ترتيب المشاريع" : "Sort projects"}
+                  className="h-10 whitespace-nowrap rounded-xl border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] text-[14px]"
+                  options={[
+                    { value: "risk", label: locale === "ar" ? "الأعلى خطورة" : "Highest risk" },
+                    { value: "budget", label: locale === "ar" ? "الميزانية" : "Budget" },
+                    { value: "progress", label: locale === "ar" ? "الإنجاز" : "Progress" },
+                    { value: "updated", label: locale === "ar" ? "الأحدث" : "Latest" },
+                  ]}
+                />
+              </div>
+            </div>
+            <div className="flex w-full min-w-0 items-center gap-2">
+              <Button variant="primary" size="sm" onClick={onNew} className="h-10 min-w-0 flex-1 whitespace-nowrap rounded-xl px-3.5 text-[14px]">
+                <Plus className="h-4 w-4" />{c.addProject}
+              </Button>
+              <Button variant="secondary" size="sm" onClick={() => exportCsv()} className="h-10 w-10 shrink-0 rounded-xl p-0" aria-label={c.export} title={c.export}>
+                <FileText className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       {selected.size > 0 ? (
         <m.div
+          ref={bulkBarRef}
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.18, ease: "easeOut" }}
           data-testid="projects-bulk-bar"
-          className="fixed inset-x-3 bottom-[calc(64px+env(safe-area-inset-bottom,0px)+8px)] z-[70] flex items-center justify-between gap-3 rounded-2xl border border-white/[.08] bg-gradient-to-b from-[#1a1c25] to-[#13151c] px-3 py-2.5 shadow-[0_12px_40px_rgba(0,0,0,.5)] md:sticky md:inset-x-auto md:bottom-auto md:top-3 md:z-20 md:px-4 md:py-3"
+          data-bulk-layout={bulkLayout}
+          className="fixed inset-x-3 bottom-[calc(64px+env(safe-area-inset-bottom,0px)+8px)] z-[70] min-w-0 rounded-2xl border border-white/[.08] bg-gradient-to-b from-[#1a1c25] to-[#13151c] px-3 py-2.5 shadow-[0_12px_40px_rgba(0,0,0,.5)] md:sticky md:inset-x-auto md:bottom-auto md:top-3 md:z-20 md:px-2"
         >
-          <div className="flex min-w-0 items-center gap-2.5">
-            <span className="inline-flex h-7 shrink-0 items-center rounded-full bg-[rgba(226,176,74,0.14)] px-3 text-[13px] font-semibold tabular-nums text-[#F3C86A]">
-              {selected.size} {locale === "ar" ? "محدد" : "selected"}
-            </span>
-            {selected.size < filtered.length ? (
-              <button
-                type="button"
-                onClick={selectAllFiltered}
-                className="admin-focus-ring hidden truncate rounded-md px-1 text-[14px] font-medium text-[#F3C86A] underline decoration-[#F3C86A]/30 underline-offset-4 hover:decoration-[#F3C86A] sm:inline-flex"
-              >
-                {locale === "ar" ? `تحديد الكل (${filtered.length})` : `Select all ${filtered.length}`}
-              </button>
-            ) : (
-              <span className="hidden text-[13px] text-[var(--admin-muted)] sm:inline">
-                {locale === "ar" ? `تم تحديد ${filtered.length}` : `All ${filtered.length} selected`}
-              </span>
-            )}
-          </div>
-
-          <div className="hidden items-center gap-2 md:flex">
-            <span className="whitespace-nowrap text-[14px] text-[var(--admin-muted)]">
-              {locale === "ar" ? "نقل إلى" : "Move to"}
-            </span>
-            <SegmentedControl
-              value={paged.find((project) => selected.has(project.slug))?.status ?? "ongoing"}
-              onValueChange={applyBulkStatus}
-              label={locale === "ar" ? "نقل المشاريع المحددة" : "Move selected projects"}
-              options={[
-                { value: "upcoming", label: c.statusLabels.upcoming },
-                { value: "ongoing", label: c.statusLabels.ongoing },
-                { value: "completed", label: c.statusLabels.completed },
-              ]}
-              className="w-[250px] [&>button]:min-h-10 [&>button]:text-[14px]"
-            />
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => {
-                const rows = [...selected]
-                  .map((slug) => projects.find((project) => project.slug === slug))
-                  .filter((project): project is WorkspaceProject => Boolean(project));
-                exportCsv(rows);
-              }}
-              className="h-10 rounded-xl px-3.5 text-[14px] font-medium"
-            >
-              <FileText className="h-4 w-4" />
-              {locale === "ar" ? "تصدير Excel" : "Export Excel"}
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setBulkArchiveOpen(true)}
-              className="h-10 rounded-xl px-3.5 text-[14px] font-medium text-[#FF9A8F] hover:bg-[rgba(255,107,94,0.1)] hover:text-[#FFB4AC]"
-            >
-              <Archive className="h-4 w-4" />
-              {c.archive}
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setSelected(new Set<string>());
-                lastSelectedRef.current = null;
-              }}
-              className="h-10 w-10 rounded-xl p-0 text-[var(--admin-muted)]"
-              aria-label={c.clearSelection}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-
-          <div className="flex shrink-0 items-center gap-1.5 md:hidden">
-            <Popover
-              open={bulkStatusOpen}
-              onOpenChange={setBulkStatusOpen}
-              align="end"
-              side="top"
-              trigger={
-                <Button variant="secondary" size="sm" className="h-10 rounded-xl px-3 text-[14px] font-medium">
-                  {locale === "ar" ? "تغيير الحالة" : "Change status"}
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-              }
-            >
-              <div className="flex min-w-[170px] flex-col gap-0.5">
-                {(["upcoming", "ongoing", "completed"] as const).map((status) => (
+          {bulkLayout === "wide" ? (
+            <div className="flex min-w-0 flex-nowrap items-center gap-1.5">
+              <div className="flex min-w-0 items-center gap-1.5">
+                <span
+                  data-testid="bulk-count"
+                  className="inline-flex h-7 shrink-0 items-center whitespace-nowrap rounded-full bg-[rgba(226,176,74,0.14)] px-2.5 text-[13px] font-semibold tabular-nums text-[#F3C86A]"
+                >
+                  {selected.size} {locale === "ar" ? "محدد" : "selected"}
+                </span>
+                {selected.size < filtered.length ? (
                   <button
-                    key={status}
                     type="button"
-                    onClick={() => applyBulkStatus(status)}
-                    className="admin-focus-ring flex min-h-10 w-full items-center rounded-lg px-3 text-start text-[14px] text-[var(--admin-text)] hover:bg-[var(--admin-pill-surface)]"
+                    data-testid="bulk-select-all"
+                    onClick={selectAllFiltered}
+                    className="admin-focus-ring min-w-0 truncate rounded-md px-0 text-[14px] font-medium text-[#F3C86A] underline decoration-[#F3C86A]/30 underline-offset-4 hover:decoration-[#F3C86A]"
                   >
-                    {c.statusLabels[status]}
+                    {locale === "ar" ? `تحديد الكل (${filtered.length})` : `Select all ${filtered.length}`}
                   </button>
-                ))}
+                ) : null}
               </div>
-            </Popover>
-            <Popover
-              open={bulkMoreOpen}
-              onOpenChange={setBulkMoreOpen}
-              align="end"
-              side="top"
-              trigger={
-                <Button variant="ghost" size="sm" className="h-10 rounded-xl px-3 text-[14px] font-medium" aria-label={locale === "ar" ? "المزيد" : "More"}>
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              }
-            >
-              <div className="flex min-w-[170px] flex-col gap-0.5">
-                <button
-                  type="button"
+
+              <div className="min-w-0 flex-1" aria-hidden="true" />
+
+              <div className="flex shrink-0 items-center gap-1.5">
+                <span className="whitespace-nowrap text-[14px] text-[var(--admin-muted)]">
+                  {locale === "ar" ? "نقل إلى" : "Move to"}
+                </span>
+                <SegmentedControl
+                  value={paged.find((project) => selected.has(project.slug))?.status ?? "ongoing"}
+                  onValueChange={applyBulkStatus}
+                  label={locale === "ar" ? "نقل المشاريع المحددة" : "Move selected projects"}
+                  options={[
+                    { value: "upcoming", label: c.statusLabels.upcoming },
+                    { value: "ongoing", label: c.statusLabels.ongoing },
+                    { value: "completed", label: c.statusLabels.completed },
+                  ]}
+                  className="shrink-0 [&>[role=radio]]:px-2"
+                />
+                <Button
+                  variant="secondary"
+                  size="sm"
                   onClick={() => {
-                    setBulkMoreOpen(false);
                     const rows = [...selected]
                       .map((slug) => projects.find((project) => project.slug === slug))
                       .filter((project): project is WorkspaceProject => Boolean(project));
                     exportCsv(rows);
                   }}
-                  className="admin-focus-ring flex min-h-10 w-full items-center gap-2 rounded-lg px-3 text-start text-[14px] text-[var(--admin-text)] hover:bg-[var(--admin-pill-surface)]"
+                  className="h-10 shrink-0 whitespace-nowrap rounded-xl px-2 text-[14px] font-medium"
+                  aria-label={locale === "ar" ? "تصدير Excel" : "Export Excel"}
+                  title={locale === "ar" ? "تصدير Excel" : "Export Excel"}
                 >
                   <FileText className="h-4 w-4" />
                   {locale === "ar" ? "تصدير Excel" : "Export Excel"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setBulkMoreOpen(false);
-                    setBulkArchiveOpen(true);
-                  }}
-                  className="admin-focus-ring flex min-h-10 w-full items-center gap-2 rounded-lg px-3 text-start text-[14px] text-[#FF9A8F] hover:bg-[rgba(255,107,94,0.1)]"
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setBulkArchiveOpen(true)}
+                  className="h-10 shrink-0 whitespace-nowrap rounded-xl px-2 text-[14px] font-medium text-[#FF9A8F] hover:bg-[rgba(255,107,94,0.1)] hover:text-[#FFB4AC]"
+                  aria-label={c.archive}
+                  title={c.archive}
                 >
                   <Archive className="h-4 w-4" />
                   {c.archive}
-                </button>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setSelected(new Set<string>());
+                    lastSelectedRef.current = null;
+                  }}
+                  className="h-10 w-10 shrink-0 rounded-xl p-0 text-[var(--admin-muted)]"
+                  aria-label={c.clearSelection}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
               </div>
-            </Popover>
-          </div>
+            </div>
+          ) : (
+            <div className="flex min-w-0 flex-col gap-2">
+              <div className="flex min-w-0 items-center justify-between gap-2">
+                <div className="flex min-w-0 items-center gap-2">
+                  <span
+                    data-testid="bulk-count"
+                    className="inline-flex h-7 shrink-0 items-center whitespace-nowrap rounded-full bg-[rgba(226,176,74,0.14)] px-3 text-[13px] font-semibold tabular-nums text-[#F3C86A]"
+                  >
+                    {selected.size} {locale === "ar" ? "محدد" : "selected"}
+                  </span>
+                  {bulkLayout === "medium" && selected.size < filtered.length ? (
+                    <button
+                      type="button"
+                      data-testid="bulk-select-all"
+                      onClick={selectAllFiltered}
+                      className="admin-focus-ring min-w-0 truncate rounded-md px-1 text-[14px] font-medium text-[#F3C86A] underline decoration-[#F3C86A]/30 underline-offset-4 hover:decoration-[#F3C86A]"
+                    >
+                      {locale === "ar" ? `تحديد الكل (${filtered.length})` : `Select all ${filtered.length}`}
+                    </button>
+                  ) : null}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setSelected(new Set<string>());
+                    lastSelectedRef.current = null;
+                  }}
+                  className="h-10 w-10 shrink-0 rounded-xl p-0 text-[var(--admin-muted)]"
+                  aria-label={c.clearSelection}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {bulkLayout === "medium" ? (
+                <div className="flex min-w-0 items-center gap-2">
+                  <div className="min-w-0 flex-1">
+                    <SegmentedControl
+                      value={paged.find((project) => selected.has(project.slug))?.status ?? "ongoing"}
+                      onValueChange={applyBulkStatus}
+                      label={locale === "ar" ? "نقل المشاريع المحددة" : "Move selected projects"}
+                      options={[
+                        { value: "upcoming", label: c.statusLabels.upcoming },
+                        { value: "ongoing", label: c.statusLabels.ongoing },
+                        { value: "completed", label: c.statusLabels.completed },
+                      ]}
+                      className="w-full"
+                    />
+                  </div>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => {
+                      const rows = [...selected]
+                        .map((slug) => projects.find((project) => project.slug === slug))
+                        .filter((project): project is WorkspaceProject => Boolean(project));
+                      exportCsv(rows);
+                    }}
+                    className="h-10 w-10 shrink-0 rounded-xl p-0"
+                    aria-label={locale === "ar" ? "تصدير Excel" : "Export Excel"}
+                    title={locale === "ar" ? "تصدير Excel" : "Export Excel"}
+                  >
+                    <FileText className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setBulkArchiveOpen(true)}
+                    className="h-10 w-10 shrink-0 rounded-xl p-0 text-[#FF9A8F] hover:bg-[rgba(255,107,94,0.1)] hover:text-[#FFB4AC]"
+                    aria-label={c.archive}
+                    title={c.archive}
+                  >
+                    <Archive className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex min-w-0 items-center gap-2">
+                  <Popover
+                    open={bulkStatusOpen}
+                    onOpenChange={setBulkStatusOpen}
+                    align="end"
+                    side="top"
+                    trigger={
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="h-10 min-w-0 flex-1 justify-between whitespace-nowrap rounded-xl px-3 text-[14px] font-medium"
+                      >
+                        {locale === "ar" ? "تغيير الحالة" : "Change status"}
+                        <ChevronDown className="h-4 w-4 shrink-0" />
+                      </Button>
+                    }
+                  >
+                    <div className="flex min-w-[170px] flex-col gap-0.5">
+                      {(["upcoming", "ongoing", "completed"] as const).map((status) => (
+                        <button
+                          key={status}
+                          type="button"
+                          onClick={() => applyBulkStatus(status)}
+                          className="admin-focus-ring flex min-h-10 w-full items-center rounded-lg px-3 text-start text-[14px] text-[var(--admin-text)] hover:bg-[var(--admin-pill-surface)]"
+                        >
+                          {c.statusLabels[status]}
+                        </button>
+                      ))}
+                    </div>
+                  </Popover>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => {
+                      const rows = [...selected]
+                        .map((slug) => projects.find((project) => project.slug === slug))
+                        .filter((project): project is WorkspaceProject => Boolean(project));
+                      exportCsv(rows);
+                    }}
+                    className="h-10 w-10 shrink-0 rounded-xl p-0"
+                    aria-label={locale === "ar" ? "تصدير Excel" : "Export Excel"}
+                    title={locale === "ar" ? "تصدير Excel" : "Export Excel"}
+                  >
+                    <FileText className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setBulkArchiveOpen(true)}
+                    className="h-10 w-10 shrink-0 rounded-xl p-0 text-[#FF9A8F] hover:bg-[rgba(255,107,94,0.1)] hover:text-[#FFB4AC]"
+                    aria-label={c.archive}
+                    title={c.archive}
+                  >
+                    <Archive className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
         </m.div>
       ) : null}
 

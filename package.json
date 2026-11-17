@@ -11,7 +11,7 @@
     "seed": "tsx --env-file=.env scripts/seed.ts",
     "migrate:cities": "tsx --env-file=.env scripts/migrate-project-cities.ts",
     "smoke:proposal": "tsx --env-file=.env scripts/proposal-smoke.ts",
-    "test:projects": "playwright test tests/projects-responsive.spec.ts"
+    "test:projects": "playwright test tests/projects-responsive.spec.ts tests/projects-toolbar-bulkbar.spec.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^7.0.6",

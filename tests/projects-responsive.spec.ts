@@ -175,15 +175,18 @@ test.describe("admin projects table · container responsive", () => {
           expect(state.mainScrollWidth).toBeLessThanOrEqual(state.mainClientWidth + 1);
         }
 
-        if (width >= 1024) {
-          expect(state.asideWidth).toBe(collapsed ? 76 : 264);
-        } else {
+        if (width < 1024) {
           expect(state.asideWidth).toBe(0);
+        } else if (width < 1280) {
+          // 1024–1279 is always the icon rail, regardless of the stored preference.
+          expect(state.asideWidth).toBe(76);
+        } else {
+          expect(state.asideWidth).toBe(collapsed ? 76 : 264);
         }
 
         const expectedMode = state.wrapperWidth! >= 1100 ? "full" : state.wrapperWidth! >= 760 ? "compact" : "cards";
         expect(state.mode).toBe(expectedMode);
-        if (width === 1024) expect(state.mode).toBe(collapsed ? "compact" : "cards");
+        if (width === 1024) expect(state.mode).toBe("compact");
         if (width === 1280) expect(state.mode).toBe(collapsed ? "full" : "compact");
         if (width === 1440) expect(state.mode).toBe("full");
 
@@ -246,16 +249,22 @@ test.describe("admin projects table · container responsive", () => {
         const bar = page.locator('[data-testid="projects-bulk-bar"]');
         await expect(bar).toBeVisible();
         await expect(bar).toContainText("1 selected");
-        if (width >= 768) {
+        await expect(bar.getByRole("button", { name: "Export Excel" })).toBeVisible();
+        await expect(bar.getByRole("button", { name: "Archive", exact: true })).toBeVisible();
+        if (width >= 900) {
           await expect(bar.getByText("Move to", { exact: true })).toBeVisible();
-          await expect(bar.getByRole("button", { name: "Export Excel" })).toBeVisible();
-          await expect(bar.getByRole("button", { name: "Archive", exact: true })).toBeVisible();
+          await expect(bar.getByRole("radio")).toHaveCount(3);
+        } else if (width >= 520) {
+          await expect(bar.getByText("Move to", { exact: true })).toHaveCount(0);
+          await expect(bar.getByRole("radio")).toHaveCount(3);
         } else {
           await expect(bar.getByRole("button", { name: "Change status" })).toBeVisible();
-          await expect(bar.getByRole("button", { name: "More" })).toBeVisible();
+          await expect(bar.getByRole("radio")).toHaveCount(0);
+        }
+        if (width < 768) {
           const box = await bar.boundingBox();
           expect(box).not.toBeNull();
-          expect(box!.y + box!.height).toBeLessThanOrEqual(width < 768 ? 844 - 64 : 900);
+          expect(box!.y + box!.height).toBeLessThanOrEqual(844 - 64);
         }
         const barWidths = await page.evaluate(() => ({
           document: document.documentElement.scrollWidth,

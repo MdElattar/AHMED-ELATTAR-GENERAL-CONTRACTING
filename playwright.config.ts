@@ -51,7 +51,7 @@ export default defineConfig({
     { name: "setup", testMatch: /auth\.setup\.ts/ },
     {
       name: "chromium",
-      testMatch: /projects-responsive\.spec\.ts/,
+      testMatch: /projects-.*\.spec\.ts/,
       dependencies: ["setup"],
       use: { storageState: "tests/.auth/admin.json" },
     },

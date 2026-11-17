@@ -188,6 +188,12 @@ html {
   background: var(--scroll-thumb-hover);
 }
 
+/* Single-row chip rails fade at the edges instead of wrapping. */
+.chips-fade {
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
+}
+
 [data-theme="light"] {
   --scroll-thumb: rgba(20, 18, 10, 0.22);
   --scroll-thumb-hover: rgba(20, 18, 10, 0.34);
