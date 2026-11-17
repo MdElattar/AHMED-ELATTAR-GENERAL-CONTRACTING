@@ -910,6 +910,19 @@ html[dir="rtl"] .carousel-progress {
 .lux-checkbox:checked::before {
   transform: scale(1);
 }
+.lux-checkbox:indeterminate {
+  background: #b8860b;
+  border-color: #c59b27;
+  box-shadow: 0 0 0 1px rgba(184, 134, 11, 0.2);
+}
+.lux-checkbox:indeterminate::before {
+  width: 0.55rem;
+  height: 2px;
+  border-radius: 999px;
+  background: #0a0b0e;
+  clip-path: none;
+  transform: none;
+}
 .lux-checkbox:focus-visible {
   outline: 2px solid rgba(197, 155, 39, 0.7);
   outline-offset: 2px;

@@ -17,14 +17,12 @@ import {
   Check,
   ChevronDown,
   ChevronLeft,
-  Columns3,
   Copy,
   ExternalLink,
   FileSignature,
   FileText,
   Flag,
   FolderKanban,
-  Eye,
   Globe2,
   Image as ImageIcon,
   Inbox,
@@ -46,13 +44,13 @@ import {
   ShieldCheck,
   Sparkles,
   Sun,
-  Trash2,
   UserRound,
   Wallet,
   Wrench,
   X,
 } from "lucide-react";
 import { isAdminUser, useAuth } from "@/components/providers/AuthProvider";
+import { useContainerWidth } from "@/hooks/useContainerWidth";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useI18n } from "@/components/providers/I18nProvider";
 
@@ -79,9 +77,9 @@ import { Field, TextInput, Textarea } from "@/components/ui/Field";
 import { ProjectArt } from "@/components/ui/ProjectArt";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { AdminSectionBoundary } from "@/components/system/AdminSectionBoundary";
-import { Button, Card, Chip, DataTable, EmptyState, PageHeader, StatusPill, Table, TD, TH, THead, TR, AdminInput, AdminSelect } from "@/components/ui/admin";
+import { Button, Card, Chip, EmptyState, PageHeader, StatusPill, TD, TH, THead, TR, AdminInput, AdminSelect } from "@/components/ui/admin";
 import { ConfirmDialog, Drawer, Modal, Popover } from "@/components/ui/admin/overlay";
-import { Input as FieldInput, Select as FieldSelect, Slider } from "@/components/ui/admin/form";
+import { Input as FieldInput, SegmentedControl, Select as FieldSelect, Slider } from "@/components/ui/admin/form";
 import { ProjectImage } from "@/components/ui/ProjectImage";
 import { useToast } from "@/components/ui/Toast";
 import type { ArtVariant } from "@/data/projects";
@@ -155,13 +153,6 @@ function sectionFromPath(pathname: string | null): Section | null {
   if (slug === "site-content" || slug === "content") return "content";
   if (slug in sectionHrefs) return slug as Section;
   return null;
-}
-
-function viewportTier() {
-  if (typeof window === "undefined") return "xl" as const;
-  if (window.innerWidth < 1024) return "mobile" as const;
-  if (window.innerWidth < 1280) return "lg" as const;
-  return "xl" as const;
 }
 
 const copy = {
@@ -527,7 +518,6 @@ export function AdminDashboard({
   const [moreOpen, setMoreOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [topbarScrolled, setTopbarScrolled] = useState(false);
-  const [tier, setTier] = useState<"mobile" | "lg" | "xl">("xl");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     if (typeof window === "undefined") return false;
     try { return localStorage.getItem("admin-sidebar-collapsed") === "1"; } catch { return false; }
@@ -546,15 +536,7 @@ export function AdminDashboard({
   });
   const mainRef = useRef<HTMLElement | null>(null);
   const topSentinelRef = useRef<HTMLDivElement | null>(null);
-  const autoCollapsed = tier === "lg";
-  const collapsed = autoCollapsed || sidebarCollapsed;
-
-  useEffect(() => {
-    const update = () => setTier(viewportTier());
-    update();
-    window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
-  }, []);
+  const collapsed = sidebarCollapsed;
 
   useEffect(() => {
     const main = mainRef.current;
@@ -676,7 +658,7 @@ export function AdminDashboard({
   if (!ready) {
     return (
       <section className="admin-shell flex h-dvh min-h-0 overflow-hidden bg-[var(--admin-bg)]">
-        <div className="relative mx-auto flex h-full min-h-0 w-full max-w-[1600px]">
+        <div className="relative mx-auto flex h-full min-h-0 w-full min-w-0 max-w-[1600px]">
           <aside className="hidden w-[264px] shrink-0 flex-col border-e border-[var(--admin-card-border)] bg-[var(--admin-sidebar)] lg:flex">
             <div className="h-[72px] border-b border-[var(--admin-card-border)]" />
             <div className="flex flex-col gap-2 p-3">
@@ -1070,13 +1052,13 @@ export function AdminDashboard({
     <LazyMotion features={domAnimation}>
       <section
         className={cn(
-          "admin-shell relative flex h-dvh min-h-0 overflow-hidden",
+          "admin-shell relative flex h-dvh min-h-0 min-w-0 overflow-hidden",
           fontScale === "large" ? "text-[18px]" : "text-[16px]",
           density === "compact" && "[--admin-card-gap:16px] [--admin-page-pad:24px]",
         )}
         data-admin-theme={theme}
       >
-        <div className="relative mx-auto flex h-full min-h-0 w-full max-w-[1600px]">
+        <div className="relative mx-auto flex h-full min-h-0 w-full min-w-0 max-w-[1600px]">
           <aside
             data-collapsed={collapsed ? "true" : "false"}
             className={cn(
@@ -1220,7 +1202,7 @@ export function AdminDashboard({
               id="main"
               tabIndex={-1}
               data-scroll-root="main"
-              className="scroll-area relative min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-5 pb-[calc(64px+env(safe-area-inset-bottom,0px)+20px)] focus:outline-none sm:px-6 md:px-8 md:py-6 md:pb-6 lg:px-[var(--admin-page-pad)]"
+              className="scroll-area relative min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain px-4 py-5 pb-[calc(64px+env(safe-area-inset-bottom,0px)+20px)] focus:outline-none sm:px-6 md:px-8 md:py-6 md:pb-6 lg:px-[var(--admin-page-pad)]"
             >
               <div
                 ref={topSentinelRef}
@@ -1236,7 +1218,7 @@ export function AdminDashboard({
                   <OverviewSection projects={projects} ready={workspaceReady} displayName={displayName} onNew={openNew} onNavigate={navigateToSection} density={density} setDensity={setDensity} fontScale={fontScale} setFontScale={setFontScale} setPaletteOpen={setPaletteOpen} locale={locale} />
                 ) : null}
                 {section === "projects" ? (
-                  <ProjectsSection projects={projects} onNew={openNew} onEdit={openEdit} density={density} setDensity={setDensity} />
+                  <ProjectsSection projects={projects} onNew={openNew} onEdit={openEdit} />
                 ) : null}
                 {section === "milestones" ? <MilestonesPanel /> : null}
                 {section === "consultations" ? <ConsultationsPanel /> : null}
@@ -1950,14 +1932,10 @@ function ProjectsSection({
   projects,
   onNew,
   onEdit,
-  density,
-  setDensity,
 }: {
   projects: WorkspaceProject[];
   onNew: () => void;
   onEdit: (project: WorkspaceProject) => void;
-  density: "comfortable" | "compact";
-  setDensity: (value: "comfortable" | "compact") => void;
 }) {
   const { locale, l } = useI18n();
   const c = copy[locale];
@@ -2008,21 +1986,14 @@ function ProjectsSection({
   const [rowActions, setRowActions] = useState<string | null>(null);
   const [mobileActions, setMobileActions] = useState<string | null>(null);
   const [archiveTarget, setArchiveTarget] = useState<WorkspaceProject | null>(null);
+  const [bulkArchiveOpen, setBulkArchiveOpen] = useState(false);
+  const [bulkStatusOpen, setBulkStatusOpen] = useState(false);
+  const [bulkMoreOpen, setBulkMoreOpen] = useState(false);
   const [archiving, setArchiving] = useState(false);
-  // Column visibility is part of the shareable table state, so it lives in the
-  // URL next to status/sort instead of a second, hidden persistence layer.
-  const [columns, setColumns] = useState<Record<"category" | "health" | "progress" | "value", boolean>>(() => {
-    const urlCols = searchParams.get("cols");
-    if (!urlCols) return { category: true, health: true, progress: true, value: true };
-    if (urlCols === "none") return { category: false, health: false, progress: false, value: false };
-    const active = new Set(urlCols.split(","));
-    return {
-      category: active.has("category"),
-      health: active.has("health"),
-      progress: active.has("progress"),
-      value: active.has("value"),
-    };
-  });
+  const [tableWidthRef, tableWidth] = useContainerWidth<HTMLDivElement>();
+  const selectAllRef = useRef<HTMLInputElement | null>(null);
+  const lastSelectedRef = useRef<string | null>(null);
+  const shiftHandledRef = useRef(false);
   const pageSize = 8;
 
   useEffect(() => {
@@ -2045,7 +2016,6 @@ function ProjectsSection({
       const incomingView = params.get("view") ?? "table";
       const q = params.get("q") ?? "";
       const pageParam = Number(params.get("page") ?? "1");
-      const cols = params.get("cols");
 
       setTab(statuses.includes(status) ? (status as typeof tab) : "all");
       setCategoryFilter(categories.includes(category) ? (category as typeof categoryFilter) : "all");
@@ -2054,19 +2024,6 @@ function ProjectsSection({
       setQuery(q);
       setDebouncedQuery(q);
       setPage(Number.isFinite(pageParam) && pageParam > 0 ? Math.floor(pageParam) : 1);
-      if (!cols) {
-        setColumns({ category: true, health: true, progress: true, value: true });
-      } else if (cols === "none") {
-        setColumns({ category: false, health: false, progress: false, value: false });
-      } else {
-        const active = new Set(cols.split(","));
-        setColumns({
-          category: active.has("category"),
-          health: active.has("health"),
-          progress: active.has("progress"),
-          value: active.has("value"),
-        });
-      }
     };
     window.addEventListener("popstate", syncFromUrl);
     return () => window.removeEventListener("popstate", syncFromUrl);
@@ -2082,13 +2039,11 @@ function ProjectsSection({
     if (view !== "table") params.set("view", view);
     if (debouncedQuery.trim()) params.set("q", debouncedQuery.trim());
     if (page > 1) params.set("page", String(page));
-    const visibleColumns = (Object.keys(columns) as Array<keyof typeof columns>).filter((key) => columns[key]);
-    if (visibleColumns.length < 4) params.set("cols", visibleColumns.length ? visibleColumns.join(",") : "none");
     const next = params.toString();
     const current = window.location.search.replace(/^\?/, "");
     if (next === current) return;
     router.replace(`${pathname}${next ? `?${next}` : ""}`, { scroll: false });
-  }, [tab, categoryFilter, sortBy, view, debouncedQuery, page, columns, pathname, router]);
+  }, [tab, categoryFilter, sortBy, view, debouncedQuery, page, pathname, router]);
 
   const metricsBySlug = useMemo(() => {
     const m = new Map<string, ReturnType<typeof toMetricsProject>>();
@@ -2148,12 +2103,54 @@ function ProjectsSection({
   const currentPage = Math.min(page, totalPages);
   const paged = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
   const allSelected = paged.length > 0 && paged.every((project) => selected.has(project.slug));
+  const someSelected = paged.some((project) => selected.has(project.slug));
+  const tableMode = tableWidth >= 1100 ? "full" : tableWidth >= 760 ? "compact" : "cards";
+
+  useEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate = someSelected && !allSelected;
+    }
+  }, [allSelected, someSelected]);
+
+  useEffect(() => {
+    if (!selected.size) return;
+    const clearSelection = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setSelected(new Set<string>());
+        lastSelectedRef.current = null;
+      }
+    };
+    window.addEventListener("keydown", clearSelection);
+    return () => window.removeEventListener("keydown", clearSelection);
+  }, [selected.size]);
 
   const toggleSelected = (slug: string) => {
     setSelected((current) => {
       const next = new Set(current);
       if (next.has(slug)) next.delete(slug);
       else next.add(slug);
+      return next;
+    });
+  };
+
+  const selectRange = (slug: string, index: number) => {
+    setSelected((current) => {
+      const anchorIndex = lastSelectedRef.current
+        ? paged.findIndex((project) => project.slug === lastSelectedRef.current)
+        : -1;
+      if (anchorIndex < 0) {
+        const next = new Set(current);
+        next.add(slug);
+        return next;
+      }
+      const start = Math.min(anchorIndex, index);
+      const end = Math.max(anchorIndex, index);
+      const shouldSelect = !current.has(slug);
+      const next = new Set(current);
+      paged.slice(start, end + 1).forEach((project) => {
+        if (shouldSelect) next.add(project.slug);
+        else next.delete(project.slug);
+      });
       return next;
     });
   };
@@ -2168,6 +2165,12 @@ function ProjectsSection({
       }
       return next;
     });
+    lastSelectedRef.current = null;
+  };
+
+  const selectAllFiltered = () => {
+    setSelected(new Set(filtered.map((project) => project.slug)));
+    lastSelectedRef.current = null;
   };
 
   const openDetail = (
@@ -2222,10 +2225,11 @@ function ProjectsSection({
     toast(locale === "ar" ? "تم نسخ المشروع" : "Project duplicated", "success");
   };
 
-  const bulkArchive = () => {
+  const commitBulkArchive = () => {
     const archived = [...selected]
       .map((slug) => projects.find((project) => project.slug === slug))
       .filter((project): project is WorkspaceProject => Boolean(project && !project.archivedAt));
+    setBulkArchiveOpen(false);
     if (!archived.length) {
       toast(locale === "ar" ? "المشاريع محددة مؤرشفة بالفعل" : "Selected projects are already archived", "success");
       return;
@@ -2233,8 +2237,11 @@ function ProjectsSection({
     const stamp = new Date().toISOString();
     archived.forEach((project) => updateProject(project.slug, { archivedAt: stamp }));
     setSelected(new Set<string>());
+    lastSelectedRef.current = null;
     sonnerToast.success(
-      locale === "ar" ? `تمت أرشفة ${archived.length} مشروع` : `${archived.length} projects archived`,
+      locale === "ar"
+        ? `تمت أرشفة ${archived.length} مشروع`
+        : `${archived.length} project${archived.length === 1 ? "" : "s"} archived`,
       {
         duration: 8000,
         action: {
@@ -2249,18 +2256,37 @@ function ProjectsSection({
   };
 
   const applyBulkStatus = (status: WorkspaceProject["status"]) => {
-    const known = new Set(projects.map((project) => project.slug));
-    for (const slug of selected) {
-      if (known.has(slug)) updateProject(slug, { status });
-    }
-    toast(locale === "ar" ? "تم تحديث الحالة" : "Status updated", "success");
+    setBulkStatusOpen(false);
+    setBulkMoreOpen(false);
+    const targets = [...selected]
+      .map((slug) => projects.find((project) => project.slug === slug))
+      .filter((project): project is WorkspaceProject => Boolean(project));
+    if (!targets.length) return;
+    const previous = targets.map((project) => ({ slug: project.slug, status: project.status }));
+    targets.forEach((project) => updateProject(project.slug, { status }));
     setSelected(new Set<string>());
+    lastSelectedRef.current = null;
+    sonnerToast.success(
+      locale === "ar"
+        ? `تم نقل ${targets.length} مشروع إلى ${c.statusLabels[status]}`
+        : `${targets.length} project${targets.length === 1 ? "" : "s"} moved to ${c.statusLabels[status]}`,
+      {
+        duration: 8000,
+        action: {
+          label: c.undo,
+          onClick: () => {
+            previous.forEach((project) => updateProject(project.slug, { status: project.status }));
+            sonnerToast.success(locale === "ar" ? "تم التراجع" : "Change undone");
+          },
+        },
+      },
+    );
   };
 
-  const exportCsv = () => {
+  const exportCsv = (rowsToExport: WorkspaceProject[] = filtered) => {
     const rows = [
       ["Project", "Category", "Status", "Progress", "Value", "Budget", "Spent"],
-      ...filtered.map((project) => [
+      ...rowsToExport.map((project) => [
         project.title.en || project.title.ar,
         project.category,
         project.status,
@@ -2313,8 +2339,62 @@ function ProjectsSection({
     return budgetHealthCopy(getBudgetHealth(mp), locale);
   };
 
+  const projectActionsMenu = (project: WorkspaceProject, onClose: () => void) => (
+    <div className="flex min-w-[190px] flex-col gap-0.5">
+      {project.archivedAt ? (
+        <button
+          type="button"
+          onClick={() => {
+            onClose();
+            restoreProject(project);
+          }}
+          className="admin-focus-ring flex min-h-10 w-full items-center gap-2 rounded-lg px-3 text-start text-[14px] text-[var(--admin-text)] hover:bg-[var(--admin-pill-surface)]"
+        >
+          <RotateCcw className="h-4 w-4" />
+          {c.restore}
+        </button>
+      ) : (
+        <>
+          <button
+            type="button"
+            onClick={() => {
+              onClose();
+              onEdit(project);
+            }}
+            className="admin-focus-ring flex min-h-10 w-full items-center gap-2 rounded-lg px-3 text-start text-[14px] text-[var(--admin-text)] hover:bg-[var(--admin-pill-surface)]"
+          >
+            <Pencil className="h-4 w-4" />
+            {c.edit}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              onClose();
+              duplicateProject(project);
+            }}
+            className="admin-focus-ring flex min-h-10 w-full items-center gap-2 rounded-lg px-3 text-start text-[14px] text-[var(--admin-text)] hover:bg-[var(--admin-pill-surface)]"
+          >
+            <Copy className="h-4 w-4" />
+            {locale === "ar" ? "نسخ" : "Duplicate"}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              onClose();
+              setArchiveTarget(project);
+            }}
+            className="admin-focus-ring flex min-h-10 w-full items-center gap-2 rounded-lg px-3 text-start text-[14px] text-[#FF9A8F] hover:bg-[rgba(255,107,94,0.1)]"
+          >
+            <Archive className="h-4 w-4" />
+            {c.archive}
+          </button>
+        </>
+      )}
+    </div>
+  );
+
   return (
-    <div className="space-y-5">
+    <div className="min-w-0 space-y-5">
       <PageHeader
         title={c.projects}
         description={`${filtered.length} / ${projects.length}`}
@@ -2342,7 +2422,7 @@ function ProjectsSection({
         ))}
       </Card>
 
-      <div className="grid w-full gap-2 sm:grid-cols-2 xl:flex xl:flex-wrap xl:items-center">
+      <div className="grid w-full min-w-0 gap-2 sm:grid-cols-2 xl:flex xl:flex-wrap xl:items-center">
         <AdminInput
           value={query}
           onChange={(event) => { setQuery(event.target.value); setPage(1); }}
@@ -2363,37 +2443,7 @@ function ProjectsSection({
           <option value="progress">{locale === "ar" ? "الإنجاز" : "Progress"}</option>
           <option value="updated">{locale === "ar" ? "الأحدث" : "Latest"}</option>
         </AdminSelect>
-        <div className="flex items-center gap-1" role="group" aria-label={locale === "ar" ? "كثافة الجدول" : "Table density"}>
-          <button type="button" onClick={() => setDensity("comfortable")} aria-pressed={density === "comfortable"} className={cn("admin-focus-ring min-h-11 rounded-[999px] border px-3 text-[12px]", density === "comfortable" ? "border-[rgba(226,176,74,0.3)] bg-[rgba(226,176,74,0.14)] text-[#F3C86A]" : "border-[var(--admin-card-border)] text-[var(--admin-muted)]")}>{locale === "ar" ? "مريح" : "Comfortable"}</button>
-          <button type="button" onClick={() => setDensity("compact")} aria-pressed={density === "compact"} className={cn("admin-focus-ring min-h-11 rounded-[999px] border px-3 text-[12px]", density === "compact" ? "border-[rgba(226,176,74,0.3)] bg-[rgba(226,176,74,0.14)] text-[#F3C86A]" : "border-[var(--admin-card-border)] text-[var(--admin-muted)]")}>{locale === "ar" ? "مضغوط" : "Compact"}</button>
-        </div>
-        <Popover
-          align="end"
-          trigger={
-            <Button variant="secondary" size="sm">
-              <Columns3 className="h-4 w-4" />{locale === "ar" ? "الأعمدة" : "Columns"}
-            </Button>
-          }
-        >
-          <div className="flex min-w-[180px] flex-col gap-1">
-            {([
-              ["category", c.category],
-              ["health", locale === "ar" ? "صحة الميزانية" : "Budget health"],
-              ["progress", c.progress],
-              ["value", c.value],
-            ] as const).map(([id, label]) => (
-              <label key={id} className="flex min-h-11 cursor-pointer items-center gap-2 rounded-lg px-2 text-[13px] text-[var(--admin-text)] hover:bg-[var(--admin-pill-surface)]">
-                <Checkbox
-                  checked={columns[id]}
-                  onChange={() => setColumns((current) => ({ ...current, [id]: !current[id] }))}
-                  aria-label={label}
-                />
-                {label}
-              </label>
-            ))}
-          </div>
-        </Popover>
-        <Button variant="secondary" size="sm" onClick={exportCsv}>
+        <Button variant="secondary" size="sm" onClick={() => exportCsv()}>
           <FileText className="h-4 w-4" />{c.export}
         </Button>
         <Button variant="primary" size="sm" onClick={onNew}>
@@ -2402,22 +2452,151 @@ function ProjectsSection({
       </div>
 
       {selected.size > 0 ? (
-        <div className="sticky bottom-20 z-20 flex flex-wrap items-center gap-2 rounded-[20px] border border-[rgba(226,176,74,0.25)] bg-[#14161d]/95 px-4 py-3 shadow-[0_8px_24px_rgba(0,0,0,0.35)] backdrop-blur lg:bottom-4">
-          <span className="text-[14px] font-semibold text-[#F3C86A] tabular-nums">{selected.size} {c.selected}</span>
-          <span className="text-[13px] text-[#A6A9B4]">{c.bulkStatus}</span>
-          {(["ongoing", "completed", "upcoming"] as const).map((status) => (
-            <button key={status} type="button" onClick={() => applyBulkStatus(status)} className="min-h-11 border border-white/12 px-3 text-[0.66rem] font-semibold  text-ivory/60 transition-colors hover:border-gold/45 hover:text-gold">
-              {c.statusLabels[status]}
-            </button>
-          ))}
-          <button type="button" onClick={exportCsv} className="min-h-11 border border-white/12 px-3 text-[0.66rem] font-semibold  text-ivory/60 transition-colors hover:border-gold/45 hover:text-gold">
-            {locale === "ar" ? "تصدير Excel" : "Export Excel"}
-          </button>
-          <button type="button" onClick={bulkArchive} className="min-h-11 border border-[rgba(255,107,94,0.3)] px-3 text-[0.66rem] font-semibold text-[#FF9A8F] transition-colors hover:bg-[rgba(255,107,94,0.1)]">
-            {c.archive}
-          </button>
-          <button type="button" onClick={() => setSelected(new Set<string>())} className="ms-auto min-h-11 px-2 text-[0.66rem]  text-ivory/40 transition-colors hover:text-gold">{c.clearSelection}</button>
-        </div>
+        <m.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.18, ease: "easeOut" }}
+          data-testid="projects-bulk-bar"
+          className="fixed inset-x-3 bottom-[calc(64px+env(safe-area-inset-bottom,0px)+8px)] z-[70] flex items-center justify-between gap-3 rounded-2xl border border-white/[.08] bg-gradient-to-b from-[#1a1c25] to-[#13151c] px-3 py-2.5 shadow-[0_12px_40px_rgba(0,0,0,.5)] md:sticky md:inset-x-auto md:bottom-auto md:top-3 md:z-20 md:px-4 md:py-3"
+        >
+          <div className="flex min-w-0 items-center gap-2.5">
+            <span className="inline-flex h-7 shrink-0 items-center rounded-full bg-[rgba(226,176,74,0.14)] px-3 text-[13px] font-semibold tabular-nums text-[#F3C86A]">
+              {selected.size} {locale === "ar" ? "محدد" : "selected"}
+            </span>
+            {selected.size < filtered.length ? (
+              <button
+                type="button"
+                onClick={selectAllFiltered}
+                className="admin-focus-ring hidden truncate rounded-md px-1 text-[14px] font-medium text-[#F3C86A] underline decoration-[#F3C86A]/30 underline-offset-4 hover:decoration-[#F3C86A] sm:inline-flex"
+              >
+                {locale === "ar" ? `تحديد الكل (${filtered.length})` : `Select all ${filtered.length}`}
+              </button>
+            ) : (
+              <span className="hidden text-[13px] text-[var(--admin-muted)] sm:inline">
+                {locale === "ar" ? `تم تحديد ${filtered.length}` : `All ${filtered.length} selected`}
+              </span>
+            )}
+          </div>
+
+          <div className="hidden items-center gap-2 md:flex">
+            <span className="whitespace-nowrap text-[14px] text-[var(--admin-muted)]">
+              {locale === "ar" ? "نقل إلى" : "Move to"}
+            </span>
+            <SegmentedControl
+              value={paged.find((project) => selected.has(project.slug))?.status ?? "ongoing"}
+              onValueChange={applyBulkStatus}
+              label={locale === "ar" ? "نقل المشاريع المحددة" : "Move selected projects"}
+              options={[
+                { value: "upcoming", label: c.statusLabels.upcoming },
+                { value: "ongoing", label: c.statusLabels.ongoing },
+                { value: "completed", label: c.statusLabels.completed },
+              ]}
+              className="w-[250px] [&>button]:min-h-10 [&>button]:text-[14px]"
+            />
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                const rows = [...selected]
+                  .map((slug) => projects.find((project) => project.slug === slug))
+                  .filter((project): project is WorkspaceProject => Boolean(project));
+                exportCsv(rows);
+              }}
+              className="h-10 rounded-xl px-3.5 text-[14px] font-medium"
+            >
+              <FileText className="h-4 w-4" />
+              {locale === "ar" ? "تصدير Excel" : "Export Excel"}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setBulkArchiveOpen(true)}
+              className="h-10 rounded-xl px-3.5 text-[14px] font-medium text-[#FF9A8F] hover:bg-[rgba(255,107,94,0.1)] hover:text-[#FFB4AC]"
+            >
+              <Archive className="h-4 w-4" />
+              {c.archive}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setSelected(new Set<string>());
+                lastSelectedRef.current = null;
+              }}
+              className="h-10 w-10 rounded-xl p-0 text-[var(--admin-muted)]"
+              aria-label={c.clearSelection}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+
+          <div className="flex shrink-0 items-center gap-1.5 md:hidden">
+            <Popover
+              open={bulkStatusOpen}
+              onOpenChange={setBulkStatusOpen}
+              align="end"
+              side="top"
+              trigger={
+                <Button variant="secondary" size="sm" className="h-10 rounded-xl px-3 text-[14px] font-medium">
+                  {locale === "ar" ? "تغيير الحالة" : "Change status"}
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              }
+            >
+              <div className="flex min-w-[170px] flex-col gap-0.5">
+                {(["upcoming", "ongoing", "completed"] as const).map((status) => (
+                  <button
+                    key={status}
+                    type="button"
+                    onClick={() => applyBulkStatus(status)}
+                    className="admin-focus-ring flex min-h-10 w-full items-center rounded-lg px-3 text-start text-[14px] text-[var(--admin-text)] hover:bg-[var(--admin-pill-surface)]"
+                  >
+                    {c.statusLabels[status]}
+                  </button>
+                ))}
+              </div>
+            </Popover>
+            <Popover
+              open={bulkMoreOpen}
+              onOpenChange={setBulkMoreOpen}
+              align="end"
+              side="top"
+              trigger={
+                <Button variant="ghost" size="sm" className="h-10 rounded-xl px-3 text-[14px] font-medium" aria-label={locale === "ar" ? "المزيد" : "More"}>
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              }
+            >
+              <div className="flex min-w-[170px] flex-col gap-0.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBulkMoreOpen(false);
+                    const rows = [...selected]
+                      .map((slug) => projects.find((project) => project.slug === slug))
+                      .filter((project): project is WorkspaceProject => Boolean(project));
+                    exportCsv(rows);
+                  }}
+                  className="admin-focus-ring flex min-h-10 w-full items-center gap-2 rounded-lg px-3 text-start text-[14px] text-[var(--admin-text)] hover:bg-[var(--admin-pill-surface)]"
+                >
+                  <FileText className="h-4 w-4" />
+                  {locale === "ar" ? "تصدير Excel" : "Export Excel"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBulkMoreOpen(false);
+                    setBulkArchiveOpen(true);
+                  }}
+                  className="admin-focus-ring flex min-h-10 w-full items-center gap-2 rounded-lg px-3 text-start text-[14px] text-[#FF9A8F] hover:bg-[rgba(255,107,94,0.1)]"
+                >
+                  <Archive className="h-4 w-4" />
+                  {c.archive}
+                </button>
+              </div>
+            </Popover>
+          </div>
+        </m.div>
       ) : null}
 
       {view === "timeline" ? (
@@ -2475,27 +2654,87 @@ function ProjectsSection({
           {!paged.length ? <EmptyProjects locale={locale} label={c.noProjects} full /> : null}
         </div>
       ) : (
-        <>
-          <div className="grid gap-3 md:hidden">
-            {paged.map((project, index) => {
-              const statusTone: "warning" | "success" | "info" = project.status === "ongoing" ? "warning" : project.status === "completed" ? "success" : "info";
-              return (
-                <Card key={project.slug} className="relative p-4">
-                  <div className="flex items-start gap-3">
-                    <ProjectImage project={project} variant="thumb" sizes="70px" priority={index === 0} className="h-14 w-[70px] shrink-0 rounded-xl border border-[var(--admin-card-border)]" />
-                    <button type="button" onClick={() => openDetail(project)} className="min-w-0 flex-1 text-start admin-focus-ring rounded-[12px]">
-                      <p className="truncate text-[15px] font-medium text-[var(--admin-text)]">{l(project.title)}</p>
-                      <p className="mt-1 truncate text-[13px] text-[var(--admin-muted)]">{l(project.location)}</p>
-                      <span className="mt-3 flex items-center gap-2">
-                        <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-[var(--admin-track)]">
-                          <span className="block h-full rounded-full bg-[linear-gradient(270deg,#F3C86A,#C98F1E)]" style={{ width: `${project.progress}%` }} />
+        <div ref={tableWidthRef} className="min-w-0" data-testid="projects-responsive">
+          {tableWidth === 0 ? (
+            <Card className="min-h-[320px] overflow-hidden rounded-[20px] p-0" aria-hidden="true">
+              <div className="h-14 border-b border-[var(--admin-card-border)] bg-[var(--admin-bg)]/60" />
+              <div className="space-y-2 p-3">
+                {[0, 1, 2, 3].map((item) => (
+                  <div key={item} className="h-14 animate-pulse rounded-xl bg-white/[.035]" />
+                ))}
+              </div>
+            </Card>
+          ) : tableMode === "cards" ? (
+            <div className="grid min-w-0 gap-3" data-testid="projects-cards">
+              {paged.map((project, index) => {
+                const mp = metricsBySlug.get(project.slug);
+                const health = mp ? getBudgetHealth(mp) : { key: "no_data" as const };
+                const healthTone: "success" | "warning" | "danger" | "neutral" =
+                  health.key === "on_track" || health.key === "saved"
+                    ? "success"
+                    : health.key === "watch"
+                      ? "warning"
+                      : health.key === "over" || health.key === "overrun"
+                        ? "danger"
+                        : "neutral";
+                const statusTone: "warning" | "success" | "info" =
+                  project.status === "ongoing" ? "warning" : project.status === "completed" ? "success" : "info";
+                return (
+                  <Card
+                    key={project.slug}
+                    data-testid="projects-card"
+                    data-project-slug={project.slug}
+                    className={cn(
+                      "min-w-0 overflow-hidden rounded-[20px] p-3.5",
+                      selected.has(project.slug) && "border-[rgba(226,176,74,0.35)] bg-[rgba(226,176,74,0.05)]",
+                    )}
+                  >
+                    <div className="flex min-w-0 items-start gap-3">
+                      <Checkbox
+                        data-testid="project-select"
+                        checked={selected.has(project.slug)}
+                        onClick={(event) => {
+                          if (event.shiftKey) {
+                            event.preventDefault();
+                            shiftHandledRef.current = true;
+                            selectRange(project.slug, index);
+                          } else {
+                            lastSelectedRef.current = project.slug;
+                          }
+                        }}
+                        onChange={() => {
+                          if (shiftHandledRef.current) {
+                            shiftHandledRef.current = false;
+                            return;
+                          }
+                          toggleSelected(project.slug);
+                        }}
+                        aria-label={`${c.selectAll}: ${l(project.title)}`}
+                        className="mt-1.5 shrink-0"
+                      />
+                      <ProjectImage
+                        project={project}
+                        variant="thumb"
+                        sizes="64px"
+                        priority={index === 0}
+                        className="h-12 w-16 shrink-0 rounded-xl border border-[var(--admin-card-border)]"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => openDetail(project)}
+                        className="admin-focus-ring min-w-0 flex-1 rounded-[12px] text-start"
+                      >
+                        <span
+                          data-testid="project-name"
+                          className="block truncate text-[15px] font-medium text-[var(--admin-text)]"
+                          title={l(project.title)}
+                        >
+                          {l(project.title)}
                         </span>
-                        <span className="whitespace-nowrap tabular-nums text-[13px] text-[var(--admin-muted)]">{project.progress}%</span>
-                      </span>
-                      <span className="mt-2 block whitespace-nowrap text-[14px] tabular-nums text-[var(--admin-gold)]">{formatMoney(project.contractValue || project.budget, locale)}</span>
-                    </button>
-                    <span className="flex shrink-0 flex-col items-end gap-2">
-                      <StatusPill tone={statusTone} className="whitespace-nowrap">{c.statusLabels[project.status]}</StatusPill>
+                        <span data-testid="project-city" className="mt-0.5 block truncate text-[13px] text-[var(--admin-muted)]">
+                          {l(project.location)}
+                        </span>
+                      </button>
                       <Popover
                         open={mobileActions === project.slug}
                         onOpenChange={(open) => setMobileActions(open ? project.slug : null)}
@@ -2503,148 +2742,277 @@ function ProjectsSection({
                         trigger={
                           <button
                             type="button"
-                            className="admin-focus-ring inline-flex h-11 w-11 items-center justify-center rounded-[10px] border border-[var(--admin-card-border)] text-[var(--admin-muted)]"
+                            data-testid="project-actions"
+                            className="admin-focus-ring inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[var(--admin-card-border)] text-[var(--admin-muted)]"
                             aria-label={locale === "ar" ? "إجراءات المشروع" : "Project actions"}
                           >
                             <MoreVertical className="h-4 w-4" />
                           </button>
                         }
                       >
-                        {project.archivedAt ? (
-                          <button type="button" onClick={() => restoreProject(project)} className="admin-focus-ring flex min-h-[40px] w-full items-center gap-2 rounded-lg px-3 text-start text-[13px] text-[var(--admin-text)] hover:bg-[var(--admin-pill-surface)]">
-                            <RotateCcw className="h-4 w-4" />{c.restore}
-                          </button>
-                        ) : (
-                          <>
-                            <button type="button" onClick={() => { setMobileActions(null); onEdit(project); }} className="admin-focus-ring flex min-h-[40px] w-full items-center gap-2 rounded-lg px-3 text-start text-[13px] text-[var(--admin-text)] hover:bg-[var(--admin-pill-surface)]">
-                              <Pencil className="h-4 w-4" />{c.edit}
-                            </button>
-                            <button type="button" onClick={() => { setMobileActions(null); setArchiveTarget(project); }} className="admin-focus-ring flex min-h-[40px] w-full items-center gap-2 rounded-lg px-3 text-start text-[13px] text-[#FF9A8F] hover:bg-[rgba(255,107,94,0.1)]">
-                              <Trash2 className="h-4 w-4" />{c.archive}
-                            </button>
-                          </>
-                        )}
+                        {projectActionsMenu(project, () => setMobileActions(null))}
                       </Popover>
-                    </span>
-                  </div>
-                </Card>
-              );
-            })}
-            {!paged.length ? <EmptyProjects locale={locale} label={c.noProjects} /> : null}
-          </div>
-          <div className="hidden md:block">
-            <DataTable>
-              <Table className={cn("min-w-[1040px]", density === "compact" && "[&_tr]:h-12 [&_th]:h-10 [&_td]:py-1 [&_th]:py-1")}>
-                <THead>
-                  <tr>
-                    <TH className="w-12"><Checkbox checked={allSelected} onChange={toggleAll} aria-label={c.selectAll} /></TH>
-                    <TH>{c.project}</TH>
-                    {columns.category ? <TH>{c.category}</TH> : null}
-                    <TH>{c.status}</TH>
-                    {columns.health ? <TH>{locale === "ar" ? "صحة الميزانية" : "Budget health"}</TH> : null}
-                    {columns.progress ? <TH>{c.progress}</TH> : null}
-                    {columns.value ? <TH className="text-end">{c.value}</TH> : null}
-                    <TH className="text-end">{c.actions}</TH>
-                  </tr>
-                </THead>
-                <tbody>
-                  {paged.map((project, index) => {
-                    const mp = metricsBySlug.get(project.slug);
-                    const h = mp ? getBudgetHealth(mp) : { key: "no_data" as const };
-                    const tone: "success" | "warning" | "danger" | "neutral" = h.key === "on_track" || h.key === "saved" ? "success" : h.key === "watch" ? "warning" : h.key === "over" || h.key === "overrun" ? "danger" : "neutral";
-                    const statusTone: "warning" | "success" | "info" = project.status === "ongoing" ? "warning" : project.status === "completed" ? "success" : "info";
-                    return (
-                      <TR key={project.slug} onClick={() => openDetail(project)} className={cn("cursor-pointer", selected.has(project.slug) && "bg-[rgba(226,176,74,0.06)]")}>
-                        <TD onClick={(e) => e.stopPropagation()}><Checkbox checked={selected.has(project.slug)} onChange={() => toggleSelected(project.slug)} aria-label={`${c.selectAll}: ${l(project.title)}`} /></TD>
-                        <TD>
-                          <span className="flex items-center gap-3">
-                            <ProjectImage project={project} variant="thumb" sizes="64px" priority={index === 0} className="h-12 w-16 shrink-0 rounded-xl border border-[var(--admin-card-border)]" />
-                            <span className="flex min-w-0 flex-col gap-0.5">
-                              <span className="truncate text-[14px] font-medium text-[#F1EEE8]">{l(project.title)}</span>
-                              <span className="truncate text-[13px] text-[#A6A9B4]">{l(project.location)}</span>
-                            </span>
-                          </span>
-                        </TD>
-                        {columns.category ? <TD><span className="text-[14px] text-[#C9CAD1]">{c.categoryLabels[project.category]}</span></TD> : null}
-                        <TD onClick={(e) => e.stopPropagation()}>
-                          <Popover
-                            align="start"
-                            trigger={
-                              <button type="button" title={locale === "ar" ? "تعديل الحالة والإنجاز" : "Edit status and progress"} className="admin-focus-ring">
-                                <StatusPill tone={statusTone}>{c.statusLabels[project.status]}</StatusPill>
-                              </button>
-                            }
-                          >
-                            <InlineProjectControls
-                              key={`${project.status}-${project.progress}`}
-                              project={project}
-                              locale={locale}
-                              onApply={(patch) => applyInline(project, patch)}
+                    </div>
+
+                    <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+                      <StatusPill data-testid="project-status" tone={statusTone}>{c.statusLabels[project.status]}</StatusPill>
+                      <StatusPill data-testid="project-health" tone={healthTone} title={budgetHealthFor(project).tooltip}>
+                        {budgetHealthFor(project).short}
+                      </StatusPill>
+                    </div>
+
+                    <div className="mt-3 flex items-center gap-2" data-testid="project-progress">
+                      <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-[var(--admin-track)]">
+                        <span
+                          className="block h-full rounded-full bg-[linear-gradient(270deg,#F3C86A,#C98F1E)]"
+                          style={{ width: `${project.progress}%` }}
+                        />
+                      </span>
+                      <span data-testid="project-progress-value" className="whitespace-nowrap tabular-nums text-[13px] text-[var(--admin-muted)]">
+                        {project.progress}%
+                      </span>
+                    </div>
+                    <div className="mt-1.5 flex items-center justify-between gap-3">
+                      <span className="truncate text-[12px] text-[var(--admin-muted)]">
+                        {c.categoryLabels[project.category]}
+                      </span>
+                      <span data-testid="project-value" className="whitespace-nowrap tabular-nums text-[14px] text-[var(--admin-gold)]">
+                        {formatMoney(project.contractValue || project.budget, locale)}
+                      </span>
+                    </div>
+                  </Card>
+                );
+              })}
+              {!paged.length ? <EmptyProjects locale={locale} label={c.noProjects} full /> : null}
+            </div>
+          ) : (
+            <Card className="overflow-hidden rounded-[20px] p-0" data-testid="projects-table">
+              <div
+                className="scroll-area max-h-[calc(100dvh-320px)] overflow-x-hidden overflow-y-auto overscroll-contain"
+                data-lenis-prevent
+              >
+                <table className="w-full table-fixed border-collapse">
+                  <colgroup>
+                    {tableMode === "full" ? (
+                      <>
+                        <col className="w-[44px]" />
+                        <col />
+                        <col className="w-[130px]" />
+                        <col className="w-[120px]" />
+                        <col className="w-[160px]" />
+                        <col className="w-[140px]" />
+                        <col className="w-[110px]" />
+                        <col className="w-[56px]" />
+                      </>
+                    ) : (
+                      <>
+                        <col className="w-[40px]" />
+                        <col />
+                        <col className="w-[98px]" />
+                        <col className="w-[136px]" />
+                        <col className="w-[140px]" />
+                        <col className="w-[86px]" />
+                        <col className="w-[40px]" />
+                      </>
+                    )}
+                  </colgroup>
+                  <THead>
+                    <tr>
+                      <TH className="px-2 text-center">
+                        <Checkbox
+                          ref={selectAllRef}
+                          data-testid="select-all"
+                          checked={allSelected}
+                          onChange={toggleAll}
+                          aria-label={c.selectAll}
+                        />
+                      </TH>
+                      <TH className="px-3">{c.project}</TH>
+                      {tableMode === "full" ? <TH>{c.category}</TH> : null}
+                      <TH className={tableMode === "compact" ? "px-0.5" : undefined}>{c.status}</TH>
+                      <TH className={tableMode === "compact" ? "px-0.5" : undefined}>
+                        {locale === "ar" ? "صحة الميزانية" : "Budget health"}
+                      </TH>
+                      <TH className={tableMode === "compact" ? "px-1" : undefined}>{c.progress}</TH>
+                      <TH className={cn("text-end", tableMode === "compact" && "px-0.5")}>{c.value}</TH>
+                      <TH className={cn("text-end", tableMode === "compact" ? "px-0" : "px-1")}>
+                        {tableMode === "compact" ? (
+                          <>
+                            <span className="sr-only">{c.actions}</span>
+                            <MoreVertical aria-hidden="true" className="ms-auto h-4 w-4" />
+                          </>
+                        ) : (
+                          c.actions
+                        )}
+                      </TH>
+                    </tr>
+                  </THead>
+                  <tbody>
+                    {paged.map((project, index) => {
+                      const mp = metricsBySlug.get(project.slug);
+                      const health = mp ? getBudgetHealth(mp) : { key: "no_data" as const };
+                      const healthTone: "success" | "warning" | "danger" | "neutral" =
+                        health.key === "on_track" || health.key === "saved"
+                          ? "success"
+                          : health.key === "watch"
+                            ? "warning"
+                            : health.key === "over" || health.key === "overrun"
+                              ? "danger"
+                              : "neutral";
+                      const statusTone: "warning" | "success" | "info" =
+                        project.status === "ongoing" ? "warning" : project.status === "completed" ? "success" : "info";
+                      return (
+                        <TR
+                          key={project.slug}
+                          data-project-slug={project.slug}
+                          onClick={() => openDetail(project)}
+                          className={cn(
+                            "h-16 cursor-pointer",
+                            selected.has(project.slug) && "bg-[rgba(226,176,74,0.06)]",
+                          )}
+                        >
+                          <TD className="px-2 text-center" onClick={(event) => event.stopPropagation()}>
+                            <Checkbox
+                              data-testid="project-select"
+                              checked={selected.has(project.slug)}
+                              onClick={(event) => {
+                                if (event.shiftKey) {
+                                  event.preventDefault();
+                                  shiftHandledRef.current = true;
+                                  selectRange(project.slug, index);
+                                } else {
+                                  lastSelectedRef.current = project.slug;
+                                }
+                              }}
+                              onChange={() => {
+                                if (shiftHandledRef.current) {
+                                  shiftHandledRef.current = false;
+                                  return;
+                                }
+                                toggleSelected(project.slug);
+                              }}
+                              aria-label={`${c.selectAll}: ${l(project.title)}`}
                             />
-                          </Popover>
-                        </TD>
-                        {columns.health ? <TD><StatusPill tone={tone} title={budgetHealthFor(project).tooltip} className="whitespace-nowrap">{budgetHealthFor(project).short}</StatusPill></TD> : null}
-                        {columns.progress ? (
-                          <TD>
-                            <span className="flex items-center gap-2">
-                              <span className="h-1.5 w-16 overflow-hidden rounded-full bg-[#232632]"><span className="block h-full rounded-full bg-[linear-gradient(270deg,#F3C86A,#C98F1E)]" style={{ width: `${project.progress}%` }} /></span>
-                              <span className="tabular-nums text-[13px] text-[#A6A9B4]">{project.progress}%</span>
+                          </TD>
+                          <TD className={cn("px-3", tableMode === "compact" && "py-1")}>
+                            <span className="flex min-w-0 items-center gap-3">
+                              <ProjectImage
+                                project={project}
+                                variant="thumb"
+                                sizes="64px"
+                                priority={index === 0}
+                                className="h-12 w-16 shrink-0 rounded-xl border border-[var(--admin-card-border)]"
+                              />
+                              <span className="flex min-w-0 flex-1 flex-col justify-center gap-0.5 leading-tight">
+                                <span
+                                  data-testid="project-name"
+                                  className="truncate text-[14px] font-medium text-[#F1EEE8]"
+                                  title={l(project.title)}
+                                >
+                                  {l(project.title)}
+                                </span>
+                                <span data-testid="project-city" className="truncate text-[13px] text-[#A6A9B4]">
+                                  {l(project.location)}
+                                </span>
+                                {tableMode === "compact" ? (
+                                  <span data-testid="project-category-inline" className="truncate text-[12px] text-[#A6A9B4]/70">
+                                    {c.categoryLabels[project.category]}
+                                  </span>
+                                ) : null}
+                              </span>
                             </span>
                           </TD>
-                        ) : null}
-                        {columns.value ? <TD className="text-end tabular-nums text-[#D7D8DE]">{formatMoney(project.contractValue || project.budget, locale)}</TD> : null}
-                        <TD onClick={(e) => e.stopPropagation()}>
-                          <span className="flex items-center justify-end">
+                          {tableMode === "full" ? (
+                            <TD data-testid="project-category">
+                              <span className="text-[14px] text-[#C9CAD1]">
+                                {c.categoryLabels[project.category]}
+                              </span>
+                            </TD>
+                          ) : null}
+                          <TD
+                            data-testid="project-status"
+                            className={tableMode === "compact" ? "px-0.5" : undefined}
+                            onClick={(event) => event.stopPropagation()}
+                          >
                             <Popover
-                              open={rowActions === project.slug}
-                              onOpenChange={(open) => setRowActions(open ? project.slug : null)}
+                              align="start"
                               trigger={
                                 <button
                                   type="button"
-                                  className="admin-focus-ring inline-flex h-11 w-11 items-center justify-center rounded-[10px] border border-[var(--admin-card-border)] text-[var(--admin-muted)] transition-colors hover:border-[rgba(226,176,74,0.25)] hover:text-[var(--admin-text)]"
+                                  title={locale === "ar" ? "تعديل الحالة والإنجاز" : "Edit status and progress"}
+                                  className="admin-focus-ring"
+                                >
+                                  <StatusPill tone={statusTone}>{c.statusLabels[project.status]}</StatusPill>
+                                </button>
+                              }
+                            >
+                              <InlineProjectControls
+                                key={`${project.status}-${project.progress}`}
+                                project={project}
+                                locale={locale}
+                                onApply={(patch) => applyInline(project, patch)}
+                              />
+                            </Popover>
+                          </TD>
+                          <TD data-testid="project-health" className={tableMode === "compact" ? "px-0.5" : undefined}>
+                            <StatusPill tone={healthTone} title={budgetHealthFor(project).tooltip}>
+                              {budgetHealthFor(project).short}
+                            </StatusPill>
+                          </TD>
+                          <TD data-testid="project-progress" className={tableMode === "compact" ? "px-0" : undefined}>
+                            <span className="flex items-center gap-1.5">
+                              <span
+                                className={cn(
+                                  "h-1.5 shrink-0 overflow-hidden rounded-full bg-[#232632]",
+                                  tableMode === "compact" ? "w-24" : "w-16",
+                                )}
+                              >
+                                <span
+                                  className="block h-full rounded-full bg-[linear-gradient(270deg,#F3C86A,#C98F1E)]"
+                                  style={{ width: `${project.progress}%` }}
+                                />
+                              </span>
+                              <span className="whitespace-nowrap tabular-nums text-[13px] text-[#A6A9B4]">
+                                {project.progress}%
+                              </span>
+                            </span>
+                          </TD>
+                          <TD data-testid="project-value" className={cn("text-end tabular-nums text-[#D7D8DE]", tableMode === "compact" && "px-0.5")}>
+                            {formatMoney(project.contractValue || project.budget, locale)}
+                          </TD>
+                          <TD data-testid="project-actions" className={cn("text-end", tableMode === "compact" ? "px-0" : "px-1")} onClick={(event) => event.stopPropagation()}>
+                            <Popover
+                              open={rowActions === project.slug}
+                              onOpenChange={(open) => setRowActions(open ? project.slug : null)}
+                              align="end"
+                              trigger={
+                                <button
+                                  type="button"
+                                  data-testid="project-actions"
+                                  className="admin-focus-ring inline-flex h-9 w-9 items-center justify-center rounded-[10px] border border-[var(--admin-card-border)] text-[var(--admin-muted)] transition-colors hover:border-[rgba(226,176,74,0.25)] hover:text-[var(--admin-text)]"
                                   aria-label={`${locale === "ar" ? "إجراءات" : "Actions"}: ${l(project.title)}`}
                                 >
                                   <MoreVertical className="h-4 w-4" />
                                 </button>
                               }
                             >
-                              <div className="flex min-w-[190px] flex-col gap-0.5">
-                                {project.archivedAt ? (
-                                  <button type="button" onClick={() => { setRowActions(null); restoreProject(project); }} className="admin-focus-ring flex min-h-11 w-full items-center gap-2 rounded-lg px-3 text-start text-[13px] text-[var(--admin-text)] hover:bg-[var(--admin-pill-surface)]">
-                                    <RotateCcw className="h-4 w-4" />{c.restore}
-                                  </button>
-                                ) : (
-                                  <>
-                                    <button type="button" onClick={() => { setRowActions(null); setDetailTab("overview"); setDetail(project); }} className="admin-focus-ring flex min-h-11 w-full items-center gap-2 rounded-lg px-3 text-start text-[13px] text-[var(--admin-text)] hover:bg-[var(--admin-pill-surface)]">
-                                      <Eye className="h-4 w-4" />{locale === "ar" ? "عرض سريع" : "Quick view"}
-                                    </button>
-                                    <button type="button" onClick={() => { setRowActions(null); onEdit(project); }} className="admin-focus-ring flex min-h-11 w-full items-center gap-2 rounded-lg px-3 text-start text-[13px] text-[var(--admin-text)] hover:bg-[var(--admin-pill-surface)]">
-                                      <Pencil className="h-4 w-4" />{c.edit}
-                                    </button>
-                                    <button type="button" onClick={() => duplicateProject(project)} className="admin-focus-ring flex min-h-11 w-full items-center gap-2 rounded-lg px-3 text-start text-[13px] text-[var(--admin-text)] hover:bg-[var(--admin-pill-surface)]">
-                                      <Copy className="h-4 w-4" />{locale === "ar" ? "نسخ" : "Duplicate"}
-                                    </button>
-                                    <Link href={`/projects/${project.slug}`} target="_blank" onClick={() => setRowActions(null)} className="admin-focus-ring flex min-h-11 w-full items-center gap-2 rounded-lg px-3 text-start text-[13px] text-[var(--admin-text)] hover:bg-[var(--admin-pill-surface)]">
-                                      <ExternalLink className="h-4 w-4" />{locale === "ar" ? "فتح الصفحة" : "Open public page"}
-                                    </Link>
-                                    <button type="button" onClick={() => { setRowActions(null); setArchiveTarget(project); }} className="admin-focus-ring flex min-h-11 w-full items-center gap-2 rounded-lg px-3 text-start text-[13px] text-[#FF9A8F] hover:bg-[rgba(255,107,94,0.1)]">
-                                      <Archive className="h-4 w-4" />{c.archive}
-                                    </button>
-                                  </>
-                                )}
-                              </div>
+                              {projectActionsMenu(project, () => setRowActions(null))}
                             </Popover>
-                          </span>
-                        </TD>
-                      </TR>
-                    );
-                  })}
-                </tbody>
-              </Table>
-              {!paged.length ? <div className="p-6"><EmptyState title={c.noProjects} /></div> : null}
-            </DataTable>
-          </div>
-        </>
+                          </TD>
+                        </TR>
+                      );
+                    })}
+                  </tbody>
+                </table>
+                {!paged.length ? (
+                  <div className="p-6">
+                    <EmptyState title={c.noProjects} />
+                  </div>
+                ) : null}
+              </div>
+            </Card>
+          )}
+        </div>
       )}
 
       {totalPages > 1 ? (
@@ -2870,6 +3238,25 @@ function ProjectsSection({
         onConfirm={() => {
           if (archiveTarget) archiveProject(archiveTarget);
         }}
+      />
+
+      <ConfirmDialog
+        open={bulkArchiveOpen}
+        onOpenChange={setBulkArchiveOpen}
+        title={
+          locale === "ar"
+            ? `أرشفة ${selected.size} مشروع؟`
+            : `Archive ${selected.size} project${selected.size === 1 ? "" : "s"}?`
+        }
+        description={
+          locale === "ar"
+            ? "ستُخفى المشاريع المحددة من الموقع العام. يمكنك التراجع من الإشعار لمدة ٨ ثوانٍ."
+            : "The selected projects will be hidden from the public site. You can undo from the toast for 8 seconds."
+        }
+        confirmLabel={c.archive}
+        cancelLabel={c.cancel}
+        destructive
+        onConfirm={commitBulkArchive}
       />
     </div>
   );
