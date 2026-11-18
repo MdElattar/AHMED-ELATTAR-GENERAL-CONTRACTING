@@ -1,3 +1,4 @@
+import { ADMIN_ALERT_URL, renderAdminAlertEmail } from "@/lib/admin-alert-template";
 import { sendEmail } from "@/lib/email";
 
 export type AlertChannel = "email" | "whatsapp";
@@ -15,14 +16,6 @@ export type DispatchResult = {
   email: DispatchState;
   whatsapp: DispatchState;
 };
-
-function escapeHtml(value: string) {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
 
 function alertEmail() {
   return process.env.ADMIN_ALERT_EMAIL?.trim() || process.env.ADMIN_EMAIL?.trim() || "";
@@ -58,7 +51,7 @@ function alertText(alert: AdminAlert) {
   for (const [key, value] of Object.entries(alert.meta ?? {})) {
     if (value !== undefined && value !== "") lines.push(`${key}: ${value}`);
   }
-  if (alert.url) lines.push(alert.url);
+  lines.push(ADMIN_ALERT_URL);
   return lines.join("\n");
 }
 
@@ -67,36 +60,7 @@ async function sendAlertEmail(alert: AdminAlert): Promise<DispatchState> {
   if (!process.env.RESEND_API_KEY?.trim() || !to) return "skipped";
 
   const text = alertText(alert);
-  const rows = Object.entries(alert.meta ?? {})
-    .filter(([, value]) => value !== undefined && value !== "")
-    .map(
-      ([key, value]) =>
-        `<tr><td style="padding:6px 12px 6px 0;color:rgba(243,238,228,.42);font-size:12px">${escapeHtml(
-          key,
-        )}</td><td style="padding:6px 0;color:#f3eee4;font-size:12px">${escapeHtml(
-          String(value),
-        )}</td></tr>`,
-    )
-    .join("");
-
-  const html = `
-    <div dir="rtl" style="background:#060708;padding:36px 18px;font-family:Tahoma,Arial,sans-serif;color:#f3eee4">
-      <div style="max-width:560px;margin:0 auto;border:1px solid rgba(184,134,11,.25);background:#0b0c0f;padding:30px">
-        <p style="margin:0;color:#b8860b;font-size:11px;letter-spacing:2px">شركة أحمد العطار للمقاولات العامة</p>
-        <h1 style="margin:16px 0 0;font-size:21px;font-weight:600">${escapeHtml(alert.title)}</h1>
-        <p style="margin:12px 0 0;color:rgba(243,238,228,.66);font-size:13px;line-height:1.9">${escapeHtml(
-          alert.message,
-        )}</p>
-        ${rows ? `<table style="margin:18px 0 0;border-top:1px solid rgba(255,255,255,.08);width:100%">${rows}</table>` : ""}
-        ${
-          alert.url
-            ? `<p style="margin:22px 0 0"><a href="${escapeHtml(
-                alert.url,
-              )}" style="color:#c59b27;font-size:12px">فتح لوحة الإدارة</a></p>`
-            : ""
-        }
-      </div>
-    </div>`;
+  const html = renderAdminAlertEmail(alert);
 
   const result = await sendEmail({
     to,
