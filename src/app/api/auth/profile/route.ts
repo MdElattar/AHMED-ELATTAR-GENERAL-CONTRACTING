@@ -11,12 +11,7 @@ import {
   readJsonBody,
 } from "@/lib/security/http";
 import { rateLimit } from "@/lib/security/rate-limit";
-import {
-  cleanString,
-  isDisplayName,
-  isPhone,
-  isPlainObject,
-} from "@/lib/security/validation";
+import { profileSchema } from "@/lib/security/schemas";
 
 export async function PATCH(request: NextRequest) {
   if (!isSameOrigin(request)) {
@@ -43,28 +38,15 @@ export async function PATCH(request: NextRequest) {
     );
   }
 
-  const body = await readJsonBody(request);
-  if (!isPlainObject(body)) {
-    return NextResponse.json({ error: "invalid_input" }, { status: 400 });
-  }
-
-  const name = cleanString(body.name, 120);
-  const nameAr = cleanString(body.nameAr, 120);
-  const honorific = cleanString(body.honorific, 30);
-  const honorificAr = cleanString(body.honorificAr, 30);
-  const company = cleanString(body.company, 160);
-  const phone = cleanString(body.phone, 40);
-
-  if (
-    !isDisplayName(name) ||
-    (nameAr.length > 0 && !isDisplayName(nameAr)) ||
-    (phone.length > 0 && !isPhone(phone))
-  ) {
+  const parsed = profileSchema.safeParse(await readJsonBody(request));
+  if (!parsed.success) {
     return NextResponse.json(
       { error: "invalid_input" },
       { status: 400, headers: NO_STORE_HEADERS },
     );
   }
+
+  const { name, nameAr, honorific, honorificAr, company, phone } = parsed.data;
 
   // Email, role, and accountId are intentionally immutable here. Letting a
   // client change them would allow privilege escalation or account takeover.

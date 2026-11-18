@@ -1,3 +1,4 @@
+import { safeLogError } from "@/lib/security/http";
 import type { MetadataRoute } from "next";
 import { connection } from "next/server";
 import { listProjects } from "@/lib/db";
@@ -35,7 +36,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     }));
   } catch (error) {
-    console.error("[sitemap] failed to load projects", error);
+    safeLogError("[sitemap] failed to load projects", error);
   }
 
   return [

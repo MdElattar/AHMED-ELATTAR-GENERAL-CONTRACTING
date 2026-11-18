@@ -1,6 +1,6 @@
 import { NextResponse, connection } from "next/server";
 import { listProjects } from "@/lib/db";
-import { NO_STORE_HEADERS } from "@/lib/security/http";
+import {NO_STORE_HEADERS, safeLogError } from "@/lib/security/http";
 
 /** Public, read-only portfolio feed. Internal records (site content) are hidden. */
 export async function GET() {
@@ -15,17 +15,21 @@ export async function GET() {
 
     return NextResponse.json(
       {
-        projects: projects.map((project) => ({
-          slug: project.slug,
-          featured: project.featured,
-          ...project.payload,
-          updatedAt: project.updatedAt,
-        })),
+        projects: projects.map((project) => {
+          const { clientEmails: _owners, ...payload } = project.payload;
+          void _owners;
+          return {
+            slug: project.slug,
+            featured: project.featured,
+            ...payload,
+            updatedAt: project.updatedAt,
+          };
+        }),
       },
       { headers: NO_STORE_HEADERS },
     );
   } catch (error) {
-    console.error("[projects] failed to list", error);
+    safeLogError("[projects] failed to list", error);
     return NextResponse.json(
       { projects: [] },
       { status: 503, headers: NO_STORE_HEADERS },

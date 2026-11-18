@@ -8,7 +8,7 @@ import {
   readJsonBody,
 } from "@/lib/security/http";
 import { rateLimit } from "@/lib/security/rate-limit";
-import { isPlainObject } from "@/lib/security/validation";
+import { passkeyDeleteSchema } from "@/lib/security/schemas";
 
 function summarize(
   passkeys: Awaited<ReturnType<typeof listPasskeys>>,
@@ -62,20 +62,15 @@ export async function DELETE(request: NextRequest) {
     );
   }
 
-  const body = await readJsonBody(request, 8_000);
-  const credentialId =
-    isPlainObject(body) && typeof body.credentialId === "string"
-      ? body.credentialId.trim().slice(0, 2048)
-      : "";
-
-  if (!credentialId) {
+  const parsed = passkeyDeleteSchema.safeParse(await readJsonBody(request, 8_000));
+  if (!parsed.success) {
     return NextResponse.json(
       { error: "invalid_credential" },
       { status: 400, headers: NO_STORE_HEADERS },
     );
   }
 
-  const removed = await deletePasskey(session.email, credentialId);
+  const removed = await deletePasskey(session.email, parsed.data.credentialId);
   if (!removed) {
     return NextResponse.json(
       { error: "not_found" },
@@ -88,7 +83,7 @@ export async function DELETE(request: NextRequest) {
     action: "auth.passkey_removed",
     entity: "user",
     entityId: session.sub,
-    meta: { credentialId },
+    meta: { credentialId: parsed.data.credentialId },
     ip,
   });
 

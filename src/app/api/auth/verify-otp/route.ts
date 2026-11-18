@@ -17,7 +17,7 @@ import {
   isSameOrigin,
   readJsonBody,
 } from "@/lib/security/http";
-import { rateLimit } from "@/lib/security/rate-limit";
+import { rateLimitIdentity } from "@/lib/security/rate-limit";
 import { verifyOtpSchema } from "@/lib/security/schemas";
 
 export async function POST(request: NextRequest) {
@@ -26,17 +26,6 @@ export async function POST(request: NextRequest) {
   }
 
   const ip = clientIp(request);
-  const limited = rateLimit(`verify-otp:${ip}`, 12, 15 * 60 * 1000);
-  if (!limited.ok) {
-    return NextResponse.json(
-      { error: "rate_limited" },
-      {
-        status: 429,
-        headers: { ...NO_STORE_HEADERS, "Retry-After": String(limited.retryAfter) },
-      },
-    );
-  }
-
   const parsed = verifyOtpSchema.safeParse(await readJsonBody(request, 4_000));
   if (!parsed.success) {
     return NextResponse.json(
@@ -46,6 +35,17 @@ export async function POST(request: NextRequest) {
   }
 
   const { email, code } = parsed.data;
+
+  const limited = rateLimitIdentity("verify-otp", ip, email, 12, 15 * 60 * 1000);
+  if (!limited.ok) {
+    return NextResponse.json(
+      { error: "rate_limited" },
+      {
+        status: 429,
+        headers: { ...NO_STORE_HEADERS, "Retry-After": String(limited.retryAfter) },
+      },
+    );
+  }
 
   const otp = await getOtp(email);
 

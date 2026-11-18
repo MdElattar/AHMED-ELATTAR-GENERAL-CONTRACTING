@@ -11,7 +11,9 @@
     "seed": "tsx --env-file=.env scripts/seed.ts",
     "migrate:cities": "tsx --env-file=.env scripts/migrate-project-cities.ts",
     "smoke:proposal": "tsx --env-file=.env scripts/proposal-smoke.ts",
-    "test:projects": "playwright test tests/projects-responsive.spec.ts tests/projects-toolbar-bulkbar.spec.ts"
+    "test:projects": "playwright test tests/projects-responsive.spec.ts tests/projects-toolbar-bulkbar.spec.ts",
+    "test:security": "playwright test tests/security-hardening.spec.ts",
+    "security:scan": "node scripts/security-scan.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^7.0.6",
@@ -36,7 +38,7 @@
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "react-hook-form": "^7.92.0",
-    "sharp": "^0.34.5",
+    "sharp": "^0.35.5",
     "sonner": "^2.0.8",
     "tailwind-merge": "^3.7.0",
     "zod": "^4.6.7"

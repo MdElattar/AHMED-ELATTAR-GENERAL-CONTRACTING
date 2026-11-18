@@ -1,10 +1,16 @@
+import "server-only";
 import type { NextResponse } from "next/server";
-import { RESET_COOKIE, RESET_TTL_SECONDS, SESSION_COOKIE } from "./token";
+import {
+  RESET_COOKIE,
+  RESET_TTL_SECONDS,
+  SESSION_COOKIE,
+  SESSION_TTL_SECONDS,
+} from "./token";
 
 export function setSessionCookie(
   response: NextResponse,
   token: string,
-  maxAge?: number,
+  maxAge = SESSION_TTL_SECONDS,
 ) {
   response.cookies.set({
     name: SESSION_COOKIE,
@@ -13,7 +19,7 @@ export function setSessionCookie(
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
     path: "/",
-    ...(maxAge ? { maxAge } : {}),
+    maxAge,
   });
 }
 

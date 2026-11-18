@@ -1,11 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createInquiry, listInquiries } from "@/lib/db";
-import {
-  NO_STORE_HEADERS,
+import {NO_STORE_HEADERS,
   clientIp,
   isSameOrigin,
-  readJsonBody,
-} from "@/lib/security/http";
+  readJsonBody, safeLogError } from "@/lib/security/http";
 import { rateLimit } from "@/lib/security/rate-limit";
 import { newsletterSchema } from "@/lib/security/schemas";
 
@@ -46,7 +44,7 @@ export async function POST(request: NextRequest) {
       await createInquiry({ kind: "newsletter", email });
     }
   } catch (error) {
-    console.error("[newsletter] failed to persist subscription", error);
+    safeLogError("[newsletter] failed to persist subscription", error);
   }
 
   return NextResponse.json({ ok: true }, { headers: NO_STORE_HEADERS });

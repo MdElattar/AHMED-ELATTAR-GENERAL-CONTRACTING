@@ -1,3 +1,4 @@
+import "server-only";
 import { stat, readFile } from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";

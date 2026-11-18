@@ -8,12 +8,10 @@ import {
 import { OTP_TTL_SECONDS, generateOtp, hashOtp } from "@/lib/auth/otp";
 import { sendOtpEmail } from "@/lib/email";
 import { authUnavailable, isAuthConfigError } from "@/lib/auth/response";
-import {
-  NO_STORE_HEADERS,
+import {NO_STORE_HEADERS,
   clientIp,
   isSameOrigin,
-  readJsonBody,
-} from "@/lib/security/http";
+  readJsonBody, safeLogError } from "@/lib/security/http";
 import { rateLimit } from "@/lib/security/rate-limit";
 import { forgotPasswordSchema } from "@/lib/security/schemas";
 
@@ -97,7 +95,7 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     if (isAuthConfigError(error)) return authUnavailable();
-    console.error("[auth] forgot-password failed", error);
+    safeLogError("[auth] forgot-password failed", error);
     return NextResponse.json(
       { error: "server_error" },
       { status: 500, headers: NO_STORE_HEADERS },

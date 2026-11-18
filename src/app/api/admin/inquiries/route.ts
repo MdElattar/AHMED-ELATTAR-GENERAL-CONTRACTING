@@ -8,7 +8,7 @@ import {
   readJsonBody,
 } from "@/lib/security/http";
 import { rateLimit } from "@/lib/security/rate-limit";
-import { isPlainObject } from "@/lib/security/validation";
+import { adminInquiryStatusSchema } from "@/lib/security/schemas";
 
 const STATUSES = new Set(["new", "read", "won", "lost"]);
 
@@ -46,25 +46,16 @@ export async function PATCH(request: NextRequest) {
     );
   }
 
-  const body = await readJsonBody(request, 8_000);
-  if (!isPlainObject(body)) {
+  const parsed = adminInquiryStatusSchema.safeParse(await readJsonBody(request, 8_000));
+  if (!parsed.success) {
     return NextResponse.json(
       { error: "invalid_input" },
       { status: 400, headers: NO_STORE_HEADERS },
     );
   }
 
-  const status = typeof body.status === "string" ? body.status : "";
-  const ids = Array.isArray(body.ids)
-    ? Array.from(
-        new Set(
-          body.ids
-            .filter((id): id is string => typeof id === "string")
-            .map((id) => id.trim())
-            .filter(Boolean),
-        ),
-      ).slice(0, 100)
-    : [];
+  const { status } = parsed.data;
+  const ids = [...new Set(parsed.data.ids.filter(Boolean))].slice(0, 100);
 
   if (ids.length > 0) {
     if (!STATUSES.has(status)) {
@@ -102,7 +93,7 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ inquiries: updated }, { headers: NO_STORE_HEADERS });
   }
 
-  const inquiryId = typeof body.id === "string" ? body.id.trim() : "";
+  const inquiryId = parsed.data.id;
   if (!inquiryId || !STATUSES.has(status)) {
     return NextResponse.json(
       { error: "invalid_input" },

@@ -1,3 +1,4 @@
+import "server-only";
 import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import type { NextRequest, NextResponse } from "next/server";
 import { AuthConfigError } from "@/lib/auth/token";

@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/auth/guard";
 import { createAsset } from "@/lib/db";
-import { NO_STORE_HEADERS, clientIp, isSameOrigin } from "@/lib/security/http";
+import {NO_STORE_HEADERS, clientIp, isSameOrigin, safeLogError } from "@/lib/security/http";
 import { rateLimit } from "@/lib/security/rate-limit";
 
 const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
       { status: 201, headers: NO_STORE_HEADERS },
     );
   } catch (error) {
-    console.error("[admin] failed to store project image", error);
+    safeLogError("[admin] failed to store project image", error);
     return NextResponse.json(
       { error: "server_error" },
       { status: 500, headers: NO_STORE_HEADERS },

@@ -3,6 +3,7 @@ import { connection } from "next/server";
 import { ProjectDetailLive } from "@/components/sections/projects/ProjectDetail";
 import type { Project } from "@/data/projects";
 import { getProjectBySlug } from "@/lib/db";
+import { safeLogError } from "@/lib/security/http";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -21,7 +22,7 @@ async function loadProject(slug: string) {
     if (record.payload.archivedAt || record.payload.published === false) return null;
     return record.payload as unknown as Project;
   } catch (error) {
-    console.error("[project] failed to load", slug, error);
+    safeLogError("[project] failed to load", error);
     return null;
   }
 }

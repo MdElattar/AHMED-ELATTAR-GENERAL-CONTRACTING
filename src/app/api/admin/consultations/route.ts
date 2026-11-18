@@ -10,7 +10,7 @@ import {
   readJsonBody,
 } from "@/lib/security/http";
 import { rateLimit } from "@/lib/security/rate-limit";
-import { cleanString, isPlainObject } from "@/lib/security/validation";
+import { adminConsultationStatusSchema } from "@/lib/security/schemas";
 
 function unauthorized() {
   return NextResponse.json(
@@ -44,17 +44,16 @@ export async function PATCH(request: NextRequest) {
     );
   }
 
-  const body = await readJsonBody(request, 8_000);
-  if (!isPlainObject(body)) {
+  const parsed = adminConsultationStatusSchema.safeParse(await readJsonBody(request, 8_000));
+  if (!parsed.success) {
     return NextResponse.json(
       { error: "invalid_body" },
       { status: 400, headers: NO_STORE_HEADERS },
     );
   }
 
-  const id = cleanString(body.id, 80);
-  const status = body.status;
-  if (!id || !isConsultationStatus(status)) {
+  const { id, status } = parsed.data;
+  if (!isConsultationStatus(status)) {
     return NextResponse.json(
       { error: "invalid_input" },
       { status: 422, headers: NO_STORE_HEADERS },

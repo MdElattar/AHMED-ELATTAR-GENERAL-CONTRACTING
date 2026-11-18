@@ -1,5 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { clearSessionCookie } from "@/lib/auth/cookie";
+import { activeSession } from "@/lib/auth/guard";
+import { clearResetCookie, clearSessionCookie } from "@/lib/auth/cookie";
+import { updateUser } from "@/lib/db";
 import { NO_STORE_HEADERS, isSameOrigin } from "@/lib/security/http";
 
 export async function POST(request: NextRequest) {
@@ -7,7 +9,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 
+  const session = await activeSession();
+  if (session) {
+    await updateUser(session.email, { sessionVersion: session.sessionVersion + 1 });
+  }
+
   const response = NextResponse.json({ ok: true }, { headers: NO_STORE_HEADERS });
   clearSessionCookie(response);
+  clearResetCookie(response);
   return response;
 }

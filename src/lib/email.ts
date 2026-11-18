@@ -1,3 +1,5 @@
+import { safeLogError } from "@/lib/security/http";
+import "server-only";
 const BRAND_LOGO_URL = `${(process.env.NEXT_PUBLIC_SITE_URL?.trim() || "https://alattar.sa").replace(/\/$/, "")}/brand/logo-full.svg`;
 
 type SendOtpInput = {
@@ -65,13 +67,13 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
     });
 
     if (!response.ok) {
-      console.error("[email] Resend delivery failed", response.status, await response.text());
+      safeLogError("[email] Resend delivery failed", new Error(`status ${response.status}`));
       return { delivered: false, provider: "resend" };
     }
 
     return { delivered: true, provider: "resend" };
   } catch (error) {
-    console.error("[email] Resend request failed", error);
+    safeLogError("[email] Resend request failed", error);
     return { delivered: false, provider: "resend" };
   }
 }

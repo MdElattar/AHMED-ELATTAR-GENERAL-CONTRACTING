@@ -3,13 +3,12 @@ import { requireAdmin } from "@/lib/auth/guard";
 import { isAllowedMediaSource, isCmsPath } from "@/lib/cms";
 import { recordAudit, upsertProject } from "@/lib/db";
 import { revalidatePublicContent } from "@/lib/revalidate";
-import {
-  NO_STORE_HEADERS,
+import {NO_STORE_HEADERS,
   clientIp,
   isSameOrigin,
-  readJsonBody,
-} from "@/lib/security/http";
+  readJsonBody, safeLogError } from "@/lib/security/http";
 import { rateLimit } from "@/lib/security/rate-limit";
+import { adminContentMutationSchema } from "@/lib/security/schemas";
 import { isPlainObject } from "@/lib/security/validation";
 
 const CONTENT_SLUG = "__site-content__";
@@ -41,14 +40,17 @@ export async function PATCH(request: NextRequest) {
   // Copy overrides are intentionally granular (every dictionary leaf can be
   // edited), so allow a larger admin-only payload while still bounding it.
   const body = await readJsonBody(request, 1_000_000);
-  if (!isPlainObject(body)) {
+  const parsed = adminContentMutationSchema.safeParse(
+    isPlainObject(body) && isPlainObject(body.content) ? body : { content: body },
+  );
+  if (!parsed.success) {
     return NextResponse.json(
       { error: "invalid_input" },
       { status: 400, headers: NO_STORE_HEADERS },
     );
   }
 
-  const content = isPlainObject(body.content) ? body.content : body;
+  const content = parsed.data;
 
   // Media links are admin-authored, but they still flow into next/image. Keep
   // the same validation on both sides of the wire so a malformed script URL or
@@ -92,7 +94,7 @@ export async function PATCH(request: NextRequest) {
     revalidatePublicContent();
     return NextResponse.json({ content: record.payload }, { headers: NO_STORE_HEADERS });
   } catch (error) {
-    console.error("[admin] failed to update content", error);
+    safeLogError("[admin] failed to update content", error);
     return NextResponse.json(
       { error: "server_error" },
       { status: 500, headers: NO_STORE_HEADERS },

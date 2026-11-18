@@ -628,9 +628,11 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       try {
         // The admin shell needs archived rows for the Archived filter. Public
         // and portal visitors stay on the published-only portfolio feed.
-        const projectsEndpoint =
-          typeof window !== "undefined" && window.location.pathname.startsWith("/admin")
-            ? "/api/admin/projects"
+        const pathname = typeof window !== "undefined" ? window.location.pathname : "";
+        const projectsEndpoint = pathname.startsWith("/admin")
+          ? "/api/admin/projects"
+          : pathname.startsWith("/portal")
+            ? "/api/portal/projects"
             : "/api/projects";
         const [contentResponse, projectsResponse] = await Promise.all([
           fetch("/api/content", { cache: "no-store" }),

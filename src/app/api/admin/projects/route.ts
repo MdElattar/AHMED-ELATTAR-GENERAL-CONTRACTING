@@ -1,14 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/auth/guard";
 import { listProjects, recordAudit, upsertProject } from "@/lib/db";
-import {
-  NO_STORE_HEADERS,
+import {NO_STORE_HEADERS,
   clientIp,
   isSameOrigin,
-  readJsonBody,
-} from "@/lib/security/http";
+  readJsonBody, safeLogError } from "@/lib/security/http";
 import { revalidatePublicContent } from "@/lib/revalidate";
 import { rateLimit } from "@/lib/security/rate-limit";
+import { adminProjectMutationSchema } from "@/lib/security/schemas";
 import { isPlainObject } from "@/lib/security/validation";
 
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -56,14 +55,17 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await readJsonBody(request, MAX_PAYLOAD_BYTES);
-  if (!isPlainObject(body)) {
+  const parsed = adminProjectMutationSchema.safeParse(
+    isPlainObject(body) && isPlainObject(body.project) ? body : { project: body },
+  );
+  if (!parsed.success) {
     return NextResponse.json(
       { error: "invalid_input" },
       { status: 400, headers: NO_STORE_HEADERS },
     );
   }
 
-  const candidate = isPlainObject(body.project) ? body.project : body;
+  const candidate = parsed.data;
   const slug =
     typeof candidate.slug === "string" ? candidate.slug.trim().toLowerCase() : "";
 
@@ -86,7 +88,7 @@ export async function POST(request: NextRequest) {
     revalidatePublicContent(slug);
     return NextResponse.json({ project }, { status: 201, headers: NO_STORE_HEADERS });
   } catch (error) {
-    console.error("[admin] failed to create project", error);
+    safeLogError("[admin] failed to create project", error);
     return NextResponse.json(
       { error: "server_error" },
       { status: 500, headers: NO_STORE_HEADERS },

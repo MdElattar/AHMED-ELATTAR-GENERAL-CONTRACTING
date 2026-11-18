@@ -2,32 +2,12 @@ import { NextResponse, type NextRequest } from "next/server";
 import { randomReference } from "@/lib/auth/token";
 import { createInquiry, listServiceSlugs } from "@/lib/db";
 import { dispatchAdminAlert } from "@/lib/notifications";
-import {
-  NO_STORE_HEADERS,
+import {NO_STORE_HEADERS,
   clientIp,
   isSameOrigin,
-  readJsonBody,
-} from "@/lib/security/http";
+  readJsonBody, safeLogError } from "@/lib/security/http";
 import { rateLimit } from "@/lib/security/rate-limit";
 import { contactSchema } from "@/lib/security/schemas";
-import { cleanString, isPlainObject } from "@/lib/security/validation";
-
-const MAX_FILE_SIZE = 25 * 1024 * 1024;
-
-function fileMetadata(value: unknown) {
-  if (!Array.isArray(value)) return [];
-  return value
-    .slice(0, 10)
-    .map((item) => {
-      if (!isPlainObject(item)) return null;
-      const name = cleanString(item.name, 180);
-      const size = typeof item.size === "number" && Number.isFinite(item.size) ? item.size : 0;
-      const type = cleanString(item.type, 120);
-      if (!name || size <= 0 || size > MAX_FILE_SIZE) return null;
-      return { name, size, type };
-    })
-    .filter((item): item is { name: string; size: number; type: string } => item !== null);
-}
 
 export async function POST(request: NextRequest) {
   if (!isSameOrigin(request)) {
@@ -45,12 +25,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const body = await readJsonBody(request, 32_000);
-  if (!isPlainObject(body)) {
-    return NextResponse.json({ error: "invalid_input" }, { status: 400 });
-  }
-
-  const parsed = contactSchema.safeParse(body);
+  const parsed = contactSchema.safeParse(await readJsonBody(request, 32_000));
   if (!parsed.success) {
     return NextResponse.json(
       { error: "invalid_input" },
@@ -58,16 +33,25 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { name, email, phone, company, service, projectType, budget, location, message } =
-    parsed.data;
-  const consent = body.consent === true;
-  const files = fileMetadata(body.files);
+  const {
+    name,
+    email,
+    phone,
+    company,
+    service,
+    projectType,
+    budget,
+    location,
+    message,
+    consent,
+    files,
+  } = parsed.data;
 
   let allowedServices: string[] = [];
   try {
     allowedServices = await listServiceSlugs();
   } catch (error) {
-    console.error("[contact] failed to load service catalogue", error);
+    safeLogError("[contact] failed to load service catalogue", error);
     return NextResponse.json(
       { error: "server_error" },
       { status: 500, headers: NO_STORE_HEADERS },
@@ -99,7 +83,7 @@ export async function POST(request: NextRequest) {
       reference,
     });
   } catch (error) {
-    console.error("[contact] failed to persist inquiry", error);
+    safeLogError("[contact] failed to persist inquiry", error);
     return NextResponse.json(
       { error: "server_error" },
       { status: 500, headers: NO_STORE_HEADERS },

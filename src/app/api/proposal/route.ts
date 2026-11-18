@@ -11,12 +11,10 @@ import { getExchangeRates } from "@/lib/currency";
 import { getProjectBySlug, recordAudit } from "@/lib/db";
 import { dispatchAdminAlert } from "@/lib/notifications";
 import { buildProposalPdf, type ProposalProject } from "@/lib/proposal";
-import {
-  NO_STORE_HEADERS,
+import {NO_STORE_HEADERS,
   clientIp,
   isSameOrigin,
-  readJsonBody,
-} from "@/lib/security/http";
+  readJsonBody, safeLogError } from "@/lib/security/http";
 import { rateLimit } from "@/lib/security/rate-limit";
 import { proposalSchema } from "@/lib/security/schemas";
 import { isPlainObject } from "@/lib/security/validation";
@@ -159,7 +157,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("[proposal] generation failed", error);
+    safeLogError("[proposal] generation failed", error);
     return NextResponse.json(
       { error: "proposal_failed" },
       { status: 500, headers: NO_STORE_HEADERS },

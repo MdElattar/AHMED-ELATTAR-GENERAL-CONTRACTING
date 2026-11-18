@@ -8,12 +8,10 @@ import {
 import { createConsultation, listBookedSlots, recordAudit } from "@/lib/db";
 import { sendEmail } from "@/lib/email";
 import { dispatchAdminAlert } from "@/lib/notifications";
-import {
-  NO_STORE_HEADERS,
+import {NO_STORE_HEADERS,
   clientIp,
   isSameOrigin,
-  readJsonBody,
-} from "@/lib/security/http";
+  readJsonBody, safeLogError } from "@/lib/security/http";
 import { rateLimit } from "@/lib/security/rate-limit";
 import { consultationSchema } from "@/lib/security/schemas";
 import { isPlainObject } from "@/lib/security/validation";
@@ -147,7 +145,7 @@ export async function POST(request: NextRequest) {
       { status: 201, headers: NO_STORE_HEADERS },
     );
   } catch (error) {
-    console.error("[consultation] create failed", error);
+    safeLogError("[consultation] create failed", error);
     return NextResponse.json(
       { error: "server_error" },
       { status: 500, headers: NO_STORE_HEADERS },

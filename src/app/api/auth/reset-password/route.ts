@@ -4,15 +4,13 @@ import { timingSafeEqual } from "node:crypto";
 import { clearUserResetToken, getUserByEmail, recordAudit, updateUser } from "@/lib/db";
 import { hashPassword, hashResetToken } from "@/lib/auth/password";
 import { RESET_COOKIE, verifyResetToken } from "@/lib/auth/token";
-import { clearResetCookie } from "@/lib/auth/cookie";
+import { clearResetCookie, clearSessionCookie } from "@/lib/auth/cookie";
 import { authUnavailable, isAuthConfigError } from "@/lib/auth/response";
-import {
-  NO_STORE_HEADERS,
+import {NO_STORE_HEADERS,
   clientIp,
   isSameOrigin,
-  readJsonBody,
-} from "@/lib/security/http";
-import { rateLimit } from "@/lib/security/rate-limit";
+  readJsonBody, safeLogError } from "@/lib/security/http";
+import { rateLimitIdentity } from "@/lib/security/rate-limit";
 import { resetPasswordSchema } from "@/lib/security/schemas";
 
 function sameHash(a: string, b: string) {
@@ -28,17 +26,6 @@ export async function POST(request: NextRequest) {
   }
 
   const ip = clientIp(request);
-  const limited = rateLimit(`reset-password:${ip}`, 8, 15 * 60 * 1000);
-  if (!limited.ok) {
-    return NextResponse.json(
-      { error: "rate_limited" },
-      {
-        status: 429,
-        headers: { ...NO_STORE_HEADERS, "Retry-After": String(limited.retryAfter) },
-      },
-    );
-  }
-
   const cookie = (await cookies()).get(RESET_COOKIE)?.value;
   const reset = cookie ? await verifyResetToken(cookie) : null;
 
@@ -46,6 +33,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { error: "invalid_token" },
       { status: 401, headers: NO_STORE_HEADERS },
+    );
+  }
+
+  const limited = rateLimitIdentity("reset-password", ip, reset.email, 8, 15 * 60 * 1000);
+  if (!limited.ok) {
+    return NextResponse.json(
+      { error: "rate_limited" },
+      {
+        status: 429,
+        headers: { ...NO_STORE_HEADERS, "Retry-After": String(limited.retryAfter) },
+      },
     );
   }
 
@@ -74,7 +72,10 @@ export async function POST(request: NextRequest) {
 
   try {
     const passwordHash = await hashPassword(password);
-    await updateUser(reset.email, { passwordHash });
+    await updateUser(reset.email, {
+      passwordHash,
+      sessionVersion: user.sessionVersion + 1,
+    });
     await clearUserResetToken(reset.email);
 
     await recordAudit({
@@ -87,10 +88,11 @@ export async function POST(request: NextRequest) {
 
     const response = NextResponse.json({ ok: true }, { headers: NO_STORE_HEADERS });
     clearResetCookie(response);
+    clearSessionCookie(response);
     return response;
   } catch (error) {
     if (isAuthConfigError(error)) return authUnavailable();
-    console.error("[auth] reset-password failed", error);
+    safeLogError("[auth] reset-password failed", error);
     return NextResponse.json(
       { error: "server_error" },
       { status: 500, headers: NO_STORE_HEADERS },
