@@ -16,8 +16,14 @@ import {
   Trash2,
   UserRound,
 } from "lucide-react";
-import { isAdminUser, useAuth, type PortalPasskey } from "@/components/providers/AuthProvider";
+import {
+  AuthRequestError,
+  isAdminUser,
+  useAuth,
+  type PortalPasskey,
+} from "@/components/providers/AuthProvider";
 import { useI18n } from "@/components/providers/I18nProvider";
+import { BackupCodesPanel } from "@/components/auth/BackupCodesPanel";
 import { PortalShell } from "@/components/sections/portal/PortalShell";
 import { Field, TextInput } from "@/components/ui/Field";
 import { Reveal } from "@/components/ui/Reveal";
@@ -133,13 +139,15 @@ const copy = {
 const PREFERENCES_KEY = "ahmed-elattar-portal-preferences";
 
 export function PortalSettings() {
-  const { locale, toggleLocale } = useI18n();
+  const { locale, toggleLocale, t } = useI18n();
   const {
     user,
     updateProfile,
     listPasskeys,
     registerPasskey,
+    renamePasskey,
     removePasskey,
+    stepUp,
   } = useAuth();
   const c = copy[locale];
   const [name, setName] = useState(user?.name ?? "");
@@ -165,6 +173,11 @@ export function PortalSettings() {
   const [passkeyBusy, setPasskeyBusy] = useState(false);
   const [passkeyMessage, setPasskeyMessage] = useState("");
   const [passkeyError, setPasskeyError] = useState("");
+  const [hasBackupCodes, setHasBackupCodes] = useState(false);
+  const [freshCodes, setFreshCodes] = useState<string[] | undefined>();
+  const [deviceName, setDeviceName] = useState("");
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState("");
 
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
@@ -200,8 +213,11 @@ export function PortalSettings() {
     let cancelled = false;
 
     listPasskeys()
-      .then((items) => {
-        if (!cancelled) setPasskeys(items);
+      .then((result) => {
+        if (!cancelled) {
+          setPasskeys(result.passkeys);
+          setHasBackupCodes(result.hasBackupCodes);
+        }
       })
       .catch(() => {
         if (!cancelled) setPasskeyError(c.passkeyError);
@@ -314,38 +330,86 @@ export function PortalSettings() {
 
   const isAdmin = isAdminUser(user);
 
+  const refreshPasskeys = async () => {
+    const result = await listPasskeys();
+    setPasskeys(result.passkeys);
+    setHasBackupCodes(result.hasBackupCodes);
+  };
+
   const addPasskey = async () => {
     setPasskeyMessage("");
     setPasskeyError("");
     setPasskeyBusy(true);
 
     try {
-      const passkey = await registerPasskey();
+      const result = await registerPasskey(
+        deviceName.trim() || t.security.passkeyDevice,
+      );
       setPasskeys((current) => [
-        passkey,
-        ...current.filter((item) => item.credentialId !== passkey.credentialId),
+        result.passkey,
+        ...current.filter((item) => item.credentialId !== result.passkey.credentialId),
       ]);
-      setPasskeyMessage(c.passkeyAdded);
+      if (result.backupCodes?.length) setFreshCodes(result.backupCodes);
+      setDeviceName("");
+      setPasskeyMessage(t.security.passkeyAdded);
+    } catch (error) {
+      setPasskeyError(
+        error instanceof AuthRequestError && error.code === "unavailable"
+          ? t.security.enrollUnsupported
+          : t.security.passkeyError,
+      );
+    } finally {
+      setPasskeyBusy(false);
+    }
+  };
+
+  const savePasskeyName = async (credentialId: string) => {
+    const name = renameValue.trim();
+    if (!name) return;
+    setPasskeyMessage("");
+    setPasskeyError("");
+    setPasskeyBusy(true);
+    try {
+      await renamePasskey(credentialId, name);
+      await refreshPasskeys();
+      setRenamingId(null);
+      setRenameValue("");
+      setPasskeyMessage(t.security.passkeyRenamed);
     } catch {
-      setPasskeyError(c.passkeyError);
+      setPasskeyError(t.security.passkeyError);
     } finally {
       setPasskeyBusy(false);
     }
   };
 
   const deletePasskey = async (credentialId: string) => {
-    if (!window.confirm(c.passkeyRemoveConfirm)) return;
+    if (!window.confirm(t.security.passkeyRemoveConfirm)) return;
     setPasskeyMessage("");
     setPasskeyError("");
+    setPasskeyBusy(true);
 
     try {
-      await removePasskey(credentialId);
-      setPasskeys((current) =>
-        current.filter((item) => item.credentialId !== credentialId),
+      try {
+        await removePasskey(credentialId);
+      } catch (error) {
+        if (error instanceof AuthRequestError && error.code === "step_up_required") {
+          setPasskeyMessage(t.security.stepUpVerifying);
+          await stepUp();
+          await removePasskey(credentialId);
+        } else {
+          throw error;
+        }
+      }
+      await refreshPasskeys();
+      setPasskeyMessage(t.security.passkeyRemoved);
+    } catch (error) {
+      setPasskeyError(
+        error instanceof AuthRequestError && error.code === "backup_codes_required"
+          ? t.security.backupCodesRequired
+          : t.security.passkeyError,
       );
-      setPasskeyMessage(c.passkeyRemoved);
-    } catch {
-      setPasskeyError(c.passkeyError);
+    } finally {
+      setPasskeyBusy(false);
     }
   };
 
@@ -577,41 +641,56 @@ export function PortalSettings() {
       </Reveal>
 
       <Reveal delay={140}>
-        <section className="mt-6 border border-white/10 bg-coal">
+        <section className="mt-6 border border-white/10 bg-coal" data-testid="passkey-settings">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-6 py-4">
             <div className="flex items-center gap-2 text-[0.55rem] font-semibold uppercase tracking-[0.16em] text-gold">
               <Fingerprint className="h-4 w-4" />
-              {c.passkeys}
+              {t.security.passkeysTitle}
             </div>
             <button
               type="button"
               onClick={addPasskey}
               disabled={passkeyBusy}
-              className="inline-flex h-10 items-center gap-2 border border-gold/35 bg-gold/[0.07] px-4 text-[0.6rem] font-semibold uppercase tracking-[0.14em] text-gold transition-colors hover:border-gold/60 hover:bg-gold/[0.12] disabled:cursor-wait disabled:opacity-60"
+              data-testid="passkey-add"
+              className="inline-flex min-h-11 items-center gap-2 border border-gold/35 bg-gold/[0.07] px-4 text-[0.6rem] font-semibold uppercase tracking-[0.14em] text-gold transition-colors hover:border-gold/60 hover:bg-gold/[0.12] disabled:cursor-wait disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
             >
               {passkeyBusy ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
               ) : (
                 <Plus className="h-3.5 w-3.5" />
               )}
-              {passkeyBusy ? c.addingPasskey : c.addPasskey}
+              {passkeyBusy ? t.security.addingPasskey : t.security.addPasskey}
             </button>
           </div>
 
           <div className="p-6">
             <p className="max-w-2xl text-[0.72rem] leading-relaxed text-ivory/55">
-              {c.passkeysText}
+              {t.security.passkeysText}
             </p>
 
+            <div className="mt-5 max-w-sm">
+              <Field label={t.security.enrollDeviceLabel} htmlFor="settings-device-name">
+                <TextInput
+                  id="settings-device-name"
+                  data-testid="passkey-device-name"
+                  value={deviceName}
+                  onChange={(event) => setDeviceName(event.target.value)}
+                  placeholder={t.security.enrollDevicePlaceholder}
+                  maxLength={80}
+                  disabled={passkeyBusy}
+                />
+              </Field>
+            </div>
+
             {passkeysLoading ? (
-              <div className="mt-5 flex items-center gap-2 text-[0.65rem] text-ivory/45">
+              <div className="mt-5 flex items-center gap-2 text-[0.65rem] text-ivory/45" role="status">
                 <Loader2 className="h-3.5 w-3.5 animate-spin text-gold" />
-                {locale === "ar" ? "جارٍ التحميل..." : "Loading..."}
+                {t.common.loading}
               </div>
             ) : passkeys.length === 0 ? (
               <div className="mt-5 flex items-center gap-3 border border-dashed border-white/10 px-4 py-5 text-[0.68rem] text-ivory/45">
                 <Fingerprint className="h-5 w-5 text-white/20" />
-                {c.noPasskeys}
+                {t.security.noPasskeys}
               </div>
             ) : (
               <ul className="mt-5 divide-y divide-white/8 border border-white/10">
@@ -619,6 +698,7 @@ export function PortalSettings() {
                   <li
                     key={passkey.credentialId}
                     className="flex flex-wrap items-center justify-between gap-4 px-4 py-4"
+                    data-testid="passkey-item"
                   >
                     <div className="flex min-w-0 items-center gap-3">
                       <span className="flex h-10 w-10 shrink-0 items-center justify-center border border-gold/20 bg-gold/[0.05] text-gold">
@@ -626,30 +706,82 @@ export function PortalSettings() {
                       </span>
                       <div className="min-w-0">
                         <p className="truncate text-[0.72rem] font-medium text-ivory">
-                          {passkey.deviceType === "multiDevice"
-                            ? locale === "ar"
-                              ? "مفتاح مرور متزامن"
-                              : "Synced passkey"
-                            : c.passkeyDevice}
+                          {passkey.deviceName ??
+                            (passkey.deviceType === "multiDevice"
+                              ? locale === "ar"
+                                ? "مفتاح مرور متزامن"
+                                : "Synced passkey"
+                              : t.security.passkeyDevice)}
+                          {typeof passkey.backedUp === "boolean" ? (
+                            <span className="ms-2 text-[0.56rem] text-gold/70">
+                              {passkey.backedUp ? t.security.backedUp : t.security.notBackedUp}
+                            </span>
+                          ) : null}
                         </p>
                         <p className="mt-1 text-[0.58rem] text-ivory/45">
-                          {c.passkeyCreated}: {formatPasskeyDate(passkey.createdAt)}
+                          {t.security.passkeyCreated}: {formatPasskeyDate(passkey.createdAt)}
                           {" · "}
-                          {c.passkeyLastUsed}:{" "}
+                          {t.security.passkeyLastUsed}:{" "}
                           {passkey.lastUsedAt
                             ? formatPasskeyDate(passkey.lastUsedAt)
-                            : c.passkeyNeverUsed}
+                            : t.security.passkeyNeverUsed}
                         </p>
+                        {renamingId === passkey.credentialId ? (
+                          <div className="mt-3 flex flex-wrap items-center gap-2">
+                            <TextInput
+                              aria-label={t.security.renamePasskey}
+                              value={renameValue}
+                              onChange={(event) => setRenameValue(event.target.value)}
+                              placeholder={t.security.renamePlaceholder}
+                              maxLength={80}
+                              data-testid="passkey-rename-input"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => void savePasskeyName(passkey.credentialId)}
+                              disabled={passkeyBusy || !renameValue.trim()}
+                              className="inline-flex min-h-11 items-center border border-gold/40 px-3 text-[0.56rem] uppercase tracking-[0.12em] text-gold disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+                              data-testid="passkey-rename-save"
+                            >
+                              {t.security.save}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setRenamingId(null);
+                                setRenameValue("");
+                              }}
+                              className="inline-flex min-h-11 items-center border border-white/10 px-3 text-[0.56rem] uppercase tracking-[0.12em] text-ivory/55 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+                            >
+                              {t.security.cancel}
+                            </button>
+                          </div>
+                        ) : null}
                       </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => deletePasskey(passkey.credentialId)}
-                      className="inline-flex h-9 items-center gap-1.5 border border-white/10 px-3 text-[0.56rem] uppercase tracking-[0.12em] text-ivory/45 transition-colors hover:border-red-400/35 hover:text-red-300"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                      {locale === "ar" ? "حذف" : "Remove"}
-                    </button>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setRenamingId(passkey.credentialId);
+                          setRenameValue(passkey.deviceName ?? "");
+                        }}
+                        className="inline-flex min-h-11 items-center gap-1.5 border border-white/10 px-3 text-[0.56rem] uppercase tracking-[0.12em] text-ivory/55 transition-colors hover:border-gold/40 hover:text-gold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+                        data-testid="passkey-rename"
+                      >
+                        {t.security.rename}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => deletePasskey(passkey.credentialId)}
+                        disabled={passkeyBusy}
+                        className="inline-flex min-h-11 items-center gap-1.5 border border-white/10 px-3 text-[0.56rem] uppercase tracking-[0.12em] text-ivory/55 transition-colors hover:border-red-400/35 hover:text-red-300 disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+                        data-testid="passkey-remove"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        {t.security.remove}
+                      </button>
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -667,6 +799,19 @@ export function PortalSettings() {
             </p>
           </div>
         </section>
+      </Reveal>
+
+      <Reveal delay={180}>
+        <div className="mt-6">
+          <BackupCodesPanel
+            codes={freshCodes}
+            hasBackupCodes={hasBackupCodes}
+            onCodesGenerated={(codes: string[]) => {
+              setFreshCodes(codes);
+              setHasBackupCodes(true);
+            }}
+          />
+        </div>
       </Reveal>
     </PortalShell>
   );

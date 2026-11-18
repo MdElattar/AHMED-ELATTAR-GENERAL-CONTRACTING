@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/auth/guard";
+import { hasRecentStepUp, stepUpRequiredResponse } from "@/lib/auth/step-up";
 import { isPrimaryAdminEmail } from "@/lib/auth/token";
 import { adminDirectoryUser } from "@/lib/admin-access";
 import {
@@ -46,6 +47,7 @@ export async function POST(request: NextRequest) {
       { status: 403, headers: NO_STORE_HEADERS },
     );
   }
+  if (!hasRecentStepUp(session)) return stepUpRequiredResponse();
 
   const parsed = adminRevokeSchema.safeParse(await readJsonBody(request, 4_000));
   if (!parsed.success) {
@@ -78,6 +80,19 @@ export async function POST(request: NextRequest) {
       { status: 404, headers: NO_STORE_HEADERS },
     );
   }
+
+  await recordAudit({
+    actor: session.email,
+    action: "role_changed",
+    entity: "user",
+    entityId: updated.id,
+    meta: {
+      targetEmail: updated.email,
+      before: target.role,
+      after: updated.role,
+    },
+    ip,
+  });
 
   await recordAudit({
     actor: session.email,

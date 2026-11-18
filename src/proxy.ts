@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIE, verifySession } from "@/lib/auth/token";
+import { NO_STORE_HEADERS } from "@/lib/security/http";
 import { applySecurityHeaders } from "@/lib/security/headers";
 
 type GuardedArea = "admin" | "portal" | null;
@@ -30,18 +31,68 @@ function requestProtocol(request: NextRequest) {
   return request.nextUrl.protocol.replace(":", "");
 }
 
-function deny(request: NextRequest, status: 401 | 403, reason: string) {
-  if (request.nextUrl.pathname.startsWith("/api/")) {
-    return applySecurityHeaders(NextResponse.json({ error: reason }, { status }));
-  }
-
-  const signInUrl = request.nextUrl.clone();
-  signInUrl.pathname = "/sign-in";
-  signInUrl.search = "";
-  signInUrl.searchParams.set("next", request.nextUrl.pathname);
-  return applySecurityHeaders(NextResponse.redirect(signInUrl, 307));
+/** Always a same-origin, relative path safe to put in a `next` parameter. */
+function relativePath(request: NextRequest) {
+  const pathname = request.nextUrl.pathname || "/";
+  const suffix = request.nextUrl.search || "";
+  return `${pathname}${suffix}`;
 }
 
+function clearSession(response: NextResponse) {
+  response.cookies.set({
+    name: SESSION_COOKIE,
+    value: "",
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    path: "/",
+    maxAge: 0,
+  });
+  return response;
+}
+
+function denyApi(
+  request: NextRequest,
+  status: 401 | 403,
+  reason: string,
+  clearStaleSession = false,
+) {
+  const response = NextResponse.json(
+    { error: reason },
+    { status, headers: NO_STORE_HEADERS },
+  );
+  return applySecurityHeaders(clearStaleSession ? clearSession(response) : response);
+}
+
+function redirectTo(request: NextRequest, pathname: string, next?: string) {
+  const url = request.nextUrl.clone();
+  url.pathname = pathname;
+  url.search = "";
+  if (next) url.searchParams.set("next", next);
+  const response = NextResponse.redirect(url, 307);
+  applySecurityHeaders(response);
+  return response;
+}
+
+/**
+ * Unauthenticated / expired session: send pages to sign-in so the user can
+ * recover, and clear the stale cookie to avoid an endless redirect loop.
+ */
+function deny(request: NextRequest, status: 401 | 403, reason: string) {
+  if (request.nextUrl.pathname.startsWith("/api/")) {
+    return denyApi(request, status, reason, true);
+  }
+
+  const response = redirectTo(request, "/sign-in", relativePath(request));
+  return clearSession(response);
+}
+
+/**
+ * Proxy performs only optimistic, token-based checks. It never queries MongoDB:
+ * authoritative reconciliation (role/sessionVersion) happens in the route
+ * handler via `activeSession()`. This keeps privileged redirects fast and,
+ * crucially, prevents a login loop when the database and cookie disagree.
+ */
 export async function proxy(request: NextRequest) {
   // First request over plain HTTP is redirected before any session work. HSTS
   // only protects repeat visits, so this guard is required in production.
@@ -59,34 +110,23 @@ export async function proxy(request: NextRequest) {
   const area = areaFor(request.nextUrl.pathname);
   if (!area) return applySecurityHeaders(NextResponse.next());
 
+  const isApi = request.nextUrl.pathname.startsWith("/api/");
   const token = request.cookies.get(SESSION_COOKIE)?.value;
   const session = token ? await verifySession(token) : null;
-  if (!session) return deny(request, 401, "authentication_required");
+  if (!session) return deny(request, 401, "session_expired");
 
-  // Reconcile with the live account on every privileged request. This makes
-  // role changes, revocations and deletions effective without waiting for JWT
-  // expiry, and keeps the admin API protected even if a route forgets its
-  // own guard.
-  let liveUser: Awaited<ReturnType<(typeof import("@/lib/db"))["getUserByEmail"]>> = null;
-  try {
-    const { getUserByEmail } = await import("@/lib/db");
-    liveUser = await getUserByEmail(session.email);
-  } catch {
-    liveUser = null;
+  if (area === "admin" && session.role === "client") {
+    if (isApi) return denyApi(request, 403, "forbidden");
+    return redirectTo(request, "/portal");
   }
 
-  if (!liveUser || (liveUser.sessionVersion ?? 0) !== session.sessionVersion) {
-    return deny(request, 401, "session_expired");
-  }
-
-  if (area === "admin" && liveUser.role !== "admin") {
-    if (request.nextUrl.pathname.startsWith("/api/")) {
-      return applySecurityHeaders(NextResponse.json({ error: "forbidden" }, { status: 403 }));
-    }
-    const portalUrl = request.nextUrl.clone();
-    portalUrl.pathname = "/portal";
-    portalUrl.search = "";
-    return applySecurityHeaders(NextResponse.redirect(portalUrl, 307));
+  if (
+    area === "admin" &&
+    (session.role === "admin" || session.role === "manager") &&
+    session.passkeyEnrolled === false
+  ) {
+    if (isApi) return denyApi(request, 403, "passkey_enrollment_required");
+    return redirectTo(request, "/passkey-enroll", relativePath(request));
   }
 
   return applySecurityHeaders(NextResponse.next());

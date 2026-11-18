@@ -1,48 +1,67 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check, Eye, EyeOff, Fingerprint, ShieldCheck } from "lucide-react";
-import { AuthRequestError, useAuth } from "@/components/providers/AuthProvider";
+import {
+  AuthRequestError,
+  defaultPathForRole,
+  resolveRedirectTarget,
+  safeNextParam,
+  useAuth,
+} from "@/components/providers/AuthProvider";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { Field, TextInput } from "@/components/ui/Field";
 import { BrandLogo } from "@/components/ui/BrandLogo";
-import { isSafeInternalPath } from "@/lib/security/validation";
+import { isEmail } from "@/lib/security/validation";
+import type { Dictionary } from "@/lib/dictionary";
 
 type AuthMode = "sign-in" | "sign-up";
+type AuthStatus = "idle" | "pending" | "redirecting" | "error";
 
 type AuthPageProps = {
   mode: AuthMode;
 };
 
-function nextPath() {
-  if (typeof window === "undefined") return "/portal";
-  const requested = new URLSearchParams(window.location.search).get("next");
-  return typeof requested === "string" && isSafeInternalPath(requested)
-    ? requested
-    : "/portal";
+/** Reads the raw `next` value; the provider performs the origin/role checks. */
+function requestedNext() {
+  if (typeof window === "undefined") return undefined;
+  return safeNextParam(new URLSearchParams(window.location.search).get("next"));
 }
 
-function authErrorMessage(error: unknown, locale: string, fallback: string) {
+function authErrorMessage(error: unknown, t: Dictionary, fallback: string) {
   if (error instanceof AuthRequestError) {
-    if (error.code === "unavailable") {
-      return locale === "ar"
-        ? "خدمة الدخول غير مهيأة مؤقتاً. حاول لاحقاً أو تواصل معنا."
-        : "Sign-in is temporarily unavailable. Please try again later.";
-    }
-    if (error.code === "rate_limited") {
-      return locale === "ar"
-        ? "محاولات كثيرة. انتظر قليلاً ثم أعد المحاولة."
-        : "Too many attempts. Please wait a moment and try again.";
+    switch (error.code) {
+      case "unavailable":
+        return t.auth.unavailable;
+      case "rate_limited":
+        return t.auth.rateLimited;
+      case "cancelled":
+        return t.auth.passkeyCancelled;
+      case "step_up_required":
+        return t.security.stepUpRequired;
+      case "backup_codes_required":
+        return t.security.backupCodesRequired;
+      default:
+        return fallback;
     }
   }
   return fallback;
 }
 
 export function AuthPage({ mode }: AuthPageProps) {
-  const { t, isRTL, locale } = useI18n();
-  const { signIn, signInWithPasskey, signUp, user, ready } = useAuth();
+  const { t, isRTL } = useI18n();
+  const {
+    signIn,
+    signInWithPasskey,
+    signUp,
+    user,
+    ready,
+    webAuthnSupported,
+    webAuthnChecked,
+    conditionalMediationAvailable,
+  } = useAuth();
   const router = useRouter();
 
   const [name, setName] = useState("");
@@ -54,81 +73,137 @@ export function AuthPage({ mode }: AuthPageProps) {
   const [remember, setRemember] = useState(true);
   const [terms, setTerms] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [passkeyLoading, setPasskeyLoading] = useState(false);
+  const [status, setStatus] = useState<AuthStatus>("idle");
+  const [passkeyPending, setPasskeyPending] = useState(false);
   const [error, setError] = useState("");
+  const formRef = useRef<HTMLFormElement>(null);
+  const conditionalStarted = useRef(false);
+  const lastAction = useRef<"password" | "passkey">("password");
 
   const isSignIn = mode === "sign-in";
 
   useEffect(() => {
-    if (ready && user?.sessionVerified) router.replace(nextPath());
+    if (!ready || !user?.sessionVerified) return;
+    const privileged = user.role === "admin" || user.role === "manager";
+    if (privileged && !user.passkeyEnrolled) {
+      router.replace(`/passkey-enroll?next=${encodeURIComponent("/admin")}`);
+      return;
+    }
+    router.replace(resolveRedirectTarget(defaultPathForRole(user.role), user));
   }, [ready, user, router]);
+
+  // Conditional mediation is best-effort: it never blocks the password form.
+  useEffect(() => {
+    if (!isSignIn || !ready || !webAuthnChecked) return;
+    if (!webAuthnSupported || !conditionalMediationAvailable) return;
+    if (conditionalStarted.current) return;
+    conditionalStarted.current = true;
+
+    void (async () => {
+      try {
+        const result = await signInWithPasskey(
+          undefined,
+          remember,
+          requestedNext(),
+          true,
+        );
+        setStatus("redirecting");
+        router.replace(result.redirectTo);
+      } catch {
+        // The user can still use the passkey button or the password form.
+      }
+    })();
+  }, [
+    isSignIn,
+    ready,
+    webAuthnChecked,
+    webAuthnSupported,
+    conditionalMediationAvailable,
+    remember,
+    signInWithPasskey,
+    router,
+  ]);
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     setError("");
+    setStatus("idle");
 
-    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (!isEmail(email.trim())) {
       setError(t.contactPage.form.emailError);
+      setStatus("error");
       return;
     }
     if (password.length < 8) {
       setError(t.auth.shortPassword);
+      setStatus("error");
       return;
     }
     if (!isSignIn) {
       if (!name.trim()) {
         setError(t.contactPage.form.requiredError);
+        setStatus("error");
         return;
       }
       if (password !== confirm) {
         setError(t.auth.mismatch);
+        setStatus("error");
         return;
       }
       if (!terms) {
         setError(t.auth.termsError);
+        setStatus("error");
         return;
       }
     }
 
-    setLoading(true);
+    lastAction.current = "password";
+    setStatus("pending");
     try {
-      if (isSignIn) {
-        await signIn(email, password, remember);
-      } else {
-        await signUp({ name, email, company, phone, password });
-      }
-      router.push(nextPath());
+      const result = isSignIn
+        ? await signIn(email.trim(), password, remember, requestedNext())
+        : await signUp({ name: name.trim(), email: email.trim(), company, phone, password });
+      setStatus("redirecting");
+      router.replace(result.redirectTo);
     } catch (error) {
-      setError(authErrorMessage(error, locale, t.auth.invalid));
-    } finally {
-      setLoading(false);
+      setError(authErrorMessage(error, t, t.auth.signInFailed));
+      setStatus("error");
     }
   };
 
   const passkeySignIn = async () => {
     setError("");
-    setPasskeyLoading(true);
+    setStatus("idle");
+    lastAction.current = "passkey";
+    setPasskeyPending(true);
     try {
-      await signInWithPasskey(email.trim() || undefined, remember);
-      router.push(nextPath());
+      const result = await signInWithPasskey(
+        email.trim() || undefined,
+        remember,
+        requestedNext(),
+      );
+      setStatus("redirecting");
+      router.replace(result.redirectTo);
     } catch (error) {
-      if (error instanceof AuthRequestError) {
-        setError(authErrorMessage(error, locale, t.auth.invalid));
-      } else {
-        setError(
-          locale === "ar"
-            ? "تعذر إكمال الدخول بالبصمة. تأكد من وجود مفتاح مرور مسجل لهذا الحساب أو استخدم كلمة المرور."
-            : "Passkey sign-in could not be completed. Make sure a passkey is registered for this account, or use your password.",
-        );
-      }
+      setError(authErrorMessage(error, t, t.auth.passkeyFailed));
+      setStatus("error");
     } finally {
-      setPasskeyLoading(false);
+      setPasskeyPending(false);
     }
+  };
+
+  const retry = () => {
+    if (status !== "error") return;
+    if (lastAction.current === "passkey") {
+      void passkeySignIn();
+      return;
+    }
+    formRef.current?.requestSubmit();
   };
 
   const BackIcon = isRTL ? ArrowRight : ArrowLeft;
   const ForwardIcon = isRTL ? ArrowLeft : ArrowRight;
+  const pending = status === "pending" || status === "redirecting";
 
   return (
     <section className="relative min-h-[100svh] overflow-hidden bg-obsidian pt-20 text-ivory">
@@ -143,7 +218,7 @@ export function AuthPage({ mode }: AuthPageProps) {
             <BrandLogo tone="light" />
             <span className="mt-5 inline-flex items-center gap-2 border border-white/10 px-3 py-1.5 text-[0.52rem] uppercase tracking-[0.18em] text-gold/80">
               <ShieldCheck className="h-3 w-3" />
-              {locale === "ar" ? "بوابة العملاء" : "Client portal"}
+              {t.portal.eyebrow}
             </span>
           </div>
 
@@ -184,7 +259,7 @@ export function AuthPage({ mode }: AuthPageProps) {
                 href="/"
                 className="inline-flex items-center gap-1.5 text-[0.58rem] uppercase tracking-[0.16em] text-ivory/50 transition-colors hover:text-gold"
               >
-                <BackIcon className="h-3 w-3" />
+                <BackIcon className="h-3.5 w-3.5" />
                 {t.auth.backHome}
               </Link>
             </div>
@@ -199,7 +274,24 @@ export function AuthPage({ mode }: AuthPageProps) {
               {isSignIn ? t.auth.signInSubtitle : t.auth.signUpSubtitle}
             </p>
 
-            <form onSubmit={submit} className="mt-8 flex flex-col gap-5" noValidate>
+            {pending ? (
+              <p
+                role="status"
+                aria-live="polite"
+                data-testid="auth-pending"
+                className="guard-inline-status mt-5"
+              >
+                <span className="guard-spinner" aria-hidden="true" />
+                {t.auth.signingInRedirect}
+              </p>
+            ) : null}
+
+            <form
+              ref={formRef}
+              onSubmit={submit}
+              className="mt-8 flex flex-col gap-5"
+              noValidate
+            >
               {!isSignIn ? (
                 <div className="grid gap-5 sm:grid-cols-2">
                   <Field label={t.auth.name} htmlFor="auth-name" required>
@@ -224,12 +316,13 @@ export function AuthPage({ mode }: AuthPageProps) {
               <Field label={t.auth.email} htmlFor="auth-email" required>
                 <TextInput
                   id="auth-email"
+                  data-testid="auth-email"
                   type="email"
                   dir="ltr"
                   className="text-start"
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
-                  autoComplete="email"
+                  autoComplete={isSignIn ? "username webauthn" : "email"}
                   placeholder="name@company.com"
                 />
               </Field>
@@ -252,6 +345,7 @@ export function AuthPage({ mode }: AuthPageProps) {
                 <div className="relative">
                   <TextInput
                     id="auth-password"
+                    data-testid="auth-password"
                     type={showPassword ? "text" : "password"}
                     dir="ltr"
                     className="pe-11 text-start"
@@ -262,8 +356,8 @@ export function AuthPage({ mode }: AuthPageProps) {
                   <button
                     type="button"
                     onClick={() => setShowPassword((current) => !current)}
-                    aria-label={showPassword ? "Hide password" : "Show password"}
-                    className="absolute end-3 top-1/2 -translate-y-1/2 text-ivory/45 transition-colors hover:text-gold"
+                    aria-label={showPassword ? t.auth.hidePassword : t.auth.showPassword}
+                    className="absolute end-3 top-1/2 flex min-h-11 min-w-11 -translate-y-1/2 items-center justify-center text-ivory/45 transition-colors hover:text-gold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
@@ -286,12 +380,12 @@ export function AuthPage({ mode }: AuthPageProps) {
 
               {isSignIn ? (
                 <div className="flex items-center justify-between gap-4">
-                  <label className="flex cursor-pointer items-center gap-2 text-[0.72rem] text-ivory/65">
+                  <label className="flex min-h-11 cursor-pointer items-center gap-2 text-[0.72rem] text-ivory/65">
                     <input
                       type="checkbox"
                       checked={remember}
                       onChange={(event) => setRemember(event.target.checked)}
-                      className="h-3.5 w-3.5 accent-gold"
+                      className="h-4 w-4 accent-gold"
                     />
                     {t.auth.remember}
                   </label>
@@ -308,34 +402,46 @@ export function AuthPage({ mode }: AuthPageProps) {
                     type="checkbox"
                     checked={terms}
                     onChange={(event) => setTerms(event.target.checked)}
-                    className="mt-0.5 h-3.5 w-3.5 shrink-0 accent-gold"
+                    className="mt-0.5 h-4 w-4 shrink-0 accent-gold"
                   />
                   {t.auth.terms}
                 </label>
               )}
 
               {error ? (
-                <p
-                  className="border border-red-400/25 bg-red-400/[0.06] px-4 py-3 text-[0.72rem] text-red-300"
+                <div
+                  className="border border-red-400/25 bg-red-400/[0.06] px-4 py-3"
                   role="alert"
+                  data-testid="auth-error"
                 >
-                  {error}
-                </p>
+                  <p className="text-[0.72rem] text-red-200">{error}</p>
+                  <button
+                    type="button"
+                    onClick={retry}
+                    data-testid="auth-retry"
+                    className="mt-3 inline-flex min-h-11 items-center gap-2 border border-red-300/40 px-4 text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-red-100 transition-colors hover:border-red-200/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+                  >
+                    {t.auth.retry}
+                  </button>
+                </div>
               ) : null}
 
               <button
                 type="submit"
-                disabled={loading}
-                className="btn-shine mt-1 inline-flex h-12 items-center justify-center gap-2.5 bg-gold px-6 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-obsidian transition-colors hover:bg-gold-light disabled:cursor-wait disabled:opacity-70"
+                data-testid="auth-submit"
+                disabled={pending}
+                className="btn-shine mt-1 inline-flex min-h-12 items-center justify-center gap-2.5 bg-gold px-6 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-obsidian transition-colors hover:bg-gold-light disabled:cursor-wait disabled:opacity-70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
               >
-                {loading
+                {status === "pending"
                   ? isSignIn
                     ? t.auth.signingIn
                     : t.auth.signingUp
-                  : isSignIn
-                    ? t.auth.signIn
-                    : t.auth.signUp}
-                {loading ? null : <ForwardIcon className="h-3.5 w-3.5" />}
+                  : passkeyPending
+                    ? t.auth.signingInWithPasskey
+                    : isSignIn
+                      ? t.auth.signIn
+                      : t.auth.signUp}
+                {pending ? null : <ForwardIcon className="h-3.5 w-3.5" />}
               </button>
             </form>
 
@@ -343,29 +449,34 @@ export function AuthPage({ mode }: AuthPageProps) {
               <div className="mt-5">
                 <div className="flex items-center gap-3 text-[0.52rem] uppercase tracking-[0.18em] text-ivory/35">
                   <span className="h-px flex-1 bg-white/10" />
-                  {locale === "ar" ? "أو" : "or"}
+                  {t.auth.or}
                   <span className="h-px flex-1 bg-white/10" />
                 </div>
                 <button
                   type="button"
+                  data-testid="passkey-sign-in"
                   onClick={passkeySignIn}
-                  disabled={passkeyLoading || loading}
-                  className="mt-4 inline-flex h-12 w-full items-center justify-center gap-2.5 border border-gold/30 bg-gold/[0.06] px-6 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-gold transition-colors hover:border-gold/60 hover:bg-gold/[0.1] disabled:cursor-wait disabled:opacity-60"
+                  disabled={passkeyPending || pending || (webAuthnChecked && !webAuthnSupported)}
+                  className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2.5 border border-gold/30 bg-gold/[0.06] px-6 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-gold transition-colors hover:border-gold/60 hover:bg-gold/[0.1] disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
                 >
                   <Fingerprint className="h-4 w-4" />
-                  {passkeyLoading
-                    ? locale === "ar"
-                      ? "جارٍ التحقق..."
-                      : "Verifying..."
-                    : locale === "ar"
-                      ? "الدخول بالبصمة أو مفتاح المرور"
-                      : "Sign in with passkey"}
+                  {passkeyPending ? t.auth.verifyingPasskey : t.auth.passkeySignIn}
                 </button>
-                <p className="mt-3 text-center text-[0.6rem] leading-relaxed text-ivory/40">
-                  {locale === "ar"
-                    ? "استخدم Face ID أو Touch ID أو مفتاح الأمان المسجل لحسابك."
-                    : "Use Face ID, Touch ID, or the security key registered to your account."}
-                </p>
+                {webAuthnChecked && !webAuthnSupported ? (
+                  <p
+                    role="status"
+                    data-testid="webauthn-unsupported"
+                    className="mt-3 text-center text-[0.62rem] leading-relaxed text-gold/80"
+                  >
+                    {t.auth.webAuthnUnsupported} {t.auth.webAuthnHint}
+                  </p>
+                ) : (
+                  <p className="mt-3 text-center text-[0.6rem] leading-relaxed text-ivory/40">
+                    {conditionalMediationAvailable
+                      ? t.auth.conditionalHint
+                      : t.security.passkeysText}
+                  </p>
+                )}
               </div>
             ) : null}
 

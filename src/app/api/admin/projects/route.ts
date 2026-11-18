@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/auth/guard";
+import { hasRecentStepUp, stepUpRequiredResponse } from "@/lib/auth/step-up";
 import { listProjects, recordAudit, upsertProject } from "@/lib/db";
 import {NO_STORE_HEADERS,
   clientIp,
@@ -66,6 +67,15 @@ export async function POST(request: NextRequest) {
   }
 
   const candidate = parsed.data;
+  // Archiving is a soft delete. Require a fresh step-up before persisting the
+  // archived marker so it cannot be triggered by a stale admin session.
+  const isArchive =
+    candidate.archivedAt != null ||
+    candidate.deletedAt != null ||
+    candidate.archived === true ||
+    candidate.status === "archived";
+  if (isArchive && !hasRecentStepUp(session)) return stepUpRequiredResponse();
+
   const slug =
     typeof candidate.slug === "string" ? candidate.slug.trim().toLowerCase() : "";
 

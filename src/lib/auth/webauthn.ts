@@ -2,16 +2,30 @@ import "server-only";
 import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import type { NextRequest, NextResponse } from "next/server";
 import { AuthConfigError } from "@/lib/auth/token";
+import {
+  consumeAuthChallenge,
+  createAuthChallenge,
+  type AuthChallengeKind,
+} from "@/lib/db";
 
 export const WEBAUTHN_COOKIE = "alattar_webauthn";
 export const WEBAUTHN_CHALLENGE_TTL_SECONDS = 5 * 60;
 
 export const RP_NAME = "Ahmed Elattar General Contracting";
 
-export type WebAuthnChallengeKind = "registration" | "authentication";
+export type WebAuthnChallengeKind = AuthChallengeKind;
 
-type ChallengePayload = {
+/** The value returned after atomically consuming a single-use challenge. */
+export type WebAuthnChallenge = {
   challenge: string;
+  kind: WebAuthnChallengeKind;
+  email?: string;
+  exp: number;
+};
+
+type ChallengeCookie = {
+  /** Opaque DB id; the challenge bytes themselves never live in the cookie. */
+  id: string;
   kind: WebAuthnChallengeKind;
   email?: string;
   exp: number;
@@ -36,12 +50,16 @@ function sign(payload: string) {
   return createHmac("sha256", secret()).update(payload).digest("base64url");
 }
 
-function encode(payload: ChallengePayload) {
+function encode(payload: ChallengeCookie) {
   const body = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
   return `${body}.${sign(body)}`;
 }
 
-function decode(value: string): ChallengePayload | null {
+function isChallengeKind(value: unknown): value is WebAuthnChallengeKind {
+  return value === "registration" || value === "authentication" || value === "step-up";
+}
+
+function decode(value: string): ChallengeCookie | null {
   try {
     const [body, signature] = value.split(".");
     if (!body || !signature) return null;
@@ -60,44 +78,52 @@ function decode(value: string): ChallengePayload | null {
     }
 
     const record = parsed as Record<string, unknown>;
-    const challenge = typeof record.challenge === "string" ? record.challenge : "";
-    const kind =
-      record.kind === "registration" || record.kind === "authentication"
-        ? record.kind
-        : null;
-    const exp = typeof record.exp === "number" ? record.exp : 0;
-    const email =
-      typeof record.email === "string" ? record.email.trim().toLowerCase() : undefined;
+    const id = typeof record.id === "string" ? record.id.trim() : "";
+    if (!id || id.length > 120) return null;
+    if (!isChallengeKind(record.kind)) return null;
 
-    if (!challenge || !kind) return null;
+    const exp = typeof record.exp === "number" ? record.exp : 0;
     if (exp <= Math.floor(Date.now() / 1000)) return null;
 
-    return { challenge, kind, ...(email ? { email } : {}), exp };
+    const email =
+      typeof record.email === "string" && record.email.trim()
+        ? record.email.trim().toLowerCase()
+        : undefined;
+
+    return { id, kind: record.kind, ...(email ? { email } : {}), exp };
   } catch {
     return null;
   }
 }
 
 /**
- * A fresh challenge is generated for every ceremony and stored in a signed,
- * httpOnly cookie. It is never accepted from the browser request body.
+ * Creates a fresh single-use challenge for every ceremony. The random bytes are
+ * persisted in MongoDB; the browser only receives a signed httpOnly cookie
+ * holding the challenge id (plus metadata), so a client cannot substitute its
+ * own challenge or replay a completed one.
  */
-export function createWebAuthnChallenge(
+export async function createWebAuthnChallenge(
   response: NextResponse,
   kind: WebAuthnChallengeKind,
   email?: string,
-): string {
+): Promise<string> {
   const challenge = randomBytes(32).toString("base64url");
-  const payload: ChallengePayload = {
+  const normalizedEmail = email?.trim().toLowerCase() || "";
+  const record = await createAuthChallenge({
     challenge,
     kind,
-    ...(email ? { email: email.trim().toLowerCase() } : {}),
-    exp: Math.floor(Date.now() / 1000) + WEBAUTHN_CHALLENGE_TTL_SECONDS,
-  };
+    email: normalizedEmail,
+    ttlSeconds: WEBAUTHN_CHALLENGE_TTL_SECONDS,
+  });
 
   response.cookies.set({
     name: WEBAUTHN_COOKIE,
-    value: encode(payload),
+    value: encode({
+      id: record.id,
+      kind,
+      ...(normalizedEmail ? { email: normalizedEmail } : {}),
+      exp: Math.floor(Date.now() / 1000) + WEBAUTHN_CHALLENGE_TTL_SECONDS,
+    }),
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
@@ -108,16 +134,34 @@ export function createWebAuthnChallenge(
   return challenge;
 }
 
-export function readWebAuthnChallenge(
+/**
+ * Reads and *consumes* the pending challenge. Matching kind and email are
+ * enforced inside the atomic database update, so two concurrent verifications
+ * can never both succeed with the same challenge.
+ */
+export async function readWebAuthnChallenge(
   request: NextRequest,
   kind: WebAuthnChallengeKind,
-): ChallengePayload | null {
+): Promise<WebAuthnChallenge | null> {
   const value = request.cookies.get(WEBAUTHN_COOKIE)?.value;
   if (!value) return null;
 
   const payload = decode(value);
   if (!payload || payload.kind !== kind) return null;
-  return payload;
+
+  const challenge = await consumeAuthChallenge({
+    id: payload.id,
+    kind,
+    ...(payload.email ? { email: payload.email } : {}),
+  });
+  if (!challenge) return null;
+
+  return {
+    challenge,
+    kind,
+    ...(payload.email ? { email: payload.email } : {}),
+    exp: payload.exp,
+  };
 }
 
 export function clearWebAuthnChallenge(response: NextResponse) {
@@ -132,10 +176,20 @@ export function clearWebAuthnChallenge(response: NextResponse) {
   });
 }
 
-/**
- * The RP ID is the registrable domain without protocol or port. Deployments
- * can pin it with WEBAUTHN_RP_ID; local development uses localhost.
- */
+const DEFAULT_RP_ID_ALLOWLIST = [
+  "localhost",
+  "127.0.0.1",
+  "alattar.sa",
+  "www.alattar.sa",
+];
+
+class WebAuthnConfigError extends AuthConfigError {
+  constructor(message: string) {
+    super();
+    this.message = message;
+  }
+}
+
 function hostnameFrom(value: string | null) {
   if (!value) return "";
   try {
@@ -145,6 +199,20 @@ function hostnameFrom(value: string | null) {
   }
 }
 
+function allowedRpIds() {
+  const custom = (process.env.WEBAUTHN_RP_ID_ALLOWLIST ?? "")
+    .split(",")
+    .map((entry) => hostnameFrom(entry.trim()) || entry.trim().toLowerCase())
+    .filter(Boolean);
+  return new Set([...DEFAULT_RP_ID_ALLOWLIST, ...custom]);
+}
+
+/**
+ * The RP ID is the registrable domain without protocol or port. An explicit
+ * `WEBAUTHN_RP_ID` is validated against a fixed allowlist (extended by
+ * `WEBAUTHN_RP_ID_ALLOWLIST` for custom deployments) so a passkey registered on
+ * an untrusted preview hostname can never be bound to the production site.
+ */
 export function relyingParty(request: NextRequest) {
   const configured = process.env.WEBAUTHN_RP_ID?.trim();
   const forwardedHost =
@@ -158,7 +226,18 @@ export function relyingParty(request: NextRequest) {
       ? `${forwardedProto.split(",")[0].trim()}://${forwardedHost.split(",")[0].trim()}`
       : request.nextUrl.origin);
 
-  return { rpID: configured || hostname, origin, rpName: RP_NAME };
+  const rpID = (configured ? hostnameFrom(configured) || configured.toLowerCase() : hostname)
+    .trim()
+    .toLowerCase()
+    .replace(/\.$/, "");
+
+  if (!rpID || !allowedRpIds().has(rpID)) {
+    throw new WebAuthnConfigError(
+      `WebAuthn RP ID "${rpID || "(empty)"}" is not allowed. Set WEBAUTHN_RP_ID to an approved hostname or add it to WEBAUTHN_RP_ID_ALLOWLIST. Passkeys cannot be tested on *.vercel.app preview URLs.`,
+    );
+  }
+
+  return { rpID, origin, rpName: RP_NAME };
 }
 
 export function webauthnUserID(userId: string, email: string) {

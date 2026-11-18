@@ -2,10 +2,11 @@ import "server-only";
 import { randomBytes } from "node:crypto";
 
 export const SESSION_COOKIE = "alattar_session";
-export const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7;
-export const REMEMBERED_SESSION_TTL_SECONDS = 60 * 60 * 24 * 30;
+/** Absolute ceiling for every session, including remembered sessions. */
+export const SESSION_TTL_SECONDS = 60 * 60 * 12;
+export const REMEMBERED_SESSION_TTL_SECONDS = SESSION_TTL_SECONDS;
 
-export type SessionRole = "client" | "admin";
+export type SessionRole = "client" | "manager" | "admin";
 
 export type SessionPayload = {
   sub: string;
@@ -20,11 +21,19 @@ export type SessionPayload = {
   role: SessionRole;
   /** Incremented when a role changes or an administrator is revoked. */
   sessionVersion: number;
+  /** True when the account has at least one registered passkey. */
+  passkeyEnrolled: boolean;
+  /** Unix seconds of the last successful step-up verification; `0` when none. */
+  stepUpAt: number;
   iat: number;
   exp: number;
 };
 
-export type SessionInput = Omit<SessionPayload, "iat" | "exp">;
+export type SessionInput = Omit<
+  SessionPayload,
+  "iat" | "exp" | "passkeyEnrolled" | "stepUpAt"
+> &
+  Partial<Pick<SessionPayload, "passkeyEnrolled" | "stepUpAt">>;
 
 export type PublicSessionUser = {
   name: string;
@@ -36,6 +45,7 @@ export type PublicSessionUser = {
   accountId: string;
   phone?: string;
   role: SessionRole;
+  passkeyEnrolled: boolean;
   /** True only for the configured super-admin identity. */
   primaryAdmin: boolean;
 };
@@ -128,7 +138,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function isSessionRole(value: unknown): value is SessionRole {
-  return value === "client" || value === "admin";
+  return value === "client" || value === "manager" || value === "admin";
 }
 
 function safeText(value: unknown, max: number) {
@@ -161,6 +171,8 @@ export async function createSession(
   const now = Math.floor(Date.now() / 1000);
   const session: SessionPayload = {
     ...input,
+    passkeyEnrolled: input.passkeyEnrolled ?? false,
+    stepUpAt: input.stepUpAt ?? 0,
     iat: now,
     exp: now + ttlSeconds,
   };
@@ -207,6 +219,11 @@ export async function verifySession(token: string): Promise<SessionPayload | nul
       typeof parsed.sessionVersion === "number" && parsed.sessionVersion >= 0
         ? Math.floor(parsed.sessionVersion)
         : 0;
+    const passkeyEnrolled = parsed.passkeyEnrolled === true;
+    const stepUpAt =
+      typeof parsed.stepUpAt === "number" && parsed.stepUpAt > 0
+        ? Math.floor(parsed.stepUpAt)
+        : 0;
 
     if (!email || !name || !company || !accountId) return null;
     if (!isSessionRole(role)) return null;
@@ -225,6 +242,8 @@ export async function verifySession(token: string): Promise<SessionPayload | nul
       ...(phone ? { phone } : {}),
       role,
       sessionVersion,
+      passkeyEnrolled,
+      stepUpAt,
       iat,
       exp,
     };
@@ -244,7 +263,54 @@ export function publicSessionUser(session: SessionPayload): PublicSessionUser {
     accountId: session.accountId,
     ...(session.phone ? { phone: session.phone } : {}),
     role: session.role,
+    passkeyEnrolled: session.passkeyEnrolled,
     primaryAdmin: isPrimaryAdminEmail(session.email),
+  };
+}
+
+/**
+ * Minimal shape shared by the repository user record and the session builder.
+ * Keeping it structural avoids importing the database module into the signing
+ * code (which is also used by the optimistic proxy check).
+ */
+export type SessionUserSource = {
+  id: string;
+  email: string;
+  name: string;
+  nameAr?: string;
+  honorific?: string;
+  honorificAr?: string;
+  company: string;
+  accountId: string;
+  phone?: string;
+  role: SessionRole;
+  sessionVersion?: number;
+};
+
+/**
+ * Builds a session from the *currently persisted* user. Session versions are
+ * only ever advanced by an explicit revocation (role change, sign-out, admin
+ * passkey reset); signing in must reuse the stored value or the freshly issued
+ * token would immediately fail `activeSession`'s reconciliation check.
+ */
+export function sessionInputFromUser(
+  user: SessionUserSource,
+  options: { passkeyEnrolled?: boolean; stepUpAt?: number } = {},
+): SessionInput {
+  return {
+    sub: user.id,
+    email: user.email,
+    name: user.name,
+    ...(user.nameAr ? { nameAr: user.nameAr } : {}),
+    ...(user.honorific ? { honorific: user.honorific } : {}),
+    ...(user.honorificAr ? { honorificAr: user.honorificAr } : {}),
+    company: user.company,
+    accountId: user.accountId,
+    ...(user.phone ? { phone: user.phone } : {}),
+    role: user.role,
+    sessionVersion: user.sessionVersion ?? 0,
+    passkeyEnrolled: options.passkeyEnrolled ?? false,
+    stepUpAt: options.stepUpAt ?? 0,
   };
 }
 

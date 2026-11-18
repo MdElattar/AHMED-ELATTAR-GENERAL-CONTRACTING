@@ -4,15 +4,20 @@ import {
   SESSION_TTL_SECONDS,
   createSession,
   publicSessionUser,
+  sessionInputFromUser,
 } from "@/lib/auth/token";
 import { setSessionCookie } from "@/lib/auth/cookie";
+import { resolvePostLoginPath } from "@/lib/auth/redirect";
 import { authUnavailable, isAuthConfigError } from "@/lib/auth/response";
-import { getUserByEmail, recordAudit, updateUser } from "@/lib/db";
+import { getUserByEmail, listPasskeys, recordAudit, updateUser } from "@/lib/db";
 import { hashPassword, needsRehash, verifyPassword } from "@/lib/auth/password";
-import {NO_STORE_HEADERS,
+import {
+  NO_STORE_HEADERS,
   clientIp,
   isSameOrigin,
-  readJsonBody, safeLogError } from "@/lib/security/http";
+  readJsonBody,
+  safeLogError,
+} from "@/lib/security/http";
 import { rateLimitIdentity } from "@/lib/security/rate-limit";
 import { signInSchema } from "@/lib/security/schemas";
 
@@ -30,7 +35,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { email, password, remember } = parsed.data;
+  const { email, password, remember, next } = parsed.data;
 
   const limited = rateLimitIdentity("sign-in", ip, email, 8, 15 * 60 * 1000);
   if (!limited.ok) {
@@ -52,15 +57,14 @@ export async function POST(request: NextRequest) {
     : await verifyPassword(password, "bcrypt$invalid");
 
   if (!user || !passwordValid) {
-    if (user) {
-      await recordAudit({
-        actor: email,
-        action: "auth.sign_in_failed",
-        entity: "user",
-        entityId: user.id,
-        ip,
-      });
-    }
+    await recordAudit({
+      actor: email,
+      action: "login_failed",
+      entity: "user",
+      ...(user ? { entityId: user.id } : {}),
+      ip,
+      meta: { method: "password" },
+    });
     return NextResponse.json(
       { error: "invalid_credentials" },
       { status: 401, headers: NO_STORE_HEADERS },
@@ -77,26 +81,16 @@ export async function POST(request: NextRequest) {
   }
 
   const ttl = remember ? REMEMBERED_SESSION_TTL_SECONDS : SESSION_TTL_SECONDS;
-  // Rotate the version on every successful sign-in so a stolen token from a
-  // previous session cannot be replayed alongside the new one.
-  const rotatedVersion = (user.sessionVersion ?? 0) + 1;
+  // Never rotate sessionVersion here. The token must carry the version that is
+  // already persisted, otherwise `activeSession()` rejects the fresh cookie
+  // and the client bounces back to /sign-in in a loop.
+  const passkeys = await listPasskeys(user.email);
+  const passkeyEnrolled = passkeys.length > 0;
 
   let created: Awaited<ReturnType<typeof createSession>>;
   try {
     created = await createSession(
-      {
-        sub: user.id,
-        email: user.email,
-        name: user.name,
-        ...(user.nameAr ? { nameAr: user.nameAr } : {}),
-        ...(user.honorific ? { honorific: user.honorific } : {}),
-        ...(user.honorificAr ? { honorificAr: user.honorificAr } : {}),
-        company: user.company,
-        accountId: user.accountId,
-        ...(user.phone ? { phone: user.phone } : {}),
-        role: user.role,
-        sessionVersion: rotatedVersion,
-      },
+      sessionInputFromUser(user, { passkeyEnrolled, stepUpAt: 0 }),
       ttl,
     );
   } catch (error) {
@@ -111,21 +105,23 @@ export async function POST(request: NextRequest) {
 
   const { token, session } = created;
 
-  await updateUser(email, {
-    lastLoginAt: new Date().toISOString(),
-    sessionVersion: rotatedVersion,
-  });
+  // Only write login metadata; the version in the token was already persisted.
+  await updateUser(email, { lastLoginAt: new Date().toISOString() });
 
   await recordAudit({
     actor: email,
-    action: "auth.sign_in",
+    action: "login_success",
     entity: "user",
     entityId: user.id,
     ip,
+    meta: { method: "password" },
   });
 
   const response = NextResponse.json(
-    { user: publicSessionUser(session) },
+    {
+      user: publicSessionUser(session),
+      redirectTo: resolvePostLoginPath(user.role, next, passkeyEnrolled),
+    },
     { headers: NO_STORE_HEADERS },
   );
 

@@ -1,11 +1,14 @@
 import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, Inter, Manrope, Tajawal } from "next/font/google";
+import { Suspense } from "react";
 import "./globals.css";
 import { I18nProvider } from "@/components/providers/I18nProvider";
 import { AtmosphereProvider } from "@/components/providers/AtmosphereProvider";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { WorkspaceProvider } from "@/components/providers/WorkspaceProvider";
 import { RouteChrome } from "@/components/layout/RouteChrome";
+import IdleGuard from "@/components/auth/IdleGuard";
+import PasskeyEnrollmentGate from "@/components/auth/PasskeyEnrollmentGate";
 import { ToastProvider } from "@/components/ui/Toast";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
@@ -129,6 +132,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                     تجاوز إلى المحتوى / Skip to content
                   </a>
                   <RouteChrome>{children}</RouteChrome>
+                  <Suspense fallback={null}>
+                    <PasskeyEnrollmentGate />
+                  </Suspense>
+                  <Suspense fallback={null}>
+                    <IdleGuard />
+                  </Suspense>
                   <SpeedInsights />
                 </ToastProvider>
               </AuthProvider>

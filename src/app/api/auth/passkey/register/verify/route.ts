@@ -5,7 +5,16 @@ import {
 } from "@simplewebauthn/server";
 import { isoBase64URL } from "@simplewebauthn/server/helpers";
 import { activeSession } from "@/lib/auth/guard";
+import {
+  REMEMBERED_SESSION_TTL_SECONDS,
+  createSession,
+  publicSessionUser,
+  sessionInputFromUser,
+} from "@/lib/auth/token";
+import { setSessionCookie } from "@/lib/auth/cookie";
+import { resolvePostLoginPath } from "@/lib/auth/redirect";
 import { authUnavailable, isAuthConfigError } from "@/lib/auth/response";
+import { generateBackupCodes } from "@/lib/auth/backup-codes";
 import {
   clearWebAuthnChallenge,
   readWebAuthnChallenge,
@@ -16,13 +25,17 @@ import {
   getPasskeyByCredentialId,
   getUserByEmail,
   recordAudit,
+  setBackupCodes,
 } from "@/lib/db";
-import {NO_STORE_HEADERS,
+import {
+  NO_STORE_HEADERS,
   clientIp,
   isSameOrigin,
-  readJsonBody, safeLogError } from "@/lib/security/http";
+  readJsonBody,
+  safeLogError,
+} from "@/lib/security/http";
 import { rateLimit } from "@/lib/security/rate-limit";
-import { isPlainObject } from "@/lib/security/validation";
+import { cleanString, isPlainObject } from "@/lib/security/validation";
 
 export async function POST(request: NextRequest) {
   if (!isSameOrigin(request)) {
@@ -58,7 +71,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const challenge = readWebAuthnChallenge(request, "registration");
+    // Registration is tied to the signed-in account: the challenge was created
+    // for this email and is consumed atomically before any verification work.
+    const challenge = await readWebAuthnChallenge(request, "registration");
     if (!challenge || challenge.email !== session.email) {
       return NextResponse.json(
         { error: "expired_challenge" },
@@ -72,7 +87,7 @@ export async function POST(request: NextRequest) {
       expectedChallenge: challenge.challenge,
       expectedOrigin: origin,
       expectedRPID: rpID,
-      requireUserVerification: false,
+      requireUserVerification: true,
     });
 
     if (!verification.verified) {
@@ -106,6 +121,7 @@ export async function POST(request: NextRequest) {
             (transport): transport is string => typeof transport === "string",
           )
         : [];
+    const deviceName = cleanString(body.deviceName, 80) || "This device";
 
     const passkey = await createPasskey({
       userId: user.id,
@@ -115,31 +131,57 @@ export async function POST(request: NextRequest) {
       counter: info.credential.counter,
       transports,
       deviceType: info.credentialDeviceType,
+      deviceName,
       backedUp: info.credentialBackedUp,
     });
 
     await recordAudit({
       actor: user.email,
-      action: "auth.passkey_registered",
+      action: "passkey_registered",
       entity: "user",
       entityId: user.id,
       meta: {
         credentialId: passkey.credentialId,
+        deviceName,
         deviceType: passkey.deviceType ?? "unknown",
       },
       ip,
     });
 
+    // Recovery codes are issued exactly once, on first enrollment.
+    let backupCodes: string[] | undefined;
+    if (!user.backupCodeHashes || user.backupCodeHashes.length === 0) {
+      backupCodes = generateBackupCodes();
+      await setBackupCodes(user.email, backupCodes);
+    }
+
+    // Reissue the cookie so the passkey-enrollment gate sees the new state on
+    // the very next request instead of waiting for another sign-in. Enrollment
+    // also counts as a fresh step-up for subsequent sensitive operations.
+    const stepUpAt = Math.floor(Date.now() / 1000);
+    const { token, session: refreshed } = await createSession(
+      sessionInputFromUser(user, { passkeyEnrolled: true, stepUpAt }),
+      REMEMBERED_SESSION_TTL_SECONDS,
+    );
+
+    const next = typeof body.next === "string" ? body.next : undefined;
     const response = NextResponse.json(
       {
         passkey: {
           credentialId: passkey.credentialId,
           createdAt: passkey.createdAt,
+          deviceName: passkey.deviceName,
           ...(passkey.deviceType ? { deviceType: passkey.deviceType } : {}),
+          ...(typeof passkey.backedUp === "boolean" ? { backedUp: passkey.backedUp } : {}),
         },
+        user: publicSessionUser(refreshed),
+        stepUpAt,
+        redirectTo: resolvePostLoginPath(session.role, next, true),
+        ...(backupCodes ? { backupCodes } : {}),
       },
       { status: 201, headers: NO_STORE_HEADERS },
     );
+    setSessionCookie(response, token, REMEMBERED_SESSION_TTL_SECONDS);
     clearWebAuthnChallenge(response);
     return response;
   } catch (error) {

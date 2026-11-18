@@ -7,6 +7,7 @@ import {
   verifySession,
   type SessionPayload,
 } from "./token";
+import { hasRecentStepUp } from "./step-up";
 
 /**
  * Reads and verifies the signed session cookie for server-side route handlers.
@@ -37,6 +38,16 @@ export async function activeSession(
 
 export async function requirePortalSession(): Promise<SessionPayload | null> {
   return activeSession();
+}
+
+/**
+ * Active session plus a fresh step-up. Sensitive route handlers should use
+ * this (and `stepUpRequiredResponse()` on failure) instead of trusting the
+ * client to claim that re-authentication happened.
+ */
+export async function requireStepUpSession(maxAgeSeconds?: number): Promise<SessionPayload | null> {
+  const session = await activeSession();
+  return session && hasRecentStepUp(session, maxAgeSeconds) ? session : null;
 }
 
 /**
