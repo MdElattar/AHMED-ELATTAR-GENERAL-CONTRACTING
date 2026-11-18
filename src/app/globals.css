@@ -190,6 +190,15 @@
   --gold: var(--accent);
   --nav-height: 84px;
 
+  /* Mobile motion & spacing contract. All values are logical and theme-safe. */
+  --touch-min: 44px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-inline-start: env(safe-area-inset-left, 0px);
+  --safe-inline-end: env(safe-area-inset-right, 0px);
+  --space-page: clamp(1rem, 0.6rem + 2vw, 2.5rem);
+  --space-section: clamp(3rem, 2rem + 5vw, 7rem);
+
   /*
    * Atmosphere tokens. The default is a golden-hour grade; the navigation
    * toggle swaps these to blue hour or a neutral studio grade. The glow values
@@ -1638,3 +1647,55 @@ html[dir="rtl"] .carousel-progress {
     animation-duration: 2s;
   }
 }
+
+/* ---------- Mobile motion & spacing contract ---------- */
+:root {
+  /* Anchors clear the fixed chrome and the notch on either side. */
+  scroll-padding-block-start: calc(var(--nav-height) + var(--safe-top) + 0.75rem);
+  scroll-padding-inline-start: calc(var(--space-page) + var(--safe-inline-start));
+  scroll-padding-inline-end: calc(var(--space-page) + var(--safe-inline-end));
+}
+
+@media (max-width: 767px) {
+  :root {
+    --nav-height: 72px;
+  }
+
+  /* Reusable, direction-agnostic tap target for custom controls. */
+  .touch-target {
+    min-block-size: var(--touch-min);
+    min-inline-size: var(--touch-min);
+  }
+
+  main#main {
+    padding-inline-start: var(--safe-inline-start);
+    padding-inline-end: var(--safe-inline-end);
+  }
+}
+
+@media (pointer: coarse) {
+  /* Native and custom controls get a full fingertip target on touch devices.
+     Dense table actions opt out with data-density="compact". */
+  button:not([data-density="compact"]),
+  [role="button"]:not([data-density="compact"]),
+  a[aria-label] {
+    min-block-size: var(--touch-min);
+    min-inline-size: var(--touch-min);
+  }
+
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-block-size: 24px;
+    min-inline-size: 24px;
+  }
+
+  /* Prevent iOS Safari from zooming the viewport when a field is focused. */
+  input,
+  select,
+  textarea {
+    font-size: max(16px, 1rem);
+  }
+}
+
+/* Motion is transform/opacity only and fully suppressed by the global
+   prefers-reduced-motion block above; no extra mobile-only timelines. */

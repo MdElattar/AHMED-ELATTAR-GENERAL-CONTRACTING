@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, type ElementType, type ReactNode } from "react";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { cn } from "@/lib/utils";
 
 type RevealProps = {
@@ -23,16 +24,13 @@ export function Reveal({
   once = true,
 }: RevealProps) {
   const ref = useRef<HTMLElement | null>(null);
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
     const node = ref.current;
     if (!node) return;
 
-    const prefersReduced =
-      typeof window.matchMedia === "function" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-    if (typeof IntersectionObserver === "undefined" || prefersReduced) {
+    if (typeof IntersectionObserver === "undefined" || reducedMotion) {
       node.classList.add("is-visible");
       return;
     }
@@ -53,7 +51,7 @@ export function Reveal({
 
     observer.observe(node);
     return () => observer.disconnect();
-  }, [once, threshold]);
+  }, [once, reducedMotion, threshold]);
 
   const base = variant === "left" ? "reveal-left" : variant === "scale" ? "reveal-scale" : "reveal";
 

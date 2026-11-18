@@ -2,6 +2,7 @@
 
 import { useEffect, type MutableRefObject } from "react";
 import Lenis from "lenis";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { resetScrollLocks } from "@/lib/scroll/lock";
 
 type SmoothScrollEngineProps = {
@@ -19,10 +20,11 @@ type SmoothScrollEngineProps = {
  * so the Lenis engine never enters the critical path.
  */
 export function SmoothScrollEngine({ lenisRef, lockedRef }: SmoothScrollEngineProps) {
+  const reducedMotion = useReducedMotion();
+
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const root = document.documentElement;
 
     if (reducedMotion) {
@@ -66,7 +68,7 @@ export function SmoothScrollEngine({ lenisRef, lockedRef }: SmoothScrollEnginePr
       root.style.overflow = "";
       resetScrollLocks();
     };
-  }, [lenisRef, lockedRef]);
+  }, [lenisRef, lockedRef, reducedMotion]);
 
   return null;
 }

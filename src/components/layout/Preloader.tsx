@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { dictionary } from "@/lib/dictionary";
 import { BrandLogo } from "@/components/ui/BrandLogo";
@@ -15,11 +16,11 @@ export function Preloader() {
   const [phase, setPhase] = useState<Phase>("loading");
   const [progress, setProgress] = useState(0);
   const exitTimer = useRef<number | null>(null);
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
     if (!ready) return;
 
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     let seen = false;
     try {
       seen = window.sessionStorage.getItem(STORAGE_KEY) === "1";
@@ -27,7 +28,7 @@ export function Preloader() {
       seen = false;
     }
 
-    if (reduced || seen) {
+    if (reducedMotion || seen) {
       // Hydration-safe: sessionStorage is only readable after mount.
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setPhase("gone");
@@ -62,7 +63,7 @@ export function Preloader() {
         exitTimer.current = null;
       }
     };
-  }, [ready]);
+  }, [ready, reducedMotion]);
 
   useEffect(() => {
     if (phase !== "leaving") return;

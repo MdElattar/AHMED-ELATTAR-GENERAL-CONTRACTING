@@ -32,7 +32,7 @@ function EnrollContent() {
 
   if (!auth.ready) {
     return (
-      <main className="guard-page" id="main-content">
+      <main className="guard-page" id="main" tabIndex={-1}>
         <p className="guard-hint" role="status">
           {t.auth.loadingEnrollment}
         </p>
@@ -42,7 +42,7 @@ function EnrollContent() {
 
   if (!auth.user?.sessionVerified) {
     return (
-      <main className="guard-page" id="main-content">
+      <main className="guard-page" id="main" tabIndex={-1}>
         <section className="guard-page-card">
           <p className="guard-copy" role="alert">
             {t.portal.noAccessText}
@@ -58,7 +58,7 @@ function EnrollContent() {
   }
 
   return (
-    <main className="guard-page" id="main-content">
+    <main className="guard-page" id="main" tabIndex={-1}>
       <section className="guard-page-card" aria-labelledby="passkey-enroll-title">
         <PasskeyEnrollmentForm
           variant="page"
@@ -74,7 +74,7 @@ export default function PasskeyEnrollPage() {
   return (
     <Suspense
       fallback={
-        <main className="guard-page" id="main-content">
+        <main className="guard-page" id="main" tabIndex={-1}>
           <p className="guard-hint" role="status">
             {t.auth.loadingEnrollment}
           </p>

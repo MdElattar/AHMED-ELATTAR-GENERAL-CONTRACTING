@@ -1,5 +1,6 @@
 "use client";
 
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 import {
   createContext,
   useCallback,
@@ -50,6 +51,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [systemDark, setSystemDark] = useState(false);
   const [ready, setReady] = useState(false);
   const transitionTimer = useRef<number | null>(null);
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
     // Sync React with the pre-paint bootstrap and keep an eye on OS changes.
@@ -98,12 +100,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   const queueThemeChange = useCallback((next: Theme | ((current: Theme) => Theme)) => {
     const root = document.documentElement;
-    const reduceMotion =
-      typeof window !== "undefined" &&
-      window.matchMedia &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-    if (!reduceMotion) {
+    if (!reducedMotion) {
       root.classList.add("theme-transition");
       if (transitionTimer.current !== null) {
         window.clearTimeout(transitionTimer.current);
@@ -115,7 +112,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     }
 
     setThemeState(next);
-  }, []);
+  }, [reducedMotion]);
 
   const setTheme = useCallback(
     (next: Theme) => queueThemeChange(next),
