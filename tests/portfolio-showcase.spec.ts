@@ -32,7 +32,19 @@ async function enforceEnglishLandscape(page: Page) {
   expect(viewport!.width / viewport!.height).toBeCloseTo(EXPECTED_ASPECT, 2);
 }
 
-async function settle(page: Page, delay = 650) {
+async function gotoEnglish(page: Page, target: string, apiFragment?: string) {
+  const response = apiFragment
+    ? page.waitForResponse(
+        (candidate) => candidate.url().includes(apiFragment) && candidate.ok(),
+        { timeout: 30_000 },
+      )
+    : undefined;
+  await page.goto(englishUrl(target), { waitUntil: "domcontentloaded" });
+  if (response) await response;
+  await enforceEnglishLandscape(page);
+}
+
+async function settle(page: Page, delay = 750) {
   await page.evaluate(async () => {
     await document.fonts.ready;
   });
@@ -62,6 +74,17 @@ async function capture(page: Page, testInfo: TestInfo, name: string) {
   await testInfo.attach(name, { path: target, contentType: "image/png" });
 }
 
+async function waitForAdminShell(page: Page) {
+  await expect(page.locator("main").first()).toBeVisible();
+  await expect(page.locator('main[aria-busy="true"]')).toHaveCount(0);
+}
+
+async function scrollToText(page: Page, text: string) {
+  const target = page.getByText(text, { exact: false }).first();
+  await expect(target).toBeVisible();
+  await target.scrollIntoViewIfNeeded();
+}
+
 async function selectAllProjects(page: Page) {
   const header = page.locator('[data-testid="select-all"]');
   if ((await header.count()) > 0 && (await header.isVisible())) {
@@ -80,103 +103,202 @@ async function selectAllProjects(page: Page) {
   }
 }
 
-test.describe("01 — public homepage", () => {
-  test("English widescreen hero with procedural WebGL accent", async ({ page }, testInfo) => {
-    await page.goto(englishUrl("/"), { waitUntil: "domcontentloaded" });
+test.describe("01 — public marketing and experience", () => {
+  test("English widescreen homepage hero and cinematic 3D section", async ({ page }, testInfo) => {
+    await gotoEnglish(page, "/");
     await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
     // The R3F canvas is dynamically imported and must be present in the hero.
     await expect(page.locator("canvas").first()).toBeVisible({ timeout: 30_000 });
     await settle(page, 1_500);
-    await capture(page, testInfo, "01-homepage-hero-wide");
+    await capture(page, testInfo, "01-public-homepage-hero-wide");
   });
-});
 
-test.describe("02 — public interactive catalog", () => {
-  test("English widescreen projects catalog", async ({ page }, testInfo) => {
-    await page.goto(englishUrl("/projects"), { waitUntil: "domcontentloaded" });
+  test("English widescreen interactive projects catalog and filters", async ({ page }, testInfo) => {
+    await gotoEnglish(page, "/projects");
     await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
-    const firstProject = page
-      .getByRole("button", { name: /View project|Project details/ })
-      .first();
+    const firstProject = page.getByRole("button", { name: /View project|Project details/ }).first();
     await expect(firstProject).toBeVisible();
     await firstProject.scrollIntoViewIfNeeded();
     await settle(page, 1_000);
-    await capture(page, testInfo, "02-projects-catalog-wide");
+    await capture(page, testInfo, "01-public-projects-catalog-filters-wide");
   });
 
   test("English widescreen project preview modal", async ({ page }, testInfo) => {
-    await page.goto(englishUrl("/projects"), { waitUntil: "domcontentloaded" });
-    const trigger = page
-      .getByRole("button", { name: /View project|Project details/ })
-      .first();
+    await gotoEnglish(page, "/projects");
+    const trigger = page.getByRole("button", { name: /View project|Project details/ }).first();
     await expect(trigger).toBeVisible();
     await trigger.click();
     await expect(page.getByRole("dialog")).toBeVisible();
     await settle(page, 900);
-    await capture(page, testInfo, "02-projects-preview-modal-wide");
+    await capture(page, testInfo, "01-public-project-preview-modal-wide");
+  });
+
+  test("English widescreen project detail deep dive", async ({ page }, testInfo) => {
+    await gotoEnglish(page, "/projects/advanced-industries");
+    await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
+    await expect(page.getByText("Advanced Industries Complex").first()).toBeVisible();
+    await settle(page, 1_000);
+    await capture(page, testInfo, "01-public-project-detail-wide");
+  });
+
+  test("English widescreen public consultation and bid form", async ({ page }, testInfo) => {
+    await gotoEnglish(page, "/contact");
+    await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
+    const form = page.locator("form").first();
+    await expect(form).toBeVisible();
+    await form.scrollIntoViewIfNeeded();
+    await settle(page, 900);
+    await capture(page, testInfo, "01-public-contact-bid-form-wide");
+  });
+
+  test("English widescreen executive consultation booking", async ({ page }, testInfo) => {
+    await gotoEnglish(page, "/consultation");
+    await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
+    const form = page.locator("form").first();
+    await expect(form).toBeVisible();
+    await form.scrollIntoViewIfNeeded();
+    await settle(page, 900);
+    await capture(page, testInfo, "01-public-consultation-booking-wide");
   });
 });
 
-test.describe("03 — client portal", () => {
+test.describe("02 — client transparency portal", () => {
   test.use({ storageState: "tests/.auth/portal.json" });
 
-  test("English widescreen live milestones and financial tracker", async ({ page }, testInfo) => {
-    const feed = page.waitForResponse(
-      (response) => response.url().includes("/api/portal/projects") && response.ok(),
-    );
-    await page.goto(englishUrl("/portal"), { waitUntil: "domcontentloaded" });
-    await feed;
+  test("English widescreen portal overview with live metrics", async ({ page }, testInfo) => {
+    await gotoEnglish(page, "/portal", "/api/portal/projects");
     await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
     await expect(page.getByText("Advanced Industries Complex").first()).toBeVisible();
     await settle(page, 1_100);
-    await capture(page, testInfo, "03-client-portal-dashboard-wide");
+    await capture(page, testInfo, "02-portal-overview-metrics-wide");
   });
 
-  test("English widescreen secure contract signing view", async ({ page }, testInfo) => {
-    const contractFeed = page.waitForResponse(
-      (response) => response.url().includes("/api/portal/contract") && response.ok(),
-    );
-    await page.goto(englishUrl("/portal/projects"), { waitUntil: "domcontentloaded" });
-    await contractFeed;
-    await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
+  test("English widescreen projects assigned to the client", async ({ page }, testInfo) => {
+    await gotoEnglish(page, "/portal/projects", "/api/portal/projects");
+    await expect(page.getByText("Project tracking").first()).toBeVisible();
+    await expect(page.getByText("Advanced Industries Complex").first()).toBeVisible();
+    await settle(page, 1_000);
+    await capture(page, testInfo, "02-portal-assigned-projects-wide");
+  });
+
+  test("English widescreen live milestones and progress tracker", async ({ page }, testInfo) => {
+    await gotoEnglish(page, "/portal/projects", "/api/portal/projects");
+    await scrollToText(page, "Timeline");
+    await settle(page, 900);
+    await capture(page, testInfo, "02-portal-milestones-progress-wide");
+  });
+
+  test("English widescreen financial breakdown, invoices and payment statuses", async (
+    { page },
+    testInfo,
+  ) => {
+    await gotoEnglish(page, "/portal/financials");
+    await expect(page.getByText("Financials & invoices").first()).toBeVisible();
+    await expect(page.getByText("Contract value").first()).toBeVisible();
+    await settle(page, 1_000);
+    await capture(page, testInfo, "02-portal-financials-invoices-wide");
+  });
+
+  test("English widescreen secure contract signing with cryptographic digest", async (
+    { page },
+    testInfo,
+  ) => {
+    await gotoEnglish(page, "/portal/projects", "/api/portal/contract");
+    await expect(page.getByText("Contract & digital sign-off").first()).toBeVisible();
 
     const signature = page.locator("#contract-signature");
     if (await signature.count()) {
       await signature.fill("Showcase Client");
       await page.locator('form input[type="checkbox"]').first().check();
-      await expect(signature).toBeVisible();
-      await signature.scrollIntoViewIfNeeded();
-    } else {
-      await page.getByText("Contract & digital sign-off").first().scrollIntoViewIfNeeded();
+      const signed = page.waitForResponse(
+        (response) =>
+          response.url().includes("/api/portal/contract") &&
+          response.request().method() === "POST" &&
+          response.ok(),
+      );
+      await page
+        .getByRole("button", { name: /Sign contract digitally|Re-sign updated contract/ })
+        .click();
+      await signed;
     }
-    await settle(page, 900);
-    await capture(page, testInfo, "06-contract-signing-view-wide");
+
+    await expect(page.getByText("Contract digest", { exact: false }).first()).toBeVisible({
+      timeout: 20_000,
+    });
+    await scrollToText(page, "Contract & digital sign-off");
+    await settle(page, 1_000);
+    await capture(page, testInfo, "02-portal-contract-signing-digest-wide");
   });
 });
 
-test.describe("04 — admin control center", () => {
+test.describe("03 — independent admin shell and control center", () => {
   test.use({ storageState: "tests/.auth/admin.json" });
 
-  test("English widescreen dark luxury KPI overview", async ({ page }, testInfo) => {
-    const kpis = page.waitForResponse(
-      (response) => response.url().includes("/api/admin/kpis") && response.ok(),
-    );
-    await page.goto(englishUrl("/admin"), { waitUntil: "domcontentloaded" });
-    await kpis;
+  test("English widescreen admin dashboard KPIs and budget health", async ({ page }, testInfo) => {
+    await gotoEnglish(page, "/admin", "/api/admin/kpis");
+    await waitForAdminShell(page);
     await expect(page.getByText("Counted where status is new")).toBeVisible();
     await settle(page, 1_000);
-    await capture(page, testInfo, "04-admin-dashboard-wide");
+    await capture(page, testInfo, "03-admin-dashboard-kpis-wide");
   });
 
-  test("English widescreen projects table and bulk bar", async ({ page }, testInfo) => {
-    await page.goto(englishUrl("/admin/projects?view=table"), { waitUntil: "domcontentloaded" });
+  test("English ultra-wide full projects management table", async ({ page }, testInfo) => {
+    await page.setViewportSize({ width: 2560, height: 1440 });
+    await gotoEnglish(page, "/admin/projects?view=table");
+    await waitForAdminShell(page);
     await expect(page.locator('[data-testid="projects-toolbar"]')).toBeVisible();
     await expect(page.locator('[data-testid="projects-responsive"]')).toBeVisible();
-    await settle(page, 900);
+    await settle(page, 1_000);
+    await capture(page, testInfo, "03-admin-projects-table-full-wide");
+  });
 
+  test("English widescreen projects bulk actions bar", async ({ page }, testInfo) => {
+    await gotoEnglish(page, "/admin/projects?view=table");
+    await waitForAdminShell(page);
+    await expect(page.locator('[data-testid="projects-toolbar"]')).toBeVisible();
     await selectAllProjects(page);
     await expect(page.locator('[data-testid="projects-bulk-bar"]')).toBeVisible();
-    await settle(page, 500);
-    await capture(page, testInfo, "05-admin-projects-bulk-bar-wide");
+    await settle(page, 600);
+    await capture(page, testInfo, "03-admin-projects-bulk-actions-wide");
   });
+
+  test("English compact widescreen projects status filters", async ({ page }, testInfo) => {
+    await page.setViewportSize({ width: 1600, height: 900 });
+    await gotoEnglish(page, "/admin/projects?view=table");
+    await waitForAdminShell(page);
+    const chips = page.locator('[data-testid="projects-status-chips"]');
+    await expect(chips).toBeVisible();
+    await chips.getByRole("button", { name: /Ongoing/ }).click();
+    await settle(page, 800);
+    await capture(page, testInfo, "03-admin-projects-status-filters-wide");
+  });
+
+  const sections = [
+    { path: "/admin/milestones", label: "Milestones", name: "03-admin-milestones-management-wide" },
+    { path: "/admin/contracts", label: "Contracts", name: "03-admin-contracts-management-wide" },
+    {
+      path: "/admin/consultations",
+      label: "Consultations",
+      name: "03-admin-consultations-management-wide",
+    },
+    { path: "/admin/inquiries", label: "Inquiries", name: "03-admin-inquiries-management-wide" },
+    { path: "/admin/financials", label: "Financials", name: "03-admin-financials-wide" },
+    { path: "/admin/site-content", label: "Content", name: "03-admin-content-management-wide" },
+    { path: "/admin/media", label: "Media", name: "03-admin-media-library-wide" },
+    { path: "/admin/audit", label: "Audit trail", name: "03-admin-audit-trail-wide" },
+    { path: "/admin/maintenance", label: "Maintenance", name: "03-admin-maintenance-wide" },
+  ];
+
+  for (const section of sections) {
+    test(`English widescreen ${section.label.toLowerCase()} management view`, async (
+      { page },
+      testInfo,
+    ) => {
+      await gotoEnglish(page, section.path);
+      await waitForAdminShell(page);
+      await expect(page.getByText(section.label, { exact: false }).first()).toBeVisible();
+      await settle(page, 950);
+      await capture(page, testInfo, section.name);
+    });
+  }
 });

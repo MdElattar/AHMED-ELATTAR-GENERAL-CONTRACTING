@@ -6,7 +6,7 @@
 
 This document is the portfolio companion for the Ahmed Elattar General Contracting Co. web platform. It combines the public luxury experience, the client transparency portal, and the independent administrative control center into one production-grade application. The screenshots in this folder are generated automatically from the running product — not mocked designs — using the Playwright suite in `tests/portfolio-showcase.spec.ts`.
 
-> **Capture policy:** every image in this folder is forced to **English (LTR)** and captured from a **1920 × 1080 landscape viewport** at `deviceScaleFactor: 2`, producing **3840 × 2160 (4K, 16:9)** PNG assets. The generator asserts locale, direction, viewport ratio, PNG signature, and exported image ratio before writing each file.
+> **Capture policy:** every asset is forced to **English (LTR)** and captured from a **16:9 landscape viewport**. Standard views use **1920 × 1080** at `deviceScaleFactor: 2` → **3840 × 2160 (4K)**; the full admin table uses **2560 × 1440** → **5120 × 2880**, and the compact status-filter view uses **1600 × 900** → **3200 × 1800**. The generator asserts locale, direction, viewport ratio, PNG signature, and exported image ratio before writing each file.
 
 > ملاحظة تسمية المجلد: تم استخدام `portfolio-showcase/` كاسم ASCII آمن للتنقل عبر أنظمة CI وWindows، وهو الاسم التقني المكافئ لمجلد **«احترافي»**. جميع اللقطات باللغة الإنجليزية وباتجاه أفقي.
 
@@ -42,21 +42,50 @@ A unified digital platform for Ahmed Elattar General Contracting Co. that turns 
 
 ## 3. معرض اللقطات / Visual showcase
 
-Every asset below is **English, LTR, landscape, 16:9, and 3840 × 2160 px (4K)**. No Arabic, portrait, tablet, or mobile captures are included in this showcase set.
+All **24** assets below are **English, LTR, landscape, and 16:9**. No Arabic, portrait, tablet, or mobile captures are included in this showcase set.
+
+### Public marketing & experience — 6 views
 
 | # | Critical view | What it demonstrates | Capture |
 | --- | --- | --- | --- |
-| 01 | Public widescreen homepage / hero | Cinematic intro, editorial typography, and the lazy-loaded Three.js / R3F WebGL accent | [Hero](01-homepage-hero-wide.png) |
-| 02 | Interactive projects catalog — wide | Search, filters, project cards, and the interactive catalog grid | [Catalog](02-projects-catalog-wide.png) |
-| 02b | Project preview modal — wide | Accessible `role="dialog"` preview with gallery, scope, and full-page CTA | [Modal](02-projects-preview-modal-wide.png) |
-| 03 | Client portal dashboard — wide | Live assigned-project feed, milestone progress, and financial tracker | [Portal](03-client-portal-dashboard-wide.png) |
-| 04 | Admin dashboard overview — wide | Dark luxury shell, KPI metrics, budget health, and operations panels | [Admin](04-admin-dashboard-wide.png) |
-| 05 | Projects management table & bulk bar — wide | Responsive table engine, gold-selection states, and the bulk action bar | [Bulk bar](05-admin-projects-bulk-bar-wide.png) |
-| 06 | Secure contract signing view — wide | Consent-gated digital signature, contract digest, and milestone verification gate | [Signing](06-contract-signing-view-wide.png) |
+| 01 | Homepage hero & cinematic 3D section | Cinematic intro, editorial typography, and the lazy-loaded Three.js / R3F WebGL accent | [Hero](01-public-homepage-hero-wide.png) |
+| 02 | Interactive projects catalog & filters | Search, filter chips, project cards, and the interactive catalog grid | [Catalog](01-public-projects-catalog-filters-wide.png) |
+| 03 | Project preview modal | Accessible `role="dialog"` preview with gallery, scope, and full-page CTA | [Modal](01-public-project-preview-modal-wide.png) |
+| 04 | Project detail deep dive | Full project narrative, scope, cost visualizer, and related projects | [Detail](01-public-project-detail-wide.png) |
+| 05 | Public consultation & bid form | Multi-step RFQ with attachments, consent, and validation states | [Contact](01-public-contact-bid-form-wide.png) |
+| 06 | Executive consultation booking | Available dates, session modes, and the executive booking form | [Booking](01-public-consultation-booking-wide.png) |
+
+### Client transparency portal — 5 views
+
+| # | Critical view | What it demonstrates | Capture |
+| --- | --- | --- | --- |
+| 07 | Portal overview & live metrics | Signed-in dashboard with assigned projects, progress, and live financial summary | [Overview](02-portal-overview-metrics-wide.png) |
+| 08 | Projects assigned to client | Ownership-scoped project list derived from the signed session | [Projects](02-portal-assigned-projects-wide.png) |
+| 09 | Live milestones & progress tracker | Timeline, current milestone, and completion progress | [Milestones](02-portal-milestones-progress-wide.png) |
+| 10 | Financial breakdown & invoices | Contract value, spend, remaining balance, invoice states, and payment statuses | [Financials](02-portal-financials-invoices-wide.png) |
+| 11 | Secure contract signing & digest | Consent-gated digital signature, contract hash, and milestone verification gate | [Signing](02-portal-contract-signing-digest-wide.png) |
+
+### Independent admin shell & control center — 13 views
+
+| # | Critical view | What it demonstrates | Capture |
+| --- | --- | --- | --- |
+| 12 | Admin dashboard KPIs & budget health | Dark luxury shell, KPI metrics, active-project alerts, and budget panels | [Dashboard](03-admin-dashboard-kpis-wide.png) |
+| 13 | Full projects management table | Ultra-wide 5120 × 2880 table with all responsive columns visible | [Full table](03-admin-projects-table-full-wide.png) |
+| 14 | Bulk actions bar | Gold selection state with the bulk operations toolbar engaged | [Bulk bar](03-admin-projects-bulk-actions-wide.png) |
+| 15 | Status filters | Compact 3200 × 1800 landscape view with the "Ongoing" filter active | [Filters](03-admin-projects-status-filters-wide.png) |
+| 16 | Milestones management | Financial milestones and completion tracking | [Milestones](03-admin-milestones-management-wide.png) |
+| 17 | Contracts management | Contract records, sign-off state, and digest visibility | [Contracts](03-admin-contracts-management-wide.png) |
+| 18 | Consultations management | Executive consultation requests and booking state | [Consultations](03-admin-consultations-management-wide.png) |
+| 19 | Inquiries management | Public RFQ and contact leads in the admin pipeline | [Inquiries](03-admin-inquiries-management-wide.png) |
+| 20 | Financials | Portfolio financial performance and margin reporting | [Financials](03-admin-financials-wide.png) |
+| 21 | Content management / CMS | Editable bilingual copy and homepage content fields | [Content](03-admin-content-management-wide.png) |
+| 22 | Media library | Banners, project imagery, and media overrides | [Media](03-admin-media-library-wide.png) |
+| 23 | Audit trail | Security and activity log with actor/action metadata | [Audit](03-admin-audit-trail-wide.png) |
+| 24 | Maintenance | Operational maintenance and data-integrity controls | [Maintenance](03-admin-maintenance-wide.png) |
 
 ### Featured capture — English widescreen
 
-![Homepage hero — English landscape](01-homepage-hero-wide.png)
+![Homepage hero — English landscape](01-public-homepage-hero-wide.png)
 
 ---
 
@@ -148,7 +177,7 @@ Environment requirements for authenticated captures:
 ## 7. Delivery notes / ملاحظات التسليم
 
 - Screenshots are **live product evidence**: the portal views use a real signed-in client session, and the admin views use a real admin session.
-- Every image is **English-only and horizontal**; the suite fails fast if locale, direction, viewport, or exported aspect ratio drifts.
+- Every image is **English-only and horizontal**; the suite fails fast if locale, direction, viewport, or exported aspect ratio drifts. Three 16:9 landscape widths are used deliberately: 1920, 2560, and 1600 CSS pixels.
 - No secrets, tokens, or private environment values are embedded in this document or in the images.
 - The screenshot generator is idempotent: rerunning it overwrites the same deterministic `-wide` filenames.
 - The ASCII folder alias keeps automation portable while the Arabic identity remains explicit in the title and narrative.
