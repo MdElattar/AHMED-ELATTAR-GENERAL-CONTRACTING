@@ -6,7 +6,9 @@
 
 This document is the portfolio companion for the Ahmed Elattar General Contracting Co. web platform. It combines the public luxury experience, the client transparency portal, and the independent administrative control center into one production-grade application. The screenshots in this folder are generated automatically from the running product — not mocked designs — using the Playwright suite in `tests/portfolio-showcase.spec.ts`.
 
-> ملاحظة تسمية المجلد: تم استخدام `portfolio-showcase/` كاسم ASCII آمن للتنقل عبر أنظمة CI وWindows، وهو الاسم التقني المكافئ لمجلد **«احترافي»**.
+> **Capture policy:** every image in this folder is forced to **English (LTR)** and captured from a **1920 × 1080 landscape viewport** at `deviceScaleFactor: 2`, producing **3840 × 2160 (4K, 16:9)** PNG assets. The generator asserts locale, direction, viewport ratio, PNG signature, and exported image ratio before writing each file.
+
+> ملاحظة تسمية المجلد: تم استخدام `portfolio-showcase/` كاسم ASCII آمن للتنقل عبر أنظمة CI وWindows، وهو الاسم التقني المكافئ لمجلد **«احترافي»**. جميع اللقطات باللغة الإنجليزية وباتجاه أفقي.
 
 ---
 
@@ -40,21 +42,21 @@ A unified digital platform for Ahmed Elattar General Contracting Co. that turns 
 
 ## 3. معرض اللقطات / Visual showcase
 
-All images are captured at a retina-equivalent device scale factor of 2. Desktop captures are **3200 × 2000 px**; responsive mobile captures are **780 × 1688 px**.
+Every asset below is **English, LTR, landscape, 16:9, and 3840 × 2160 px (4K)**. No Arabic, portrait, tablet, or mobile captures are included in this showcase set.
 
-| # | View | Arabic description | Capture |
+| # | Critical view | What it demonstrates | Capture |
 | --- | --- | --- | --- |
-| 01 | Public homepage — hero | الواجهة الرئيسية مع لمسة WebGL ثلاثية الأبعاد ومقدمة سينمائية | [AR](01-home-hero-ar.png) · [EN](01-home-hero-en.png) |
-| 02 | Interactive catalog | كتالوج المشاريع التفاعلي مع الفلاتر والبحث | [Full page](02-projects-catalog.png) |
-| 02b | Project preview modal | نافذة معاينة المشروع التفاعلية | [Modal](02-projects-preview-modal.png) |
-| 03 | Client portal | لوحة العميل مع المراحل والمتتبع المالي | [Dashboard](03-client-portal-dashboard.png) |
-| 04 | Admin overview | لوحة الإدارة الداكنة مع مؤشرات الأداء | [Overview](04-admin-dashboard.png) |
-| 05 | Projects management | جدول المشاريع وشريط العمليات الجماعية | [Desktop](05-admin-projects-bulk-desktop.png) · [Tablet](05-admin-projects-bulk-tablet.png) · [Mobile](05-admin-projects-bulk-mobile.png) · [Full](05-admin-projects-table-full.png) |
-| 06 | Contract signing | توقيع العقد الآمن مع موافقة وبصمة تشفيرية | [Signing](06-client-contract-signing.png) · [Full](06-client-contract-signing-full.png) |
+| 01 | Public widescreen homepage / hero | Cinematic intro, editorial typography, and the lazy-loaded Three.js / R3F WebGL accent | [Hero](01-homepage-hero-wide.png) |
+| 02 | Interactive projects catalog — wide | Search, filters, project cards, and the interactive catalog grid | [Catalog](02-projects-catalog-wide.png) |
+| 02b | Project preview modal — wide | Accessible `role="dialog"` preview with gallery, scope, and full-page CTA | [Modal](02-projects-preview-modal-wide.png) |
+| 03 | Client portal dashboard — wide | Live assigned-project feed, milestone progress, and financial tracker | [Portal](03-client-portal-dashboard-wide.png) |
+| 04 | Admin dashboard overview — wide | Dark luxury shell, KPI metrics, budget health, and operations panels | [Admin](04-admin-dashboard-wide.png) |
+| 05 | Projects management table & bulk bar — wide | Responsive table engine, gold-selection states, and the bulk action bar | [Bulk bar](05-admin-projects-bulk-bar-wide.png) |
+| 06 | Secure contract signing view — wide | Consent-gated digital signature, contract digest, and milestone verification gate | [Signing](06-contract-signing-view-wide.png) |
 
-### لقطة مميزة / Featured capture
+### Featured capture — English widescreen
 
-![Homepage hero — Arabic RTL](01-home-hero-ar.png)
+![Homepage hero — English landscape](01-homepage-hero-wide.png)
 
 ---
 
@@ -120,7 +122,7 @@ Full control-by-control evidence is in [`../SECURITY_AUDIT_REPORT.md`](../SECURI
 
 ## 6. Reproducing the showcase / إعادة توليد اللقطات
 
-The captures are produced by a dedicated Playwright project. It provisions a deterministic client identity, assigns ownership through the real admin API, authenticates both admin and portal sessions, then navigates the live application.
+The captures are produced by a dedicated Playwright project. It provisions a deterministic client identity, assigns ownership through the real admin API, authenticates both admin and portal sessions, then navigates the live application. Every navigation appends `lang=en`; the capture helper refuses to write an image unless the document is `lang="en"`, `dir="ltr"`, the viewport is 16:9, and the exported PNG is landscape 16:9.
 
 ```bash
 # 1) Generate every screenshot in this folder
@@ -146,9 +148,11 @@ Environment requirements for authenticated captures:
 ## 7. Delivery notes / ملاحظات التسليم
 
 - Screenshots are **live product evidence**: the portal views use a real signed-in client session, and the admin views use a real admin session.
+- Every image is **English-only and horizontal**; the suite fails fast if locale, direction, viewport, or exported aspect ratio drifts.
 - No secrets, tokens, or private environment values are embedded in this document or in the images.
-- The screenshot generator is idempotent: rerunning it overwrites the same deterministic filenames.
+- The screenshot generator is idempotent: rerunning it overwrites the same deterministic `-wide` filenames.
 - The ASCII folder alias keeps automation portable while the Arabic identity remains explicit in the title and narrative.
+- Showcase updates follow the current deployment policy: changes are committed and pushed **directly to `main`**, with no feature or fix branches.
 - The repository also includes `SECURITY_AUDIT_REPORT.md`, `tests/security-hardening.spec.ts`, and `scripts/security-scan.mjs` for independent verification.
 
 ---

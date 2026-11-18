@@ -67,15 +67,16 @@ export default defineConfig({
       dependencies: ["setup"],
     },
     {
-      // Portfolio captures use a larger retina-equivalent viewport, then
-      // override it locally for the responsive admin views.
+      // Portfolio captures are strictly English, landscape, and 16:9.
+      // With deviceScaleFactor 2 the exported PNGs are 3840 x 2160 (4K).
       name: "portfolio",
       testMatch: /portfolio-showcase\.spec\.ts/,
       dependencies: ["setup", "portal-setup"],
       use: {
         storageState: { cookies: [], origins: [] },
-        viewport: { width: 1600, height: 1000 },
+        viewport: { width: 1920, height: 1080 },
         deviceScaleFactor: 2,
+        locale: "en-US",
       },
     },
   ],
