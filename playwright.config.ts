@@ -80,6 +80,12 @@ export default defineConfig({
       use: { storageState: "tests/.auth/portal.json" },
     },
     {
+      name: "pwa",
+      testMatch: /pwa-.*\.spec\.ts/,
+      dependencies: ["setup"],
+      use: { storageState: { cookies: [], origins: [] } },
+    },
+    {
       name: "portal-setup",
       testMatch: /portal\.setup\.ts/,
       dependencies: ["setup"],

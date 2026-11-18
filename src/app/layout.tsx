@@ -7,10 +7,12 @@ import { AtmosphereProvider } from "@/components/providers/AtmosphereProvider";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { WorkspaceProvider } from "@/components/providers/WorkspaceProvider";
+import { BRAND } from "@/lib/brand";
 import { RouteChrome } from "@/components/layout/RouteChrome";
 import IdleGuard from "@/components/auth/IdleGuard";
 import PasskeyEnrollmentGate from "@/components/auth/PasskeyEnrollmentGate";
 import { ToastProvider } from "@/components/ui/Toast";
+import { ServiceWorkerRegistrar } from "@/components/providers/ServiceWorkerRegistrar";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const arabic = Tajawal({
@@ -43,17 +45,16 @@ const display = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://alattar.sa"),
+  metadataBase: new URL(BRAND.siteUrl),
   title: {
-    default: "شركة أحمد العطار للمقاولات العامة | نبني ما يبقى",
-    template: "%s | أحمد العطار",
+    default: `${BRAND.nameAr} | ${BRAND.descriptionAr}`,
+    template: `%s | ${BRAND.shortAr}`,
   },
-  description:
-    "شركة أحمد العطار للمقاولات العامة — أربعة عقود من الهندسة الدقيقة والمشاريع الضخمة في المملكة العربية السعودية. من الرؤية الأولى إلى آخر مسمار.",
+  description: `${BRAND.nameAr} — ${BRAND.descriptionAr}`,
   icons: {
     icon: [{ url: "/brand/logo-mark.svg", type: "image/svg+xml" }],
     shortcut: "/brand/logo-mark.svg",
-    apple: "/brand/logo-mark.svg",
+    apple: "/icons/icon-180.png",
   },
   keywords: [
     "مقاولات",
@@ -69,22 +70,21 @@ export const metadata: Metadata = {
     "Saudi Arabia",
     "contracting",
   ],
-  authors: [{ name: "Ahmed Elattar General Contracting Co." }],
-  creator: "Ahmed Elattar General Contracting Co.",
+  authors: [{ name: BRAND.nameEn }],
+  creator: BRAND.nameEn,
   openGraph: {
     type: "website",
     locale: "ar_SA",
     alternateLocale: ["en_US"],
-    siteName: "Ahmed Elattar General Contracting Co.",
-    title: "شركة أحمد العطار للمقاولات العامة | نبني ما يبقى",
-    description:
-      "أربعة عقود من الهندسة الدقيقة والمشاريع الضخمة في المملكة العربية السعودية.",
-    url: "https://alattar.sa",
+    siteName: BRAND.nameEn,
+    title: `${BRAND.nameAr} | ${BRAND.shortAr}`,
+    description: BRAND.descriptionAr,
+    url: BRAND.siteUrl,
   },
   twitter: {
     card: "summary_large_image",
-    title: "Ahmed Elattar General Contracting Co.",
-    description: "We build what endures. Four decades of precision construction in Saudi Arabia.",
+    title: BRAND.nameEn,
+    description: BRAND.descriptionEn,
   },
   robots: {
     index: true,
@@ -95,6 +95,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  themeColor: BRAND.themeColor,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -148,6 +149,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                       <IdleGuard />
                     </Suspense>
                     <SpeedInsights />
+                    <ServiceWorkerRegistrar />
                   </ToastProvider>
                 </AuthProvider>
               </ThemeProvider>

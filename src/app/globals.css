@@ -1697,5 +1697,15 @@ html[dir="rtl"] .carousel-progress {
   }
 }
 
+/* Below-the-fold public sections skip layout/paint until they approach the
+   viewport. Auth and admin shells are excluded because they own scroll
+   containers and measurement-sensitive overlays. */
+@supports (content-visibility: auto) {
+  main#main > section:nth-child(n + 3) {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 48rem;
+  }
+}
+
 /* Motion is transform/opacity only and fully suppressed by the global
    prefers-reduced-motion block above; no extra mobile-only timelines. */

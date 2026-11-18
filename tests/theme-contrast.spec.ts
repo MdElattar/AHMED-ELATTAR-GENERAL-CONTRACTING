@@ -94,6 +94,9 @@ for (const theme of THEMES) {
             test.skip(!authenticated, "Admin session could not be established.");
           }
 
+          // Freeze motion so axe measures settled colors, not mid-transition
+          // compositing from modal entrances or theme cross-fades.
+          await page.emulateMedia({ reducedMotion: "reduce" });
           await setTheme(page, theme);
           await page.goto(route);
           await expect(page.locator("html")).toHaveAttribute("data-theme", theme);

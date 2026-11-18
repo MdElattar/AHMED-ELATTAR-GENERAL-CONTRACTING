@@ -44,6 +44,9 @@ const nextConfig: NextConfig = {
     // Lucide is optimized by default; these two barrels are not and would
     // otherwise pull hundreds of unused modules into client chunks.
     optimizePackageImports: ["framer-motion", "@react-three/drei"],
+    // Keep prefetched soft navigations pending through brief network drops,
+    // then resume automatically. Full offline loads use the service worker.
+    useOffline: true,
   },
   turbopack: {
     root: process.cwd(),
@@ -59,6 +62,17 @@ const nextConfig: NextConfig = {
       {
         source: "/:path*",
         headers: securityHeaders,
+      },
+      {
+        source: "/sw.js",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=0, must-revalidate" },
+          { key: "Service-Worker-Allowed", value: "/" },
+        ],
+      },
+      {
+        source: "/icons/:path*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
       },
     ];
   },
