@@ -72,6 +72,7 @@ export async function POST(request: NextRequest) {
       response,
       purpose === "step-up" ? "step-up" : "authentication",
       email || undefined,
+      options.challenge,
     );
     return response;
   } catch (error) {

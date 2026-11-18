@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
     });
 
     const response = NextResponse.json({ options }, { headers: NO_STORE_HEADERS });
-    await createWebAuthnChallenge(response, "registration", user.email);
+    await createWebAuthnChallenge(response, "registration", user.email, options.challenge);
     return response;
   } catch (error) {
     if (isAuthConfigError(error)) return authUnavailable();

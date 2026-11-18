@@ -39,7 +39,9 @@ test.describe("PWA shell", () => {
   test("offline fallback is a public, server-rendered page", async ({ page }) => {
     const response = await page.goto("/offline", { waitUntil: "domcontentloaded" });
     expect(response?.ok()).toBe(true);
-    await expect(page.locator("main#main h1")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: /You are offline|أنت غير متصل بالإنترنت/ }),
+    ).toBeVisible();
     await expect(page.getByRole("link", { name: /Return home|العودة إلى الرئيسية/ })).toBeVisible();
   });
 

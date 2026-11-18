@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint && npm run check:colors",
     "check:colors": "node scripts/check-color-tokens.mjs",
+    "check:deploy": "node scripts/check-production-env.mjs",
     "typecheck": "tsc --noEmit",
     "seed": "tsx --env-file=.env scripts/seed.ts",
     "migrate:cities": "tsx --env-file=.env scripts/migrate-project-cities.ts",

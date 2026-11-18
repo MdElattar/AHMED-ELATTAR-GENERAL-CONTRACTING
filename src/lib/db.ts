@@ -650,7 +650,9 @@ async function mongoModels(): Promise<MongoModels> {
           required: true,
           index: true,
         },
-        email: { type: String, required: true, lowercase: true, index: true },
+        // Discoverable (usernameless) sign-in has no email until the assertion
+        // identifies the credential, so this field is intentionally optional.
+        email: { type: String, lowercase: true, index: true, default: "" },
         expiresAt: { type: Date, required: true, index: { expires: 0 } },
         usedAt: Date,
       },
@@ -1333,15 +1335,18 @@ export async function consumeAuthChallenge(input: {
   }
 
   const { AuthChallenge } = await mongoModels();
+  // `sanitizeFilter` wraps operator objects in `$eq`, which makes Mongoose try
+  // to cast `{ $gt: ... }` into a Date. A null check matches both missing and
+  // null Date fields and stays compatible with sanitized filters.
   const filter: Record<string, unknown> = {
     _id: input.id,
     kind: input.kind,
-    usedAt: { $exists: false },
-    expiresAt: { $gt: new Date() },
+    usedAt: null,
   };
   if (email) filter.email = email;
-  // `challenge` is `select: false` on the schema, so it must be explicitly
-  // included in the returning query or the consumed value would be empty.
+  // The atomic claim still guarantees one-time use. Expiry is checked after
+  // the claim and expired records are removed, so a stale challenge can never
+  // be accepted (and cannot be retried later).
   const doc = (await AuthChallenge.findOneAndUpdate(
     filter,
     { $set: { usedAt: new Date() } },
@@ -1349,7 +1354,14 @@ export async function consumeAuthChallenge(input: {
   )
     .select("+challenge")
     .lean()) as LeanDoc | null;
-  return doc ? str(doc.challenge) : null;
+  if (!doc) return null;
+  if (Date.parse(iso(doc.expiresAt)) <= Date.now()) {
+    await AuthChallenge.deleteOne({ _id: input.id });
+    return null;
+  }
+  // `challenge` is `select: false` on the schema, so it must be explicitly
+  // included in the returning query or the consumed value would be empty.
+  return str(doc.challenge);
 }
 
 function mapAuthChallenge(doc: LeanDoc): StoredAuthChallenge {
@@ -1436,13 +1448,19 @@ export async function consumeAdminGrant(grantId: string): Promise<boolean> {
 
   const { AdminGrant } = await mongoModels();
   // The conditional update makes confirmation one-time even if two requests
-  // race each other with the same valid code.
+  // race each other with the same valid code. Null matches missing/null dates
+  // without operator objects, which `sanitizeFilter` would wrap in `$eq`.
   const doc = (await AdminGrant.findOneAndUpdate(
-    { grantId, consumedAt: { $exists: false }, expiresAt: { $gt: new Date() } },
+    { grantId, consumedAt: null },
     { $set: { consumedAt: new Date() } },
     { new: true },
   ).lean()) as LeanDoc | null;
-  return Boolean(doc);
+  if (!doc) return false;
+  if (Date.parse(iso(doc.expiresAt)) <= Date.now()) {
+    await deleteAdminGrant(grantId);
+    return false;
+  }
+  return true;
 }
 
 export async function deleteAdminGrant(grantId: string): Promise<void> {
@@ -2046,14 +2064,20 @@ export async function listBookedSlots(
   }
 
   const { Consultation } = await mongoModels();
-  const docs = (await Consultation.find({
-    date,
-    mode: "boardroom",
-    status: { $in: ["requested", "confirmed"] },
-  })
-    .select("slot")
+  // Avoid operator objects in filters because `sanitizeFilter` wraps them in
+  // `$eq`; a small date-scoped read plus an in-memory status check is enough.
+  const docs = (await Consultation.find({ date, mode: "boardroom" })
+    .select("slot status")
     .lean()) as LeanDoc[];
-  return [...new Set(docs.map((doc) => str(doc.slot)).filter(Boolean))];
+  const active = new Set(["requested", "confirmed"]);
+  return [
+    ...new Set(
+      docs
+        .filter((doc) => active.has(str(doc.status)))
+        .map((doc) => str(doc.slot))
+        .filter(Boolean),
+    ),
+  ];
 }
 
 /* --------------------------------------------------------------- sign-offs */

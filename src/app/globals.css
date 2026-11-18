@@ -131,11 +131,12 @@
   --line: rgba(22,27,38,.10);
   --fg: #161B26;
   --muted: #5B6474;
-  --accent: #8F6A1A;
+  /* Darkened so 10–15% tinted pills keep AA contrast on white surfaces. */
+  --accent: #7A5812;
   --accent-strong: #6F520F;
   --accent-fg: #1A1405;
   --accent-fill: #C9A24A;
-  --success: #1F7A52;
+  --success: #166B47;
   --warning: #9A6412;
   --danger: #B23A2E;
   --info: #2A62A0;
@@ -145,8 +146,8 @@
   --surface-2-rgb: 241 238 231;
   --fg-rgb: 22 27 38;
   --muted-rgb: 91 100 116;
-  --accent-rgb: 143 106 26;
-  --success-rgb: 31 122 82;
+  --accent-rgb: 122 88 18;
+  --success-rgb: 22 107 71;
   --warning-rgb: 154 100 18;
   --danger-rgb: 178 58 46;
   --info-rgb: 42 98 160;
