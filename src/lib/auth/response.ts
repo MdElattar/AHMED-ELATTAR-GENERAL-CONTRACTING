@@ -1,3 +1,4 @@
+import "server-only";
 import { NextResponse } from "next/server";
 import { NO_STORE_HEADERS } from "@/lib/security/http";
 

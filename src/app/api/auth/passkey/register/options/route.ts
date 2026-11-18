@@ -8,11 +8,9 @@ import {
   webauthnUserID,
 } from "@/lib/auth/webauthn";
 import { getUserByEmail, listPasskeys } from "@/lib/db";
-import {
-  NO_STORE_HEADERS,
+import {NO_STORE_HEADERS,
   clientIp,
-  isSameOrigin,
-} from "@/lib/security/http";
+  isSameOrigin, safeLogError } from "@/lib/security/http";
 import { rateLimit } from "@/lib/security/rate-limit";
 
 export async function POST(request: NextRequest) {
@@ -77,7 +75,7 @@ export async function POST(request: NextRequest) {
     return response;
   } catch (error) {
     if (isAuthConfigError(error)) return authUnavailable();
-    console.error("[passkey] registration options failed", error);
+    safeLogError("[passkey] registration options failed", error);
     return NextResponse.json(
       { error: "passkey_unavailable" },
       { status: 503, headers: NO_STORE_HEADERS },

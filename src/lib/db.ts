@@ -1,3 +1,5 @@
+import { safeLogError } from "@/lib/security/http";
+import "server-only";
 import type { Model, Mongoose } from "mongoose";
 import { hashPassword } from "@/lib/auth/password";
 import type { ConsultationMode, ConsultationStatus } from "@/lib/consultation";
@@ -72,6 +74,8 @@ export type StoredProject = {
   id: string;
   slug: string;
   featured: boolean;
+  /** Normalised client addresses allowed to read this project in the portal. */
+  clientEmails: string[];
   payload: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
@@ -84,6 +88,32 @@ export type StoredProject = {
  * bytes live in MongoDB. `data` is base64 in the public shape and a Buffer in
  * MongoDB.
  */
+function collectClientEmails(value: unknown, output: Set<string>) {
+  if (typeof value === "string") {
+    const email = value.trim().toLowerCase();
+    if (email.includes("@") && email.length <= 254) output.add(email);
+    return;
+  }
+  if (Array.isArray(value)) {
+    for (const item of value) collectClientEmails(item, output);
+    return;
+  }
+  if (typeof value !== "object" || value === null) return;
+  const record = value as Record<string, unknown>;
+  for (const key of ["email", "clientEmail", "clientEmails", "contact", "client"]) {
+    if (key in record) collectClientEmails(record[key], output);
+  }
+}
+
+/** Ownership is derived from the project record itself, never from the URL. */
+export function projectClientEmails(payload: Record<string, unknown>): string[] {
+  const emails = new Set<string>();
+  for (const key of ["clientEmails", "clientEmail", "contactEmail", "contact", "client"]) {
+    if (key in payload) collectClientEmails(payload[key], emails);
+  }
+  return [...emails];
+}
+
 export type StoredAsset = {
   id: string;
   mime: string;
@@ -294,13 +324,17 @@ export function databaseMode(): "mongodb" | "memory" {
  * runnable; in production it fails closed instead of silently losing writes.
  */
 async function activeMode(): Promise<"mongodb" | "memory"> {
-  if (!hasMongoUri()) {
-    if (process.env.NODE_ENV === "production" && process.env.ALLOW_IN_MEMORY_DB !== "true") {
-      throw new Error("MONGODB_URI or MONGODB_URL is required in production.");
+  if (process.env.NODE_ENV === "production") {
+    // The in-process repository is a development convenience only. Even an
+    // accidentally configured ALLOW_IN_MEMORY_DB must never bypass the real
+    // database in production, where writes would be silently discarded.
+    if (!hasMongoUri()) throw new Error("MONGODB_URI or MONGODB_URL is required in production.");
+    if (globalForDb.__alattarForceMemory) {
+      throw new Error("In-memory database fallback is disabled in production.");
     }
-    return "memory";
   }
 
+  if (!hasMongoUri()) return "memory";
   if (globalForDb.__alattarForceMemory) return "memory";
 
   if (!globalForDb.__alattarMongoProbe) {
@@ -369,6 +403,7 @@ async function seedMemory() {
           id: id(),
           slug,
           featured: payload.featured === true,
+          clientEmails: projectClientEmails(payload),
           payload: { ...payload, slug },
           createdAt: timestamp,
           updatedAt: timestamp,
@@ -378,6 +413,7 @@ async function seedMemory() {
         id: id(),
         slug: CONTENT_SLUG,
         featured: false,
+        clientEmails: [],
         payload: buildSeedContent(),
         createdAt: timestamp,
         updatedAt: timestamp,
@@ -404,6 +440,9 @@ async function connectMongo(): Promise<Mongoose> {
     cached.promise = (async () => {
       const mongoose = (await import("mongoose")).default;
       mongoose.set("strictQuery", true);
+      // Never let a client-supplied `$`-prefixed key become a query operator.
+      // All repository inputs are additionally normalised by Zod schemas.
+      mongoose.set("sanitizeFilter", true);
       const uri = mongoUri();
       if (!uri) throw new Error("MONGODB_URI or MONGODB_URL is not configured");
       return mongoose.connect(uri, {
@@ -450,11 +489,11 @@ async function mongoModels(): Promise<MongoModels> {
         honorificAr: { type: String },
         company: { type: String, required: true },
         phone: { type: String },
-        passwordHash: { type: String, required: true },
+        passwordHash: { type: String, required: true, select: false },
         role: { type: String, enum: ["client", "admin"], default: "client", index: true },
         accountId: { type: String, required: true, index: true },
         sessionVersion: { type: Number, default: 0 },
-        resetTokenHash: { type: String, index: true },
+        resetTokenHash: { type: String, index: true, select: false },
         resetTokenExpiry: { type: Date },
         lastLoginAt: { type: Date },
       },
@@ -485,8 +524,8 @@ async function mongoModels(): Promise<MongoModels> {
         name: String,
         company: String,
         phone: String,
-        passwordHash: String,
-        codeHash: { type: String, required: true },
+        passwordHash: { type: String, select: false },
+        codeHash: { type: String, required: true, select: false },
         expiresAt: { type: Date, required: true, index: { expires: 0 } },
         attempts: { type: Number, default: 0 },
         consumedAt: Date,
@@ -504,9 +543,10 @@ async function mongoModels(): Promise<MongoModels> {
         specs: { type: mongoose.Schema.Types.Mixed },
         status: { type: String, index: true },
         featured: { type: Boolean, default: false, index: true },
+        clientEmails: { type: [String], default: [], index: true },
         payload: { type: mongoose.Schema.Types.Mixed, required: true },
       },
-      { timestamps: true, versionKey: false, strict: false },
+      { timestamps: true, versionKey: false, strict: true },
     );
 
     const assetSchema = new mongoose.Schema(
@@ -560,7 +600,7 @@ async function mongoModels(): Promise<MongoModels> {
     const otpSchema = new mongoose.Schema(
       {
         email: { type: String, required: true, index: true, lowercase: true },
-        codeHash: { type: String, required: true },
+        codeHash: { type: String, required: true, select: false },
         expiresAt: { type: Date, required: true, index: { expires: 0 } },
         attempts: { type: Number, default: 0 },
         consumedAt: Date,
@@ -621,6 +661,7 @@ async function mongoModels(): Promise<MongoModels> {
     projectSchema.index({ status: 1, createdAt: -1 });
     projectSchema.index({ category: 1, createdAt: -1 });
     projectSchema.index({ featured: 1, createdAt: -1 });
+    projectSchema.index({ clientEmails: 1 });
     inquirySchema.index({ status: 1, createdAt: -1 });
     inquirySchema.index({ kind: 1, createdAt: -1 });
     auditSchema.index({ createdAt: -1 });
@@ -764,6 +805,9 @@ function mapProject(doc: LeanDoc): StoredProject {
     id: docId(doc),
     slug: str(doc.slug),
     featured: doc.featured === true,
+    clientEmails: Array.isArray(doc.clientEmails)
+      ? projectClientEmails({ clientEmails: doc.clientEmails })
+      : projectClientEmails(payload),
     payload,
     createdAt: iso(doc.createdAt),
     updatedAt: iso(doc.updatedAt),
@@ -894,7 +938,9 @@ export async function getUserByEmail(email: string): Promise<StoredUser | null> 
   }
 
   const { User } = await mongoModels();
-  const doc = (await User.findOne({ email: normalized }).lean()) as LeanDoc | null;
+  const doc = (await User.findOne({ email: normalized })
+    .select("+passwordHash +resetTokenHash")
+    .lean()) as LeanDoc | null;
   return doc ? mapUser(doc) : null;
 }
 
@@ -1115,7 +1161,9 @@ export async function getAdminGrant(grantId: string): Promise<StoredAdminGrant |
   }
 
   const { AdminGrant } = await mongoModels();
-  const doc = (await AdminGrant.findOne({ grantId }).lean()) as LeanDoc | null;
+  const doc = (await AdminGrant.findOne({ grantId })
+    .select("+codeHash +passwordHash")
+    .lean()) as LeanDoc | null;
   return doc ? mapAdminGrant(doc) : null;
 }
 
@@ -1249,7 +1297,9 @@ export async function updateUser(
     { email: normalized },
     { $set: { ...patch, updatedAt: new Date() } },
     { new: true },
-  ).lean()) as LeanDoc | null;
+  )
+    .select("+passwordHash +resetTokenHash")
+    .lean()) as LeanDoc | null;
   return doc ? mapUser(doc) : null;
 }
 
@@ -1295,6 +1345,19 @@ export async function listProjects(): Promise<StoredProject[]> {
   const { Project } = await mongoModels();
   const docs = (await Project.find({}).sort({ createdAt: -1 }).limit(200).lean()) as LeanDoc[];
   return docs.map(mapProject);
+}
+
+/** Portfolio records a signed-in client is explicitly allowed to access. */
+export async function listOwnedProjects(email: string): Promise<StoredProject[]> {
+  const normalized = email.trim().toLowerCase();
+  if (!normalized) return [];
+  const projects = await listProjects();
+  return projects.filter(
+    (project) =>
+      !project.slug.startsWith("__") &&
+      (project.clientEmails.includes(normalized) ||
+        projectClientEmails(project.payload).includes(normalized)),
+  );
 }
 
 export async function getProjectBySlug(slug: string): Promise<StoredProject | null> {
@@ -1344,6 +1407,7 @@ export async function upsertProject(
       id: existing?.id ?? id(),
       slug: normalized,
       featured: payload.featured === true,
+      clientEmails: projectClientEmails(payload),
       payload: { ...payload, slug: normalized },
       createdAt: existing?.createdAt ?? timestamp,
       updatedAt: timestamp,
@@ -1379,6 +1443,7 @@ export async function upsertProject(
         specs,
         status: typeof payload.status === "string" ? payload.status : undefined,
         featured: payload.featured === true,
+        clientEmails: projectClientEmails({ ...payload, clientEmails: payload.clientEmails }),
         payload: { ...payload, slug: normalized },
         updatedAt: new Date(),
       },
@@ -1398,6 +1463,7 @@ export async function deleteProject(slug: string): Promise<boolean> {
   // while the admin Archived filter keeps the record recoverable.
   await upsertProject(normalized, {
     ...existing.payload,
+    clientEmails: existing.clientEmails,
     featured: existing.featured,
     archivedAt: new Date().toISOString(),
   });
@@ -1540,7 +1606,7 @@ export async function recordAudit(
     const { AuditLog } = await mongoModels();
     await AuditLog.create(audit);
   } catch (error) {
-    console.error("[audit] failed to persist entry", error);
+    safeLogError("[audit] failed to persist entry", error);
   }
 }
 
@@ -1594,6 +1660,7 @@ export async function getOtp(email: string): Promise<StoredOtp | null> {
   const { OtpToken } = await mongoModels();
   const doc = (await OtpToken.findOne({ email: normalized })
     .sort({ createdAt: -1 })
+    .select("+codeHash")
     .lean()) as LeanDoc | null;
   return doc ? mapOtp(doc) : null;
 }

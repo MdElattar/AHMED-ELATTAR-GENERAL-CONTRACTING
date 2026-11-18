@@ -1,11 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { cookies } from "next/headers";
-import { SESSION_COOKIE, verifySession } from "@/lib/auth/token";
-import {
-  hashPassword,
-  isStrongEnoughPassword,
-  verifyPassword,
-} from "@/lib/auth/password";
+import { activeSession } from "@/lib/auth/guard";
+import { clearSessionCookie } from "@/lib/auth/cookie";
+import { hashPassword, verifyPassword } from "@/lib/auth/password";
 import { getUserByEmail, recordAudit, updateUser } from "@/lib/db";
 import {
   NO_STORE_HEADERS,
@@ -14,7 +10,7 @@ import {
   readJsonBody,
 } from "@/lib/security/http";
 import { rateLimit } from "@/lib/security/rate-limit";
-import { isPlainObject } from "@/lib/security/validation";
+import { changePasswordSchema } from "@/lib/security/schemas";
 
 export async function POST(request: NextRequest) {
   if (!isSameOrigin(request)) {
@@ -33,8 +29,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const token = (await cookies()).get(SESSION_COOKIE)?.value;
-  const session = token ? await verifySession(token) : null;
+  const session = await activeSession();
 
   if (!session) {
     return NextResponse.json(
@@ -43,28 +38,15 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const body = await readJsonBody(request);
-  if (!isPlainObject(body)) {
-    return NextResponse.json({ error: "invalid_input" }, { status: 400 });
-  }
-
-  const currentPassword =
-    typeof body.currentPassword === "string" ? body.currentPassword : "";
-  const newPassword = typeof body.newPassword === "string" ? body.newPassword : "";
-
-  if (!currentPassword || !newPassword || newPassword.length > 256) {
-    return NextResponse.json(
-      { error: "invalid_input" },
-      { status: 400, headers: NO_STORE_HEADERS },
-    );
-  }
-
-  if (!isStrongEnoughPassword(newPassword)) {
+  const parsed = changePasswordSchema.safeParse(await readJsonBody(request));
+  if (!parsed.success) {
     return NextResponse.json(
       { error: "weak_password" },
       { status: 400, headers: NO_STORE_HEADERS },
     );
   }
+
+  const { currentPassword, newPassword } = parsed.data;
 
   const user = await getUserByEmail(session.email);
   if (!user) {
@@ -96,7 +78,10 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  await updateUser(session.email, { passwordHash: await hashPassword(newPassword) });
+  await updateUser(session.email, {
+    passwordHash: await hashPassword(newPassword),
+    sessionVersion: session.sessionVersion + 1,
+  });
 
   await recordAudit({
     actor: session.email,
@@ -106,5 +91,7 @@ export async function POST(request: NextRequest) {
     ip,
   });
 
-  return NextResponse.json({ ok: true }, { headers: NO_STORE_HEADERS });
+  const response = NextResponse.json({ ok: true }, { headers: NO_STORE_HEADERS });
+  clearSessionCookie(response);
+  return response;
 }

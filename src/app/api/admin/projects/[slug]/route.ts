@@ -6,14 +6,13 @@ import {
   recordAudit,
   upsertProject,
 } from "@/lib/db";
-import {
-  NO_STORE_HEADERS,
+import {NO_STORE_HEADERS,
   clientIp,
   isSameOrigin,
-  readJsonBody,
-} from "@/lib/security/http";
+  readJsonBody, safeLogError } from "@/lib/security/http";
 import { revalidatePublicContent } from "@/lib/revalidate";
 import { rateLimit } from "@/lib/security/rate-limit";
+import { adminProjectMutationSchema } from "@/lib/security/schemas";
 import { isPlainObject } from "@/lib/security/validation";
 
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -62,14 +61,17 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   }
 
   const body = await readJsonBody(request, MAX_PAYLOAD_BYTES);
-  if (!isPlainObject(body)) {
+  const parsed = adminProjectMutationSchema.safeParse(
+    isPlainObject(body) && isPlainObject(body.project) ? body : { project: body },
+  );
+  if (!parsed.success) {
     return NextResponse.json(
       { error: "invalid_input" },
       { status: 400, headers: NO_STORE_HEADERS },
     );
   }
 
-  const patch = isPlainObject(body.project) ? body.project : body;
+  const patch = parsed.data;
 
   try {
     const existing = (await listProjects()).find((project) => project.slug === slug);
@@ -90,7 +92,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     revalidatePublicContent(slug);
     return NextResponse.json({ project }, { headers: NO_STORE_HEADERS });
   } catch (error) {
-    console.error("[admin] failed to update project", error);
+    safeLogError("[admin] failed to update project", error);
     return NextResponse.json(
       { error: "server_error" },
       { status: 500, headers: NO_STORE_HEADERS },
@@ -131,7 +133,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     revalidatePublicContent(slug);
     return NextResponse.json({ ok: true, archived: true }, { headers: NO_STORE_HEADERS });
   } catch (error) {
-    console.error("[admin] failed to delete project", error);
+    safeLogError("[admin] failed to delete project", error);
     return NextResponse.json(
       { error: "server_error" },
       { status: 500, headers: NO_STORE_HEADERS },

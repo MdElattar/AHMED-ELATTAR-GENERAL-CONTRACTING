@@ -1,5 +1,5 @@
 import { NextResponse, connection, type NextRequest } from "next/server";
-import { currentSession } from "@/lib/auth/guard";
+import { activeSession, ownedProject } from "@/lib/auth/guard";
 import { contractDigest, projectMilestones, projectTitle } from "@/lib/contract";
 import {
   getProjectBySlug,
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 
-  const session = await currentSession();
+  const session = await activeSession();
   if (!session) {
     return NextResponse.json(
       { error: "unauthorized" },
@@ -63,6 +63,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { error: "project_not_found" },
       { status: 404, headers: NO_STORE_HEADERS },
+    );
+  }
+  if (!(await ownedProject(session, data.projectSlug))) {
+    return NextResponse.json(
+      { error: "forbidden" },
+      { status: 403, headers: NO_STORE_HEADERS },
     );
   }
 

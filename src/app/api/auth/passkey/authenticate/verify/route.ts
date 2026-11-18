@@ -24,12 +24,10 @@ import {
   touchPasskey,
   updateUser,
 } from "@/lib/db";
-import {
-  NO_STORE_HEADERS,
+import {NO_STORE_HEADERS,
   clientIp,
   isSameOrigin,
-  readJsonBody,
-} from "@/lib/security/http";
+  readJsonBody, safeLogError } from "@/lib/security/http";
 import { rateLimit } from "@/lib/security/rate-limit";
 import { isPlainObject } from "@/lib/security/validation";
 
@@ -165,7 +163,7 @@ export async function POST(request: NextRequest) {
     return response;
   } catch (error) {
     if (isAuthConfigError(error)) return authUnavailable();
-    console.error("[passkey] authentication verification failed", error);
+    safeLogError("[passkey] authentication verification failed", error);
     return NextResponse.json(
       { error: "invalid_credentials" },
       { status: 401, headers: NO_STORE_HEADERS },

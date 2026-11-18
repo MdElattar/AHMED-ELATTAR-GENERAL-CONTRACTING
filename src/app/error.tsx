@@ -14,7 +14,7 @@ export default function ErrorPage({
   const { t } = useI18n();
 
   useEffect(() => {
-    console.error(error);
+    if (process.env.NODE_ENV !== "production") console.error(error);
   }, [error]);
 
   return (

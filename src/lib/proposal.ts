@@ -1,3 +1,4 @@
+import { safeLogError } from "@/lib/security/http";
 import fs from "node:fs/promises";
 import path from "node:path";
 import fontkit, { type Font } from "@pdf-lib/fontkit";
@@ -206,7 +207,7 @@ async function loadArabicFont(): Promise<ArabicFont | null> {
 
     return { font, draw };
   } catch (error) {
-    console.error("[proposal] Arabic font unavailable", error);
+    safeLogError("[proposal] Arabic font unavailable", error);
     return null;
   }
 }

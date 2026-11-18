@@ -1,3 +1,4 @@
+import "server-only";
 import { L } from "@/lib/dictionary";
 import { projects } from "@/data/projects";
 import { portalProjects } from "@/data/portal";
@@ -54,6 +55,9 @@ export function buildSeedProjects(): Record<string, unknown>[] {
       updatedAt: "2026-10-12",
       gallery: project.gallery ?? [project.art],
       artGallery: project.artGallery ?? [project.art],
+      clientEmails: portal
+        ? [process.env.PORTAL_DEMO_CLIENT_EMAIL?.trim().toLowerCase() || "client@alattar.example"]
+        : [],
       milestones: portal?.milestones ?? [],
       documents: portal?.documents ?? [],
       invoices: portal?.invoices ?? [],
@@ -90,8 +94,16 @@ export function buildSeedContent(): Record<string, unknown> {
 }
 
 export function seedAdminIdentity() {
-  const email = (process.env.ADMIN_EMAIL || "alattar@mohamedaelattar.com").trim().toLowerCase();
-  const password = process.env.ADMIN_PASSWORD || "Alattar!Admin2026";
+  // Production never ships a known administrator identity. The seed falls
+  // back to an unguessable per-process password in development only.
+  const configuredEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+  const configuredPassword = process.env.ADMIN_PASSWORD;
+  if (process.env.NODE_ENV === "production" && (!configuredEmail || !configuredPassword)) {
+    throw new Error("ADMIN_EMAIL and ADMIN_PASSWORD are required in production.");
+  }
+  const email = configuredEmail || "alattar@mohamedaelattar.com";
+  const password =
+    configuredPassword || globalThis.crypto?.randomUUID?.() || `dev-${Math.random()}`;
   
   return {
     email,

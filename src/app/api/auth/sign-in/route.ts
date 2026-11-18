@@ -9,13 +9,11 @@ import { setSessionCookie } from "@/lib/auth/cookie";
 import { authUnavailable, isAuthConfigError } from "@/lib/auth/response";
 import { getUserByEmail, recordAudit, updateUser } from "@/lib/db";
 import { hashPassword, needsRehash, verifyPassword } from "@/lib/auth/password";
-import {
-  NO_STORE_HEADERS,
+import {NO_STORE_HEADERS,
   clientIp,
   isSameOrigin,
-  readJsonBody,
-} from "@/lib/security/http";
-import { rateLimit } from "@/lib/security/rate-limit";
+  readJsonBody, safeLogError } from "@/lib/security/http";
+import { rateLimitIdentity } from "@/lib/security/rate-limit";
 import { signInSchema } from "@/lib/security/schemas";
 
 export async function POST(request: NextRequest) {
@@ -24,17 +22,6 @@ export async function POST(request: NextRequest) {
   }
 
   const ip = clientIp(request);
-  const limited = rateLimit(`sign-in:${ip}`, 8, 15 * 60 * 1000);
-  if (!limited.ok) {
-    return NextResponse.json(
-      { error: "rate_limited" },
-      {
-        status: 429,
-        headers: { ...NO_STORE_HEADERS, "Retry-After": String(limited.retryAfter) },
-      },
-    );
-  }
-
   const parsed = signInSchema.safeParse(await readJsonBody(request));
   if (!parsed.success) {
     return NextResponse.json(
@@ -44,6 +31,17 @@ export async function POST(request: NextRequest) {
   }
 
   const { email, password, remember } = parsed.data;
+
+  const limited = rateLimitIdentity("sign-in", ip, email, 8, 15 * 60 * 1000);
+  if (!limited.ok) {
+    return NextResponse.json(
+      { error: "rate_limited" },
+      {
+        status: 429,
+        headers: { ...NO_STORE_HEADERS, "Retry-After": String(limited.retryAfter) },
+      },
+    );
+  }
 
   const user = await getUserByEmail(email);
 
@@ -74,11 +72,14 @@ export async function POST(request: NextRequest) {
     try {
       await updateUser(email, { passwordHash: await hashPassword(password) });
     } catch (error) {
-      console.error("[auth] password rehash failed", error);
+      safeLogError("[auth] password rehash failed", error);
     }
   }
 
   const ttl = remember ? REMEMBERED_SESSION_TTL_SECONDS : SESSION_TTL_SECONDS;
+  // Rotate the version on every successful sign-in so a stolen token from a
+  // previous session cannot be replayed alongside the new one.
+  const rotatedVersion = (user.sessionVersion ?? 0) + 1;
 
   let created: Awaited<ReturnType<typeof createSession>>;
   try {
@@ -94,7 +95,7 @@ export async function POST(request: NextRequest) {
         accountId: user.accountId,
         ...(user.phone ? { phone: user.phone } : {}),
         role: user.role,
-        sessionVersion: user.sessionVersion ?? 0,
+        sessionVersion: rotatedVersion,
       },
       ttl,
     );
@@ -110,7 +111,10 @@ export async function POST(request: NextRequest) {
 
   const { token, session } = created;
 
-  await updateUser(email, { lastLoginAt: new Date().toISOString() });
+  await updateUser(email, {
+    lastLoginAt: new Date().toISOString(),
+    sessionVersion: rotatedVersion,
+  });
 
   await recordAudit({
     actor: email,
@@ -125,6 +129,6 @@ export async function POST(request: NextRequest) {
     { headers: NO_STORE_HEADERS },
   );
 
-  setSessionCookie(response, token, remember ? ttl : undefined);
+  setSessionCookie(response, token, ttl);
   return response;
 }

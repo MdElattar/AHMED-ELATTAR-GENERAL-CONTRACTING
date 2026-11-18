@@ -1,3 +1,4 @@
+import "server-only";
 import { randomBytes } from "node:crypto";
 
 export const SESSION_COOKIE = "alattar_session";
@@ -141,16 +142,16 @@ function safeText(value: unknown, max: number) {
  */
 export function primaryAdminEmail() {
   const configured = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+  // In production an unset ADMIN_EMAIL means nobody holds the super-admin
+  // role; fail closed instead of granting it to a well-known address.
+  if (!configured && process.env.NODE_ENV === "production") return "";
   return configured || "alattar@mohamedaelattar.com";
 }
 
 export function isPrimaryAdminEmail(email: string) {
   const normalized = email.trim().toLowerCase();
   const primary = primaryAdminEmail();
-  return (
-    Boolean(normalized) &&
-    (normalized === primary || normalized === "alattar@mohamedaelattar.com")
-  );
+  return Boolean(normalized) && Boolean(primary) && normalized === primary;
 }
 
 export async function createSession(

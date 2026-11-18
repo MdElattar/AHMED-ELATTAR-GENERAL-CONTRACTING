@@ -1,3 +1,4 @@
+import "server-only";
 import { createHmac, randomInt, timingSafeEqual } from "node:crypto";
 import { AuthConfigError } from "@/lib/auth/token";
 

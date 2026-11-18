@@ -19,7 +19,7 @@ import {
   readJsonBody,
 } from "@/lib/security/http";
 import { rateLimit } from "@/lib/security/rate-limit";
-import { isPlainObject } from "@/lib/security/validation";
+import { adminMaintenanceSchema } from "@/lib/security/schemas";
 
 async function loadSource(url: string): Promise<Buffer | null> {
   const local = url.match(/^\/api\/media\/([a-f0-9-]{20,64})$/i);
@@ -65,14 +65,14 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const body = await readJsonBody(request, 8_000);
-  if (!isPlainObject(body)) {
+  const parsed = adminMaintenanceSchema.safeParse(await readJsonBody(request, 8_000));
+  if (!parsed.success) {
     return NextResponse.json(
       { error: "invalid_input" },
       { status: 400, headers: NO_STORE_HEADERS },
     );
   }
-  const dryRun = body.dryRun === true;
+  const { dryRun } = parsed.data;
 
   const projects = (await listProjects()).filter(
     (project) => !project.slug.startsWith("__"),

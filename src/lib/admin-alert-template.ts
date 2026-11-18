@@ -1,3 +1,4 @@
+import "server-only";
 import type { AdminAlert } from "@/lib/notifications";
 
 const PRODUCTION_SITE_URL = "https://ahmed-elattar-general-contracting.vercel.app";

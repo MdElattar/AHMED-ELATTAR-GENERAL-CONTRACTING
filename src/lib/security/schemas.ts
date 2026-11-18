@@ -8,8 +8,65 @@ import {
   isDisplayName,
   isEmail,
   isPhone,
+  isSafeMongoValue,
   normalizeEmail,
 } from "@/lib/security/validation";
+
+/** Rejects unknown fields instead of silently stripping attacker input. */
+function strictObject<T extends z.ZodRawShape>(shape: T) {
+  return z.object(shape).strict();
+}
+
+/**
+ * CMS records intentionally have a flexible shape, but they still must never
+ * contain MongoDB operators or prototype-pollution keys at any depth.
+ */
+export const safeRecordSchema = z
+  .record(z.string(), z.unknown())
+  .refine(isSafeMongoValue, { message: "unsafe_input" });
+
+export const adminProjectMutationSchema = strictObject({
+  project: safeRecordSchema,
+}).transform(({ project }) => project);
+
+export const adminContentMutationSchema = strictObject({
+  content: safeRecordSchema,
+}).transform(({ content }) => content);
+
+export const adminInquiryStatusSchema = strictObject({
+  status: z.string().max(40).transform((value) => cleanString(value, 40)),
+  id: z.string().max(80).transform((value) => cleanString(value, 80)).optional().default(""),
+  ids: z
+    .array(z.string().max(80).transform((value) => cleanString(value, 80)))
+    .max(100)
+    .optional()
+    .default([]),
+});
+
+export const adminConsultationStatusSchema = strictObject({
+  id: z
+    .string()
+    .max(80)
+    .transform((value) => cleanString(value, 80))
+    .refine((value) => value.length > 0, { message: "invalid_id" }),
+  status: z
+    .string()
+    .max(40)
+    .transform((value) => cleanString(value, 40))
+    .refine((value) => value.length > 0, { message: "invalid_status" }),
+});
+
+export const adminMaintenanceSchema = strictObject({
+  dryRun: z.boolean().optional().default(false),
+});
+
+export const passkeyDeleteSchema = strictObject({
+  credentialId: z
+    .string()
+    .max(2048)
+    .transform((value) => cleanString(value, 2048))
+    .refine((value) => value.length > 0, { message: "invalid_credential" }),
+});
 
 /**
  * Zod contracts for every authentication payload.
@@ -29,13 +86,13 @@ export const passwordField = z
   .max(128)
   .refine((value) => isStrongEnoughPassword(value), { message: "weak_password" });
 
-export const signInSchema = z.object({
+export const signInSchema = strictObject({
   email: emailField,
   password: z.string().min(8).max(128),
   remember: z.boolean().optional().default(false),
 });
 
-export const signUpSchema = z.object({
+export const signUpSchema = strictObject({
   name: z
     .string()
     .max(120)
@@ -58,12 +115,12 @@ export const signUpSchema = z.object({
   password: passwordField,
 });
 
-export const forgotPasswordSchema = z.object({
+export const forgotPasswordSchema = strictObject({
   email: emailField,
   locale: z.enum(["ar", "en"]).optional().default("ar"),
 });
 
-export const verifyOtpSchema = z.object({
+export const verifyOtpSchema = strictObject({
   email: emailField,
   code: z
     .string()
@@ -72,12 +129,11 @@ export const verifyOtpSchema = z.object({
     .refine((value) => value.length === 6, { message: "invalid_code" }),
 });
 
-export const resetPasswordSchema = z.object({
+export const resetPasswordSchema = strictObject({
   password: passwordField,
 });
 
-export const adminGrantRequestSchema = z
-  .object({
+export const adminGrantRequestSchema = strictObject({
     primaryPassword: z.string().min(8).max(128),
     mode: z.enum(["promote", "create"]),
     email: emailField,
@@ -120,7 +176,7 @@ export const adminGrantRequestSchema = z
     }
   });
 
-export const adminGrantConfirmSchema = z.object({
+export const adminGrantConfirmSchema = strictObject({
   grantId: z
     .string()
     .min(16)
@@ -133,11 +189,11 @@ export const adminGrantConfirmSchema = z.object({
     .refine((value) => value.length === 6, { message: "invalid_code" }),
 });
 
-export const adminRevokeSchema = z.object({
+export const adminRevokeSchema = strictObject({
   email: emailField,
 });
 
-export const contactSchema = z.object({
+export const contactSchema = strictObject({
   name: z
     .string()
     .max(120)
@@ -181,9 +237,20 @@ export const contactSchema = z.object({
     .max(4000)
     .transform((value) => cleanMultiline(value, 4000))
     .refine((value) => value.length > 0, { message: "invalid_message" }),
+  consent: z.literal(true, { message: "consent_required" }),
+  files: z
+    .array(
+      strictObject({
+        name: z.string().max(180).transform((value) => cleanString(value, 180)),
+        size: z.number().int().positive().max(25 * 1024 * 1024),
+        type: z.string().max(120).transform((value) => cleanString(value, 120)),
+      }),
+    )
+    .max(10)
+    .default([]),
 });
 
-export const newsletterSchema = z.object({
+export const newsletterSchema = strictObject({
   email: emailField,
 });
 
@@ -206,13 +273,50 @@ const companyField = z
   .default("")
   .transform((value) => cleanString(value, 160));
 
+const optionalDisplayNameField = z
+  .string()
+  .max(120)
+  .optional()
+  .default("")
+  .transform((value) => cleanString(value, 120))
+  .refine((value) => value.length === 0 || isDisplayName(value), { message: "invalid_name" });
+
+const optionalPhoneField = z
+  .string()
+  .max(40)
+  .optional()
+  .default("")
+  .transform((value) => cleanString(value, 40))
+  .refine((value) => value.length === 0 || isPhone(value), { message: "invalid_phone" });
+
+export const profileSchema = strictObject({
+  name: displayNameField,
+  nameAr: optionalDisplayNameField,
+  honorific: z.string().max(30).optional().default("").transform((value) => cleanString(value, 30)),
+  honorificAr: z
+    .string()
+    .max(30)
+    .optional()
+    .default("")
+    .transform((value) => cleanString(value, 30)),
+  company: companyField,
+  phone: optionalPhoneField,
+});
+
+export const changePasswordSchema = strictObject({
+  currentPassword: z.string().min(1).max(128),
+  newPassword: passwordField,
+});
+
 const slugField = z
   .string()
   .max(120)
   .transform((value) => cleanString(value, 120).toLowerCase())
   .refine((value) => /^[a-z0-9][a-z0-9-]*$/.test(value), { message: "invalid_slug" });
 
-export const consultationSchema = z.object({
+export const projectSlugQuerySchema = strictObject({ projectSlug: slugField });
+
+export const consultationSchema = strictObject({
   name: displayNameField,
   email: emailField,
   phone: phoneField,
@@ -233,7 +337,7 @@ export const consultationSchema = z.object({
     .transform((value) => cleanMultiline(value, 2000)),
 });
 
-export const proposalSchema = z.object({
+export const proposalSchema = strictObject({
   slug: z
     .string()
     .max(120)
@@ -259,13 +363,13 @@ export const proposalSchema = z.object({
   locale: z.enum(["ar", "en"]).optional().default("ar"),
 });
 
-export const contractSignSchema = z.object({
+export const contractSignSchema = strictObject({
   projectSlug: slugField,
   signatureName: displayNameField,
   accepted: z.literal(true),
 });
 
-export const milestoneVerifySchema = z.object({
+export const milestoneVerifySchema = strictObject({
   projectSlug: slugField,
   titleEn: z
     .string()
@@ -274,7 +378,7 @@ export const milestoneVerifySchema = z.object({
     .refine((value) => value.length > 0, { message: "invalid_milestone" }),
 });
 
-export const adminNotificationSchema = z.object({
+export const adminNotificationSchema = strictObject({
   channel: z.enum(["email", "whatsapp", "all"]).optional().default("all"),
   message: z
     .string()

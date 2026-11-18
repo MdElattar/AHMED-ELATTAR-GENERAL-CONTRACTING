@@ -9,12 +9,10 @@ import { setSessionCookie } from "@/lib/auth/cookie";
 import { authUnavailable, isAuthConfigError } from "@/lib/auth/response";
 import { createUser, getUserByEmail, recordAudit } from "@/lib/db";
 import { hashPassword } from "@/lib/auth/password";
-import {
-  NO_STORE_HEADERS,
+import {NO_STORE_HEADERS,
   clientIp,
   isSameOrigin,
-  readJsonBody,
-} from "@/lib/security/http";
+  readJsonBody, safeLogError } from "@/lib/security/http";
 import { rateLimit } from "@/lib/security/rate-limit";
 import { signUpSchema } from "@/lib/security/schemas";
 
@@ -112,7 +110,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.error("[auth] sign-up failed", error);
+    safeLogError("[auth] sign-up failed", error);
     return NextResponse.json(
       { error: "server_error" },
       { status: 500, headers: NO_STORE_HEADERS },

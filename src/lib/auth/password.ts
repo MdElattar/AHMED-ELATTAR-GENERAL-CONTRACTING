@@ -1,3 +1,4 @@
+import "server-only";
 import { createHash, randomBytes, scrypt as scryptCallback, timingSafeEqual } from "node:crypto";
 import { promisify } from "node:util";
 import bcrypt from "bcryptjs";

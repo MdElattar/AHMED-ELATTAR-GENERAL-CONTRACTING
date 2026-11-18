@@ -1,3 +1,4 @@
+import { safeLogError } from "@/lib/security/http";
 import { NextResponse } from "next/server";
 import { getAsset } from "@/lib/db";
 
@@ -29,7 +30,7 @@ export async function GET(_request: Request, context: RouteContext) {
       },
     });
   } catch (error) {
-    console.error("[media] failed to read asset", error);
+    safeLogError("[media] failed to read asset", error);
     return NextResponse.json({ error: "server_error" }, { status: 500 });
   }
 }

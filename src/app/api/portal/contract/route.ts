@@ -1,5 +1,5 @@
 import { NextResponse, connection, type NextRequest } from "next/server";
-import { currentSession } from "@/lib/auth/guard";
+import { activeSession, ownedProject } from "@/lib/auth/guard";
 import { contractDigest, projectTitle } from "@/lib/contract";
 import { getProjectBySlug, getSignoff, recordAudit, saveSignoff } from "@/lib/db";
 import { dispatchAdminAlert } from "@/lib/notifications";
@@ -8,10 +8,11 @@ import {
   clientIp,
   isSameOrigin,
   readJsonBody,
+  validateSearchParams,
 } from "@/lib/security/http";
 import { rateLimit } from "@/lib/security/rate-limit";
-import { contractSignSchema } from "@/lib/security/schemas";
-import { cleanString, isPlainObject } from "@/lib/security/validation";
+import { contractSignSchema, projectSlugQuerySchema } from "@/lib/security/schemas";
+import { isPlainObject } from "@/lib/security/validation";
 
 function unauthorized() {
   return NextResponse.json(
@@ -23,22 +24,29 @@ function unauthorized() {
 export async function GET(request: NextRequest) {
   await connection();
 
-  const session = await currentSession();
+  const session = await activeSession();
   if (!session) return unauthorized();
 
-  const projectSlug = cleanString(request.nextUrl.searchParams.get("projectSlug"), 120).toLowerCase();
-  if (!projectSlug) {
+  const query = validateSearchParams(request, projectSlugQuerySchema);
+  if (!query.data) {
     return NextResponse.json(
       { error: "invalid_project" },
       { status: 400, headers: NO_STORE_HEADERS },
     );
   }
+  const projectSlug = query.data.projectSlug;
 
   const project = await getProjectBySlug(projectSlug);
   if (!project) {
     return NextResponse.json(
       { error: "project_not_found" },
       { status: 404, headers: NO_STORE_HEADERS },
+    );
+  }
+  if (!(await ownedProject(session, projectSlug))) {
+    return NextResponse.json(
+      { error: "forbidden" },
+      { status: 403, headers: NO_STORE_HEADERS },
     );
   }
 
@@ -56,7 +64,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 
-  const session = await currentSession();
+  const session = await activeSession();
   if (!session) return unauthorized();
 
   const limited = rateLimit(`contract-sign:${session.email}`, 10, 15 * 60 * 1000);
@@ -89,6 +97,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { error: "project_not_found" },
       { status: 404, headers: NO_STORE_HEADERS },
+    );
+  }
+  if (!(await ownedProject(session, data.projectSlug))) {
+    return NextResponse.json(
+      { error: "forbidden" },
+      { status: 403, headers: NO_STORE_HEADERS },
     );
   }
 

@@ -55,5 +55,11 @@ export default defineConfig({
       dependencies: ["setup"],
       use: { storageState: "tests/.auth/admin.json" },
     },
+    {
+      name: "security",
+      testMatch: /security-.*\.spec\.ts/,
+      dependencies: ["setup"],
+      use: { storageState: { cookies: [], origins: [] } },
+    },
   ],
 });

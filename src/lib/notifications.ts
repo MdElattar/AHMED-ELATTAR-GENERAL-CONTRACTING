@@ -1,3 +1,5 @@
+import { safeLogError } from "@/lib/security/http";
+import "server-only";
 import { ADMIN_ALERT_URL, renderAdminAlertEmail } from "@/lib/admin-alert-template";
 import { sendEmail } from "@/lib/email";
 
@@ -122,7 +124,7 @@ async function sendWhatsApp(alert: AdminAlert): Promise<DispatchState> {
     });
     return response.ok ? "sent" : "failed";
   } catch (error) {
-    console.error("[alert] WhatsApp dispatch failed", error);
+    safeLogError("[alert] WhatsApp dispatch failed", error);
     return "failed";
   }
 }
@@ -142,7 +144,7 @@ export async function dispatchAdminAlert(alert: AdminAlert): Promise<DispatchRes
 
     return { email, whatsapp };
   } catch (error) {
-    console.error("[alert] dispatch failed", error);
+    safeLogError("[alert] dispatch failed", error);
     return { email: "failed", whatsapp: "failed" };
   }
 }
