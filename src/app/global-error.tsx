@@ -22,8 +22,8 @@ export default function GlobalError({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#060708",
-          color: "#f3eee4",
+          background: "var(--bg)",
+          color: "var(--fg)",
           fontFamily: "system-ui, -apple-system, sans-serif",
           padding: "2rem",
         }}
@@ -32,7 +32,7 @@ export default function GlobalError({
           <p
             style={{
               margin: 0,
-              color: "#a67c1a",
+              color: "var(--accent)",
               fontSize: "0.7rem",
               letterSpacing: "0.2em",
               textTransform: "uppercase",
@@ -50,7 +50,7 @@ export default function GlobalError({
           >
             حدث خطأ في التطبيق. · The application hit an error.
           </h1>
-          <p style={{ margin: "1rem 0 0", color: "rgba(243,238,228,0.55)", lineHeight: 1.8 }}>
+          <p style={{ margin: "1rem 0 0", color: "rgb(var(--fg-rgb)/0.55)", lineHeight: 1.8 }}>
             أعد تحميل الصفحة للمتابعة. · Reload the page to continue.
           </p>
           <button
@@ -61,8 +61,8 @@ export default function GlobalError({
               minHeight: "3rem",
               padding: "0 1.75rem",
               border: 0,
-              background: "#a67c1a",
-              color: "#060708",
+              background: "var(--accent)",
+              color: "var(--bg)",
               fontSize: "0.7rem",
               fontWeight: 700,
               letterSpacing: "0.14em",

@@ -77,21 +77,21 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               className={cn(
                 "pointer-events-auto flex min-h-12 w-full max-w-sm items-start gap-3 border px-4 py-3 text-[0.8rem] leading-relaxed shadow-lux backdrop-blur-md",
                 item.kind === "error"
-                  ? "border-red-400/30 bg-[#160c0c]/95 text-red-100"
-                  : "border-gold/30 bg-[#0e1017]/95 text-ivory",
+                  ? "border-danger/30 bg-danger/10/95 text-danger"
+                  : "border-accent/30 bg-bg/95 text-fg",
               )}
             >
               <Icon
                 className={cn(
                   "mt-0.5 h-4 w-4 shrink-0",
-                  item.kind === "error" ? "text-red-300" : "text-gold",
+                  item.kind === "error" ? "text-danger" : "text-accent",
                 )}
               />
               <span className="min-w-0 flex-1">{item.message}</span>
               <button
                 type="button"
                 onClick={() => remove(item.id)}
-                className="shrink-0 text-ivory/45 transition-colors hover:text-ivory"
+                className="shrink-0 text-fg transition-colors hover:text-fg"
                 aria-label="Dismiss notification"
               >
                 <X className="h-4 w-4" />

@@ -334,41 +334,41 @@ export function AdminProfile() {
 
         <Card className="h-fit p-5 sm:p-6">
           <div className="flex items-center gap-3">
-            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[linear-gradient(135deg,#F3C86A,#C98F1E)] text-[16px] font-extrabold text-[#1a1205]">
+            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-fill text-[16px] font-extrabold text-accent-fg">
               {(form.name || user.email).slice(0, 2).toUpperCase()}
             </span>
             <div className="min-w-0">
-              <p className="truncate text-[16px] font-semibold text-[var(--admin-text)]">
+              <p className="truncate text-[16px] font-semibold text-fg">
                 {form.honorific ? `${form.honorific} ` : ""}
                 {form.name || "—"}
               </p>
-              <p className="truncate text-[13px] text-[var(--admin-muted)]">
+              <p className="truncate text-[13px] text-muted">
                 {user.primaryAdmin ? (locale === "ar" ? "المسؤول الرئيسي" : "Primary admin") : user.role}
               </p>
             </div>
           </div>
-          <dl className="mt-5 space-y-3 border-t border-[var(--admin-card-border)] pt-4 text-[13px]">
+          <dl className="mt-5 space-y-3 border-t border-line pt-4 text-[13px]">
             <div className="flex items-center justify-between gap-3">
-              <dt className="flex items-center gap-2 text-[var(--admin-muted)]">
+              <dt className="flex items-center gap-2 text-muted">
                 <Mail className="h-4 w-4" />{c.email}
               </dt>
-              <dd className="truncate text-[var(--admin-text)]">{user.email}</dd>
+              <dd className="truncate text-fg">{user.email}</dd>
             </div>
             <div className="flex items-center justify-between gap-3">
-              <dt className="flex items-center gap-2 text-[var(--admin-muted)]">
+              <dt className="flex items-center gap-2 text-muted">
                 <BadgeCheck className="h-4 w-4" />{c.account}
               </dt>
-              <dd className="truncate font-mono text-[12px] text-[var(--admin-text)]">{user.accountId}</dd>
+              <dd className="truncate font-mono text-[12px] text-fg">{user.accountId}</dd>
             </div>
             <div className="flex items-center justify-between gap-3">
-              <dt className="flex items-center gap-2 text-[var(--admin-muted)]">
+              <dt className="flex items-center gap-2 text-muted">
                 <UserRound className="h-4 w-4" />
                 {locale === "ar" ? "الاسم بالعربية" : "Arabic name"}
               </dt>
-              <dd className="truncate text-[var(--admin-text)]" dir="rtl">{form.nameAr || "—"}</dd>
+              <dd className="truncate text-fg" dir="rtl">{form.nameAr || "—"}</dd>
             </div>
           </dl>
-          <p className="mt-4 text-[12px] leading-relaxed text-[var(--admin-muted)]">{c.privacy}</p>
+          <p className="mt-4 text-[12px] leading-relaxed text-muted">{c.privacy}</p>
         </Card>
       </div>
     </div>

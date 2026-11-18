@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import "./globals.css";
 import { I18nProvider } from "@/components/providers/I18nProvider";
 import { AtmosphereProvider } from "@/components/providers/AtmosphereProvider";
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { WorkspaceProvider } from "@/components/providers/WorkspaceProvider";
 import { RouteChrome } from "@/components/layout/RouteChrome";
@@ -92,7 +93,6 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0a0b0e",
   width: "device-width",
   initialScale: 1,
 };
@@ -102,6 +102,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html
       lang="ar"
       dir="rtl"
+      data-theme="dark"
       suppressHydrationWarning
       className={`${arabic.variable} ${body.variable} ${display.variable} ${inter.variable} h-full antialiased`}
     >
@@ -118,29 +119,38 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               "(function(){try{var k='alattar-atmosphere';var v=localStorage.getItem(k);if(v!=='golden'&&v!=='blue'&&v!=='studio'){v='golden';}document.documentElement.dataset.vibe=v;}catch(e){document.documentElement.dataset.vibe='golden';}})();",
           }}
         />
+        {/* Resolve the executive theme before first paint — no flash of the wrong palette. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "(function(){try{var k='alattar-theme';var v=null;try{v=localStorage.getItem(k);}catch(e){}if(v!=='system'&&v!=='light'&&v!=='dark'){v='system';}var d=!!(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);var t=v==='system'?(d?'dark':'light'):v;var r=document.documentElement;r.dataset.themePreference=v;r.dataset.theme=t;r.style.colorScheme=t;}catch(e){var r=document.documentElement;r.dataset.themePreference='system';r.dataset.theme='dark';r.style.colorScheme='dark';}})();",
+          }}
+        />
       </head>
-      <body className="min-h-full bg-obsidian font-sans text-ivory">
+      <body className="min-h-full bg-bg font-sans text-fg">
         <WorkspaceProvider>
           <I18nProvider>
             <AtmosphereProvider>
-              <AuthProvider>
-                <ToastProvider>
-                  <a
-                    href="#main"
-                    className="sr-only z-[300] bg-gold px-5 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-obsidian focus:not-sr-only focus:fixed focus:start-4 focus:top-4"
-                  >
-                    تجاوز إلى المحتوى / Skip to content
-                  </a>
-                  <RouteChrome>{children}</RouteChrome>
-                  <Suspense fallback={null}>
-                    <PasskeyEnrollmentGate />
-                  </Suspense>
-                  <Suspense fallback={null}>
-                    <IdleGuard />
-                  </Suspense>
-                  <SpeedInsights />
-                </ToastProvider>
-              </AuthProvider>
+              <ThemeProvider>
+                <AuthProvider>
+                  <ToastProvider>
+                    <a
+                      href="#main"
+                      className="sr-only z-[300] bg-accent-fill px-5 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-accent-fg focus:not-sr-only focus:fixed focus:start-4 focus:top-4"
+                    >
+                      تجاوز إلى المحتوى / Skip to content
+                    </a>
+                    <RouteChrome>{children}</RouteChrome>
+                    <Suspense fallback={null}>
+                      <PasskeyEnrollmentGate />
+                    </Suspense>
+                    <Suspense fallback={null}>
+                      <IdleGuard />
+                    </Suspense>
+                    <SpeedInsights />
+                  </ToastProvider>
+                </AuthProvider>
+              </ThemeProvider>
             </AtmosphereProvider>
           </I18nProvider>
         </WorkspaceProvider>

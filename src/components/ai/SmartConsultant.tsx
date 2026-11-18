@@ -202,12 +202,12 @@ export function SmartConsultant() {
         type="button"
         onClick={openPanel}
         aria-label={c.open}
-        className="group fixed bottom-5 end-5 z-[90] flex h-14 w-14 items-center justify-center rounded-full bg-gold text-obsidian shadow-[0_18px_50px_-12px_rgba(184,134,11,0.65)] transition-transform duration-300 hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold sm:bottom-7 sm:end-7"
+        className="group fixed bottom-5 end-5 z-[90] flex h-14 w-14 items-center justify-center rounded-full bg-accent-fill text-accent-fg shadow-e2 transition-transform duration-300 hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:bottom-7 sm:end-7"
       >
         <Sparkles className="h-5 w-5" />
         <span className="absolute -top-1 -end-1 flex h-3 w-3">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-gold-light opacity-60" />
-          <span className="relative inline-flex h-3 w-3 rounded-full border-2 border-obsidian bg-gold-light" />
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent-fill opacity-60" />
+          <span className="relative inline-flex h-3 w-3 rounded-full border-2 border-line bg-accent-fill" />
         </span>
       </button>
 
@@ -220,17 +220,17 @@ export function SmartConsultant() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.98 }}
             transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed bottom-20 end-5 z-[95] flex max-h-[min(78svh,640px)] w-[min(25rem,calc(100vw-2.5rem))] flex-col overflow-hidden border border-white/12 bg-coal/95 text-ivory shadow-[0_40px_120px_-24px_rgba(0,0,0,0.85)] backdrop-blur-xl sm:bottom-24 sm:end-7"
+            className="fixed bottom-20 end-5 z-[95] flex max-h-[min(78svh,640px)] w-[min(25rem,calc(100vw-2.5rem))] flex-col overflow-hidden border border-line bg-surface/95 text-fg shadow-e3 backdrop-blur-xl sm:bottom-24 sm:end-7"
           >
             {/* Header */}
-            <div className="flex items-center gap-3 border-b border-white/10 bg-obsidian/70 px-4 py-3.5">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gold/15 text-gold">
+            <div className="flex items-center gap-3 border-b border-line bg-bg/70 px-4 py-3.5">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent/15 text-accent">
                 <Sparkles className="h-4 w-4" />
               </span>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[0.8rem] font-semibold leading-tight">{c.name}</p>
-                <p className="flex items-center gap-1.5 text-[0.52rem] uppercase tracking-[0.14em] text-ivory/50">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                <p className="flex items-center gap-1.5 text-[0.52rem] uppercase tracking-[0.14em] text-fg">
+                  <span className="h-1.5 w-1.5 rounded-full bg-success" />
                   {c.role} · {c.online}
                 </p>
               </div>
@@ -239,7 +239,7 @@ export function SmartConsultant() {
                 type="button"
                 onClick={() => setOpen(false)}
                 aria-label={c.close}
-                className="flex h-8 w-8 items-center justify-center border border-white/12 text-ivory/60 transition-colors hover:border-gold/50 hover:text-gold"
+                className="flex h-8 w-8 items-center justify-center border border-line text-fg transition-colors hover:border-accent/50 hover:text-accent"
               >
                 <X className="h-3.5 w-3.5" />
               </button>
@@ -257,8 +257,8 @@ export function SmartConsultant() {
                   className={cn(
                     "max-w-[85%] px-3.5 py-2.5 text-[0.76rem] leading-relaxed",
                     message.role === "assistant"
-                      ? "self-start border border-white/10 bg-obsidian/70 text-ivory/75"
-                      : "self-end border border-gold/40 bg-gold/15 text-ivory",
+                      ? "self-start border border-line bg-bg/70 text-fg"
+                      : "self-end border border-accent/40 bg-accent/15 text-fg",
                   )}
                 >
                   {message.text}
@@ -266,11 +266,11 @@ export function SmartConsultant() {
               ))}
 
               {thinking ? (
-                <div className="flex items-center gap-1.5 self-start border border-white/10 bg-obsidian/70 px-3.5 py-3">
+                <div className="flex items-center gap-1.5 self-start border border-line bg-bg/70 px-3.5 py-3">
                   {[0, 1, 2].map((dot) => (
                     <span
                       key={dot}
-                      className="h-1.5 w-1.5 animate-bounce rounded-full bg-gold/70"
+                      className="h-1.5 w-1.5 animate-bounce rounded-full bg-accent/70"
                       style={{ animationDelay: `${dot * 140}ms` }}
                     />
                   ))}
@@ -284,7 +284,7 @@ export function SmartConsultant() {
                       key={value}
                       type="button"
                       onClick={() => chooseType(value)}
-                      className="border border-gold/35 px-3 py-2 text-[0.66rem] font-medium text-gold transition-colors hover:bg-gold hover:text-obsidian"
+                      className="border border-accent/35 px-3 py-2 text-[0.66rem] font-medium text-accent transition-colors hover:bg-accent-fill hover:text-accent-fg"
                     >
                       {c.types[value]}
                     </button>
@@ -299,7 +299,7 @@ export function SmartConsultant() {
                       key={value}
                       type="button"
                       onClick={() => chooseBudget(value)}
-                      className="border border-gold/35 px-3 py-2 text-[0.66rem] font-medium text-gold transition-colors hover:bg-gold hover:text-obsidian"
+                      className="border border-accent/35 px-3 py-2 text-[0.66rem] font-medium text-accent transition-colors hover:bg-accent-fill hover:text-accent-fg"
                     >
                       {c.budgets[value]}
                     </button>
@@ -314,7 +314,7 @@ export function SmartConsultant() {
                       key={value}
                       type="button"
                       onClick={() => chooseCity(value)}
-                      className="border border-gold/35 px-3 py-2 text-[0.66rem] font-medium text-gold transition-colors hover:bg-gold hover:text-obsidian"
+                      className="border border-accent/35 px-3 py-2 text-[0.66rem] font-medium text-accent transition-colors hover:bg-accent-fill hover:text-accent-fg"
                     >
                       {c.cities[value]}
                     </button>
@@ -325,38 +325,38 @@ export function SmartConsultant() {
 
             {/* Controls / result */}
             {showResult && result && verdict ? (
-              <div className="border-t border-white/10 bg-obsidian/60 p-4">
-                <span className="text-[0.52rem] font-semibold uppercase tracking-[0.2em] text-gold">
+              <div className="border-t border-line bg-bg/60 p-4">
+                <span className="text-[0.52rem] font-semibold uppercase tracking-[0.2em] text-accent">
                   {c.resultTitle}
                 </span>
-                <p className="mt-2 font-display text-[clamp(1.35rem,4vw,1.9rem)] leading-none text-ivory">
-                  <span className="tabular text-gold">{df.format(result.low / 1_000_000)}</span>
-                  <span className="mx-1.5 text-ivory/35">–</span>
-                  <span className="tabular text-gold">{df.format(result.high / 1_000_000)}</span>
-                  <span className="ms-1.5 text-[0.42em] font-sans uppercase tracking-[0.14em] text-ivory/50">
+                <p className="mt-2 font-display text-[clamp(1.35rem,4vw,1.9rem)] leading-none text-fg">
+                  <span className="tabular text-accent">{df.format(result.low / 1_000_000)}</span>
+                  <span className="mx-1.5 text-fg">–</span>
+                  <span className="tabular text-accent">{df.format(result.high / 1_000_000)}</span>
+                  <span className="ms-1.5 text-[0.42em] font-sans uppercase tracking-[0.14em] text-fg">
                     {t.sections.inline.smartMillionSuffix}
                   </span>
                 </p>
 
-                <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-[0.6rem] text-ivory/65">
+                <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-[0.6rem] text-fg">
                   <span>
-                    {c.months}: <span className="tabular text-ivory">{nf.format(result.months)}</span>{" "}
+                    {c.months}: <span className="tabular text-fg">{nf.format(result.months)}</span>{" "}
                     {c.monthsUnit}
                   </span>
                   <span>
                     {c.perM2}:{" "}
-                    <span className="tabular text-ivory">{nf.format(Math.round(result.perM2))}</span>
+                    <span className="tabular text-fg">{nf.format(Math.round(result.perM2))}</span>
                   </span>
                 </div>
 
-                <div className="mt-3 border border-gold/25 bg-gold/[0.06] px-3 py-2.5">
-                  <span className="text-[0.5rem] uppercase tracking-[0.16em] text-ivory/50">
+                <div className="mt-3 border border-accent/25 bg-accent/[0.06] px-3 py-2.5">
+                  <span className="text-[0.5rem] uppercase tracking-[0.16em] text-fg">
                     {c.verdict.label}
                   </span>
-                  <p className="mt-0.5 text-[0.72rem] font-semibold text-gold">
+                  <p className="mt-0.5 text-[0.72rem] font-semibold text-accent">
                     {c.verdict[verdict]}
                   </p>
-                  <p className="mt-1 text-[0.6rem] leading-relaxed text-ivory/60">
+                  <p className="mt-1 text-[0.6rem] leading-relaxed text-fg">
                     {c.verdictNote[verdict]}
                   </p>
                 </div>
@@ -365,12 +365,12 @@ export function SmartConsultant() {
                   {ESTIMATE_BREAKDOWN.map((part) => (
                     <div key={part.key}>
                       <div className="flex items-center justify-between text-[0.56rem]">
-                        <span className="text-ivory/65">{c.parts[part.key]}</span>
-                        <span className="tabular text-ivory/45">{part.pct}%</span>
+                        <span className="text-fg">{c.parts[part.key]}</span>
+                        <span className="tabular text-fg">{part.pct}%</span>
                       </div>
-                      <div className="mt-1 h-[3px] overflow-hidden bg-white/10">
+                      <div className="mt-1 h-[3px] overflow-hidden bg-line">
                         <div
-                          className="h-full bg-gradient-to-r from-gold-dark to-gold"
+                          className="h-full bg-gradient-to-r from-accent to-accent"
                           style={{ width: `${part.pct}%` }}
                         />
                       </div>
@@ -379,13 +379,13 @@ export function SmartConsultant() {
                 </div>
 
                 <div className="mt-4">
-                  <span className="text-[0.5rem] uppercase tracking-[0.18em] text-ivory/50">
+                  <span className="text-[0.5rem] uppercase tracking-[0.18em] text-fg">
                     {c.nextSteps}
                   </span>
                   <ol className="mt-2 space-y-1.5">
                     {c.steps.map((step, index) => (
-                      <li key={step} className="flex items-baseline gap-2 text-[0.62rem] text-ivory/60">
-                        <span className="tabular text-[0.5rem] text-gold/70">0{index + 1}</span>
+                      <li key={step} className="flex items-baseline gap-2 text-[0.62rem] text-fg">
+                        <span className="tabular text-[0.5rem] text-accent">0{index + 1}</span>
                         {step}
                       </li>
                     ))}
@@ -394,27 +394,27 @@ export function SmartConsultant() {
 
                 <Link
                   href="/contact"
-                  className="btn-shine mt-4 flex h-10 items-center justify-center gap-2 bg-gold px-4 text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-obsidian transition-colors hover:bg-gold-light"
+                  className="btn-shine mt-4 flex h-10 items-center justify-center gap-2 bg-accent-fill px-4 text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-accent-fg transition-colors hover:bg-accent-fill"
                 >
                   {c.cta}
                   <ArrowUpRight className={cn("h-3.5 w-3.5", isRTL && "-scale-x-100")} />
                 </Link>
 
-                <p className="mt-3 text-[0.52rem] leading-relaxed text-ivory/40">{c.disclaimer}</p>
+                <p className="mt-3 text-[0.52rem] leading-relaxed text-fg">{c.disclaimer}</p>
 
                 <button
                   type="button"
                   onClick={reset}
-                  className="mt-2 flex items-center gap-1.5 text-[0.56rem] font-semibold uppercase tracking-[0.14em] text-ivory/50 transition-colors hover:text-gold"
+                  className="mt-2 flex items-center gap-1.5 text-[0.56rem] font-semibold uppercase tracking-[0.14em] text-fg transition-colors hover:text-accent"
                 >
                   <RefreshCcw className="h-3 w-3" />
                   {c.again}
                 </button>
               </div>
             ) : type !== null && budget === null ? (
-              <div className="border-t border-white/10 bg-obsidian/60 p-4">
+              <div className="border-t border-line bg-bg/60 p-4">
                 {areaConfirmed ? (
-                  <p className="text-[0.58rem] uppercase tracking-[0.16em] text-ivory/50">
+                  <p className="text-[0.58rem] uppercase tracking-[0.16em] text-fg">
                     {c.userArea.replace("{area}", nf.format(area))}
                   </p>
                 ) : (
@@ -422,11 +422,11 @@ export function SmartConsultant() {
                     <div className="flex items-center justify-between gap-3">
                       <label
                         htmlFor="smart-area"
-                        className="text-[0.58rem] font-semibold uppercase tracking-[0.16em] text-ivory/55"
+                        className="text-[0.58rem] font-semibold uppercase tracking-[0.16em] text-fg"
                       >
                         {c.areaHint}
                       </label>
-                      <span className="tabular text-[0.8rem] font-medium text-gold">
+                      <span className="tabular text-[0.8rem] font-medium text-accent">
                         {nf.format(area)} {c.areaUnit}
                       </span>
                     </div>
@@ -438,12 +438,12 @@ export function SmartConsultant() {
                       step={500}
                       value={area}
                       onChange={(event) => setArea(Number(event.target.value))}
-                      className="mt-3 h-1.5 w-full cursor-pointer appearance-none rounded-full bg-white/10 accent-gold"
+                      className="mt-3 h-1.5 w-full cursor-pointer appearance-none rounded-full bg-line accent-accent"
                     />
                     <button
                       type="button"
                       onClick={confirmArea}
-                      className="mt-3 w-full border border-gold/40 py-2.5 text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-gold transition-colors hover:bg-gold hover:text-obsidian"
+                      className="mt-3 w-full border border-accent/40 py-2.5 text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-accent transition-colors hover:bg-accent-fill hover:text-accent-fg"
                     >
                       {c.confirmArea}
                     </button>

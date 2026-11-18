@@ -62,6 +62,12 @@ export default defineConfig({
       use: { storageState: { cookies: [], origins: [] } },
     },
     {
+      name: "theme",
+      testMatch: /theme-.*\.spec\.ts/,
+      dependencies: ["setup"],
+      use: { storageState: { cookies: [], origins: [] } },
+    },
+    {
       name: "portal-setup",
       testMatch: /portal\.setup\.ts/,
       dependencies: ["setup"],

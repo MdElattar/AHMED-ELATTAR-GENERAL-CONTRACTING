@@ -268,10 +268,10 @@ const copy = {
 const statusOrder: InquiryStatus[] = ["new", "read", "won", "lost"];
 
 const statusStyles: Record<InquiryStatus, string> = {
-  new: "bg-gold text-obsidian",
-  read: "bg-white/12 text-ivory/70",
-  won: "bg-emerald-400/15 text-emerald-300",
-  lost: "bg-red-400/12 text-red-300",
+  new: "bg-accent-fill text-accent-fg",
+  read: "bg-line text-fg",
+  won: "bg-success/15 text-success",
+  lost: "bg-danger/12 text-danger",
 };
 
 function useRemoteList<T>(endpoint: string, key: string) {
@@ -331,7 +331,7 @@ function StateBlock({
 }) {
   if (loading) {
     return (
-      <div className="flex items-center justify-center gap-2 py-14 text-[0.76rem] text-ivory/45">
+      <div className="flex items-center justify-center gap-2 py-14 text-[0.76rem] text-fg">
         <Loader2 className="h-4 w-4 animate-spin" />
         {loadingText}
       </div>
@@ -341,12 +341,12 @@ function StateBlock({
   if (error) {
     return (
       <div className="flex flex-col items-center gap-3 py-14 text-center">
-        <AlertCircle className="h-5 w-5 text-red-300/70" />
-        <p className="text-[0.76rem] text-ivory/50">{errorText}</p>
+        <AlertCircle className="h-5 w-5 text-danger" />
+        <p className="text-[0.76rem] text-fg">{errorText}</p>
         <button
           type="button"
           onClick={onRetry}
-          className="inline-flex h-11 items-center gap-2 rounded-[12px] border border-white/15 bg-white/[0.04] px-4 text-[14px] font-semibold text-[#F1EEE8] transition-colors hover:border-[rgba(226,176,74,0.25)] hover:bg-white/[0.06]"
+          className="inline-flex h-11 items-center gap-2 rounded-[12px] border border-line bg-surface-2 px-4 text-[14px] font-semibold text-fg transition-colors hover:border-[rgb(var(--accent-rgb)/0.25)] hover:bg-surface-2"
         >
           <RefreshCcw className="h-3.5 w-3.5" />
           {retry}
@@ -356,7 +356,7 @@ function StateBlock({
   }
 
   if (empty) {
-    return <p className="py-14 text-center text-[0.76rem] text-ivory/40">{emptyText}</p>;
+    return <p className="py-14 text-center text-[0.76rem] text-fg">{emptyText}</p>;
   }
 
   return null;
@@ -489,16 +489,16 @@ export function InquiriesPanel() {
   };
 
   return (
-    <div className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018]">
-      <div className="flex flex-col justify-between gap-3 border-b border-white/10 px-6 py-5 sm:flex-row sm:items-center">
+    <div className="rounded-[22px] border border-line bg-surface">
+      <div className="flex flex-col justify-between gap-3 border-b border-line px-6 py-5 sm:flex-row sm:items-center">
         <div>
-          <h2 className="text-[28px] font-bold text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{c.inquiriesTitle}</h2>
-          <p className="mt-1 text-[0.74rem] leading-relaxed text-ivory/45">{c.inquiriesText}</p>
+          <h2 className="text-[28px] font-bold text-fg [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{c.inquiriesTitle}</h2>
+          <p className="mt-1 text-[0.74rem] leading-relaxed text-fg">{c.inquiriesText}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <a
             href="/api/admin/export/inquiries"
-            className="inline-flex h-11 items-center gap-2 rounded-[12px] border border-white/15 bg-white/[0.04] px-4 text-[14px] font-semibold text-[#F1EEE8] transition-colors hover:border-[rgba(226,176,74,0.25)] hover:bg-white/[0.06]"
+            className="inline-flex h-11 items-center gap-2 rounded-[12px] border border-line bg-surface-2 px-4 text-[14px] font-semibold text-fg transition-colors hover:border-[rgb(var(--accent-rgb)/0.25)] hover:bg-surface-2"
           >
             <Download className="h-3.5 w-3.5" />
             {c.exportInquiries}
@@ -506,7 +506,7 @@ export function InquiriesPanel() {
           <button
             type="button"
             onClick={() => void reload()}
-            className="inline-flex h-10 w-fit items-center gap-2 rounded-xl border border-white/12 px-3.5 text-[0.7rem] font-semibold  text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
+            className="inline-flex h-10 w-fit items-center gap-2 rounded-xl border border-line px-3.5 text-[0.7rem] font-semibold  text-fg transition-colors hover:border-accent/40 hover:text-accent"
           >
             <RefreshCcw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
             {c.refresh}
@@ -515,31 +515,31 @@ export function InquiriesPanel() {
       </div>
 
       {notice ? (
-        <p className="border-b border-white/8 bg-gold/10 px-5 py-2 text-[0.72rem] text-gold">
+        <p className="border-b border-line bg-accent/10 px-5 py-2 text-[0.72rem] text-accent">
           {notice}
         </p>
       ) : null}
 
       {items.length ? (
-        <div className="flex flex-wrap items-center gap-3 border-b border-white/8 px-6 py-3">
-          <label className="inline-flex items-center gap-2 text-[0.68rem]  text-ivory/45">
+        <div className="flex flex-wrap items-center gap-3 border-b border-line px-6 py-3">
+          <label className="inline-flex items-center gap-2 text-[0.68rem]  text-fg">
             <input
               type="checkbox"
               checked={allSelected}
               onChange={toggleAll}
-              className="h-3.5 w-3.5 accent-gold"
+              className="h-3.5 w-3.5 accent-accent"
             />
             {c.selectAll}
           </label>
-          <span className="text-[0.66rem] text-ivory/35">
+          <span className="text-[0.66rem] text-fg">
             {selected.size} {c.selected}
           </span>
         </div>
       ) : null}
 
       {selected.size > 0 ? (
-        <div className="flex flex-wrap items-center gap-2 border-b border-gold/20 bg-gold/[0.05] px-6 py-3">
-          <span className="text-[0.66rem]  text-ivory/45">
+        <div className="flex flex-wrap items-center gap-2 border-b border-accent/20 bg-accent/[0.05] px-6 py-3">
+          <span className="text-[0.66rem]  text-fg">
             {c.bulkStatus}
           </span>
           {statusOrder.map((status) => (
@@ -548,7 +548,7 @@ export function InquiriesPanel() {
               type="button"
               disabled={bulkBusy}
               onClick={() => void applyBulkStatus(status)}
-              className="h-8 border border-white/12 px-2.5 text-[0.66rem] font-semibold  text-ivory/60 transition-colors hover:border-gold/45 hover:text-gold disabled:opacity-40"
+              className="h-8 border border-line px-2.5 text-[0.66rem] font-semibold  text-fg transition-colors hover:border-accent/45 hover:text-accent disabled:opacity-40"
             >
               {c[status]}
             </button>
@@ -556,7 +556,7 @@ export function InquiriesPanel() {
           <button
             type="button"
             onClick={() => setSelected(new Set<string>())}
-            className="ms-auto h-8 px-2 text-[0.66rem]  text-ivory/40 transition-colors hover:text-gold"
+            className="ms-auto h-8 px-2 text-[0.66rem]  text-fg transition-colors hover:text-accent"
           >
             {c.clearSelection}
           </button>
@@ -575,14 +575,14 @@ export function InquiriesPanel() {
       />
 
       {items.length ? (
-        <ul className="divide-y divide-white/6">
+        <ul className="divide-y divide-line">
           {items.map((inquiry) => (
             <li
               key={inquiry.id}
               id={`inquiry-${inquiry.id}`}
               className={cn(
                 "scroll-mt-32 px-6 py-5 transition-colors",
-                focusId === inquiry.id && "bg-gold/[0.055]",
+                focusId === inquiry.id && "bg-accent/[0.055]",
               )}
             >
               <div className="flex flex-wrap items-start justify-between gap-4">
@@ -591,7 +591,7 @@ export function InquiriesPanel() {
                   checked={selected.has(inquiry.id)}
                   onChange={() => toggleSelected(inquiry.id)}
                   aria-label={`${c.selectAll}: ${inquiry.name || inquiry.email}`}
-                  className="mt-1 h-4 w-4 shrink-0 accent-gold"
+                  className="mt-1 h-4 w-4 shrink-0 accent-accent"
                 />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
@@ -603,20 +603,20 @@ export function InquiriesPanel() {
                     >
                       {c[inquiry.status]}
                     </span>
-                    <span className="text-[0.66rem]  text-ivory/40">
+                    <span className="text-[0.66rem]  text-fg">
                       {inquiry.kind === "newsletter" ? c.newsletter : c.contact}
                     </span>
                     {inquiry.reference ? (
-                      <span className="tabular text-[0.66rem] text-ivory/35">
+                      <span className="tabular text-[0.66rem] text-fg">
                         {inquiry.reference}
                       </span>
                     ) : null}
                   </div>
-                  <p className="mt-2.5 flex items-center gap-2 text-[0.95rem] text-ivory/85">
-                    <UserRound className="h-4 w-4 shrink-0 text-gold/60" />
+                  <p className="mt-2.5 flex items-center gap-2 text-[0.95rem] text-fg">
+                    <UserRound className="h-4 w-4 shrink-0 text-accent" />
                     <span className="break-words">{inquiry.name || inquiry.email}</span>
                   </p>
-                  <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[0.74rem] text-ivory/45">
+                  <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[0.74rem] text-fg">
                     <span className="inline-flex items-center gap-1.5 break-all">
                       <Mail className="h-3.5 w-3.5 shrink-0" />
                       {inquiry.email}
@@ -632,19 +632,19 @@ export function InquiriesPanel() {
                     {inquiry.service ? <span>{inquiry.service}</span> : null}
                   </div>
                 </div>
-                <span className="tabular shrink-0 text-[0.7rem] text-ivory/35">
+                <span className="tabular shrink-0 text-[0.7rem] text-fg">
                   {dateFormat.format(new Date(inquiry.createdAt))}
                 </span>
               </div>
 
               {inquiry.message ? (
-                <p className="mt-4 border-s-2 border-gold/30 bg-white/[0.03] px-4 py-3 text-[0.8rem] leading-relaxed text-ivory/65">
+                <p className="mt-4 border-s-2 border-accent/30 bg-surface-2 px-4 py-3 text-[0.8rem] leading-relaxed text-fg">
                   {inquiry.message}
                 </p>
               ) : null}
 
               <div className="mt-4 flex flex-wrap items-center gap-2">
-                <span className="me-1 text-[0.64rem]  text-ivory/35">
+                <span className="me-1 text-[0.64rem]  text-fg">
                   {c.mark}
                 </span>
                 {statusOrder.map((status) => (
@@ -657,7 +657,7 @@ export function InquiriesPanel() {
                       "h-9 px-3 text-[0.66rem] font-semibold  transition-colors disabled:opacity-40",
                       inquiry.status === status
                         ? statusStyles[status]
-                        : "border border-white/10 text-ivory/50 hover:border-gold/40 hover:text-gold",
+                        : "border border-line text-fg hover:border-accent/40 hover:text-accent",
                     )}
                   >
                     {c[status]}
@@ -686,19 +686,19 @@ export function AuditPanel() {
   });
 
   return (
-    <div className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018]">
-      <div className="flex flex-col justify-between gap-3 border-b border-white/10 px-6 py-5 sm:flex-row sm:items-center">
+    <div className="rounded-[22px] border border-line bg-surface">
+      <div className="flex flex-col justify-between gap-3 border-b border-line px-6 py-5 sm:flex-row sm:items-center">
         <div>
-          <h2 className="flex items-center gap-2 text-[28px] font-bold text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">
-            <Activity className="h-4 w-4 text-gold" />
+          <h2 className="flex items-center gap-2 text-[28px] font-bold text-fg [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">
+            <Activity className="h-4 w-4 text-accent" />
             {c.auditTitle}
           </h2>
-          <p className="mt-1 text-[0.74rem] leading-relaxed text-ivory/45">{c.auditText}</p>
+          <p className="mt-1 text-[0.74rem] leading-relaxed text-fg">{c.auditText}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <a
             href="/api/admin/export/audit"
-            className="inline-flex h-11 items-center gap-2 rounded-[12px] border border-white/15 bg-white/[0.04] px-4 text-[14px] font-semibold text-[#F1EEE8] transition-colors hover:border-[rgba(226,176,74,0.25)] hover:bg-white/[0.06]"
+            className="inline-flex h-11 items-center gap-2 rounded-[12px] border border-line bg-surface-2 px-4 text-[14px] font-semibold text-fg transition-colors hover:border-[rgb(var(--accent-rgb)/0.25)] hover:bg-surface-2"
           >
             <Download className="h-3.5 w-3.5" />
             {c.exportAudit}
@@ -706,7 +706,7 @@ export function AuditPanel() {
           <button
             type="button"
             onClick={() => void reload()}
-            className="inline-flex h-10 w-fit items-center gap-2 rounded-xl border border-white/12 px-3.5 text-[0.7rem] font-semibold  text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
+            className="inline-flex h-10 w-fit items-center gap-2 rounded-xl border border-line px-3.5 text-[0.7rem] font-semibold  text-fg transition-colors hover:border-accent/40 hover:text-accent"
           >
             <RefreshCcw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
             {c.refresh}
@@ -726,29 +726,29 @@ export function AuditPanel() {
       />
 
       {items.length ? (
-        <ul className="divide-y divide-white/6">
+        <ul className="divide-y divide-line">
           {items.map((entry) => (
             <li
               key={entry.id}
               className="flex flex-wrap items-center justify-between gap-3 px-6 py-5"
             >
               <div className="flex min-w-0 flex-1 items-center gap-3">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-gold/20 bg-gold/5">
-                  <Activity className="h-3.5 w-3.5 text-gold/70" />
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-accent/20 bg-accent/5">
+                  <Activity className="h-3.5 w-3.5 text-accent" />
                 </span>
                 <div className="min-w-0">
-                  <p className="truncate text-[0.84rem] text-ivory/75">
-                    <span className="text-gold/80">{entry.actor}</span>{" "}
-                    <span className="text-ivory/55">{entry.action}</span>
+                  <p className="truncate text-[0.84rem] text-fg">
+                    <span className="text-accent">{entry.actor}</span>{" "}
+                    <span className="text-fg">{entry.action}</span>
                   </p>
-                  <p className="mt-0.5 truncate text-[0.72rem] text-ivory/40">
+                  <p className="mt-0.5 truncate text-[0.72rem] text-fg">
                     {entry.entity}
                     {entry.entityId ? ` · ${entry.entityId}` : ""}
                     {entry.ip ? ` · ${entry.ip}` : ""}
                   </p>
                 </div>
               </div>
-              <span className="tabular shrink-0 text-[0.72rem] text-ivory/35">
+              <span className="tabular shrink-0 text-[0.72rem] text-fg">
                 {dateFormat.format(new Date(entry.createdAt))}
               </span>
             </li>
@@ -761,10 +761,10 @@ export function AuditPanel() {
 
 
 const consultationStatusStyles: Record<ConsultationStatus, string> = {
-  requested: "bg-gold/15 text-gold",
-  confirmed: "bg-emerald-400/12 text-emerald-300",
-  completed: "bg-white/10 text-ivory/60",
-  cancelled: "bg-red-400/10 text-red-300",
+  requested: "bg-accent/15 text-accent",
+  confirmed: "bg-success/12 text-success",
+  completed: "bg-line text-fg",
+  cancelled: "bg-danger/10 text-danger",
 };
 
 export function ConsultationsPanel() {
@@ -812,19 +812,19 @@ export function ConsultationsPanel() {
   };
 
   return (
-    <div className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018]">
-      <div className="flex flex-col justify-between gap-3 border-b border-white/10 px-6 py-5 sm:flex-row sm:items-center">
+    <div className="rounded-[22px] border border-line bg-surface">
+      <div className="flex flex-col justify-between gap-3 border-b border-line px-6 py-5 sm:flex-row sm:items-center">
         <div>
-          <h2 className="flex items-center gap-2 text-[28px] font-bold text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">
-            <CalendarDays className="h-4 w-4 text-gold" />
+          <h2 className="flex items-center gap-2 text-[28px] font-bold text-fg [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">
+            <CalendarDays className="h-4 w-4 text-accent" />
             {c.consultationsTitle}
           </h2>
-          <p className="mt-1 text-[0.74rem] leading-relaxed text-ivory/45">{c.consultationsText}</p>
+          <p className="mt-1 text-[0.74rem] leading-relaxed text-fg">{c.consultationsText}</p>
         </div>
         <button
           type="button"
           onClick={() => void reload()}
-          className="inline-flex h-10 w-fit items-center gap-2 rounded-xl border border-white/12 px-3.5 text-[0.7rem] font-semibold  text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
+          className="inline-flex h-10 w-fit items-center gap-2 rounded-xl border border-line px-3.5 text-[0.7rem] font-semibold  text-fg transition-colors hover:border-accent/40 hover:text-accent"
         >
           <RefreshCcw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
           {c.refresh}
@@ -843,13 +843,13 @@ export function ConsultationsPanel() {
       />
 
       {items.length ? (
-        <ul className="divide-y divide-white/6">
+        <ul className="divide-y divide-line">
           {items.map((record) => (
             <li key={record.id} className="px-6 py-5">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-mono text-[0.72rem] text-gold">{record.reference}</span>
+                    <span className="font-mono text-[0.72rem] text-accent">{record.reference}</span>
                     <span
                       className={cn(
                         "inline-flex min-h-7 items-center px-2.5 text-[0.62rem] font-semibold ",
@@ -858,15 +858,15 @@ export function ConsultationsPanel() {
                     >
                       {c[record.status]}
                     </span>
-                    <span className="text-[0.66rem]  text-ivory/40">
+                    <span className="text-[0.66rem]  text-fg">
                       {c[record.mode]}
                     </span>
                   </div>
-                  <p className="mt-2.5 text-[0.95rem] text-ivory/85">
+                  <p className="mt-2.5 text-[0.95rem] text-fg">
                     {record.name}
                     {record.company ? ` · ${record.company}` : ""}
                   </p>
-                  <p className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[0.74rem] text-ivory/45">
+                  <p className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[0.74rem] text-fg">
                     <span className="flex items-center gap-1.5">
                       <CalendarDays className="h-3.5 w-3.5 shrink-0" />
                       {dateFormat.format(new Date(`${record.date}T12:00:00.000Z`))} · {record.slot}
@@ -880,7 +880,7 @@ export function ConsultationsPanel() {
                       {record.phone}
                     </span>
                   </p>
-                  <p className="mt-3 max-w-3xl text-[0.8rem] leading-relaxed text-ivory/55">
+                  <p className="mt-3 max-w-3xl text-[0.8rem] leading-relaxed text-fg">
                     {record.topic}
                     {record.notes ? ` — ${record.notes}` : ""}
                   </p>
@@ -891,7 +891,7 @@ export function ConsultationsPanel() {
                       type="button"
                       disabled={Boolean(pending)}
                       onClick={() => void update(record, "confirmed")}
-                      className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-emerald-400/25 px-2.5 text-[0.66rem] font-semibold  text-emerald-300 transition-colors hover:bg-emerald-400/10 disabled:opacity-50"
+                      className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-success/25 px-2.5 text-[0.66rem] font-semibold  text-success transition-colors hover:bg-success/10 disabled:opacity-50"
                     >
                       <Check className="h-3 w-3" />
                       {c.confirm}
@@ -902,7 +902,7 @@ export function ConsultationsPanel() {
                       type="button"
                       disabled={Boolean(pending)}
                       onClick={() => void update(record, "completed")}
-                      className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-gold/25 px-2.5 text-[0.66rem] font-semibold  text-gold transition-colors hover:bg-gold/10 disabled:opacity-50"
+                      className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-accent/25 px-2.5 text-[0.66rem] font-semibold  text-accent transition-colors hover:bg-accent/10 disabled:opacity-50"
                     >
                       <Check className="h-3 w-3" />
                       {c.complete}
@@ -913,7 +913,7 @@ export function ConsultationsPanel() {
                       type="button"
                       disabled={Boolean(pending)}
                       onClick={() => void update(record, "cancelled")}
-                      className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-red-400/20 px-2.5 text-[0.66rem] font-semibold  text-red-300 transition-colors hover:bg-red-400/10 disabled:opacity-50"
+                      className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-danger/20 px-2.5 text-[0.66rem] font-semibold  text-danger transition-colors hover:bg-danger/10 disabled:opacity-50"
                     >
                       <X className="h-3 w-3" />
                       {c.cancel}
@@ -927,7 +927,7 @@ export function ConsultationsPanel() {
       ) : null}
 
       {notice ? (
-        <p className="border-t border-white/8 px-6 py-2 text-[0.74rem] text-gold">{notice}</p>
+        <p className="border-t border-line px-6 py-2 text-[0.74rem] text-accent">{notice}</p>
       ) : null}
     </div>
   );
@@ -959,19 +959,19 @@ export function ContractsPanel() {
   }, [focusId, items.length]);
 
   return (
-    <div className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018]">
-      <div className="flex flex-col justify-between gap-3 border-b border-white/10 px-6 py-5 sm:flex-row sm:items-center">
+    <div className="rounded-[22px] border border-line bg-surface">
+      <div className="flex flex-col justify-between gap-3 border-b border-line px-6 py-5 sm:flex-row sm:items-center">
         <div>
-          <h2 className="flex items-center gap-2 text-[28px] font-bold text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">
-            <FileSignature className="h-4 w-4 text-gold" />
+          <h2 className="flex items-center gap-2 text-[28px] font-bold text-fg [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">
+            <FileSignature className="h-4 w-4 text-accent" />
             {c.contractsTitle}
           </h2>
-          <p className="mt-1 text-[0.74rem] leading-relaxed text-ivory/45">{c.contractsText}</p>
+          <p className="mt-1 text-[0.74rem] leading-relaxed text-fg">{c.contractsText}</p>
         </div>
         <button
           type="button"
           onClick={() => void reload()}
-          className="inline-flex h-10 w-fit items-center gap-2 rounded-xl border border-white/12 px-3.5 text-[0.7rem] font-semibold  text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
+          className="inline-flex h-10 w-fit items-center gap-2 rounded-xl border border-line px-3.5 text-[0.7rem] font-semibold  text-fg transition-colors hover:border-accent/40 hover:text-accent"
         >
           <RefreshCcw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
           {c.refresh}
@@ -990,36 +990,36 @@ export function ContractsPanel() {
       />
 
       {items.length ? (
-        <ul className="divide-y divide-white/6">
+        <ul className="divide-y divide-line">
           {items.map((record) => (
             <li
               key={record.id}
               id={`contract-${record.id}`}
               className={cn(
                 "scroll-mt-32 px-6 py-5 transition-colors",
-                focusId === record.id && "bg-gold/[0.055]",
+                focusId === record.id && "bg-accent/[0.055]",
               )}
             >
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
-                  <p className="flex items-center gap-2 text-[0.95rem] text-ivory/85">
-                    <ShieldCheck className="h-4 w-4 shrink-0 text-gold" />
+                  <p className="flex items-center gap-2 text-[0.95rem] text-fg">
+                    <ShieldCheck className="h-4 w-4 shrink-0 text-accent" />
                     {record.projectSlug}
                   </p>
-                  <p className="mt-1.5 break-all text-[0.76rem] text-ivory/50">
+                  <p className="mt-1.5 break-all text-[0.76rem] text-fg">
                     {c.signedBy}: {record.signerName} · {record.email}
                   </p>
-                  <p className="mt-1.5 break-all font-mono text-[0.7rem] text-ivory/35">
+                  <p className="mt-1.5 break-all font-mono text-[0.7rem] text-fg">
                     {c.digest}: {record.contractHash.slice(0, 24)}…
                   </p>
-                  <p className="mt-2 text-[0.74rem] leading-relaxed text-ivory/45">
+                  <p className="mt-2 text-[0.74rem] leading-relaxed text-fg">
                     {c.verifiedMilestones}: {record.milestones.length}
                     {record.milestones.length
                       ? ` · ${record.milestones.map((item) => item.titleEn).join(" · ")}`
                       : ` · ${c.noVerifiedMilestones}`}
                   </p>
                 </div>
-                <span className="tabular shrink-0 text-[0.7rem] text-ivory/35">
+                <span className="tabular shrink-0 text-[0.7rem] text-fg">
                   {dateFormat.format(new Date(record.signedAt))}
                 </span>
               </div>
@@ -1105,20 +1105,20 @@ export function NotificationsPanel() {
   ];
 
   return (
-    <div className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018]">
-      <div className="flex flex-col justify-between gap-3 border-b border-white/10 px-6 py-5 sm:flex-row sm:items-center">
+    <div className="rounded-[22px] border border-line bg-surface">
+      <div className="flex flex-col justify-between gap-3 border-b border-line px-6 py-5 sm:flex-row sm:items-center">
         <div>
-          <h2 className="flex items-center gap-2 text-[28px] font-bold text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">
-            <BellRing className="h-4 w-4 text-gold" />
+          <h2 className="flex items-center gap-2 text-[28px] font-bold text-fg [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">
+            <BellRing className="h-4 w-4 text-accent" />
             {c.notificationsTitle}
           </h2>
-          <p className="mt-1 text-[0.74rem] leading-relaxed text-ivory/45">{c.notificationsText}</p>
+          <p className="mt-1 text-[0.74rem] leading-relaxed text-fg">{c.notificationsText}</p>
         </div>
         <button
           type="button"
           onClick={() => void test()}
           disabled={busy}
-          className="inline-flex h-10 w-fit items-center gap-2 rounded-xl border border-gold/30 bg-gold/5 px-3.5 text-[0.7rem] font-semibold  text-gold transition-colors hover:bg-gold/10 disabled:opacity-50"
+          className="inline-flex h-10 w-fit items-center gap-2 rounded-xl border border-accent/30 bg-accent/5 px-3.5 text-[0.7rem] font-semibold  text-accent transition-colors hover:bg-accent/10 disabled:opacity-50"
         >
           {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
           {busy ? c.sendingTest : c.sendTest}
@@ -1126,54 +1126,54 @@ export function NotificationsPanel() {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center gap-2 py-14 text-[0.76rem] text-ivory/45">
+        <div className="flex items-center justify-center gap-2 py-14 text-[0.76rem] text-fg">
           <Loader2 className="h-4 w-4 animate-spin" />
           {c.loading}
         </div>
       ) : error ? (
         <div className="flex flex-col items-center gap-3 py-14 text-center">
-          <AlertCircle className="h-5 w-5 text-red-300/70" />
-          <p className="text-[0.76rem] text-ivory/50">{c.error}</p>
+          <AlertCircle className="h-5 w-5 text-danger" />
+          <p className="text-[0.76rem] text-fg">{c.error}</p>
           <button
             type="button"
             onClick={() => void load()}
-            className="inline-flex h-11 items-center gap-2 rounded-[12px] border border-white/15 bg-white/[0.04] px-4 text-[14px] font-semibold text-[#F1EEE8] transition-colors hover:border-[rgba(226,176,74,0.25)] hover:bg-white/[0.06]"
+            className="inline-flex h-11 items-center gap-2 rounded-[12px] border border-line bg-surface-2 px-4 text-[14px] font-semibold text-fg transition-colors hover:border-[rgb(var(--accent-rgb)/0.25)] hover:bg-surface-2"
           >
             <RefreshCcw className="h-3.5 w-3.5" />
             {c.retry}
           </button>
         </div>
       ) : (
-        <div className="grid gap-px bg-white/10 sm:grid-cols-2">
+        <div className="grid gap-px bg-line sm:grid-cols-2">
           {channels.map(({ key, icon: Icon, label, configured, detail }) => (
-            <div key={key} className="bg-obsidian p-6">
+            <div key={key} className="bg-bg p-6">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <span className="flex items-center gap-2 text-[0.84rem] text-ivory/70">
-                  <Icon className="h-4 w-4 shrink-0 text-gold" />
+                <span className="flex items-center gap-2 text-[0.84rem] text-fg">
+                  <Icon className="h-4 w-4 shrink-0 text-accent" />
                   {label}
                 </span>
                 <span
                   className={cn(
                     "inline-flex min-h-7 items-center rounded-full px-2.5 text-[0.66rem] font-semibold ",
                     configured
-                      ? "bg-emerald-400/12 text-emerald-300"
-                      : "bg-white/8 text-ivory/45",
+                      ? "bg-success/12 text-success"
+                      : "bg-line text-fg",
                   )}
                 >
                   {configured ? c.configured : c.notConfigured}
                 </span>
               </div>
-              <p className="mt-4 text-[0.72rem]  text-ivory/40">
+              <p className="mt-4 text-[0.72rem]  text-fg">
                 {key === "email" ? c.recipient : c.transport}
               </p>
-              <p className="mt-1.5 truncate text-[0.8rem] text-ivory/65">{detail}</p>
+              <p className="mt-1.5 truncate text-[0.8rem] text-fg">{detail}</p>
             </div>
           ))}
         </div>
       )}
 
       {notice ? (
-        <p className="border-t border-white/8 px-6 py-2 text-[0.74rem] text-gold">{notice}</p>
+        <p className="border-t border-line px-6 py-2 text-[0.74rem] text-accent">{notice}</p>
       ) : null}
     </div>
   );
@@ -1246,14 +1246,14 @@ export function MilestonesPanel() {
   };
 
   return (
-    <div className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018]">
-      <div className="flex flex-col justify-between gap-3 border-b border-white/10 px-6 py-5 sm:flex-row sm:items-center">
+    <div className="rounded-[22px] border border-line bg-surface">
+      <div className="flex flex-col justify-between gap-3 border-b border-line px-6 py-5 sm:flex-row sm:items-center">
         <div>
-          <h2 className="flex items-center gap-2 text-[28px] font-bold text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">
-            <Flag className="h-4 w-4 text-gold" />
+          <h2 className="flex items-center gap-2 text-[28px] font-bold text-fg [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">
+            <Flag className="h-4 w-4 text-accent" />
             {c.milestonesTitle}
           </h2>
-          <p className="mt-1 text-[0.74rem] leading-relaxed text-ivory/45">{c.milestonesText}</p>
+          <p className="mt-1 text-[0.74rem] leading-relaxed text-fg">{c.milestonesText}</p>
         </div>
         <div className="flex flex-wrap items-end gap-2">
           {active ? (
@@ -1261,12 +1261,12 @@ export function MilestonesPanel() {
               project={active}
               variant="thumb"
               sizes="56px"
-              className="h-11 w-14 shrink-0 rounded-[10px] border border-white/12"
+              className="h-11 w-14 shrink-0 rounded-[10px] border border-line"
             />
           ) : null}
           <a
             href="/api/admin/export/milestones"
-            className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-white/12 px-3.5 text-[0.7rem] font-semibold  text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
+            className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-line px-3.5 text-[0.7rem] font-semibold  text-fg transition-colors hover:border-accent/40 hover:text-accent"
           >
             <Download className="h-3.5 w-3.5" />
             {c.exportMilestones}
@@ -1289,7 +1289,7 @@ export function MilestonesPanel() {
               setAdding(true);
               setFormError("");
             }}
-            className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-gold/40 px-3.5 text-[0.7rem] font-semibold  text-gold transition-colors hover:bg-gold hover:text-obsidian disabled:opacity-40"
+            className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-accent/40 px-3.5 text-[0.7rem] font-semibold  text-accent transition-colors hover:bg-accent-fill hover:text-accent-fg disabled:opacity-40"
           >
             <Plus className="h-3.5 w-3.5" />
             {c.addMilestone}
@@ -1303,9 +1303,9 @@ export function MilestonesPanel() {
             event.preventDefault();
             addMilestone();
           }}
-          className="border-b border-white/10 bg-obsidian/40 px-6 py-5"
+          className="border-b border-line bg-bg/40 px-6 py-5"
         >
-          <p className="text-[0.68rem] font-semibold  text-gold">
+          <p className="text-[0.68rem] font-semibold  text-accent">
             {c.newMilestone}
           </p>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -1347,12 +1347,12 @@ export function MilestonesPanel() {
             </Field>
           </div>
           {formError ? (
-            <p className="mt-2 text-[0.7rem] text-red-300">{formError}</p>
+            <p className="mt-2 text-[0.7rem] text-danger">{formError}</p>
           ) : null}
           <div className="mt-3 flex flex-wrap gap-2">
             <button
               type="submit"
-              className="inline-flex h-10 items-center gap-1.5 bg-gold px-4 text-[0.7rem] font-semibold  text-obsidian transition-colors hover:bg-gold-light"
+              className="inline-flex h-10 items-center gap-1.5 bg-accent-fill px-4 text-[0.7rem] font-semibold  text-accent-fg transition-colors hover:bg-accent-fill"
             >
               <Check className="h-3.5 w-3.5" />
               {c.saveMilestone}
@@ -1364,7 +1364,7 @@ export function MilestonesPanel() {
                 setDraft(emptyMilestoneDraft);
                 setFormError("");
               }}
-              className="inline-flex h-10 items-center rounded-xl border border-white/12 px-4 text-[0.7rem] font-semibold  text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
+              className="inline-flex h-10 items-center rounded-xl border border-line px-4 text-[0.7rem] font-semibold  text-fg transition-colors hover:border-accent/40 hover:text-accent"
             >
               {c.cancel}
             </button>
@@ -1373,7 +1373,7 @@ export function MilestonesPanel() {
       ) : null}
 
       {active?.milestones.length ? (
-        <ol className="divide-y divide-white/6">
+        <ol className="divide-y divide-line">
           {active.milestones.map((milestone, index) => (
             <li key={`${milestone.title.en}-${index}`} className="px-6 py-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
@@ -1382,10 +1382,10 @@ export function MilestonesPanel() {
                     className={cn(
                       "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border",
                       milestone.status === "complete"
-                        ? "border-gold bg-gold text-obsidian"
+                        ? "border-accent bg-accent-fill text-accent-fg"
                         : milestone.status === "current"
-                          ? "border-gold text-gold"
-                          : "border-white/15 text-ivory/40",
+                          ? "border-accent text-accent"
+                          : "border-line text-fg",
                     )}
                   >
                     {milestone.status === "complete" ? (
@@ -1397,10 +1397,10 @@ export function MilestonesPanel() {
                     )}
                   </span>
                   <div className="min-w-0">
-                    <p className="text-[0.92rem] leading-snug text-ivory/80">
+                    <p className="text-[0.92rem] leading-snug text-fg">
                       {l(milestone.title)}
                     </p>
-                    <span className="mt-0.5 block text-[0.76rem] text-ivory/40">
+                    <span className="mt-0.5 block text-[0.76rem] text-fg">
                       {l(milestone.date)}
                     </span>
                   </div>
@@ -1414,8 +1414,8 @@ export function MilestonesPanel() {
                       className={cn(
                         "h-9 px-3 text-[0.68rem] font-semibold  transition-colors",
                         milestone.status === status
-                          ? "bg-gold text-obsidian"
-                          : "border border-white/10 text-ivory/50 hover:border-gold/40 hover:text-gold",
+                          ? "bg-accent-fill text-accent-fg"
+                          : "border border-line text-fg hover:border-accent/40 hover:text-accent",
                       )}
                     >
                       {c[status]}
@@ -1425,7 +1425,7 @@ export function MilestonesPanel() {
                     type="button"
                     onClick={() => removeMilestone(index)}
                     aria-label={`${c.remove} — ${l(milestone.title)}`}
-                    className="flex h-9 w-9 items-center justify-center border border-white/10 text-ivory/45 transition-colors hover:border-red-400/50 hover:text-red-300"
+                    className="flex h-9 w-9 items-center justify-center border border-line text-fg transition-colors hover:border-danger/50 hover:text-danger"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
@@ -1436,15 +1436,15 @@ export function MilestonesPanel() {
         </ol>
       ) : (
         <div className="flex flex-col items-center gap-3 px-6 py-14 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] text-ivory/50">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full border border-line bg-surface-2 text-fg">
             <Flag className="h-5 w-5" />
           </div>
-          <p className="text-[0.8rem] text-ivory/55">{(c as Record<string, string>).noMilestonesHint || (c as Record<string, string>).noMilestones}</p>
+          <p className="text-[0.8rem] text-fg">{(c as Record<string, string>).noMilestonesHint || (c as Record<string, string>).noMilestones}</p>
           <div className="mt-1 flex flex-wrap items-center justify-center gap-2">
             <button
               type="button"
               onClick={() => { setAdding(true); setFormError(""); }}
-              className="inline-flex h-10 items-center gap-1.5 bg-gold px-4 text-[0.7rem] font-semibold  text-obsidian transition-colors hover:bg-gold-light"
+              className="inline-flex h-10 items-center gap-1.5 bg-accent-fill px-4 text-[0.7rem] font-semibold  text-accent-fg transition-colors hover:bg-accent-fill"
             >
               <Plus className="h-3.5 w-3.5" />
               {(c as Record<string, string>).addFirstMilestone || (c as Record<string, string>).addMilestone}
@@ -1464,7 +1464,7 @@ export function MilestonesPanel() {
                 updateProject(active.slug, { milestones: template });
                 toast(c.updated, "success");
               }}
-              className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-white/12 px-4 text-[0.7rem] font-semibold  text-ivory/70 transition-colors hover:border-gold/40 hover:text-gold"
+              className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-line px-4 text-[0.7rem] font-semibold  text-fg transition-colors hover:border-accent/40 hover:text-accent"
             >
               {(c as Record<string, string>).useTemplate || (locale === "ar" ? "استخدام قالب الإنشاء القياسي" : "Use standard construction template")}
             </button>
@@ -1472,7 +1472,7 @@ export function MilestonesPanel() {
         </div>
       )}
 
-      <p className="border-t border-white/8 px-6 py-2 text-[0.68rem] text-ivory/35">
+      <p className="border-t border-line px-6 py-2 text-[0.68rem] text-fg">
         {c.milestoneHint}
       </p>
     </div>

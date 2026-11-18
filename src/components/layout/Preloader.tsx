@@ -75,7 +75,7 @@ export function Preloader() {
   return (
     <div
       className={cn(
-        "fixed inset-0 z-[200] flex flex-col items-center justify-center bg-obsidian transition-transform duration-[700ms] ease-[cubic-bezier(0.76,0,0.24,1)]",
+        "fixed inset-0 z-[200] flex flex-col items-center justify-center bg-bg transition-transform duration-[700ms] ease-[cubic-bezier(0.76,0,0.24,1)]",
         phase === "leaving" && "pointer-events-none -translate-y-full",
       )}
       aria-hidden="true"
@@ -88,13 +88,13 @@ export function Preloader() {
         <div className="i18n-en">
           <BrandLogo locale="en" />
         </div>
-        <div className="mt-10 h-px w-[180px] overflow-hidden bg-white/10">
+        <div className="mt-10 h-px w-[180px] overflow-hidden bg-line">
           <div
-            className="h-full origin-left bg-gold transition-[width] duration-100 ease-linear"
+            className="h-full origin-left bg-accent-fill transition-[width] duration-100 ease-linear"
             style={{ width: `${progress}%` }}
           />
         </div>
-        <div className="mt-4 flex w-[180px] items-center justify-between text-[0.58rem] uppercase tracking-[0.24em] text-ivory/45">
+        <div className="mt-4 flex w-[180px] items-center justify-between text-[0.58rem] uppercase tracking-[0.24em] text-fg">
           {ready ? (
             <span>{t.common.loading}</span>
           ) : (
@@ -103,7 +103,7 @@ export function Preloader() {
               <span className="i18n-en">{dictionary.en.common.loading}</span>
             </>
           )}
-          <span className="tabular text-gold">{String(progress).padStart(3, "0")}</span>
+          <span className="tabular text-accent">{String(progress).padStart(3, "0")}</span>
         </div>
       </div>
     </div>

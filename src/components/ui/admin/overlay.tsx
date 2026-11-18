@@ -67,16 +67,16 @@ function OverlaySurface({
   return (
     <>
       {kind === "modal" ? (
-        <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-white/15 md:hidden" />
+        <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-line md:hidden" />
       ) : null}
       {!bare ? (
-        <div className="flex min-h-[72px] shrink-0 items-center justify-between gap-4 border-b border-white/[.06] px-6 py-4">
+        <div className="flex min-h-[72px] shrink-0 items-center justify-between gap-4 border-b border-line px-6 py-4">
           <div className="min-w-0">
-            <DialogPrimitive.Title className="truncate text-[20px] font-bold leading-tight text-[var(--admin-text,#F1EEE8)]">
+            <DialogPrimitive.Title className="truncate text-[20px] font-bold leading-tight text-fg">
               {title}
             </DialogPrimitive.Title>
             {description ? (
-              <DialogPrimitive.Description className="mt-1 line-clamp-2 text-[14px] leading-relaxed text-[var(--admin-muted,#A6A9B4)]">
+              <DialogPrimitive.Description className="mt-1 line-clamp-2 text-[14px] leading-relaxed text-muted">
                 {description}
               </DialogPrimitive.Description>
             ) : null}
@@ -86,7 +86,7 @@ function OverlaySurface({
               type="button"
               onClick={onClose}
               aria-label={closeLabel}
-              className="admin-focus-ring inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[.03] text-white/55 transition-colors hover:bg-white/[.08] hover:text-white"
+              className="admin-focus-ring inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-surface-2 text-fg transition-colors hover:bg-surface-2 hover:text-fg"
             >
               <X className="h-4 w-4" strokeWidth={1.8} />
             </button>
@@ -116,7 +116,7 @@ function OverlaySurface({
       {footer ? (
         <div
           className={cn(
-            "shrink-0 border-t border-white/[.08] bg-[#101218]/85 px-6 py-4 backdrop-blur",
+            "shrink-0 border-t border-line bg-surface/85 px-6 py-4 backdrop-blur",
             footerClassName,
           )}
         >
@@ -150,11 +150,11 @@ export function Modal({
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange} modal>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="admin-overlay fixed inset-0 z-[250] bg-black/60 backdrop-blur-sm" />
+        <DialogPrimitive.Overlay className="admin-overlay fixed inset-0 z-[250] bg-bg/60 backdrop-blur-sm" />
         <DialogPrimitive.Content
           data-slot="admin-modal"
           className={cn(
-            "admin-modal-content fixed inset-x-0 bottom-0 z-[260] flex max-h-[94dvh] flex-col rounded-t-3xl border border-white/[.08] bg-gradient-to-b from-[#161820] to-[#101218] text-[var(--admin-text,#F1EEE8)] shadow-[0_24px_80px_rgba(0,0,0,.6)] outline-none md:inset-x-auto md:bottom-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:max-h-[90dvh] md:rounded-3xl",
+            "admin-modal-content fixed inset-x-0 bottom-0 z-[260] flex max-h-[94dvh] flex-col rounded-t-3xl border border-line bg-gradient-to-b from-surface to-surface text-fg shadow-e3 outline-none md:inset-x-auto md:bottom-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:max-h-[90dvh] md:rounded-3xl",
             modalWidths[size],
             className,
           )}
@@ -212,12 +212,12 @@ export function Drawer({
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange} modal>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="admin-overlay fixed inset-0 z-[250] bg-black/60 backdrop-blur-sm" />
+        <DialogPrimitive.Overlay className="admin-overlay fixed inset-0 z-[250] bg-bg/60 backdrop-blur-sm" />
         <DialogPrimitive.Content
           data-slot="admin-drawer"
           data-side={side}
           className={cn(
-            "admin-drawer-content fixed inset-y-0 z-[260] flex h-dvh w-full flex-col border-white/[.08] bg-gradient-to-b from-[#161820] to-[#101218] text-[var(--admin-text,#F1EEE8)] shadow-[0_24px_80px_rgba(0,0,0,.6)] outline-none",
+            "admin-drawer-content fixed inset-y-0 z-[260] flex h-dvh w-full flex-col border-line bg-gradient-to-b from-surface to-surface text-fg shadow-e3 outline-none",
             side === "end" ? "end-0 border-s" : "start-0 border-e",
             widthClassName,
             className,
@@ -302,7 +302,7 @@ export function ConfirmDialog({
             disabled={busy || !matches}
             className={cn(
               destructive &&
-                "border-red-400/20 bg-red-500/10 text-red-200 hover:border-red-400/30 hover:bg-red-500/15",
+                "border-danger/20 bg-danger/10 text-danger hover:border-danger/30 hover:bg-danger/15",
             )}
           >
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : destructive ? <AlertTriangle className="h-4 w-4" /> : <Check className="h-4 w-4" />}
@@ -313,24 +313,24 @@ export function ConfirmDialog({
     >
       <div className="space-y-4">
         {description ? (
-          <div className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[.03] p-3.5">
+          <div className="flex items-start gap-3 rounded-xl border border-line bg-surface-2 p-3.5">
             <span
               className={cn(
                 "mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full",
-                destructive ? "bg-red-500/12 text-red-300" : "bg-[#E2B04A]/12 text-[#F3C86A]",
+                destructive ? "bg-danger/12 text-danger" : "bg-accent-fill/12 text-accent",
               )}
             >
               {destructive ? <AlertTriangle className="h-4 w-4" /> : <Check className="h-4 w-4" />}
             </span>
-            <div className="text-[14px] leading-relaxed text-[var(--admin-muted,#A6A9B4)]">
+            <div className="text-[14px] leading-relaxed text-muted">
               {description}
             </div>
           </div>
         ) : null}
         {requireText ? (
           <div className="space-y-2">
-            <p className="text-[13px] leading-relaxed text-[var(--admin-muted,#A6A9B4)]">
-              Type <strong className="font-semibold text-[var(--admin-text,#F1EEE8)]">{requireText}</strong> to confirm.
+            <p className="text-[13px] leading-relaxed text-muted">
+              Type <strong className="font-semibold text-fg">{requireText}</strong> to confirm.
             </p>
             <Input
               ref={inputRef}
@@ -377,7 +377,7 @@ export function Popover({
           side={side}
           sideOffset={8}
           className={cn(
-            "scroll-area z-[280] min-w-[180px] rounded-xl border border-white/10 bg-[#161820] p-1.5 text-[var(--admin-text,#F1EEE8)] shadow-[0_18px_60px_rgba(0,0,0,.55)] outline-none",
+            "scroll-area z-[280] min-w-[180px] rounded-xl border border-line bg-surface p-1.5 text-fg shadow-e2 outline-none",
             className,
           )}
         >
@@ -396,11 +396,11 @@ export function AdminToaster() {
       closeButton
       toastOptions={{
         style: {
-          background: "#161820",
-          border: "1px solid rgba(255,255,255,.08)",
-          color: "#F1EEE8",
+          background: "var(--surface)",
+          border: "1px solid rgb(var(--fg-rgb)/.08)",
+          color: "var(--fg)",
           borderRadius: "16px",
-          boxShadow: "0 24px 80px rgba(0,0,0,.6)",
+          boxShadow: "0 24px 80px rgb(var(--bg-rgb)/.6)",
         },
       }}
     />

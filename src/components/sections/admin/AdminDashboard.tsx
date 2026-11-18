@@ -33,7 +33,6 @@ import {
   Menu,
   MessageSquare,
   MoreVertical,
-  Moon,
   Pencil,
   Plus,
   RotateCcw,
@@ -43,7 +42,6 @@ import {
   Settings,
   ShieldCheck,
   Sparkles,
-  Sun,
   UserRound,
   Wallet,
   Wrench,
@@ -53,6 +51,7 @@ import { isAdminUser, useAuth } from "@/components/providers/AuthProvider";
 import { useContainerWidth } from "@/hooks/useContainerWidth";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useI18n } from "@/components/providers/I18nProvider";
+import { useTheme } from "@/components/providers/ThemeProvider";
 
 import {
   useWorkspace,
@@ -73,6 +72,7 @@ import {
   NotificationsPanel,
 } from "@/components/sections/admin/AdminOperations";
 import { BrandLogo } from "@/components/ui/BrandLogo";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { Field, TextInput, Textarea } from "@/components/ui/Field";
 import { ProjectArt } from "@/components/ui/ProjectArt";
 import { Checkbox } from "@/components/ui/Checkbox";
@@ -501,7 +501,14 @@ export function AdminDashboard({
 }: {
   initialSection?: AdminSection;
 }) {
-  const { locale, toggleLocale } = useI18n();
+  const { locale, toggleLocale, t } = useI18n();
+  const { resolvedTheme } = useTheme();
+  const themeToggleLabels = {
+    system: t.theme.system,
+    light: t.theme.light,
+    dark: t.theme.dark,
+    cycle: t.theme.toggle,
+  };
   const { signOut } = useAuth();
   const { user, ready, loading: userLoading, email, displayName, monogram, roleLabel } = useCurrentUser();
   const { projects, messages, addProject, updateProject, ready: workspaceReady } = useWorkspace();
@@ -530,10 +537,6 @@ export function AdminDashboard({
   const [density, setDensity] = useState<"comfortable" | "compact">(() => {
     if (typeof window === "undefined") return "comfortable";
     try { const d = localStorage.getItem("admin-density"); return d === "compact" ? "compact" : "comfortable"; } catch { return "comfortable"; }
-  });
-  const [theme, setTheme] = useState<"dark" | "light">(() => {
-    if (typeof window === "undefined") return "dark";
-    try { const t = localStorage.getItem("admin-theme"); return t === "light" ? "light" : "dark"; } catch { return "dark"; }
   });
   const mainRef = useRef<HTMLElement | null>(null);
   const topSentinelRef = useRef<HTMLDivElement | null>(null);
@@ -573,12 +576,6 @@ export function AdminDashboard({
   useEffect(() => { try { localStorage.setItem("admin-density", density); } catch {} }, [density]);
   useEffect(() => { try { localStorage.setItem("admin-font-size", fontScale); } catch {} }, [fontScale]);
   useEffect(() => { try { localStorage.setItem("admin-sidebar-collapsed", sidebarCollapsed ? "1" : "0"); } catch {} }, [sidebarCollapsed]);
-  useEffect(() => {
-    try { localStorage.setItem("admin-theme", theme); } catch {}
-    const root = document.documentElement;
-    if (theme === "light") root.setAttribute("data-theme", "light");
-    else root.removeAttribute("data-theme");
-  }, [theme]);
 
   const navigateToSection = useCallback((next: Section, focusId?: string) => {
     setMobileNavOpen(false);
@@ -669,32 +666,32 @@ export function AdminDashboard({
 
   if (!ready) {
     return (
-      <section className="admin-shell flex h-dvh min-h-0 overflow-hidden bg-[var(--admin-bg)]">
+      <section className="admin-shell flex h-dvh min-h-0 overflow-hidden bg-bg">
         <div className="relative mx-auto flex h-full min-h-0 w-full min-w-0 max-w-[1600px]">
-          <aside className="hidden w-[264px] shrink-0 flex-col border-e border-[var(--admin-card-border)] bg-[var(--admin-sidebar)] lg:flex">
-            <div className="h-[72px] border-b border-[var(--admin-card-border)]" />
+          <aside className="hidden w-[264px] shrink-0 flex-col border-e border-line bg-surface lg:flex">
+            <div className="h-[72px] border-b border-line" />
             <div className="flex flex-col gap-2 p-3">
               {Array.from({ length: 8 }).map((_, index) => (
-                <div key={index} className="h-11 animate-pulse rounded-[12px] bg-white/[0.045]" />
+                <div key={index} className="h-11 animate-pulse rounded-[12px] bg-surface-2" />
               ))}
             </div>
           </aside>
           <div className="flex min-w-0 flex-1 flex-col">
-            <header className="flex h-[72px] shrink-0 items-center gap-3 border-b border-[var(--admin-card-border)] px-4 sm:px-8">
-              <div className="h-11 w-11 animate-pulse rounded-full bg-white/[0.05] lg:hidden" />
-              <div className="h-10 w-48 animate-pulse rounded-full bg-white/[0.05]" />
-              <div className="ms-auto h-11 w-36 animate-pulse rounded-full bg-white/[0.05]" />
+            <header className="flex h-[72px] shrink-0 items-center gap-3 border-b border-line px-4 sm:px-8">
+              <div className="h-11 w-11 animate-pulse rounded-full bg-surface-2 lg:hidden" />
+              <div className="h-10 w-48 animate-pulse rounded-full bg-surface-2" />
+              <div className="ms-auto h-11 w-36 animate-pulse rounded-full bg-surface-2" />
             </header>
             <main className="flex-1 space-y-5 overflow-hidden p-4 sm:p-6 lg:p-8" aria-busy="true" aria-label="Loading admin dashboard">
-              <div className="h-44 animate-pulse rounded-[24px] bg-white/[0.04]" />
+              <div className="h-44 animate-pulse rounded-[24px] bg-surface-2" />
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
                 {Array.from({ length: 5 }).map((_, index) => (
-                  <div key={index} className="h-36 animate-pulse rounded-[20px] bg-white/[0.04]" />
+                  <div key={index} className="h-36 animate-pulse rounded-[20px] bg-surface-2" />
                 ))}
               </div>
               <div className="grid gap-4 xl:grid-cols-[1.7fr_1fr]">
-                <div className="h-64 animate-pulse rounded-[22px] bg-white/[0.04]" />
-                <div className="h-64 animate-pulse rounded-[22px] bg-white/[0.04]" />
+                <div className="h-64 animate-pulse rounded-[22px] bg-surface-2" />
+                <div className="h-64 animate-pulse rounded-[22px] bg-surface-2" />
               </div>
             </main>
           </div>
@@ -707,27 +704,27 @@ export function AdminDashboard({
 
   if (!user || !isAdmin) {
     return (
-      <section className="relative flex h-dvh items-center overflow-hidden bg-obsidian">
+      <section className="relative flex h-dvh items-center overflow-hidden bg-bg">
         <div className="blueprint-grid pointer-events-none absolute inset-0 opacity-40" />
         <div className="container-lux relative">
           <div className="mx-auto flex max-w-lg flex-col items-center text-center">
-            <span className="flex h-12 w-12 items-center justify-center rounded-full border border-gold/30 bg-gold/5 text-gold">
+            <span className="flex h-12 w-12 items-center justify-center rounded-full border border-accent/30 bg-accent/5 text-accent">
               <ShieldCheck className="h-5 w-5" />
             </span>
-            <h1 className="mt-6 text-[clamp(2.2rem,5vw,3.6rem)] font-bold leading-tight text-ivory [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">
+            <h1 className="mt-6 text-[clamp(2.2rem,5vw,3.6rem)] font-bold leading-tight text-fg [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">
               {c.accessTitle}
             </h1>
-            <p className="mt-5 max-w-md text-[0.9rem] leading-[1.9] text-ivory/60">
+            <p className="mt-5 max-w-md text-[0.9rem] leading-[1.9] text-fg">
               {c.accessText}
             </p>
             <Link
               href="/sign-in"
-              className="btn-shine mt-9 inline-flex min-h-[44px] items-center gap-2.5 rounded-[12px] bg-gold px-7 text-[15px] font-bold text-obsidian transition-colors hover:bg-gold-light"
+              className="btn-shine mt-9 inline-flex min-h-[44px] items-center gap-2.5 rounded-[12px] bg-accent-fill px-7 text-[15px] font-bold text-accent-fg transition-colors hover:bg-accent-fill"
             >
               {c.signIn}
               <ArrowUpRight className="h-4 w-4" />
             </Link>
-            <p className="mt-6 text-[0.76rem] text-ivory/40">{c.secureNote}</p>
+            <p className="mt-6 text-[0.76rem] text-fg">{c.secureNote}</p>
           </div>
         </div>
       </section>
@@ -811,7 +808,7 @@ export function AdminDashboard({
   const sidebarBrand = (collapsed: boolean) => (
     <div
       className={cn(
-        "flex h-[72px] shrink-0 items-center border-b border-[var(--admin-card-border)]",
+        "flex h-[72px] shrink-0 items-center border-b border-line",
         collapsed ? "justify-center px-0" : "min-w-0 gap-2 px-4",
       )}
     >
@@ -831,21 +828,21 @@ export function AdminDashboard({
               collapsed
               priority
               markClassName="h-10 w-10"
-              tone={theme === "light" ? "dark" : "light"}
+              tone={resolvedTheme === "light" ? "dark" : "light"}
             />
           </span>
         ) : (
           <BrandLogo
             variant="full"
             priority
-            tone={theme === "light" ? "dark" : "light"}
+            tone={resolvedTheme === "light" ? "dark" : "light"}
           />
         )}
       </Link>
       <button
         type="button"
         onClick={() => setMobileNavOpen(false)}
-        className="admin-focus-ring inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[12px] text-[var(--admin-muted)] hover:bg-[var(--admin-pill-surface)] lg:hidden"
+        className="admin-focus-ring inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[12px] text-muted hover:bg-surface-2 lg:hidden"
         aria-label={locale === "ar" ? "إغلاق" : "Close"}
       >
         <X className="h-5 w-5" strokeWidth={1.7} />
@@ -862,9 +859,9 @@ export function AdminDashboard({
       {navGroups.map((group) => (
         <div key={group.title} className="mt-1 first:mt-0">
           {!collapsed ? (
-            <p className="px-3 pb-[6px] pt-[18px] text-[12px] text-[var(--admin-muted)]">{group.title}</p>
+            <p className="px-3 pb-[6px] pt-[18px] text-[12px] text-muted">{group.title}</p>
           ) : (
-            <div className="my-2 h-px bg-[var(--admin-card-border)]" />
+            <div className="my-2 h-px bg-line" />
           )}
           <div className="flex flex-col gap-[2px]">
             {group.items.map(({ id, label, icon: Icon }) => {
@@ -887,14 +884,14 @@ export function AdminDashboard({
                     "admin-focus-ring group relative flex min-h-[44px] items-center gap-3 rounded-[12px] px-3 py-[11px] text-[15px] transition-colors",
                     collapsed && "justify-center px-0",
                     active
-                      ? "bg-[linear-gradient(90deg,rgba(226,176,74,0.20),rgba(226,176,74,0.04))] text-[#F3C86A] shadow-[inset_0_0_0_1px_rgba(226,176,74,0.25)]"
-                      : "text-[var(--admin-muted)] hover:bg-[var(--admin-pill-surface)] hover:text-[var(--admin-text)]",
+                      ? "bg-accent/15 text-accent shadow-e1"
+                      : "text-muted hover:bg-surface-2 hover:text-fg",
                   )}
                 >
                   <Icon className="h-5 w-5 shrink-0" strokeWidth={1.7} />
                   {!collapsed ? <span className="flex-1 truncate">{label}</span> : null}
-                  {!collapsed && badge > 0 ? <span className="ms-auto rounded-[9px] bg-[var(--admin-red)] px-[7px] py-0 text-[12px] leading-[18px] text-white">{badge}</span> : null}
-                  {collapsed && badge > 0 ? <span className="absolute end-2 top-2 h-2 w-2 rounded-full bg-[var(--admin-red)]" /> : null}
+                  {!collapsed && badge > 0 ? <span className="ms-auto rounded-[9px] bg-danger px-[7px] py-0 text-[12px] leading-[18px] text-fg">{badge}</span> : null}
+                  {collapsed && badge > 0 ? <span className="absolute end-2 top-2 h-2 w-2 rounded-full bg-danger" /> : null}
                 </Link>
               );
             })}
@@ -908,18 +905,18 @@ export function AdminDashboard({
     const isAr = locale === "ar";
     return (
       <div className="w-[230px]" role="menu" aria-label={isAr ? "قائمة المستخدم" : "User menu"}>
-        <div className="border-b border-[var(--admin-card-border)] px-2.5 pb-2.5 pt-1.5">
-          <p className="truncate text-[14px] font-semibold text-[var(--admin-text)]">{displayName || "—"}</p>
-          <p className="mt-0.5 truncate text-[12px] text-[var(--admin-muted)]" dir="ltr">{email || "—"}</p>
+        <div className="border-b border-line px-2.5 pb-2.5 pt-1.5">
+          <p className="truncate text-[14px] font-semibold text-fg">{displayName || "—"}</p>
+          <p className="mt-0.5 truncate text-[12px] text-muted" dir="ltr">{email || "—"}</p>
         </div>
         <Link
           href="/admin/profile"
           role="menuitem"
           prefetch
           onClick={close}
-          className="admin-focus-ring mt-1 flex min-h-[44px] items-center gap-3 rounded-[10px] px-3 text-[14px] text-[var(--admin-text)] hover:bg-[var(--admin-pill-surface)]"
+          className="admin-focus-ring mt-1 flex min-h-[44px] items-center gap-3 rounded-[10px] px-3 text-[14px] text-fg hover:bg-surface-2"
         >
-          <UserRound className="h-4 w-4 text-[var(--admin-muted)]" strokeWidth={1.7} />
+          <UserRound className="h-4 w-4 text-muted" strokeWidth={1.7} />
           {isAr ? "الملف الشخصي" : "Profile"}
         </Link>
         <Link
@@ -928,20 +925,20 @@ export function AdminDashboard({
           rel="noopener noreferrer"
           role="menuitem"
           onClick={close}
-          className="admin-focus-ring flex min-h-[44px] items-center gap-3 rounded-[10px] px-3 text-[14px] text-[var(--admin-text)] hover:bg-[var(--admin-pill-surface)]"
+          className="admin-focus-ring flex min-h-[44px] items-center gap-3 rounded-[10px] px-3 text-[14px] text-fg hover:bg-surface-2"
         >
-          <Globe2 className="h-4 w-4 text-[var(--admin-muted)]" strokeWidth={1.7} />
+          <Globe2 className="h-4 w-4 text-muted" strokeWidth={1.7} />
           <span className="flex-1">{isAr ? "عرض الموقع" : "View website"}</span>
-          <ArrowUpRight className="h-3.5 w-3.5 text-[var(--admin-muted)]" strokeWidth={1.7} />
+          <ArrowUpRight className="h-3.5 w-3.5 text-muted" strokeWidth={1.7} />
         </Link>
         <Link
           href="/portal"
           role="menuitem"
           prefetch
           onClick={close}
-          className="admin-focus-ring flex min-h-[44px] items-center gap-3 rounded-[10px] px-3 text-[14px] text-[var(--admin-text)] hover:bg-[var(--admin-pill-surface)]"
+          className="admin-focus-ring flex min-h-[44px] items-center gap-3 rounded-[10px] px-3 text-[14px] text-fg hover:bg-surface-2"
         >
-          <LayoutDashboard className="h-4 w-4 text-[var(--admin-muted)]" strokeWidth={1.7} />
+          <LayoutDashboard className="h-4 w-4 text-muted" strokeWidth={1.7} />
           {isAr ? "بوابة العملاء" : "Client portal"}
         </Link>
         <button
@@ -951,32 +948,18 @@ export function AdminDashboard({
             toggleLocale();
             close();
           }}
-          className="admin-focus-ring flex min-h-[44px] w-full items-center gap-3 rounded-[10px] px-3 text-start text-[14px] text-[var(--admin-text)] hover:bg-[var(--admin-pill-surface)]"
+          className="admin-focus-ring flex min-h-[44px] w-full items-center gap-3 rounded-[10px] px-3 text-start text-[14px] text-fg hover:bg-surface-2"
         >
-          <Languages className="h-4 w-4 text-[var(--admin-muted)]" strokeWidth={1.7} />
+          <Languages className="h-4 w-4 text-muted" strokeWidth={1.7} />
           <span className="flex-1">{isAr ? "اللغة" : "Language"}</span>
-          <span className="text-[12px] text-[var(--admin-muted)]">{isAr ? "EN" : "AR"}</span>
+          <span className="text-[12px] text-muted">{isAr ? "EN" : "AR"}</span>
         </button>
-        <button
-          type="button"
-          role="menuitem"
-          onClick={() => {
-            setTheme((value) => (value === "dark" ? "light" : "dark"));
-            close();
-          }}
-          className="admin-focus-ring flex min-h-[44px] w-full items-center gap-3 rounded-[10px] px-3 text-start text-[14px] text-[var(--admin-text)] hover:bg-[var(--admin-pill-surface)]"
-        >
-          {theme === "dark" ? (
-            <Sun className="h-4 w-4 text-[var(--admin-muted)]" strokeWidth={1.7} />
-          ) : (
-            <Moon className="h-4 w-4 text-[var(--admin-muted)]" strokeWidth={1.7} />
-          )}
-          <span className="flex-1">{isAr ? "المظهر" : "Theme"}</span>
-          <span className="text-[12px] text-[var(--admin-muted)]">
-            {theme === "dark" ? (isAr ? "داكن" : "Dark") : isAr ? "فاتح" : "Light"}
-          </span>
-        </button>
-        <div className="my-1 border-t border-[var(--admin-card-border)]" />
+        <ThemeToggle
+          variant="menu"
+          labels={themeToggleLabels}
+          className="w-full min-w-0 justify-start rounded-[10px] border-0 bg-transparent px-3 font-normal text-fg hover:bg-surface-2"
+        />
+        <div className="my-1 border-t border-line" />
         <button
           type="button"
           role="menuitem"
@@ -984,7 +967,7 @@ export function AdminDashboard({
             close();
             void handleSignOut();
           }}
-          className="admin-focus-ring flex min-h-[44px] w-full items-center gap-3 rounded-[10px] px-3 text-start text-[14px] text-[var(--admin-red)] hover:bg-[var(--admin-red)]/10"
+          className="admin-focus-ring flex min-h-[44px] w-full items-center gap-3 rounded-[10px] px-3 text-start text-[14px] text-danger hover:bg-danger"
         >
           <LogOut className="h-4 w-4" strokeWidth={1.7} />
           {isAr ? "تسجيل الخروج" : "Sign out"}
@@ -994,11 +977,11 @@ export function AdminDashboard({
   };
 
   const sidebarUser = (collapsed: boolean) => (
-    <div className="shrink-0 border-t border-[var(--admin-card-border)] p-3">
+    <div className="shrink-0 border-t border-line p-3">
       {userLoading ? (
         <div
           className={cn(
-            "animate-pulse bg-white/[0.05]",
+            "animate-pulse bg-surface-2",
             collapsed ? "mx-auto h-10 w-10 rounded-full" : "h-[68px] rounded-[14px]",
           )}
           aria-hidden="true"
@@ -1021,20 +1004,20 @@ export function AdminDashboard({
                 "admin-focus-ring w-full text-start transition-colors",
                 collapsed
                   ? "mx-auto flex h-11 w-11 items-center justify-center rounded-full"
-                  : "flex items-center gap-[10px] rounded-[14px] border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] p-3 hover:border-white/20",
+                  : "flex items-center gap-[10px] rounded-[14px] border border-line bg-surface-2 p-3 hover:border-line",
               )}
             >
-              <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,#F3C86A,#C98F1E)] text-[14px] font-extrabold text-[#1a1205]">
+              <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-fill text-[14px] font-extrabold text-accent-fg">
                 {monogram}
-                <span className="absolute bottom-0 end-0 h-[11px] w-[11px] rounded-full border-2 border-[var(--admin-bg)] bg-[var(--admin-green)]" />
+                <span className="absolute bottom-0 end-0 h-[11px] w-[11px] rounded-full border-2 border-bg bg-success" />
               </span>
               {!collapsed ? (
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[14px] font-medium text-[var(--admin-text)]">{displayName || "—"}</span>
-                  <span className="block truncate text-[12px] text-[var(--admin-muted)]">{roleLabel}</span>
+                  <span className="block truncate text-[14px] font-medium text-fg">{displayName || "—"}</span>
+                  <span className="block truncate text-[12px] text-muted">{roleLabel}</span>
                 </span>
               ) : null}
-              {!collapsed ? <ChevronDown className="h-4 w-4 shrink-0 text-[var(--admin-muted)]" strokeWidth={1.7} /> : null}
+              {!collapsed ? <ChevronDown className="h-4 w-4 shrink-0 text-muted" strokeWidth={1.7} /> : null}
             </button>
           }
         >
@@ -1068,13 +1051,12 @@ export function AdminDashboard({
           fontScale === "large" ? "text-[18px]" : "text-[16px]",
           density === "compact" && "[--admin-card-gap:16px] [--admin-page-pad:24px]",
         )}
-        data-admin-theme={theme}
       >
         <div className="relative mx-auto flex h-full min-h-0 w-full min-w-0 max-w-[1600px]">
           <aside
             data-collapsed={collapsed ? "true" : "false"}
             className={cn(
-              "relative hidden h-dvh w-[264px] shrink-0 flex-col border-e border-[var(--admin-card-border)] bg-[var(--admin-sidebar)] transition-[width] duration-200 data-[collapsed=true]:w-[76px] lg:flex",
+              "relative hidden h-dvh w-[264px] shrink-0 flex-col border-e border-line bg-surface transition-[width] duration-200 data-[collapsed=true]:w-[76px] lg:flex",
             )}
           >
             {sidebarBrand(collapsed)}
@@ -1095,7 +1077,7 @@ export function AdminDashboard({
                       ? "طي الشريط"
                       : "Collapse sidebar"
                 }
-                className="admin-focus-ring absolute -end-3.5 top-[22px] z-20 hidden h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-[#161820] text-[var(--admin-muted)] shadow-[0_6px_18px_rgba(0,0,0,.35)] transition-colors hover:border-[rgba(226,176,74,.35)] hover:text-[var(--admin-gold)] lg:flex"
+                className="admin-focus-ring absolute -end-3.5 top-[22px] z-20 hidden h-7 w-7 items-center justify-center rounded-full border border-line bg-surface text-muted shadow-e1 transition-colors hover:border-[rgb(var(--accent-rgb)/.35)] hover:text-accent lg:flex"
               >
                 <ChevronLeft
                   className={cn(
@@ -1113,14 +1095,14 @@ export function AdminDashboard({
               className={cn(
                 "flex h-[72px] shrink-0 items-center gap-2 border-b px-3 transition-[background-color,border-color,backdrop-filter] duration-200 sm:px-6 lg:px-8",
                 topbarScrolled
-                  ? "border-[var(--admin-card-border)] bg-[var(--admin-bg)]/80 backdrop-blur-xl"
+                  ? "border-line bg-bg backdrop-blur-xl"
                   : "border-transparent bg-transparent",
               )}
             >
               <button
                 type="button"
                 onClick={() => setMobileNavOpen(true)}
-                className="admin-focus-ring inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[12px] text-[var(--admin-muted)] hover:bg-[var(--admin-pill-surface)] lg:hidden"
+                className="admin-focus-ring inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[12px] text-muted hover:bg-surface-2 lg:hidden"
                 aria-label={locale === "ar" ? "فتح القائمة" : "Open menu"}
               >
                 <Menu className="h-5 w-5" strokeWidth={1.7} />
@@ -1132,42 +1114,42 @@ export function AdminDashboard({
                 className="shrink-0 rounded-[12px] admin-focus-ring lg:hidden"
                 aria-label={locale === "ar" ? "نظرة عامة" : "Overview"}
               >
-                <BrandLogo variant="mark" className="sm:hidden" priority tone={theme === "light" ? "dark" : "light"} />
-                <BrandLogo variant="full" className="hidden sm:flex" priority tone={theme === "light" ? "dark" : "light"} />
+                <BrandLogo variant="mark" className="sm:hidden" priority tone={resolvedTheme === "light" ? "dark" : "light"} />
+                <BrandLogo variant="full" className="hidden sm:flex" priority tone={resolvedTheme === "light" ? "dark" : "light"} />
               </Link>
 
-              <nav aria-label="Breadcrumb" className="hidden items-center gap-2 text-[14px] text-[var(--admin-muted)] lg:flex">
+              <nav aria-label="Breadcrumb" className="hidden items-center gap-2 text-[14px] text-muted lg:flex">
                 <span>{locale === "ar" ? "الرئيسية" : "Home"}</span>
                 <span aria-hidden="true">‹</span>
-                <span className="text-[var(--admin-text)]/80">{navItems.find((i) => i.id === section)?.label ?? (locale === "ar" ? "نظرة عامة" : "Overview")}</span>
+                <span className="text-fg">{navItems.find((i) => i.id === section)?.label ?? (locale === "ar" ? "نظرة عامة" : "Overview")}</span>
               </nav>
 
               <button
                 type="button"
                 onClick={() => setPaletteOpen(true)}
-                className="admin-focus-ring ms-auto hidden h-11 min-w-0 max-w-[360px] flex-1 items-center gap-[10px] rounded-[999px] border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] px-4 text-[14px] text-[var(--admin-muted)] min-[900px]:flex"
+                className="admin-focus-ring ms-auto hidden h-11 min-w-0 max-w-[360px] flex-1 items-center gap-[10px] rounded-[999px] border border-line bg-surface-2 px-4 text-[14px] text-muted min-[900px]:flex"
               >
                 <Search className="h-5 w-5 shrink-0" strokeWidth={1.7} />
                 <span className="truncate">{locale === "ar" ? "ابحث في المشاريع والعقود…" : "Search projects and contracts…"}</span>
-                <kbd className="ms-auto shrink-0 rounded-[6px] border border-[var(--admin-card-border)] px-[7px] py-[1px] text-[12px]">⌘K</kbd>
+                <kbd className="ms-auto shrink-0 rounded-[6px] border border-line px-[7px] py-[1px] text-[12px]">⌘K</kbd>
               </button>
 
               <button
                 type="button"
                 onClick={() => setPaletteOpen(true)}
-                className="admin-focus-ring ms-auto inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] text-[var(--admin-muted)] min-[900px]:hidden"
+                className="admin-focus-ring ms-auto inline-flex h-11 w-11 items-center justify-center rounded-full border border-line bg-surface-2 text-muted min-[900px]:hidden"
                 aria-label={locale === "ar" ? "بحث" : "Search"}
               >
                 <Search className="h-5 w-5" strokeWidth={1.7} />
               </button>
 
-              <div className="flex h-11 shrink-0 items-center rounded-full border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)]">
+              <div className="flex h-11 shrink-0 items-center rounded-full border border-line bg-surface-2">
                 <Link
                   href="/"
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={locale === "ar" ? "عرض الموقع" : "View website"}
-                  className="admin-focus-ring inline-flex h-full w-11 items-center justify-center gap-2 rounded-full text-[13px] font-semibold text-[var(--admin-text)] transition-colors hover:bg-white/[0.06] lg:w-auto lg:justify-start lg:px-4"
+                  className="admin-focus-ring inline-flex h-full w-11 items-center justify-center gap-2 rounded-full text-[13px] font-semibold text-fg transition-colors hover:bg-surface-2 lg:w-auto lg:justify-start lg:px-4"
                 >
                   <Globe2 className="h-4 w-4 shrink-0" strokeWidth={1.7} />
                   <span className="hidden whitespace-nowrap lg:inline">{locale === "ar" ? "عرض الموقع" : "View website"}</span>
@@ -1179,7 +1161,7 @@ export function AdminDashboard({
                     <button
                       type="button"
                       aria-label={locale === "ar" ? "روابط الموقع" : "Website links"}
-                      className="admin-focus-ring hidden h-full w-8 items-center justify-center rounded-e-full border-s border-[var(--admin-card-border)] text-[var(--admin-muted)] transition-colors hover:text-[var(--admin-text)] sm:inline-flex"
+                      className="admin-focus-ring hidden h-full w-8 items-center justify-center rounded-e-full border-s border-line text-muted transition-colors hover:text-fg sm:inline-flex"
                     >
                       <ChevronDown className="h-3.5 w-3.5" strokeWidth={2} />
                     </button>
@@ -1193,21 +1175,21 @@ export function AdminDashboard({
                         target="_blank"
                         rel="noopener noreferrer"
                         role="menuitem"
-                        className="admin-focus-ring flex min-h-[44px] items-center justify-between gap-3 rounded-[10px] px-3 text-[14px] text-[var(--admin-text)] hover:bg-[var(--admin-pill-surface)]"
+                        className="admin-focus-ring flex min-h-[44px] items-center justify-between gap-3 rounded-[10px] px-3 text-[14px] text-fg hover:bg-surface-2"
                       >
                         {locale === "ar" ? item.ar : item.en}
-                        <ArrowUpRight className="h-3.5 w-3.5 text-[var(--admin-muted)]" strokeWidth={1.7} />
+                        <ArrowUpRight className="h-3.5 w-3.5 text-muted" strokeWidth={1.7} />
                       </Link>
                     ))}
                   </div>
                 </Popover>
               </div>
 
-              <button type="button" onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))} className="admin-focus-ring inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] text-[13px] font-bold text-[var(--admin-text)]" aria-label={theme === "dark" ? (locale === "ar" ? "الوضع الفاتح" : "Light mode") : (locale === "ar" ? "الوضع الداكن" : "Dark mode")}>{theme === "dark" ? "☀" : "☾"}</button>
-              <button type="button" onClick={toggleLocale} className="admin-focus-ring inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] text-[13px] font-bold text-[var(--admin-text)]" aria-label={locale === "ar" ? "English" : "العربية"}>{locale === "ar" ? "EN" : "AR"}</button>
-              <button type="button" onClick={() => setNotificationsOpen(true)} className="admin-focus-ring relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] text-[var(--admin-text)]" aria-label={locale === "ar" ? "التنبيهات" : "Notifications"} aria-haspopup="dialog">
+              <ThemeToggle labels={themeToggleLabels} />
+              <button type="button" onClick={toggleLocale} className="admin-focus-ring inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line bg-surface-2 text-[13px] font-bold text-fg" aria-label={locale === "ar" ? "English" : "العربية"}>{locale === "ar" ? "EN" : "AR"}</button>
+              <button type="button" onClick={() => setNotificationsOpen(true)} className="admin-focus-ring relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line bg-surface-2 text-fg" aria-label={locale === "ar" ? "التنبيهات" : "Notifications"} aria-haspopup="dialog">
                 <Bell className="h-5 w-5" strokeWidth={1.7} />
-                <span className="absolute top-[10px] end-[11px] h-2 w-2 rounded-full bg-[var(--admin-gold)]" />
+                <span className="absolute top-[10px] end-[11px] h-2 w-2 rounded-full bg-accent" />
               </button>
             </header>
 
@@ -1223,9 +1205,9 @@ export function AdminDashboard({
                 aria-hidden="true"
                 className="pointer-events-none absolute inset-x-0 top-0 h-px"
               />
-              <div className="mb-5 hidden items-center justify-between border-b border-[var(--admin-card-border)] pb-4 print:flex">
+              <div className="mb-5 hidden items-center justify-between border-b border-line pb-4 print:flex">
                 <BrandLogo variant="full" tone="dark" />
-                <span className="text-[12px] text-[var(--admin-muted)]">{formatRiyadhDate(locale)}</span>
+                <span className="text-[12px] text-muted">{formatRiyadhDate(locale)}</span>
               </div>
               <AdminSectionBoundary label={navItems.find((item) => item.id === section)?.label}>
                 {section === "overview" ? (
@@ -1260,7 +1242,7 @@ export function AdminDashboard({
           side="start"
           bare
           widthClassName="w-[min(300px,88vw)]!"
-          className="bg-[var(--admin-sidebar)] bg-none lg:hidden"
+          className="bg-surface bg-none lg:hidden"
           bodyClassName="scroll-area flex min-h-0 flex-1 flex-col overflow-y-auto p-0"
         >
           {sidebarBrand(false)}
@@ -1279,7 +1261,7 @@ export function AdminDashboard({
           <div className="flex flex-col gap-4">
             {moreGroups.map((group) => (
               <div key={group.title}>
-                <p className="mb-1 px-1 text-[13px] text-[var(--admin-muted)]">{group.title}</p>
+                <p className="mb-1 px-1 text-[13px] text-muted">{group.title}</p>
                 <div className="grid grid-cols-2 gap-2">
                   {group.items.map(({ id, label, icon: Icon }) => {
                     const active = section === id;
@@ -1293,8 +1275,8 @@ export function AdminDashboard({
                         className={cn(
                           "admin-focus-ring flex min-h-[52px] items-center gap-3 rounded-xl border px-3 text-[14px]",
                           active
-                            ? "border-[rgba(226,176,74,0.28)] bg-[rgba(226,176,74,0.12)] text-[var(--admin-gold)]"
-                            : "border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] text-[var(--admin-text)]",
+                            ? "border-[rgb(var(--accent-rgb)/0.28)] bg-[rgb(var(--accent-rgb)/0.12)] text-accent"
+                            : "border-line bg-surface-2 text-fg",
                         )}
                       >
                         <Icon className="h-5 w-5 shrink-0" strokeWidth={1.7} />
@@ -1307,17 +1289,17 @@ export function AdminDashboard({
             ))}
 
             <div>
-              <p className="mb-1 px-1 text-[13px] text-[var(--admin-muted)]">{locale === "ar" ? "الموقع" : "Website"}</p>
+              <p className="mb-1 px-1 text-[13px] text-muted">{locale === "ar" ? "الموقع" : "Website"}</p>
               <Link
                 href="/"
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => setMoreOpen(false)}
-                className="admin-focus-ring flex min-h-[52px] items-center gap-3 rounded-xl border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] px-3 text-[14px] text-[var(--admin-text)]"
+                className="admin-focus-ring flex min-h-[52px] items-center gap-3 rounded-xl border border-line bg-surface-2 px-3 text-[14px] text-fg"
               >
                 <Globe2 className="h-5 w-5 shrink-0" strokeWidth={1.7} />
                 <span className="flex-1">{locale === "ar" ? "عرض الموقع" : "View website"}</span>
-                <ArrowUpRight className="h-4 w-4 text-[var(--admin-muted)]" strokeWidth={1.7} />
+                <ArrowUpRight className="h-4 w-4 text-muted" strokeWidth={1.7} />
               </Link>
               <div className="mt-2 grid grid-cols-2 gap-2">
                 {siteLinks
@@ -1329,10 +1311,10 @@ export function AdminDashboard({
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={() => setMoreOpen(false)}
-                      className="admin-focus-ring flex min-h-[48px] items-center justify-between gap-2 rounded-xl border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] px-3 text-[14px] text-[var(--admin-text)]"
+                      className="admin-focus-ring flex min-h-[48px] items-center justify-between gap-2 rounded-xl border border-line bg-surface-2 px-3 text-[14px] text-fg"
                     >
                       <span className="truncate">{locale === "ar" ? item.ar : item.en}</span>
-                      <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-[var(--admin-muted)]" strokeWidth={1.7} />
+                      <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-muted" strokeWidth={1.7} />
                     </Link>
                   ))}
               </div>
@@ -1342,36 +1324,19 @@ export function AdminDashboard({
               <button
                 type="button"
                 onClick={toggleLocale}
-                className="admin-focus-ring flex min-h-[48px] items-center justify-center gap-2 rounded-xl border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] px-3 text-[14px] text-[var(--admin-text)]"
+                className="admin-focus-ring flex min-h-[48px] items-center justify-center gap-2 rounded-xl border border-line bg-surface-2 px-3 text-[14px] text-fg"
               >
                 <Languages className="h-4 w-4" strokeWidth={1.7} />
                 {locale === "ar" ? "English" : "العربية"}
               </button>
-              <button
-                type="button"
-                onClick={() => setTheme((value) => (value === "dark" ? "light" : "dark"))}
-                className="admin-focus-ring flex min-h-[48px] items-center justify-center gap-2 rounded-xl border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] px-3 text-[14px] text-[var(--admin-text)]"
-              >
-                {theme === "dark" ? (
-                  <Sun className="h-4 w-4" strokeWidth={1.7} />
-                ) : (
-                  <Moon className="h-4 w-4" strokeWidth={1.7} />
-                )}
-                {theme === "dark"
-                  ? locale === "ar"
-                    ? "فاتح"
-                    : "Light"
-                  : locale === "ar"
-                    ? "داكن"
-                    : "Dark"}
-              </button>
+              <ThemeToggle labels={themeToggleLabels} className="w-full min-w-0" />
               <button
                 type="button"
                 onClick={() => {
                   setMoreOpen(false);
                   void handleSignOut();
                 }}
-                className="admin-focus-ring col-span-2 flex min-h-[48px] items-center justify-center gap-2 rounded-xl border border-[var(--admin-red)]/30 bg-[var(--admin-red)]/10 px-3 text-[14px] text-[var(--admin-red)]"
+                className="admin-focus-ring col-span-2 flex min-h-[48px] items-center justify-center gap-2 rounded-xl border border-danger bg-danger px-3 text-[14px] text-danger"
               >
                 <LogOut className="h-4 w-4" strokeWidth={1.7} />
                 {locale === "ar" ? "تسجيل الخروج" : "Sign out"}
@@ -1380,7 +1345,7 @@ export function AdminDashboard({
           </div>
         </Modal>
 
-        <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--admin-card-border)] bg-[var(--admin-bg)]/95 pb-[env(safe-area-inset-bottom,0px)] backdrop-blur md:hidden" aria-label={locale === "ar" ? "تنقل سفلي" : "Bottom navigation"}>
+        <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-bg pb-[env(safe-area-inset-bottom,0px)] backdrop-blur md:hidden" aria-label={locale === "ar" ? "تنقل سفلي" : "Bottom navigation"}>
           <div className="mx-auto grid h-16 max-w-3xl grid-cols-4 px-2">
             {([
               { id: "overview" as Section, label: locale === "ar" ? "نظرة عامة" : "Overview", icon: LayoutDashboard },
@@ -1389,13 +1354,13 @@ export function AdminDashboard({
             ]).map(({ id, label, icon: Icon }) => {
               const active = section === id;
               return (
-                <button key={id} type="button" onClick={() => navigateToSection(id)} className={cn("admin-focus-ring flex min-h-[52px] flex-col items-center justify-center gap-1 rounded-[12px] px-2 text-[12px] whitespace-nowrap", active ? "text-[var(--admin-gold)]" : "text-[var(--admin-muted)]")}>
+                <button key={id} type="button" onClick={() => navigateToSection(id)} className={cn("admin-focus-ring flex min-h-[52px] flex-col items-center justify-center gap-1 rounded-[12px] px-2 text-[12px] whitespace-nowrap", active ? "text-accent" : "text-muted")}>
                   <Icon className="h-5 w-5" strokeWidth={1.7} />
                   <span className="truncate">{label}</span>
                 </button>
               );
             })}
-            <button type="button" onClick={() => setMoreOpen(true)} className={cn("admin-focus-ring flex min-h-[52px] flex-col items-center justify-center gap-1 rounded-[12px] px-2 text-[12px] whitespace-nowrap", moreOpen ? "text-[var(--admin-gold)]" : "text-[var(--admin-muted)]")}>
+            <button type="button" onClick={() => setMoreOpen(true)} className={cn("admin-focus-ring flex min-h-[52px] flex-col items-center justify-center gap-1 rounded-[12px] px-2 text-[12px] whitespace-nowrap", moreOpen ? "text-accent" : "text-muted")}>
               <MoreVertical className="h-5 w-5" strokeWidth={1.7} />
               <span className="truncate">{locale === "ar" ? "المزيد" : "More"}</span>
             </button>
@@ -1422,7 +1387,7 @@ export function AdminDashboard({
           closeLabel={locale === "ar" ? "إغلاق" : "Close"}
           size="sm"
         >
-          <dl className="divide-y divide-[var(--admin-card-border)]">
+          <dl className="divide-y divide-line">
             {[
               ["⌘ / Ctrl + K", locale === "ar" ? "فتح الأوامر السريعة" : "Open command palette"],
               ["/", locale === "ar" ? "التركيز على البحث" : "Focus search"],
@@ -1434,9 +1399,9 @@ export function AdminDashboard({
               ["?", locale === "ar" ? "عرض هذه القائمة" : "Show this list"],
             ].map(([keys, label]) => (
               <div key={keys} className="flex items-center justify-between gap-4 py-2.5">
-                <dt className="text-[14px] text-[var(--admin-text)]">{label}</dt>
+                <dt className="text-[14px] text-fg">{label}</dt>
                 <dd>
-                  <kbd className="whitespace-nowrap rounded-md border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] px-2 py-1 font-mono text-[12px] text-[var(--admin-muted)]">
+                  <kbd className="whitespace-nowrap rounded-md border border-line bg-surface-2 px-2 py-1 font-mono text-[12px] text-muted">
                     {keys}
                   </kbd>
                 </dd>
@@ -1503,10 +1468,10 @@ function StatusDonut({ completed, ongoing, upcoming }: { completed: number; ongo
     <svg width="150" height="150" viewBox="0 0 100 100" role="img"
          aria-label={`${completed} of ${total} projects completed`}>
       <g fill="none" strokeWidth="9" transform="rotate(-90 50 50)">
-        <circle cx="50" cy="50" r="40" stroke="#232632" />
-        {arc(a, 0, "#4CCB96")}{arc(b, a, "#E2B04A")}{arc(c, a + b, "#6BB6FF")}
+        <circle cx="50" cy="50" r="40" stroke="var(--surface-2)" />
+        {arc(a, 0, "var(--success)")}{arc(b, a, "var(--accent)")}{arc(c, a + b, "var(--info)")}
       </g>
-      <text x="50" y="56" textAnchor="middle" fill="#F1EEE8" fontSize="20" fontWeight="800">{completed}/{total}</text>
+      <text x="50" y="56" textAnchor="middle" fill="var(--fg)" fontSize="20" fontWeight="800">{completed}/{total}</text>
     </svg>
   );
 }
@@ -1671,12 +1636,12 @@ function OverviewSection({
     const copy = budgetHealthCopy(h, locale);
     const cls =
       copy.tone === "success"
-        ? "bg-[rgba(76,203,150,0.14)] text-[#7BE0B4]"
+        ? "bg-[rgb(var(--success-rgb)/0.14)] text-success"
         : copy.tone === "warning"
-          ? "bg-[rgba(226,176,74,0.14)] text-[#F3C86A]"
+          ? "bg-[rgb(var(--accent-rgb)/0.14)] text-accent"
           : copy.tone === "danger"
-            ? "bg-[rgba(255,107,94,0.14)] text-[#FF9A8F]"
-            : "bg-white/10 text-[#A6A9B4]";
+            ? "bg-[rgb(var(--danger-rgb)/0.14)] text-danger"
+            : "bg-line text-muted";
     return { text: copy.short, tooltip: copy.tooltip, cls };
   };
 
@@ -1718,15 +1683,15 @@ function OverviewSection({
   const profit = splitMoney(profitStr);
   const marginStr = margin == null ? "—" : `${nf.format(Number(margin.toFixed(1)))}%`;
 
-  const card = "flex flex-col gap-2 rounded-[20px] border border-white/[.07] bg-gradient-to-b from-white/[.055] to-white/[.02] p-5 transition-all duration-[160ms] hover:-translate-y-0.5 hover:border-[rgba(226,176,74,0.25)]";
-  const panel = "flex flex-col gap-[18px] rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018] p-[22px_24px]";
+  const card = "flex flex-col gap-2 rounded-[20px] border border-line bg-surface p-5 transition-all duration-[160ms] hover:-translate-y-0.5 hover:border-[rgb(var(--accent-rgb)/0.25)]";
+  const panel = "flex flex-col gap-[18px] rounded-[22px] border border-line bg-surface p-[22px_24px]";
 
   if (!ready) {
     return (
       <div className="flex flex-col gap-[22px] animate-pulse">
-        <div className="h-48 rounded-[24px] bg-white/[0.04]" />
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">{Array.from({length:5}).map((_,i)=><div key={i} className="h-36 rounded-[20px] bg-white/[0.04]" />)}</div>
-        <div className="grid gap-[22px] xl:grid-cols-[1.7fr_1fr]"><div className="h-64 rounded-[22px] bg-white/[0.04]" /><div className="h-64 rounded-[22px] bg-white/[0.04]" /></div>
+        <div className="h-48 rounded-[24px] bg-surface-2" />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">{Array.from({length:5}).map((_,i)=><div key={i} className="h-36 rounded-[20px] bg-surface-2" />)}</div>
+        <div className="grid gap-[22px] xl:grid-cols-[1.7fr_1fr]"><div className="h-64 rounded-[22px] bg-surface-2" /><div className="h-64 rounded-[22px] bg-surface-2" /></div>
       </div>
     );
   }
@@ -1735,27 +1700,27 @@ function OverviewSection({
 
   return (
     <m.div className="flex flex-col gap-[22px]" initial="hidden" animate="show" variants={stagger}>
-      <m.section variants={fadeUp} className="relative overflow-hidden rounded-[24px] border border-[rgba(226,176,74,0.22)] p-8 lg:px-9" style={{ background: "linear-gradient(135deg,#1D1608 0%,#12131A 55%,#0F1117 100%)" }}>
-        <div className="pointer-events-none absolute inset-0 opacity-[0.045]" style={{ background: "linear-gradient(rgba(255,255,255,1) 1px, transparent 1px) 0 0/36px 36px, linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px) 0 0/36px 36px", WebkitMaskImage: "linear-gradient(270deg,#000,transparent 70%)", maskImage: "linear-gradient(270deg,#000,transparent 70%)" }} />
+      <m.section variants={fadeUp} className="relative overflow-hidden rounded-[24px] border border-[rgb(var(--accent-rgb)/0.22)] p-8 lg:px-9" style={{ background: "linear-gradient(135deg,var(--surface) 0%,var(--surface) 55%,var(--surface) 100%)" }}>
+        <div className="pointer-events-none absolute inset-0 opacity-[0.045]" style={{ background: "linear-gradient(var(--fg) 1px, transparent 1px) 0 0/36px 36px, linear-gradient(90deg, var(--fg) 1px, transparent 1px) 0 0/36px 36px", WebkitMaskImage: "linear-gradient(270deg,var(--surface),transparent 70%)", maskImage: "linear-gradient(270deg,var(--surface),transparent 70%)" }} />
         <AdminWatermarkMark />
         <div className="relative flex flex-col gap-8 lg:flex-row lg:items-center">
           <div className="min-w-0 flex-1">
-            <h1 className="text-[28px] font-bold leading-tight text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{greeting}</h1>
-            <p className="mt-2 max-w-[560px] text-[15px] leading-[1.8] text-[#C9CAD1]">
+            <h1 className="text-[28px] font-bold leading-tight text-fg [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{greeting}</h1>
+            <p className="mt-2 max-w-[560px] text-[15px] leading-[1.8] text-fg">
               {dateStr ? `${dateStr} · ` : ""}{attentionSentence}
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
-              <button type="button" onClick={onNew} className="admin-focus-ring inline-flex min-h-[44px] items-center gap-2 rounded-[12px] border border-transparent bg-[linear-gradient(180deg,#F3C86A,#D9A03A)] px-5 py-3 text-[15px] font-bold text-[#1a1205] shadow-[0_8px_24px_rgba(226,176,74,0.28)] transition-transform duration-[160ms] hover:-translate-y-0.5">{isAr ? "+ إضافة مشروع" : "+ Add project"}</button>
-              <button type="button" onClick={() => window.print()} className="admin-focus-ring inline-flex min-h-[44px] items-center gap-2 rounded-[12px] border border-white/15 bg-white/[0.04] px-5 py-3 text-[15px] font-bold text-[#F1EEE8] transition-all duration-[160ms] hover:-translate-y-0.5 hover:border-[rgba(226,176,74,0.25)]">{isAr ? "تقرير تنفيذي PDF" : "Executive PDF report"}</button>
-              <button type="button" onClick={() => onNavigate("access")} className="admin-focus-ring inline-flex min-h-[44px] items-center gap-2 rounded-[12px] border border-white/15 bg-white/[0.04] px-5 py-3 text-[15px] font-bold text-[#F1EEE8] transition-all duration-[160ms] hover:-translate-y-0.5 hover:border-[rgba(226,176,74,0.25)]">{isAr ? "دعوة عضو للفريق" : "Invite team member"}</button>
+              <button type="button" onClick={onNew} className="admin-focus-ring inline-flex min-h-[44px] items-center gap-2 rounded-[12px] border border-transparent bg-accent-fill px-5 py-3 text-[15px] font-bold text-accent-fg shadow-e1 transition-transform duration-[160ms] hover:-translate-y-0.5">{isAr ? "+ إضافة مشروع" : "+ Add project"}</button>
+              <button type="button" onClick={() => window.print()} className="admin-focus-ring inline-flex min-h-[44px] items-center gap-2 rounded-[12px] border border-line bg-surface-2 px-5 py-3 text-[15px] font-bold text-fg transition-all duration-[160ms] hover:-translate-y-0.5 hover:border-[rgb(var(--accent-rgb)/0.25)]">{isAr ? "تقرير تنفيذي PDF" : "Executive PDF report"}</button>
+              <button type="button" onClick={() => onNavigate("access")} className="admin-focus-ring inline-flex min-h-[44px] items-center gap-2 rounded-[12px] border border-line bg-surface-2 px-5 py-3 text-[15px] font-bold text-fg transition-all duration-[160ms] hover:-translate-y-0.5 hover:border-[rgb(var(--accent-rgb)/0.25)]">{isAr ? "دعوة عضو للفريق" : "Invite team member"}</button>
             </div>
           </div>
           <div className="flex items-center gap-5 lg:ms-auto">
             <StatusDonut completed={completed} ongoing={ongoing} upcoming={upcoming} />
-            <ul className="m-0 flex list-none flex-col gap-2 p-0 text-[14px] text-[#C9CAD1]">
-              <li><span className="me-2 inline-block h-[9px] w-[9px] rounded-full align-middle" style={{ background: "#4CCB96" }} />{nf.format(completed)} {isAr ? "مكتمل" : "Completed"}</li>
-              <li><span className="me-2 inline-block h-[9px] w-[9px] rounded-full align-middle" style={{ background: "#E2B04A" }} />{nf.format(ongoing)} {isAr ? "جارٍ" : "Ongoing"}</li>
-              <li><span className="me-2 inline-block h-[9px] w-[9px] rounded-full align-middle" style={{ background: "#6BB6FF" }} />{nf.format(upcoming)} {isAr ? "قادم" : "Upcoming"}</li>
+            <ul className="m-0 flex list-none flex-col gap-2 p-0 text-[14px] text-fg">
+              <li><span className="me-2 inline-block h-[9px] w-[9px] rounded-full align-middle" style={{ background: "var(--success)" }} />{nf.format(completed)} {isAr ? "مكتمل" : "Completed"}</li>
+              <li><span className="me-2 inline-block h-[9px] w-[9px] rounded-full align-middle" style={{ background: "var(--accent)" }} />{nf.format(ongoing)} {isAr ? "جارٍ" : "Ongoing"}</li>
+              <li><span className="me-2 inline-block h-[9px] w-[9px] rounded-full align-middle" style={{ background: "var(--info)" }} />{nf.format(upcoming)} {isAr ? "قادم" : "Upcoming"}</li>
             </ul>
           </div>
         </div>
@@ -1763,47 +1728,47 @@ function OverviewSection({
 
       <m.section variants={stagger} className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         <m.div variants={fadeUp} className={card}>
-          <div className="flex items-center gap-[10px] text-[14px] text-[#A6A9B4]"><Building2 className="h-5 w-5 text-[#E2B04A]" strokeWidth={1.7} />{isAr ? "إجمالي المشاريع" : "Total projects"}</div>
-          <div className="whitespace-nowrap text-[28px] font-extrabold tabular-nums text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{nf.format(totalCount)}</div>
+          <div className="flex items-center gap-[10px] text-[14px] text-muted"><Building2 className="h-5 w-5 text-accent" strokeWidth={1.7} />{isAr ? "إجمالي المشاريع" : "Total projects"}</div>
+          <div className="whitespace-nowrap text-[28px] font-extrabold tabular-nums text-fg [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{nf.format(totalCount)}</div>
           <div className="flex gap-[6px]">{Array.from({ length: Math.max(totalCount, 1) }).slice(0, 12).map((_, i) => {
             const p = metrics[i];
-            const color = !p ? "#232632" : p.status === "completed" ? "#4CCB96" : p.status === "ongoing" ? "#E2B04A" : "#6BB6FF";
+            const color = !p ? "var(--surface-2)" : p.status === "completed" ? "var(--success)" : p.status === "ongoing" ? "var(--accent)" : "var(--info)";
             return <span key={i} className="h-3 w-3 rounded-full" style={{ background: color }} />;
           })}</div>
-          {totalCount === 0 ? <p className="text-[13px] text-[#A6A9B4]">{isAr ? "لا توجد مشاريع بعد" : "No projects yet"}</p> : null}
+          {totalCount === 0 ? <p className="text-[13px] text-muted">{isAr ? "لا توجد مشاريع بعد" : "No projects yet"}</p> : null}
         </m.div>
 
         <m.div variants={fadeUp} className={card}>
-          <div className="flex items-center gap-[10px] text-[14px] text-[#A6A9B4]"><Wallet className="h-5 w-5 text-[#E2B04A]" strokeWidth={1.7} />{isAr ? "قيمة المحفظة" : "Portfolio value"}</div>
-          <div className="whitespace-nowrap text-[28px] font-extrabold tabular-nums text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">
-            {portfolioStr === "—" ? "—" : (isAr ? <>{portfolio.num} <span className="text-[14px] font-medium text-[#A6A9B4]">{portfolio.unit}</span></> : <><span className="text-[14px] font-medium text-[#A6A9B4]">{portfolio.unit} </span>{portfolio.num}</>)}
+          <div className="flex items-center gap-[10px] text-[14px] text-muted"><Wallet className="h-5 w-5 text-accent" strokeWidth={1.7} />{isAr ? "قيمة المحفظة" : "Portfolio value"}</div>
+          <div className="whitespace-nowrap text-[28px] font-extrabold tabular-nums text-fg [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">
+            {portfolioStr === "—" ? "—" : (isAr ? <>{portfolio.num} <span className="text-[14px] font-medium text-muted">{portfolio.unit}</span></> : <><span className="text-[14px] font-medium text-muted">{portfolio.unit} </span>{portfolio.num}</>)}
           </div>
           <div className="flex h-2 gap-[3px] overflow-hidden rounded-full">
-            {cities.length ? cities.slice(0, 5).map((c, i) => <span key={c.id} style={{ flex: c.value || 1, background: ["#F3C86A","#E2B04A","#C98F1E","#9A6A14","#6B4A10"][i] || "#6B4A10" }} />) : <span className="flex-1 bg-[#232632]" />}
+            {cities.length ? cities.slice(0, 5).map((c, i) => <span key={c.id} style={{ flex: c.value || 1, background: ["var(--accent)","var(--accent)","var(--accent)","var(--accent)","var(--accent)"][i] || "var(--accent)" }} />) : <span className="flex-1 bg-surface-2" />}
           </div>
-          <p className="text-[13px] text-[#A6A9B4]">{distinctCities ? (isAr ? `موزعة على ${nf.format(distinctCities)} مدن` : `Across ${nf.format(distinctCities)} cities`) : (isAr ? "لا توجد بيانات مدن" : "No city data")}</p>
+          <p className="text-[13px] text-muted">{distinctCities ? (isAr ? `موزعة على ${nf.format(distinctCities)} مدن` : `Across ${nf.format(distinctCities)} cities`) : (isAr ? "لا توجد بيانات مدن" : "No city data")}</p>
         </m.div>
 
         <m.div variants={fadeUp} className={card}>
-          <div className="flex items-center gap-[10px] text-[14px] text-[#A6A9B4]"><Activity className="h-5 w-5 text-[#E2B04A]" strokeWidth={1.7} />{isAr ? "صافي الربح" : "Net profit"}</div>
-          <div className="whitespace-nowrap text-[28px] font-extrabold tabular-nums text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">
-            {profitStr === "—" ? "—" : (isAr ? <>{profit.num} <span className="text-[14px] font-medium text-[#A6A9B4]">{profit.unit}</span></> : <><span className="text-[14px] font-medium text-[#A6A9B4]">{profit.unit} </span>{profit.num}</>)}
+          <div className="flex items-center gap-[10px] text-[14px] text-muted"><Activity className="h-5 w-5 text-accent" strokeWidth={1.7} />{isAr ? "صافي الربح" : "Net profit"}</div>
+          <div className="whitespace-nowrap text-[28px] font-extrabold tabular-nums text-fg [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">
+            {profitStr === "—" ? "—" : (isAr ? <>{profit.num} <span className="text-[14px] font-medium text-muted">{profit.unit}</span></> : <><span className="text-[14px] font-medium text-muted">{profit.unit} </span>{profit.num}</>)}
           </div>
           <div className="flex h-2 gap-[3px] overflow-hidden rounded-full">
-            {margin == null ? <span className="flex-1 bg-[#232632]" /> : <><span style={{ flex: Math.max(0, Math.min(100, margin)), background: "#4CCB96" }} /><span style={{ flex: Math.max(0, 100 - margin), background: "#232632" }} /></>}
+            {margin == null ? <span className="flex-1 bg-surface-2" /> : <><span style={{ flex: Math.max(0, Math.min(100, margin)), background: "var(--success)" }} /><span style={{ flex: Math.max(0, 100 - margin), background: "var(--surface-2)" }} /></>}
           </div>
-          <p className="text-[13px] text-[#A6A9B4]">{margin == null ? (isAr ? "لا توجد بيانات هامش" : "No margin data") : (isAr ? `هامش الربح ${marginStr}` : `Margin ${marginStr}`)}</p>
+          <p className="text-[13px] text-muted">{margin == null ? (isAr ? "لا توجد بيانات هامش" : "No margin data") : (isAr ? `هامش الربح ${marginStr}` : `Margin ${marginStr}`)}</p>
         </m.div>
 
         <m.div variants={fadeUp} className={card}>
-          <div className="flex items-center gap-[10px] text-[14px] text-[#A6A9B4]"><MessageSquare className="h-5 w-5 text-[#E2B04A]" strokeWidth={1.7} />{isAr ? "استفسارات جديدة" : "New inquiries"}</div>
-          <div className="whitespace-nowrap text-[28px] font-extrabold tabular-nums text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{kpiNumber(kpiState.newInquiries)}</div>
+          <div className="flex items-center gap-[10px] text-[14px] text-muted"><MessageSquare className="h-5 w-5 text-accent" strokeWidth={1.7} />{isAr ? "استفسارات جديدة" : "New inquiries"}</div>
+          <div className="whitespace-nowrap text-[28px] font-extrabold tabular-nums text-fg [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{kpiNumber(kpiState.newInquiries)}</div>
           {kpiState.status === "error" ? (
-            <button type="button" onClick={() => void refreshKpis()} className="admin-focus-ring w-fit text-start text-[13px] text-[#E2B04A] underline-offset-4 hover:underline">
+            <button type="button" onClick={() => void refreshKpis()} className="admin-focus-ring w-fit text-start text-[13px] text-accent underline-offset-4 hover:underline">
               {isAr ? "تعذر التحميل — إعادة المحاولة" : "Could not load — retry"}
             </button>
           ) : (
-            <p className="text-[13px] text-[#A6A9B4]">
+            <p className="text-[13px] text-muted">
               {kpiState.status === "loading"
                 ? (isAr ? "جارٍ التحميل…" : "Loading…")
                 : (isAr ? "حسب الحالة: جديد" : "Counted where status is new")}
@@ -1812,14 +1777,14 @@ function OverviewSection({
         </m.div>
 
         <m.div variants={fadeUp} className={card}>
-          <div className="flex items-center gap-[10px] text-[14px] text-[#A6A9B4]"><FileSignature className="h-5 w-5 text-[#E2B04A]" strokeWidth={1.7} />{isAr ? "عقود موقّعة" : "Signed contracts"}</div>
-          <div className="whitespace-nowrap text-[28px] font-extrabold tabular-nums text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{kpiNumber(kpiState.signedContracts)}</div>
+          <div className="flex items-center gap-[10px] text-[14px] text-muted"><FileSignature className="h-5 w-5 text-accent" strokeWidth={1.7} />{isAr ? "عقود موقّعة" : "Signed contracts"}</div>
+          <div className="whitespace-nowrap text-[28px] font-extrabold tabular-nums text-fg [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{kpiNumber(kpiState.signedContracts)}</div>
           {kpiState.status === "error" ? (
-            <button type="button" onClick={() => void refreshKpis()} className="admin-focus-ring w-fit text-start text-[13px] text-[#E2B04A] underline-offset-4 hover:underline">
+            <button type="button" onClick={() => void refreshKpis()} className="admin-focus-ring w-fit text-start text-[13px] text-accent underline-offset-4 hover:underline">
               {isAr ? "تعذر التحميل — إعادة المحاولة" : "Could not load — retry"}
             </button>
           ) : (
-            <p className="text-[13px] text-[#A6A9B4]">
+            <p className="text-[13px] text-muted">
               {kpiState.status === "loading"
                 ? (isAr ? "جارٍ التحميل…" : "Loading…")
                 : (isAr ? "العقود الموقّعة المؤكدة" : "Verified signed contracts")}
@@ -1831,25 +1796,25 @@ function OverviewSection({
       <section className="grid gap-[22px] lg:grid-cols-1 xl:grid-cols-[1.7fr_1fr]">
         <div className="flex flex-col gap-[22px]">
           <m.section variants={fadeUp} className={panel}>
-            <div className="flex items-center gap-[10px]"><span className="text-[16px] tracking-[-2px] text-[#5c5f6b]">⋮⋮</span><h2 className="m-0 text-[19px] font-bold text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{isAr ? "صحة الميزانية" : "Budget health"}</h2><button type="button" onClick={() => onNavigate("projects")} className="admin-focus-ring ms-auto text-[14px] text-[#E2B04A]">{isAr ? "كل المشاريع ‹" : "All projects ›"}</button></div>
-            <div className="-mt-3 text-[13px] text-[#A6A9B4]">{isAr ? "الشريط = المصروف · العلامة البيضاء = الإنجاز الفعلي" : "Bar = spent · white marker = actual progress"}</div>
+            <div className="flex items-center gap-[10px]"><span className="text-[16px] tracking-[-2px] text-muted">⋮⋮</span><h2 className="m-0 text-[19px] font-bold text-fg [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{isAr ? "صحة الميزانية" : "Budget health"}</h2><button type="button" onClick={() => onNavigate("projects")} className="admin-focus-ring ms-auto text-[14px] text-accent">{isAr ? "كل المشاريع ‹" : "All projects ›"}</button></div>
+            <div className="-mt-3 text-[13px] text-muted">{isAr ? "الشريط = المصروف · العلامة البيضاء = الإنجاز الفعلي" : "Bar = spent · white marker = actual progress"}</div>
             {budgetRows.length === 0 ? (
-              <p className="py-6 text-[14px] text-[#A6A9B4]">{isAr ? "لا توجد مشاريع لعرض صحة الميزانية." : "No projects to show budget health."}</p>
+              <p className="py-6 text-[14px] text-muted">{isAr ? "لا توجد مشاريع لعرض صحة الميزانية." : "No projects to show budget health."}</p>
             ) : budgetRows.map((p) => {
               const h = getBudgetHealth(p);
               const spentPct = p.budget > 0 ? Math.min(100, (p.spent / p.budget) * 100) : 0;
               const progressPct = Math.min(100, Math.max(0, p.progress || 0));
               const pill = pillFor(h);
-              const color = h.key === "over" || h.key === "overrun" ? "#FF6B5E" : h.key === "watch" ? "#E2B04A" : "#4CCB96";
+              const color = h.key === "over" || h.key === "overrun" ? "var(--danger)" : h.key === "watch" ? "var(--accent)" : "var(--success)";
               const sub = p.budget > 0
                 ? `${formatSAR(p.spent, locale)} / ${formatSAR(p.budget, locale)}`
                 : (isAr ? "بيانات الميزانية غير متاحة" : "Budget data unavailable");
               return (
                 <div key={p.id} className="grid items-center gap-4 md:grid-cols-[170px_1fr_190px]">
-                  <div className="text-[15px] text-[#F1EEE8]"><div>{projectName(p, locale)}</div><small className="block text-[13px] text-[#A6A9B4]">{sub}</small></div>
-                  <div className="relative h-3 rounded-full bg-[#232632]">
+                  <div className="text-[15px] text-fg"><div>{projectName(p, locale)}</div><small className="block text-[13px] text-muted">{sub}</small></div>
+                  <div className="relative h-3 rounded-full bg-surface-2">
                     <div className="absolute inset-y-0 start-0 rounded-full" style={{ width: `${spentPct}%`, background: color }} />
-                    <div className="absolute -top-[5px] h-[22px] w-[3px] rounded-sm bg-white" style={{ insetInlineStart: `${progressPct}%` }} />
+                    <div className="absolute -top-[5px] h-[22px] w-[3px] rounded-sm bg-surface-2" style={{ insetInlineStart: `${progressPct}%` }} />
                   </div>
                   <div title={pill.tooltip} className={cn("whitespace-nowrap rounded-full px-3 py-[5px] text-center text-[13px] font-medium", pill.cls)}>{pill.text}</div>
                 </div>
@@ -1858,68 +1823,68 @@ function OverviewSection({
           </m.section>
 
           <m.section variants={fadeUp} className={panel}>
-            <div className="flex items-center gap-[10px]"><span className="text-[16px] tracking-[-2px] text-[#5c5f6b]">⋮⋮</span><h2 className="m-0 text-[19px] font-bold text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{isAr ? "قيمة المحفظة حسب المدينة" : "Portfolio value by city"}</h2></div>
+            <div className="flex items-center gap-[10px]"><span className="text-[16px] tracking-[-2px] text-muted">⋮⋮</span><h2 className="m-0 text-[19px] font-bold text-fg [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{isAr ? "قيمة المحفظة حسب المدينة" : "Portfolio value by city"}</h2></div>
             {cities.length === 0 ? (
-              <p className="py-2 text-[14px] text-[#A6A9B4]">{isAr ? "لا توجد بيانات مدن." : "No city data."}</p>
+              <p className="py-2 text-[14px] text-muted">{isAr ? "لا توجد بيانات مدن." : "No city data."}</p>
             ) : cities.map((c) => (
               <div key={c.id} className="flex flex-col gap-2 text-[15px] sm:grid sm:items-center sm:gap-[14px] sm:[grid-template-columns:70px_1fr_110px]">
                 <div className="flex items-center justify-between gap-2 sm:block">
-                  <span className="text-[#F1EEE8]">{isAr ? (c.nameAr || c.nameEn) : c.nameEn}</span>
-                  <span className="whitespace-nowrap text-[13px] text-[#D7D8DE] tabular-nums sm:hidden">{formatSAR(c.value, locale)}</span>
+                  <span className="text-fg">{isAr ? (c.nameAr || c.nameEn) : c.nameEn}</span>
+                  <span className="whitespace-nowrap text-[13px] text-fg tabular-nums sm:hidden">{formatSAR(c.value, locale)}</span>
                 </div>
-                <div className="relative h-3 rounded-full bg-[#232632]"><div className="absolute inset-y-0 start-0 rounded-full" style={{ width: `${(c.value / maxCity) * 100}%`, background: "linear-gradient(270deg,#F3C86A,#B8801C)" }} /></div>
-                <span className="hidden whitespace-nowrap text-end text-[#D7D8DE] tabular-nums [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif] sm:block">{formatSAR(c.value, locale)}</span>
+                <div className="relative h-3 rounded-full bg-surface-2"><div className="absolute inset-y-0 start-0 rounded-full" style={{ width: `${(c.value / maxCity) * 100}%`, background: "linear-gradient(270deg,var(--accent),var(--accent))" }} /></div>
+                <span className="hidden whitespace-nowrap text-end text-fg tabular-nums [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif] sm:block">{formatSAR(c.value, locale)}</span>
               </div>
             ))}
           </m.section>
         </div>
 
         <div className="flex flex-col gap-[22px]">
-          <m.section variants={fadeUp} className="flex flex-col gap-[18px] rounded-[22px] border border-[rgba(226,176,74,0.25)] p-[22px_24px]" style={{ background: "linear-gradient(180deg,rgba(226,176,74,0.09),rgba(255,255,255,0.02))" }}>
-            <div className="flex items-center gap-[10px]"><Sparkles className="h-5 w-5 text-[#E2B04A]" strokeWidth={1.7} /><h2 className="m-0 text-[19px] font-bold text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{isAr ? "رؤية ذكية" : "Insight"}</h2></div>
-            <div className="rounded-[14px] rounded-es-[4px] bg-white/[0.05] p-[12px_14px] text-[14px] leading-[1.8] text-[#E5E3DE]">{insight}</div>
-            <div className="flex items-center justify-between rounded-[14px] border border-white/[.07] bg-white/[0.03] p-[12px_14px] text-[14px] text-[#A6A9B4] opacity-70">
+          <m.section variants={fadeUp} className="flex flex-col gap-[18px] rounded-[22px] border border-[rgb(var(--accent-rgb)/0.25)] p-[22px_24px]" style={{ background: "linear-gradient(180deg,rgb(var(--accent-rgb)/0.09),rgb(var(--fg-rgb)/0.02))" }}>
+            <div className="flex items-center gap-[10px]"><Sparkles className="h-5 w-5 text-accent" strokeWidth={1.7} /><h2 className="m-0 text-[19px] font-bold text-fg [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{isAr ? "رؤية ذكية" : "Insight"}</h2></div>
+            <div className="rounded-[14px] rounded-es-[4px] bg-surface-2 p-[12px_14px] text-[14px] leading-[1.8] text-fg">{insight}</div>
+            <div className="flex items-center justify-between rounded-[14px] border border-line bg-surface-2 p-[12px_14px] text-[14px] text-muted opacity-70">
               <span>{isAr ? "اسأل عن مشاريعك وأرقامك…" : "Ask about your projects and numbers…"}</span>
-              <span className="rounded-full border border-white/15 px-2 py-0.5 text-[12px]">{isAr ? "قريباً" : "Coming soon"}</span>
+              <span className="rounded-full border border-line px-2 py-0.5 text-[12px]">{isAr ? "قريباً" : "Coming soon"}</span>
             </div>
           </m.section>
 
           <m.section variants={fadeUp} className={panel}>
-            <div className="flex items-center"><h2 className="m-0 text-[19px] font-bold text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{isAr ? "تنبيهات ذكية" : "Smart alerts"}</h2><button type="button" onClick={() => onNavigate("notifications")} className="admin-focus-ring ms-auto text-[14px] text-[#E2B04A]">{isAr ? "عرض الكل ‹" : "View all ›"}</button></div>
+            <div className="flex items-center"><h2 className="m-0 text-[19px] font-bold text-fg [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{isAr ? "تنبيهات ذكية" : "Smart alerts"}</h2><button type="button" onClick={() => onNavigate("notifications")} className="admin-focus-ring ms-auto text-[14px] text-accent">{isAr ? "عرض الكل ‹" : "View all ›"}</button></div>
             {alerts.length === 0 ? (
-              <div className="flex items-center gap-3 px-0.5 text-[14px] text-[#A6A9B4]"><MessageSquare className="h-5 w-5" strokeWidth={1.7} />{isAr ? "لا توجد تنبيهات. جميع المشاريع في المسار الصحيح." : "No alerts. All projects are on track."}</div>
+              <div className="flex items-center gap-3 px-0.5 text-[14px] text-muted"><MessageSquare className="h-5 w-5" strokeWidth={1.7} />{isAr ? "لا توجد تنبيهات. جميع المشاريع في المسار الصحيح." : "No alerts. All projects are on track."}</div>
             ) : alerts.map((a) => (
-              <div key={a.id} className={cn("flex gap-3 rounded-[14px] border p-[14px] text-[14px] leading-[1.7] text-[#F1EEE8]", a.severity === "critical" ? "border-[rgba(255,107,94,0.25)] bg-[rgba(255,107,94,0.09)]" : "border-[rgba(226,176,74,0.25)] bg-[rgba(226,176,74,0.08)]")}>
-                <Bell className={cn("mt-0.5 h-5 w-5 shrink-0", a.severity === "critical" ? "text-[#FF8A7E]" : "text-[#F3C86A]")} strokeWidth={1.7} />
+              <div key={a.id} className={cn("flex gap-3 rounded-[14px] border p-[14px] text-[14px] leading-[1.7] text-fg", a.severity === "critical" ? "border-[rgb(var(--danger-rgb)/0.25)] bg-[rgb(var(--danger-rgb)/0.09)]" : "border-[rgb(var(--accent-rgb)/0.25)] bg-[rgb(var(--accent-rgb)/0.08)]")}>
+                <Bell className={cn("mt-0.5 h-5 w-5 shrink-0", a.severity === "critical" ? "text-danger" : "text-accent")} strokeWidth={1.7} />
                 <div>{alertText(a)}</div>
               </div>
             ))}
           </m.section>
 
           <m.section variants={fadeUp} className={panel}>
-            <h2 className="m-0 text-[19px] font-bold text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{isAr ? "تخصيص اللوحة" : "Customize dashboard"}</h2>
-            <div className="flex flex-wrap items-center gap-2 text-[14px]"><span className="text-[#A6A9B4]">{isAr ? "الكثافة" : "Density"}</span>
-              <button type="button" onClick={() => setDensity("comfortable")} className={cn("admin-focus-ring min-h-[44px] rounded-[999px] border px-3 py-[6px]", density === "comfortable" ? "border-[rgba(226,176,74,0.3)] bg-[rgba(226,176,74,0.14)] text-[#F3C86A]" : "border-white/[.07] text-[#A6A9B4]")}>{isAr ? "مريح" : "Comfortable"}</button>
-              <button type="button" onClick={() => setDensity("compact")} className={cn("admin-focus-ring min-h-[44px] rounded-[999px] border px-3 py-[6px]", density === "compact" ? "border-[rgba(226,176,74,0.3)] bg-[rgba(226,176,74,0.14)] text-[#F3C86A]" : "border-white/[.07] text-[#A6A9B4]")}>{isAr ? "مضغوط" : "Compact"}</button>
+            <h2 className="m-0 text-[19px] font-bold text-fg [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{isAr ? "تخصيص اللوحة" : "Customize dashboard"}</h2>
+            <div className="flex flex-wrap items-center gap-2 text-[14px]"><span className="text-muted">{isAr ? "الكثافة" : "Density"}</span>
+              <button type="button" onClick={() => setDensity("comfortable")} className={cn("admin-focus-ring min-h-[44px] rounded-[999px] border px-3 py-[6px]", density === "comfortable" ? "border-[rgb(var(--accent-rgb)/0.3)] bg-[rgb(var(--accent-rgb)/0.14)] text-accent" : "border-line text-muted")}>{isAr ? "مريح" : "Comfortable"}</button>
+              <button type="button" onClick={() => setDensity("compact")} className={cn("admin-focus-ring min-h-[44px] rounded-[999px] border px-3 py-[6px]", density === "compact" ? "border-[rgb(var(--accent-rgb)/0.3)] bg-[rgb(var(--accent-rgb)/0.14)] text-accent" : "border-line text-muted")}>{isAr ? "مضغوط" : "Compact"}</button>
             </div>
-            <div className="flex flex-wrap items-center gap-2 text-[14px]"><span className="text-[#A6A9B4]">{isAr ? "حجم الخط" : "Font size"}</span>
-              <button type="button" onClick={() => setFontScale("normal")} className={cn("admin-focus-ring min-h-[44px] rounded-[999px] border px-3 py-[6px]", fontScale === "normal" ? "border-[rgba(226,176,74,0.3)] bg-[rgba(226,176,74,0.14)] text-[#F3C86A]" : "border-white/[.07] text-[#A6A9B4]")}>{isAr ? "عادي" : "Normal"}</button>
-              <button type="button" onClick={() => setFontScale("large")} className={cn("admin-focus-ring min-h-[44px] rounded-[999px] border px-3 py-[6px]", fontScale === "large" ? "border-[rgba(226,176,74,0.3)] bg-[rgba(226,176,74,0.14)] text-[#F3C86A]" : "border-white/[.07] text-[#A6A9B4]")}>{isAr ? "كبير" : "Large"}</button>
+            <div className="flex flex-wrap items-center gap-2 text-[14px]"><span className="text-muted">{isAr ? "حجم الخط" : "Font size"}</span>
+              <button type="button" onClick={() => setFontScale("normal")} className={cn("admin-focus-ring min-h-[44px] rounded-[999px] border px-3 py-[6px]", fontScale === "normal" ? "border-[rgb(var(--accent-rgb)/0.3)] bg-[rgb(var(--accent-rgb)/0.14)] text-accent" : "border-line text-muted")}>{isAr ? "عادي" : "Normal"}</button>
+              <button type="button" onClick={() => setFontScale("large")} className={cn("admin-focus-ring min-h-[44px] rounded-[999px] border px-3 py-[6px]", fontScale === "large" ? "border-[rgb(var(--accent-rgb)/0.3)] bg-[rgb(var(--accent-rgb)/0.14)] text-accent" : "border-line text-muted")}>{isAr ? "كبير" : "Large"}</button>
             </div>
           </m.section>
         </div>
       </section>
 
-      <div className="flex items-center gap-2"><h2 className="m-0 text-[28px] font-bold text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{isAr ? "مشاريع جارية وقادمة" : "Active and upcoming projects"}</h2><button type="button" onClick={() => onNavigate("projects")} className="admin-focus-ring ms-auto text-[14px] text-[#E2B04A]">{isAr ? "عرض الكل ‹" : "View all ›"}</button></div>
+      <div className="flex items-center gap-2"><h2 className="m-0 text-[28px] font-bold text-fg [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{isAr ? "مشاريع جارية وقادمة" : "Active and upcoming projects"}</h2><button type="button" onClick={() => onNavigate("projects")} className="admin-focus-ring ms-auto text-[14px] text-accent">{isAr ? "عرض الكل ‹" : "View all ›"}</button></div>
       {activeUpcoming.length === 0 ? (
-        <div className="rounded-[20px] border border-white/[.07] bg-white/[0.02] p-6 text-[14px] text-[#A6A9B4]">{isAr ? "لا توجد مشاريع جارية أو قادمة." : "No active or upcoming projects."}</div>
+        <div className="rounded-[20px] border border-line bg-surface-2 p-6 text-[14px] text-muted">{isAr ? "لا توجد مشاريع جارية أو قادمة." : "No active or upcoming projects."}</div>
       ) : (
         <m.section variants={stagger} className="grid gap-[18px] sm:grid-cols-2 xl:grid-cols-4">
           {activeUpcoming.map((p, idx) => {
             const statusLabel = p.status === "ongoing" ? (isAr ? "قيد التنفيذ" : "Ongoing") : p.status === "upcoming" ? (isAr ? "قادم" : "Upcoming") : (isAr ? "مكتمل" : "Completed");
             const sourceProject = projects.find((project) => project.slug === p.id);
             return (
-              <m.button key={p.id} variants={fadeUp} type="button" onClick={() => onNavigate("projects")} className="admin-focus-ring overflow-hidden rounded-[20px] border border-white/[.07] bg-[#12141B] text-start transition-all duration-[160ms] hover:-translate-y-0.5 hover:border-[rgba(226,176,74,0.25)]">
+              <m.button key={p.id} variants={fadeUp} type="button" onClick={() => onNavigate("projects")} className="admin-focus-ring overflow-hidden rounded-[20px] border border-line bg-surface text-start transition-all duration-[160ms] hover:-translate-y-0.5 hover:border-[rgb(var(--accent-rgb)/0.25)]">
                 <div className="relative">
                   <ProjectImage
                     project={sourceProject ?? p}
@@ -1927,12 +1892,12 @@ function OverviewSection({
                     sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 25vw"
                     priority={idx === 0}
                   />
-                  <span className="absolute top-3 start-3 rounded-[999px] bg-[rgba(11,12,16,0.7)] px-[10px] py-1 text-[12px]" style={{ color: p.status === "upcoming" ? "#8CC7FF" : "#F3C86A" }}>{statusLabel}</span>
+                  <span className="absolute top-3 start-3 rounded-[999px] bg-[rgb(var(--bg-rgb)/0.7)] px-[10px] py-1 text-[12px]" style={{ color: p.status === "upcoming" ? "var(--info)" : "var(--accent)" }}>{statusLabel}</span>
                 </div>
-                <div className="flex flex-col gap-[10px] p-[14px_16px] text-[15px] text-[#F1EEE8]">
-                  <div>{projectName(p, locale)}<small className="block text-[13px] text-[#A6A9B4]">{projectCity(p, locale)}</small></div>
-                  <div className="h-[6px] overflow-hidden rounded-[9px] bg-[#232632]"><span className="block h-full rounded-[9px] bg-[linear-gradient(270deg,#F3C86A,#C98F1E)]" style={{ width: `${Math.min(100, Math.max(0, p.progress || 0))}%` }} /></div>
-                  <small className="text-[13px] text-[#A6A9B4] tabular-nums [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{nf.format(Math.round(p.progress || 0))}% {isAr ? "إنجاز" : "complete"} · {formatSAR(p.value, locale)}</small>
+                <div className="flex flex-col gap-[10px] p-[14px_16px] text-[15px] text-fg">
+                  <div>{projectName(p, locale)}<small className="block text-[13px] text-muted">{projectCity(p, locale)}</small></div>
+                  <div className="h-[6px] overflow-hidden rounded-[9px] bg-surface-2"><span className="block h-full rounded-[9px] bg-accent-fill" style={{ width: `${Math.min(100, Math.max(0, p.progress || 0))}%` }} /></div>
+                  <small className="text-[13px] text-muted tabular-nums [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{nf.format(Math.round(p.progress || 0))}% {isAr ? "إنجاز" : "complete"} · {formatSAR(p.value, locale)}</small>
                 </div>
               </m.button>
             );
@@ -2377,7 +2342,7 @@ function ProjectsSection({
             onClose();
             restoreProject(project);
           }}
-          className="admin-focus-ring flex min-h-10 w-full items-center gap-2 rounded-lg px-3 text-start text-[14px] text-[var(--admin-text)] hover:bg-[var(--admin-pill-surface)]"
+          className="admin-focus-ring flex min-h-10 w-full items-center gap-2 rounded-lg px-3 text-start text-[14px] text-fg hover:bg-surface-2"
         >
           <RotateCcw className="h-4 w-4" />
           {c.restore}
@@ -2390,7 +2355,7 @@ function ProjectsSection({
               onClose();
               onEdit(project);
             }}
-            className="admin-focus-ring flex min-h-10 w-full items-center gap-2 rounded-lg px-3 text-start text-[14px] text-[var(--admin-text)] hover:bg-[var(--admin-pill-surface)]"
+            className="admin-focus-ring flex min-h-10 w-full items-center gap-2 rounded-lg px-3 text-start text-[14px] text-fg hover:bg-surface-2"
           >
             <Pencil className="h-4 w-4" />
             {c.edit}
@@ -2401,7 +2366,7 @@ function ProjectsSection({
               onClose();
               duplicateProject(project);
             }}
-            className="admin-focus-ring flex min-h-10 w-full items-center gap-2 rounded-lg px-3 text-start text-[14px] text-[var(--admin-text)] hover:bg-[var(--admin-pill-surface)]"
+            className="admin-focus-ring flex min-h-10 w-full items-center gap-2 rounded-lg px-3 text-start text-[14px] text-fg hover:bg-surface-2"
           >
             <Copy className="h-4 w-4" />
             {locale === "ar" ? "نسخ" : "Duplicate"}
@@ -2412,7 +2377,7 @@ function ProjectsSection({
               onClose();
               setArchiveTarget(project);
             }}
-            className="admin-focus-ring flex min-h-10 w-full items-center gap-2 rounded-lg px-3 text-start text-[14px] text-[#FF9A8F] hover:bg-[rgba(255,107,94,0.1)]"
+            className="admin-focus-ring flex min-h-10 w-full items-center gap-2 rounded-lg px-3 text-start text-[14px] text-danger hover:bg-[rgb(var(--danger-rgb)/0.1)]"
           >
             <Archive className="h-4 w-4" />
             {c.archive}
@@ -2480,7 +2445,7 @@ function ProjectsSection({
                 value={categoryFilter}
                 onValueChange={(value) => { setCategoryFilter(value as typeof categoryFilter); setPage(1); }}
                 aria-label={locale === "ar" ? "تصفية حسب الفئة" : "Filter by category"}
-                className="h-10 whitespace-nowrap rounded-xl border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] text-[14px]"
+                className="h-10 whitespace-nowrap rounded-xl border-line bg-surface-2 text-[14px]"
                 options={[
                   { value: "all", label: locale === "ar" ? "كل الفئات" : "All categories" },
                   { value: "commercial", label: c.categoryLabels.commercial },
@@ -2495,7 +2460,7 @@ function ProjectsSection({
                 value={sortBy}
                 onValueChange={(value) => setSortBy(value as typeof sortBy)}
                 aria-label={locale === "ar" ? "ترتيب المشاريع" : "Sort projects"}
-                className="h-10 whitespace-nowrap rounded-xl border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] text-[14px]"
+                className="h-10 whitespace-nowrap rounded-xl border-line bg-surface-2 text-[14px]"
                 options={[
                   { value: "risk", label: locale === "ar" ? "الأعلى خطورة" : "Highest risk" },
                   { value: "budget", label: locale === "ar" ? "الميزانية" : "Budget" },
@@ -2526,7 +2491,7 @@ function ProjectsSection({
                   value={categoryFilter}
                   onValueChange={(value) => { setCategoryFilter(value as typeof categoryFilter); setPage(1); }}
                   aria-label={locale === "ar" ? "تصفية حسب الفئة" : "Filter by category"}
-                  className="h-10 whitespace-nowrap rounded-xl border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] text-[14px]"
+                  className="h-10 whitespace-nowrap rounded-xl border-line bg-surface-2 text-[14px]"
                   options={[
                     { value: "all", label: locale === "ar" ? "كل الفئات" : "All categories" },
                     { value: "commercial", label: c.categoryLabels.commercial },
@@ -2541,7 +2506,7 @@ function ProjectsSection({
                   value={sortBy}
                   onValueChange={(value) => setSortBy(value as typeof sortBy)}
                   aria-label={locale === "ar" ? "ترتيب المشاريع" : "Sort projects"}
-                  className="h-10 whitespace-nowrap rounded-xl border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] text-[14px]"
+                  className="h-10 whitespace-nowrap rounded-xl border-line bg-surface-2 text-[14px]"
                   options={[
                     { value: "risk", label: locale === "ar" ? "الأعلى خطورة" : "Highest risk" },
                     { value: "budget", label: locale === "ar" ? "الميزانية" : "Budget" },
@@ -2573,7 +2538,7 @@ function ProjectsSection({
                   value={categoryFilter}
                   onValueChange={(value) => { setCategoryFilter(value as typeof categoryFilter); setPage(1); }}
                   aria-label={locale === "ar" ? "تصفية حسب الفئة" : "Filter by category"}
-                  className="h-10 whitespace-nowrap rounded-xl border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] text-[14px]"
+                  className="h-10 whitespace-nowrap rounded-xl border-line bg-surface-2 text-[14px]"
                   options={[
                     { value: "all", label: locale === "ar" ? "كل الفئات" : "All categories" },
                     { value: "commercial", label: c.categoryLabels.commercial },
@@ -2588,7 +2553,7 @@ function ProjectsSection({
                   value={sortBy}
                   onValueChange={(value) => setSortBy(value as typeof sortBy)}
                   aria-label={locale === "ar" ? "ترتيب المشاريع" : "Sort projects"}
-                  className="h-10 whitespace-nowrap rounded-xl border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] text-[14px]"
+                  className="h-10 whitespace-nowrap rounded-xl border-line bg-surface-2 text-[14px]"
                   options={[
                     { value: "risk", label: locale === "ar" ? "الأعلى خطورة" : "Highest risk" },
                     { value: "budget", label: locale === "ar" ? "الميزانية" : "Budget" },
@@ -2618,14 +2583,14 @@ function ProjectsSection({
           transition={{ duration: 0.18, ease: "easeOut" }}
           data-testid="projects-bulk-bar"
           data-bulk-layout={bulkLayout}
-          className="fixed inset-x-3 bottom-[calc(64px+env(safe-area-inset-bottom,0px)+8px)] z-[70] min-w-0 rounded-2xl border border-white/[.08] bg-gradient-to-b from-[#1a1c25] to-[#13151c] px-3 py-2.5 shadow-[0_12px_40px_rgba(0,0,0,.5)] md:sticky md:inset-x-auto md:bottom-auto md:top-3 md:z-20 md:px-2"
+          className="fixed inset-x-3 bottom-[calc(64px+env(safe-area-inset-bottom,0px)+8px)] z-[70] min-w-0 rounded-2xl border border-line bg-gradient-to-b from-surface to-surface px-3 py-2.5 shadow-e2 md:sticky md:inset-x-auto md:bottom-auto md:top-3 md:z-20 md:px-2"
         >
           {bulkLayout === "wide" ? (
             <div className="flex min-w-0 flex-nowrap items-center gap-1.5">
               <div className="flex min-w-0 items-center gap-1.5">
                 <span
                   data-testid="bulk-count"
-                  className="inline-flex h-7 shrink-0 items-center whitespace-nowrap rounded-full bg-[rgba(226,176,74,0.14)] px-2.5 text-[13px] font-semibold tabular-nums text-[#F3C86A]"
+                  className="inline-flex h-7 shrink-0 items-center whitespace-nowrap rounded-full bg-[rgb(var(--accent-rgb)/0.14)] px-2.5 text-[13px] font-semibold tabular-nums text-accent"
                 >
                   {selected.size} {locale === "ar" ? "محدد" : "selected"}
                 </span>
@@ -2634,7 +2599,7 @@ function ProjectsSection({
                     type="button"
                     data-testid="bulk-select-all"
                     onClick={selectAllFiltered}
-                    className="admin-focus-ring min-w-0 truncate rounded-md px-0 text-[14px] font-medium text-[#F3C86A] underline decoration-[#F3C86A]/30 underline-offset-4 hover:decoration-[#F3C86A]"
+                    className="admin-focus-ring min-w-0 truncate rounded-md px-0 text-[14px] font-medium text-accent underline decoration-[var(--accent)]/30 underline-offset-4 hover:decoration-[var(--accent)]"
                   >
                     {locale === "ar" ? `تحديد الكل (${filtered.length})` : `Select all ${filtered.length}`}
                   </button>
@@ -2644,7 +2609,7 @@ function ProjectsSection({
               <div className="min-w-0 flex-1" aria-hidden="true" />
 
               <div className="flex shrink-0 items-center gap-1.5">
-                <span className="whitespace-nowrap text-[14px] text-[var(--admin-muted)]">
+                <span className="whitespace-nowrap text-[14px] text-muted">
                   {locale === "ar" ? "نقل إلى" : "Move to"}
                 </span>
                 <SegmentedControl
@@ -2678,7 +2643,7 @@ function ProjectsSection({
                   variant="ghost"
                   size="sm"
                   onClick={() => setBulkArchiveOpen(true)}
-                  className="h-10 shrink-0 whitespace-nowrap rounded-xl px-2 text-[14px] font-medium text-[#FF9A8F] hover:bg-[rgba(255,107,94,0.1)] hover:text-[#FFB4AC]"
+                  className="h-10 shrink-0 whitespace-nowrap rounded-xl px-2 text-[14px] font-medium text-danger hover:bg-[rgb(var(--danger-rgb)/0.1)] hover:text-danger"
                   aria-label={c.archive}
                   title={c.archive}
                 >
@@ -2692,7 +2657,7 @@ function ProjectsSection({
                     setSelected(new Set<string>());
                     lastSelectedRef.current = null;
                   }}
-                  className="h-10 w-10 shrink-0 rounded-xl p-0 text-[var(--admin-muted)]"
+                  className="h-10 w-10 shrink-0 rounded-xl p-0 text-muted"
                   aria-label={c.clearSelection}
                 >
                   <X className="h-4 w-4" />
@@ -2705,7 +2670,7 @@ function ProjectsSection({
                 <div className="flex min-w-0 items-center gap-2">
                   <span
                     data-testid="bulk-count"
-                    className="inline-flex h-7 shrink-0 items-center whitespace-nowrap rounded-full bg-[rgba(226,176,74,0.14)] px-3 text-[13px] font-semibold tabular-nums text-[#F3C86A]"
+                    className="inline-flex h-7 shrink-0 items-center whitespace-nowrap rounded-full bg-[rgb(var(--accent-rgb)/0.14)] px-3 text-[13px] font-semibold tabular-nums text-accent"
                   >
                     {selected.size} {locale === "ar" ? "محدد" : "selected"}
                   </span>
@@ -2714,7 +2679,7 @@ function ProjectsSection({
                       type="button"
                       data-testid="bulk-select-all"
                       onClick={selectAllFiltered}
-                      className="admin-focus-ring min-w-0 truncate rounded-md px-1 text-[14px] font-medium text-[#F3C86A] underline decoration-[#F3C86A]/30 underline-offset-4 hover:decoration-[#F3C86A]"
+                      className="admin-focus-ring min-w-0 truncate rounded-md px-1 text-[14px] font-medium text-accent underline decoration-[var(--accent)]/30 underline-offset-4 hover:decoration-[var(--accent)]"
                     >
                       {locale === "ar" ? `تحديد الكل (${filtered.length})` : `Select all ${filtered.length}`}
                     </button>
@@ -2727,7 +2692,7 @@ function ProjectsSection({
                     setSelected(new Set<string>());
                     lastSelectedRef.current = null;
                   }}
-                  className="h-10 w-10 shrink-0 rounded-xl p-0 text-[var(--admin-muted)]"
+                  className="h-10 w-10 shrink-0 rounded-xl p-0 text-muted"
                   aria-label={c.clearSelection}
                 >
                   <X className="h-4 w-4" />
@@ -2768,7 +2733,7 @@ function ProjectsSection({
                     variant="ghost"
                     size="sm"
                     onClick={() => setBulkArchiveOpen(true)}
-                    className="h-10 w-10 shrink-0 rounded-xl p-0 text-[#FF9A8F] hover:bg-[rgba(255,107,94,0.1)] hover:text-[#FFB4AC]"
+                    className="h-10 w-10 shrink-0 rounded-xl p-0 text-danger hover:bg-[rgb(var(--danger-rgb)/0.1)] hover:text-danger"
                     aria-label={c.archive}
                     title={c.archive}
                   >
@@ -2799,7 +2764,7 @@ function ProjectsSection({
                           key={status}
                           type="button"
                           onClick={() => applyBulkStatus(status)}
-                          className="admin-focus-ring flex min-h-10 w-full items-center rounded-lg px-3 text-start text-[14px] text-[var(--admin-text)] hover:bg-[var(--admin-pill-surface)]"
+                          className="admin-focus-ring flex min-h-10 w-full items-center rounded-lg px-3 text-start text-[14px] text-fg hover:bg-surface-2"
                         >
                           {c.statusLabels[status]}
                         </button>
@@ -2825,7 +2790,7 @@ function ProjectsSection({
                     variant="ghost"
                     size="sm"
                     onClick={() => setBulkArchiveOpen(true)}
-                    className="h-10 w-10 shrink-0 rounded-xl p-0 text-[#FF9A8F] hover:bg-[rgba(255,107,94,0.1)] hover:text-[#FFB4AC]"
+                    className="h-10 w-10 shrink-0 rounded-xl p-0 text-danger hover:bg-[rgb(var(--danger-rgb)/0.1)] hover:text-danger"
                     aria-label={c.archive}
                     title={c.archive}
                   >
@@ -2839,20 +2804,20 @@ function ProjectsSection({
       ) : null}
 
       {view === "timeline" ? (
-        <div className="space-y-3 rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018] p-4 sm:p-5">
+        <div className="space-y-3 rounded-[22px] border border-line bg-surface p-4 sm:p-5">
           {paged.map((project) => (
-            <button key={project.slug} type="button" onClick={() => openDetail(project)} className="w-full border border-white/10 bg-[#0e1017]/60 p-4 text-start transition-colors hover:border-gold/30">
+            <button key={project.slug} type="button" onClick={() => openDetail(project)} className="w-full border border-line bg-bg/60 p-4 text-start transition-colors hover:border-accent/30">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="min-w-0">
-                  <p className="truncate text-[0.88rem] font-medium text-ivory">{l(project.title)}</p>
-                  <p className="mt-1 text-[0.7rem] text-ivory/45" title={budgetHealthFor(project).tooltip}>{budgetHealthFor(project).short}</p>
+                  <p className="truncate text-[0.88rem] font-medium text-fg">{l(project.title)}</p>
+                  <p className="mt-1 text-[0.7rem] text-fg" title={budgetHealthFor(project).tooltip}>{budgetHealthFor(project).short}</p>
                 </div>
-                <span className="text-[0.68rem] tabular-nums text-ivory/45">{c.statusLabels[project.status]}</span>
+                <span className="text-[0.68rem] tabular-nums text-fg">{c.statusLabels[project.status]}</span>
               </div>
-              <div className="mt-3 h-2 overflow-hidden bg-white/10">
-                <div className="h-full bg-gold/70" style={{ width: `${project.progress}%` }} />
+              <div className="mt-3 h-2 overflow-hidden bg-line">
+                <div className="h-full bg-accent/70" style={{ width: `${project.progress}%` }} />
               </div>
-              <div className="mt-2 flex items-center justify-between text-[0.68rem] tabular-nums text-ivory/45">
+              <div className="mt-2 flex items-center justify-between text-[0.68rem] tabular-nums text-fg">
                 <span>{project.progress}%</span>
                 <span>{formatMoney(project.spent, locale)} / {formatMoney(project.budget, locale)}</span>
               </div>
@@ -2863,7 +2828,7 @@ function ProjectsSection({
       ) : view === "cards" ? (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {paged.map((project, index) => (
-            <button key={project.slug} type="button" onClick={() => openDetail(project)} className="overflow-hidden rounded-[20px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018] text-start transition-colors hover:border-gold/30">
+            <button key={project.slug} type="button" onClick={() => openDetail(project)} className="overflow-hidden rounded-[20px] border border-line bg-surface text-start transition-colors hover:border-accent/30">
               <ProjectImage
                 project={project}
                 sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw"
@@ -2873,18 +2838,18 @@ function ProjectsSection({
               <div className="p-4">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-2">
-                    <p className="truncate text-[0.9rem] font-medium text-ivory">{l(project.title)}</p>
-                    <span className={cn("shrink-0 px-2 py-0.5 text-[0.62rem] ", project.status === "ongoing" ? "bg-gold/15 text-gold" : project.status === "completed" ? "bg-emerald-400/10 text-emerald-300/80" : "bg-sky-400/10 text-sky-300/80")}>{c.statusLabels[project.status]}</span>
+                    <p className="truncate text-[0.9rem] font-medium text-fg">{l(project.title)}</p>
+                    <span className={cn("shrink-0 px-2 py-0.5 text-[0.62rem] ", project.status === "ongoing" ? "bg-accent/15 text-accent" : project.status === "completed" ? "bg-success/10 text-success" : "bg-info/10 text-info")}>{c.statusLabels[project.status]}</span>
                   </div>
-                  <p className="mt-1 truncate text-[0.72rem] text-ivory/45">{l(project.location)}</p>
-                  <p className="mt-1 text-[0.68rem] text-ivory/45" title={budgetHealthFor(project).tooltip}>{budgetHealthFor(project).short}</p>
+                  <p className="mt-1 truncate text-[0.72rem] text-fg">{l(project.location)}</p>
+                  <p className="mt-1 text-[0.68rem] text-fg" title={budgetHealthFor(project).tooltip}>{budgetHealthFor(project).short}</p>
                   <div className="mt-3 flex items-center gap-2">
-                    <span className="h-1.5 flex-1 overflow-hidden bg-white/10"><span className="block h-full bg-gold/70" style={{ width: `${project.progress}%` }} /></span>
-                    <span className="tabular-nums text-[0.68rem] text-ivory/45">{project.progress}%</span>
+                    <span className="h-1.5 flex-1 overflow-hidden bg-line"><span className="block h-full bg-accent/70" style={{ width: `${project.progress}%` }} /></span>
+                    <span className="tabular-nums text-[0.68rem] text-fg">{project.progress}%</span>
                   </div>
                   <div className="mt-2 flex items-center justify-between text-[0.72rem]">
-                    <span className="text-ivory/45">{c.categoryLabels[project.category]}</span>
-                    <span className="tabular-nums text-gold">{formatMoney(project.contractValue || project.budget, locale)}</span>
+                    <span className="text-fg">{c.categoryLabels[project.category]}</span>
+                    <span className="tabular-nums text-accent">{formatMoney(project.contractValue || project.budget, locale)}</span>
                   </div>
                 </div>
               </div>
@@ -2896,10 +2861,10 @@ function ProjectsSection({
         <div ref={tableWidthRef} className="min-w-0" data-testid="projects-responsive">
           {tableWidth === 0 ? (
             <Card className="min-h-[320px] overflow-hidden rounded-[20px] p-0" aria-hidden="true">
-              <div className="h-14 border-b border-[var(--admin-card-border)] bg-[var(--admin-bg)]/60" />
+              <div className="h-14 border-b border-line bg-bg" />
               <div className="space-y-2 p-3">
                 {[0, 1, 2, 3].map((item) => (
-                  <div key={item} className="h-14 animate-pulse rounded-xl bg-white/[.035]" />
+                  <div key={item} className="h-14 animate-pulse rounded-xl bg-surface-2" />
                 ))}
               </div>
             </Card>
@@ -2925,7 +2890,7 @@ function ProjectsSection({
                     data-project-slug={project.slug}
                     className={cn(
                       "min-w-0 overflow-hidden rounded-[20px] p-3.5",
-                      selected.has(project.slug) && "border-[rgba(226,176,74,0.35)] bg-[rgba(226,176,74,0.05)]",
+                      selected.has(project.slug) && "border-[rgb(var(--accent-rgb)/0.35)] bg-[rgb(var(--accent-rgb)/0.05)]",
                     )}
                   >
                     <div className="flex min-w-0 items-start gap-3">
@@ -2956,7 +2921,7 @@ function ProjectsSection({
                         variant="thumb"
                         sizes="64px"
                         priority={index === 0}
-                        className="h-12 w-16 shrink-0 rounded-xl border border-[var(--admin-card-border)]"
+                        className="h-12 w-16 shrink-0 rounded-xl border border-line"
                       />
                       <button
                         type="button"
@@ -2965,12 +2930,12 @@ function ProjectsSection({
                       >
                         <span
                           data-testid="project-name"
-                          className="block truncate text-[15px] font-medium text-[var(--admin-text)]"
+                          className="block truncate text-[15px] font-medium text-fg"
                           title={l(project.title)}
                         >
                           {l(project.title)}
                         </span>
-                        <span data-testid="project-city" className="mt-0.5 block truncate text-[13px] text-[var(--admin-muted)]">
+                        <span data-testid="project-city" className="mt-0.5 block truncate text-[13px] text-muted">
                           {l(project.location)}
                         </span>
                       </button>
@@ -2982,7 +2947,7 @@ function ProjectsSection({
                           <button
                             type="button"
                             data-testid="project-actions"
-                            className="admin-focus-ring inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[var(--admin-card-border)] text-[var(--admin-muted)]"
+                            className="admin-focus-ring inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-line text-muted"
                             aria-label={locale === "ar" ? "إجراءات المشروع" : "Project actions"}
                           >
                             <MoreVertical className="h-4 w-4" />
@@ -3001,21 +2966,21 @@ function ProjectsSection({
                     </div>
 
                     <div className="mt-3 flex items-center gap-2" data-testid="project-progress">
-                      <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-[var(--admin-track)]">
+                      <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2">
                         <span
-                          className="block h-full rounded-full bg-[linear-gradient(270deg,#F3C86A,#C98F1E)]"
+                          className="block h-full rounded-full bg-accent-fill"
                           style={{ width: `${project.progress}%` }}
                         />
                       </span>
-                      <span data-testid="project-progress-value" className="whitespace-nowrap tabular-nums text-[13px] text-[var(--admin-muted)]">
+                      <span data-testid="project-progress-value" className="whitespace-nowrap tabular-nums text-[13px] text-muted">
                         {project.progress}%
                       </span>
                     </div>
                     <div className="mt-1.5 flex items-center justify-between gap-3">
-                      <span className="truncate text-[12px] text-[var(--admin-muted)]">
+                      <span className="truncate text-[12px] text-muted">
                         {c.categoryLabels[project.category]}
                       </span>
-                      <span data-testid="project-value" className="whitespace-nowrap tabular-nums text-[14px] text-[var(--admin-gold)]">
+                      <span data-testid="project-value" className="whitespace-nowrap tabular-nums text-[14px] text-accent">
                         {formatMoney(project.contractValue || project.budget, locale)}
                       </span>
                     </div>
@@ -3107,7 +3072,7 @@ function ProjectsSection({
                           onClick={() => openDetail(project)}
                           className={cn(
                             "h-16 cursor-pointer",
-                            selected.has(project.slug) && "bg-[rgba(226,176,74,0.06)]",
+                            selected.has(project.slug) && "bg-[rgb(var(--accent-rgb)/0.06)]",
                           )}
                         >
                           <TD className="px-2 text-center" onClick={(event) => event.stopPropagation()}>
@@ -3140,21 +3105,21 @@ function ProjectsSection({
                                 variant="thumb"
                                 sizes="64px"
                                 priority={index === 0}
-                                className="h-12 w-16 shrink-0 rounded-xl border border-[var(--admin-card-border)]"
+                                className="h-12 w-16 shrink-0 rounded-xl border border-line"
                               />
                               <span className="flex min-w-0 flex-1 flex-col justify-center gap-0.5 leading-tight">
                                 <span
                                   data-testid="project-name"
-                                  className="truncate text-[14px] font-medium text-[#F1EEE8]"
+                                  className="truncate text-[14px] font-medium text-fg"
                                   title={l(project.title)}
                                 >
                                   {l(project.title)}
                                 </span>
-                                <span data-testid="project-city" className="truncate text-[13px] text-[#A6A9B4]">
+                                <span data-testid="project-city" className="truncate text-[13px] text-muted">
                                   {l(project.location)}
                                 </span>
                                 {tableMode === "compact" ? (
-                                  <span data-testid="project-category-inline" className="truncate text-[12px] text-[#A6A9B4]/70">
+                                  <span data-testid="project-category-inline" className="truncate text-[12px] text-muted">
                                     {c.categoryLabels[project.category]}
                                   </span>
                                 ) : null}
@@ -3163,7 +3128,7 @@ function ProjectsSection({
                           </TD>
                           {tableMode === "full" ? (
                             <TD data-testid="project-category">
-                              <span className="text-[14px] text-[#C9CAD1]">
+                              <span className="text-[14px] text-fg">
                                 {c.categoryLabels[project.category]}
                               </span>
                             </TD>
@@ -3202,21 +3167,21 @@ function ProjectsSection({
                             <span className="flex items-center gap-1.5">
                               <span
                                 className={cn(
-                                  "h-1.5 shrink-0 overflow-hidden rounded-full bg-[#232632]",
+                                  "h-1.5 shrink-0 overflow-hidden rounded-full bg-surface-2",
                                   tableMode === "compact" ? "w-24" : "w-16",
                                 )}
                               >
                                 <span
-                                  className="block h-full rounded-full bg-[linear-gradient(270deg,#F3C86A,#C98F1E)]"
+                                  className="block h-full rounded-full bg-accent-fill"
                                   style={{ width: `${project.progress}%` }}
                                 />
                               </span>
-                              <span className="whitespace-nowrap tabular-nums text-[13px] text-[#A6A9B4]">
+                              <span className="whitespace-nowrap tabular-nums text-[13px] text-muted">
                                 {project.progress}%
                               </span>
                             </span>
                           </TD>
-                          <TD data-testid="project-value" className={cn("text-end tabular-nums text-[#D7D8DE]", tableMode === "compact" && "px-0.5")}>
+                          <TD data-testid="project-value" className={cn("text-end tabular-nums text-fg", tableMode === "compact" && "px-0.5")}>
                             {formatMoney(project.contractValue || project.budget, locale)}
                           </TD>
                           <TD data-testid="project-actions" className={cn("text-end", tableMode === "compact" ? "px-0" : "px-1")} onClick={(event) => event.stopPropagation()}>
@@ -3228,7 +3193,7 @@ function ProjectsSection({
                                 <button
                                   type="button"
                                   data-testid="project-actions"
-                                  className="admin-focus-ring inline-flex h-9 w-9 items-center justify-center rounded-[10px] border border-[var(--admin-card-border)] text-[var(--admin-muted)] transition-colors hover:border-[rgba(226,176,74,0.25)] hover:text-[var(--admin-text)]"
+                                  className="admin-focus-ring inline-flex h-9 w-9 items-center justify-center rounded-[10px] border border-line text-muted transition-colors hover:border-[rgb(var(--accent-rgb)/0.25)] hover:text-fg"
                                   aria-label={`${locale === "ar" ? "إجراءات" : "Actions"}: ${l(project.title)}`}
                                 >
                                   <MoreVertical className="h-4 w-4" />
@@ -3255,11 +3220,11 @@ function ProjectsSection({
       )}
 
       {totalPages > 1 ? (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018] px-4 py-3">
-          <p className="text-[0.72rem] tabular-nums text-ivory/45">{locale === "ar" ? `صفحة ${currentPage} من ${totalPages}` : `Page ${currentPage} of ${totalPages}`}</p>
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-[22px] border border-line bg-surface px-4 py-3">
+          <p className="text-[0.72rem] tabular-nums text-fg">{locale === "ar" ? `صفحة ${currentPage} من ${totalPages}` : `Page ${currentPage} of ${totalPages}`}</p>
           <div className="flex items-center gap-2">
-            <button type="button" disabled={currentPage <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))} className="min-h-11 border border-white/12 px-3 text-[0.7rem] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold disabled:opacity-30">{locale === "ar" ? "السابق" : "Previous"}</button>
-            <button type="button" disabled={currentPage >= totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))} className="min-h-11 border border-white/12 px-3 text-[0.7rem] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold disabled:opacity-30">{locale === "ar" ? "التالي" : "Next"}</button>
+            <button type="button" disabled={currentPage <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))} className="min-h-11 border border-line px-3 text-[0.7rem] text-fg transition-colors hover:border-accent/40 hover:text-accent disabled:opacity-30">{locale === "ar" ? "السابق" : "Previous"}</button>
+            <button type="button" disabled={currentPage >= totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))} className="min-h-11 border border-line px-3 text-[0.7rem] text-fg transition-colors hover:border-accent/40 hover:text-accent disabled:opacity-30">{locale === "ar" ? "التالي" : "Next"}</button>
           </div>
         </div>
       ) : null}
@@ -3281,7 +3246,7 @@ function ProjectsSection({
               <Link
                 href={`/projects/${detail.slug}`}
                 target="_blank"
-                className="admin-focus-ring inline-flex min-h-[44px] items-center justify-center gap-2 rounded-[12px] border border-[var(--admin-card-border)] px-4 text-[14px] font-medium text-[var(--admin-text)]"
+                className="admin-focus-ring inline-flex min-h-[44px] items-center justify-center gap-2 rounded-[12px] border border-line px-4 text-[14px] font-medium text-fg"
               >
                 <ExternalLink className="h-4 w-4" />
                 {locale === "ar" ? "الصفحة الكاملة" : "Open full page"}
@@ -3313,13 +3278,13 @@ function ProjectsSection({
               project={detail}
               sizes="(max-width: 640px) 100vw, 560px"
               priority
-              className="aspect-[16/9] w-full rounded-2xl border border-white/10"
+              className="aspect-[16/9] w-full rounded-2xl border border-line"
             />
             <div>
-              <h3 className="truncate text-[24px] font-bold text-[var(--admin-text,#F1EEE8)]">
+              <h3 className="truncate text-[24px] font-bold text-fg">
                 {l(detail.title)}
               </h3>
-              <p className="mt-1 text-[14px] text-[var(--admin-muted,#A6A9B4)]">
+              <p className="mt-1 text-[14px] text-muted">
                 {l(detail.location)}
               </p>
             </div>
@@ -3327,7 +3292,7 @@ function ProjectsSection({
             <div
               role="tablist"
               aria-label={locale === "ar" ? "أقسام المشروع" : "Project sections"}
-              className="flex flex-wrap gap-1 rounded-xl border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] p-1"
+              className="flex flex-wrap gap-1 rounded-xl border border-line bg-surface-2 p-1"
             >
               {([
                 ["overview", locale === "ar" ? "نظرة عامة" : "Overview"],
@@ -3344,8 +3309,8 @@ function ProjectsSection({
                   className={cn(
                     "admin-focus-ring min-h-10 rounded-lg px-3 text-[13px] font-medium transition-colors",
                     detailTab === id
-                      ? "bg-[rgba(226,176,74,0.14)] text-[#F3C86A]"
-                      : "text-[var(--admin-muted)] hover:bg-[var(--admin-pill-surface)] hover:text-[var(--admin-text)]",
+                      ? "bg-[rgb(var(--accent-rgb)/0.14)] text-accent"
+                      : "text-muted hover:bg-surface-2 hover:text-fg",
                   )}
                 >
                   {label}
@@ -3366,20 +3331,20 @@ function ProjectsSection({
                   ].map(([label, value]) => (
                     <div
                       key={String(label)}
-                      className="rounded-2xl border border-white/[.07] bg-white/[.025] p-3.5"
+                      className="rounded-2xl border border-line bg-surface-2 p-3.5"
                     >
-                      <p className="text-[13px] text-[var(--admin-muted,#A6A9B4)]">{label}</p>
-                      <p className="mt-1 text-[14px] tabular-nums text-[var(--admin-text,#F1EEE8)]">
+                      <p className="text-[13px] text-muted">{label}</p>
+                      <p className="mt-1 text-[14px] tabular-nums text-fg">
                         {value}
                       </p>
                     </div>
                   ))}
                 </div>
-                <div className="rounded-2xl border border-white/[.07] bg-white/[.025] p-3.5">
-                  <p className="text-[13px] text-[var(--admin-muted,#A6A9B4)]">
+                <div className="rounded-2xl border border-line bg-surface-2 p-3.5">
+                  <p className="text-[13px] text-muted">
                     {locale === "ar" ? "صحة الميزانية" : "Budget health"}
                   </p>
-                  <p className="mt-1 text-[14px] text-[var(--admin-text,#F1EEE8)]/80" title={budgetHealthFor(detail).tooltip}>
+                  <p className="mt-1 text-[14px] text-fg" title={budgetHealthFor(detail).tooltip}>
                     {budgetHealthFor(detail).short}
                   </p>
                 </div>
@@ -3390,22 +3355,22 @@ function ProjectsSection({
               detail.milestones.length ? (
                 <ol className="space-y-2">
                   {detail.milestones.map((milestone, index) => (
-                    <li key={`${milestone.title.en}-${index}`} className="flex items-start gap-3 rounded-xl border border-white/[.07] bg-white/[.025] p-3.5">
-                      <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[#E2B04A]/30 bg-[#E2B04A]/10 text-[12px] text-[#F3C86A] tabular-nums">{index + 1}</span>
+                    <li key={`${milestone.title.en}-${index}`} className="flex items-start gap-3 rounded-xl border border-line bg-surface-2 p-3.5">
+                      <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-accent/30 bg-accent-fill/10 text-[12px] text-accent tabular-nums">{index + 1}</span>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-[14px] text-[var(--admin-text)]">{l(milestone.title)}</p>
-                        <p className="mt-0.5 text-[13px] text-[var(--admin-muted)]">{l(milestone.date)}</p>
+                        <p className="truncate text-[14px] text-fg">{l(milestone.title)}</p>
+                        <p className="mt-0.5 text-[13px] text-muted">{l(milestone.date)}</p>
                       </div>
-                      <span className="rounded-full border border-white/10 px-2 py-0.5 text-[11px] text-[var(--admin-muted)]">
+                      <span className="rounded-full border border-line px-2 py-0.5 text-[11px] text-muted">
                         {milestone.status === "complete" ? (locale === "ar" ? "مكتملة" : "Complete") : milestone.status === "current" ? (locale === "ar" ? "الحالية" : "Current") : (locale === "ar" ? "قادمة" : "Upcoming")}
                       </span>
                     </li>
                   ))}
                 </ol>
               ) : (
-                <div className="rounded-2xl border border-dashed border-[var(--admin-card-border)] p-6 text-center">
-                  <Flag className="mx-auto h-6 w-6 text-[var(--admin-muted)]" />
-                  <p className="mt-2 text-[14px] text-[var(--admin-text)]">{locale === "ar" ? "لا توجد مراحل بعد." : "No milestones yet."}</p>
+                <div className="rounded-2xl border border-dashed border-line p-6 text-center">
+                  <Flag className="mx-auto h-6 w-6 text-muted" />
+                  <p className="mt-2 text-[14px] text-fg">{locale === "ar" ? "لا توجد مراحل بعد." : "No milestones yet."}</p>
                   <Button variant="secondary" size="sm" className="mt-3" onClick={() => { onEdit(detail); setDetail(null); }}>
                     <Plus className="h-4 w-4" />{locale === "ar" ? "إضافة أول مرحلة" : "Add first milestone"}
                   </Button>
@@ -3415,20 +3380,20 @@ function ProjectsSection({
 
             {detailTab === "documents" ? (
               detail.documents.length ? (
-                <ul className="divide-y divide-[var(--admin-card-border)] rounded-2xl border border-white/[.07] bg-white/[.025]">
+                <ul className="divide-y divide-line rounded-2xl border border-line bg-surface-2">
                   {detail.documents.map((document, index) => (
                     <li key={`${document.name.en}-${index}`} className="flex items-center gap-3 p-3.5">
-                      <FileText className="h-4 w-4 shrink-0 text-[#E2B04A]" />
+                      <FileText className="h-4 w-4 shrink-0 text-accent" />
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-[14px] text-[var(--admin-text)]">{l(document.name)}</p>
-                        <p className="text-[12px] text-[var(--admin-muted)]">{document.date} · {document.size}</p>
+                        <p className="truncate text-[14px] text-fg">{l(document.name)}</p>
+                        <p className="text-[12px] text-muted">{document.date} · {document.size}</p>
                       </div>
-                      <span className="text-[12px] text-[var(--admin-muted)]">{document.type}</span>
+                      <span className="text-[12px] text-muted">{document.type}</span>
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p className="rounded-2xl border border-dashed border-[var(--admin-card-border)] p-6 text-center text-[14px] text-[var(--admin-muted)]">{locale === "ar" ? "لا توجد مستندات." : "No documents."}</p>
+                <p className="rounded-2xl border border-dashed border-line p-6 text-center text-[14px] text-muted">{locale === "ar" ? "لا توجد مستندات." : "No documents."}</p>
               )
             ) : null}
 
@@ -3440,18 +3405,18 @@ function ProjectsSection({
                   [c.spent, formatMoney(detail.spent, locale)],
                   [c.profit, formatMoney(detail.profit, locale)],
                 ].map(([label, value]) => (
-                  <div key={label} className="flex items-center justify-between rounded-xl border border-white/[.07] bg-white/[.025] px-4 py-3">
-                    <span className="text-[13px] text-[var(--admin-muted)]">{label}</span>
-                    <span className="tabular-nums text-[14px] text-[var(--admin-text)]">{value}</span>
+                  <div key={label} className="flex items-center justify-between rounded-xl border border-line bg-surface-2 px-4 py-3">
+                    <span className="text-[13px] text-muted">{label}</span>
+                    <span className="tabular-nums text-[14px] text-fg">{value}</span>
                   </div>
                 ))}
                 {detail.invoices.length ? (
-                  <div className="rounded-xl border border-white/[.07] bg-white/[.025] p-3.5">
-                    <p className="mb-2 text-[13px] text-[var(--admin-muted)]">{locale === "ar" ? "الفواتير" : "Invoices"}</p>
+                  <div className="rounded-xl border border-line bg-surface-2 p-3.5">
+                    <p className="mb-2 text-[13px] text-muted">{locale === "ar" ? "الفواتير" : "Invoices"}</p>
                     {detail.invoices.map((invoice) => (
-                      <div key={invoice.number} className="flex items-center justify-between gap-3 border-t border-white/[.06] py-2 first:border-0">
-                        <span className="truncate text-[13px] text-[var(--admin-text)]">{l(invoice.title)}</span>
-                        <span className="whitespace-nowrap tabular-nums text-[13px] text-[var(--admin-muted)]">{invoice.amount}</span>
+                      <div key={invoice.number} className="flex items-center justify-between gap-3 border-t border-line py-2 first:border-0">
+                        <span className="truncate text-[13px] text-fg">{l(invoice.title)}</span>
+                        <span className="whitespace-nowrap tabular-nums text-[13px] text-muted">{invoice.amount}</span>
                       </div>
                     ))}
                   </div>
@@ -3520,7 +3485,7 @@ function InlineProjectControls({
 
   return (
     <div className="w-[260px] p-2.5">
-      <p className="mb-2 text-[13px] font-medium text-[var(--admin-muted)]">
+      <p className="mb-2 text-[13px] font-medium text-muted">
         {locale === "ar" ? "الحالة" : "Status"}
       </p>
       <div className="grid grid-cols-3 gap-1.5">
@@ -3532,8 +3497,8 @@ function InlineProjectControls({
             className={cn(
               "admin-focus-ring min-h-10 rounded-lg border px-2 text-[12px] transition-colors",
               status === option
-                ? "border-[rgba(226,176,74,0.35)] bg-[rgba(226,176,74,0.14)] text-[#F3C86A]"
-                : "border-white/10 text-[var(--admin-muted)] hover:border-white/20",
+                ? "border-[rgb(var(--accent-rgb)/0.35)] bg-[rgb(var(--accent-rgb)/0.14)] text-accent"
+                : "border-line text-muted hover:border-line",
             )}
           >
             {labels[option]}
@@ -3541,10 +3506,10 @@ function InlineProjectControls({
         ))}
       </div>
       <div className="mt-4 flex items-center justify-between gap-3">
-        <p className="text-[13px] font-medium text-[var(--admin-muted)]">
+        <p className="text-[13px] font-medium text-muted">
           {locale === "ar" ? "الإنجاز" : "Progress"}
         </p>
-        <span className="tabular-nums text-[13px] text-[var(--admin-text)]">{progress}%</span>
+        <span className="tabular-nums text-[13px] text-fg">{progress}%</span>
       </div>
       <Slider value={progress} onValueChange={setProgress} label={locale === "ar" ? "الإنجاز" : "Progress"} />
       <div className="mt-3 flex justify-end gap-2">
@@ -3563,9 +3528,9 @@ function InlineProjectControls({
 
 function EmptyProjects({ locale, label, full }: { locale: "ar" | "en"; label: string; full?: boolean }) {
   return (
-    <div className={cn("border border-dashed border-white/12 bg-coal/40 p-10 text-center", full && "col-span-full")}>
-      <p className="[font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif] text-xl text-ivory/70">{label}</p>
-      <p className="mt-2 text-[0.78rem] text-ivory/40">{locale === "ar" ? "جرّب تعديل عوامل التصفية أو أضف مشروعاً جديداً." : "Try adjusting filters or add a new project."}</p>
+    <div className={cn("border border-dashed border-line bg-surface/40 p-10 text-center", full && "col-span-full")}>
+      <p className="[font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif] text-xl text-fg">{label}</p>
+      <p className="mt-2 text-[0.78rem] text-fg">{locale === "ar" ? "جرّب تعديل عوامل التصفية أو أضف مشروعاً جديداً." : "Try adjusting filters or add a new project."}</p>
     </div>
   );
 }
@@ -3610,31 +3575,31 @@ function FinancialsSection({ projects }: { projects: WorkspaceProject[] }) {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-px border border-white/10 bg-white/10 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-px border border-line bg-line lg:grid-cols-4">
         {[
           { label: c.contract, value: formatM(totalContract, locale) },
           { label: c.budget, value: formatM(totalBudget, locale) },
           { label: c.spent, value: formatM(totalSpent, locale) },
           { label: c.profit, value: formatM(totalProfit, locale) },
         ].map((stat) => (
-          <div key={stat.label} className="bg-coal p-5">
-            <p className="tabular text-[28px] font-bold leading-none text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{stat.value}</p>
-            <p className="mt-2.5 text-[0.7rem]  text-ivory/40">
+          <div key={stat.label} className="bg-surface p-5">
+            <p className="tabular text-[28px] font-bold leading-none text-fg [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{stat.value}</p>
+            <p className="mt-2.5 text-[0.7rem]  text-fg">
               {stat.label}
             </p>
           </div>
         ))}
       </div>
 
-      <div className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018]">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-5 py-2">
-          <span className="text-[0.7rem] font-semibold  text-gold">
+      <div className="rounded-[22px] border border-line bg-surface">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-2">
+          <span className="text-[0.7rem] font-semibold  text-accent">
             {c.financials}
           </span>
           <button
             type="button"
             onClick={exportCsv}
-            className="inline-flex h-9 items-center gap-2 border border-white/12 px-3.5 text-[0.68rem] font-semibold  text-ivory/55 transition-colors hover:border-gold/40 hover:text-gold"
+            className="inline-flex h-9 items-center gap-2 border border-line px-3.5 text-[0.68rem] font-semibold  text-fg transition-colors hover:border-accent/40 hover:text-accent"
           >
             <FileText className="h-3.5 w-3.5" />
             {c.export}
@@ -3643,7 +3608,7 @@ function FinancialsSection({ projects }: { projects: WorkspaceProject[] }) {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[880px]">
             <thead>
-              <tr className="border-b border-white/8 text-[0.64rem]  text-ivory/40">
+              <tr className="border-b border-line text-[0.64rem]  text-fg">
                 <th className="px-5 py-2 text-start font-medium">{c.project}</th>
                 <th className="px-4 py-2 text-start font-medium">{c.budget}</th>
                 <th className="px-4 py-2 text-start font-medium">{c.spent}</th>
@@ -3658,8 +3623,8 @@ function FinancialsSection({ projects }: { projects: WorkspaceProject[] }) {
                   ? (project.profit / project.contractValue) * 100
                   : 0;
                 return (
-                  <tr key={project.slug} className="border-b border-white/6 last:border-0">
-                    <td className="px-5 py-2 text-[0.8rem] text-ivory/70">{l(project.title)}</td>
+                  <tr key={project.slug} className="border-b border-line last:border-0">
+                    <td className="px-5 py-2 text-[0.8rem] text-fg">{l(project.title)}</td>
                     {(["budget", "spent", "profit", "contractValue"] as const).map((key) => (
                       <td key={key} className="px-4 py-3">
                         <FieldInput
@@ -3678,7 +3643,7 @@ function FinancialsSection({ projects }: { projects: WorkspaceProject[] }) {
                       <span
                         className={cn(
                           "tabular text-[0.8rem]",
-                          margin >= 18 ? "text-emerald-300/80" : "text-gold",
+                          margin >= 18 ? "text-success" : "text-accent",
                         )}
                       >
                         {margin.toFixed(1)}%
@@ -3693,8 +3658,8 @@ function FinancialsSection({ projects }: { projects: WorkspaceProject[] }) {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-        <div className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018] p-6">
-          <span className="text-[0.7rem] font-semibold  text-gold">
+        <div className="rounded-[22px] border border-line bg-surface p-6">
+          <span className="text-[0.7rem] font-semibold  text-accent">
             {c.budgetVsSpent}
           </span>
           <div className="mt-6 space-y-5">
@@ -3703,14 +3668,14 @@ function FinancialsSection({ projects }: { projects: WorkspaceProject[] }) {
               return (
                 <div key={project.slug}>
                   <div className="flex items-center justify-between gap-3 text-[0.74rem]">
-                    <span className="truncate text-ivory/60">{l(project.title)}</span>
-                    <span className="tabular shrink-0 text-ivory/45">
+                    <span className="truncate text-fg">{l(project.title)}</span>
+                    <span className="tabular shrink-0 text-fg">
                       {formatM(project.spent, locale)} / {formatM(project.budget, locale)}
                     </span>
                   </div>
-                  <div className="mt-1.5 flex h-1.5 overflow-hidden bg-white/10">
+                  <div className="mt-1.5 flex h-1.5 overflow-hidden bg-line">
                     <div
-                      className="h-full bg-gold"
+                      className="h-full bg-accent-fill"
                       style={{ width: `${Math.min(100, (project.spent / max) * 100)}%` }}
                     />
                   </div>
@@ -3720,9 +3685,9 @@ function FinancialsSection({ projects }: { projects: WorkspaceProject[] }) {
           </div>
         </div>
 
-        <div className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018]">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-5 py-2">
-            <span className="text-[0.7rem] font-semibold  text-gold">
+        <div className="rounded-[22px] border border-line bg-surface">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-2">
+            <span className="text-[0.7rem] font-semibold  text-accent">
               {c.paymentStages}
             </span>
             <FieldSelect
@@ -3734,26 +3699,26 @@ function FinancialsSection({ projects }: { projects: WorkspaceProject[] }) {
             />
           </div>
           {selectedProject && selectedProject.invoices.length > 0 ? (
-            <div className="divide-y divide-white/6">
+            <div className="divide-y divide-line">
               {selectedProject.invoices.map((invoice) => (
                 <div key={invoice.number} className="flex items-center gap-3 px-6 py-2">
-                  <FileText className="h-4 w-4 shrink-0 text-gold" />
+                  <FileText className="h-4 w-4 shrink-0 text-accent" />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[0.84rem] text-ivory/65">{l(invoice.title)}</p>
-                    <span className="mt-0.5 block text-[0.7rem] text-ivory/40">
+                    <p className="truncate text-[0.84rem] text-fg">{l(invoice.title)}</p>
+                    <span className="mt-0.5 block text-[0.7rem] text-fg">
                       {invoice.number} · {invoice.date}
                     </span>
                   </div>
                   <div className="text-end">
-                    <p className="tabular text-[0.8rem] text-ivory/65">{invoice.amount}</p>
+                    <p className="tabular text-[0.8rem] text-fg">{invoice.amount}</p>
                     <span
                       className={cn(
                         "text-[0.64rem] ",
                         invoice.status === "paid"
-                          ? "text-emerald-300/80"
+                          ? "text-success"
                           : invoice.status === "due"
-                            ? "text-gold"
-                            : "text-ivory/40",
+                            ? "text-accent"
+                            : "text-fg",
                       )}
                     >
                       {c.invoiceStatus[invoice.status]}
@@ -3763,9 +3728,9 @@ function FinancialsSection({ projects }: { projects: WorkspaceProject[] }) {
               ))}
             </div>
           ) : (
-            <p className="p-6 text-center text-[0.76rem] text-ivory/40">{c.noProjects}</p>
+            <p className="p-6 text-center text-[0.76rem] text-fg">{c.noProjects}</p>
           )}
-          <div className="border-t border-white/10 px-5 py-3 text-[0.7rem] text-ivory/40">
+          <div className="border-t border-line px-5 py-3 text-[0.7rem] text-fg">
             {selectedProject ? l(selectedProject.title) : ""}
           </div>
         </div>
@@ -4129,15 +4094,15 @@ function ContentSection() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={saveContent} className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018]">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-5 py-2">
-          <span className="text-[0.7rem] font-semibold  text-gold">
+      <form onSubmit={saveContent} className="rounded-[22px] border border-line bg-surface">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-2">
+          <span className="text-[0.7rem] font-semibold  text-accent">
             {c.heroContent}
           </span>
           <Link
             href="/"
             target="_blank"
-            className="inline-flex items-center gap-1.5 text-[0.68rem]  text-ivory/45 transition-colors hover:text-gold"
+            className="inline-flex items-center gap-1.5 text-[0.68rem]  text-fg transition-colors hover:text-accent"
           >
             {c.back}
             <ArrowUpRight className="h-3 w-3" />
@@ -4208,8 +4173,8 @@ function ContentSection() {
           </Field>
         </div>
 
-        <div className="border-t border-white/10 p-5">
-          <p className="mb-4 text-[0.7rem] font-semibold  text-gold/80">
+        <div className="border-t border-line p-5">
+          <p className="mb-4 text-[0.7rem] font-semibold  text-accent">
             {c.promo}
           </p>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -4252,23 +4217,23 @@ function ContentSection() {
                 onChange={(event) => setHero({ ...hero, promoHref: event.target.value })}
               />
             </Field>
-            <label className="flex items-end gap-2 pb-2 text-[0.82rem] text-ivory/65">
+            <label className="flex items-end gap-2 pb-2 text-[0.82rem] text-fg">
               <input
                 type="checkbox"
                 checked={hero.promoVisible}
                 onChange={(event) => setHero({ ...hero, promoVisible: event.target.checked })}
-                className="h-3.5 w-3.5 accent-gold"
+                className="h-3.5 w-3.5 accent-accent"
               />
               {c.promoVisible}
             </label>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 p-4">
-          <span className="text-[0.72rem] text-ivory/40">{saved ? c.saved : ""}</span>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line p-4">
+          <span className="text-[0.72rem] text-fg">{saved ? c.saved : ""}</span>
           <button
             type="submit"
-            className="inline-flex h-9 items-center gap-2 bg-gold px-4 text-[0.7rem] font-semibold  text-obsidian transition-colors hover:bg-gold-light"
+            className="inline-flex h-9 items-center gap-2 bg-accent-fill px-4 text-[0.7rem] font-semibold  text-accent-fg transition-colors hover:bg-accent-fill"
           >
             {saved ? <Check className="h-3.5 w-3.5" /> : <Save className="h-3.5 w-3.5" />}
             {c.saveContent}
@@ -4276,9 +4241,9 @@ function ContentSection() {
         </div>
       </form>
 
-      <form onSubmit={saveService} className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018]">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-5 py-2">
-          <span className="text-[0.7rem] font-semibold  text-gold">
+      <form onSubmit={saveService} className="rounded-[22px] border border-line bg-surface">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-2">
+          <span className="text-[0.7rem] font-semibold  text-accent">
             {c.serviceCards}
           </span>
           <FieldSelect
@@ -4349,40 +4314,40 @@ function ContentSection() {
             />
           </Field>
         </div>
-        <div className="flex justify-end border-t border-white/10 p-4">
+        <div className="flex justify-end border-t border-line p-4">
           <button
             type="submit"
-            className="inline-flex h-9 items-center gap-2 border border-gold/40 px-4 text-[0.7rem] font-semibold  text-gold transition-colors hover:bg-gold hover:text-obsidian"
+            className="inline-flex h-9 items-center gap-2 border border-accent/40 px-4 text-[0.7rem] font-semibold  text-accent transition-colors hover:bg-accent-fill hover:text-accent-fg"
           >
             <Save className="h-3.5 w-3.5" />
             {c.saveService}
           </button>
         </div>
       </form>
-      <form onSubmit={saveCopy} className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018]">
-        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-white/10 px-5 py-2">
+      <form onSubmit={saveCopy} className="rounded-[22px] border border-line bg-surface">
+        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-line px-5 py-2">
           <div>
-            <span className="flex items-center gap-2 text-[0.7rem] font-semibold  text-gold">
+            <span className="flex items-center gap-2 text-[0.7rem] font-semibold  text-accent">
               <Sparkles className="h-3.5 w-3.5" />
               {c.siteCopy}
             </span>
-            <p className="mt-2 max-w-2xl text-[0.74rem] leading-relaxed text-ivory/45">
+            <p className="mt-2 max-w-2xl text-[0.74rem] leading-relaxed text-fg">
               {c.siteCopyText}
             </p>
           </div>
           <button
             type="button"
             onClick={resetCopy}
-            className="inline-flex h-8 items-center gap-1.5 border border-white/12 px-3 text-[0.68rem] font-semibold  text-ivory/50 transition-all duration-300 hover:border-gold/40 hover:text-gold active:scale-[0.98]"
+            className="inline-flex h-8 items-center gap-1.5 border border-line px-3 text-[0.68rem] font-semibold  text-fg transition-all duration-300 hover:border-accent/40 hover:text-accent active:scale-[0.98]"
           >
             <RotateCcw className="h-3 w-3" />
             {c.resetCopy}
           </button>
         </div>
 
-        <div className="flex flex-col gap-3 border-b border-white/10 p-4 sm:flex-row sm:items-center">
+        <div className="flex flex-col gap-3 border-b border-line p-4 sm:flex-row sm:items-center">
           <label className="relative flex-1">
-            <Search className="pointer-events-none absolute start-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ivory/35" />
+            <Search className="pointer-events-none absolute start-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-fg" />
             <TextInput
               value={copyQuery}
               onChange={(event) => setCopyQuery(event.target.value)}
@@ -4404,14 +4369,14 @@ function ContentSection() {
             className="h-10 text-[13px]"
             aria-label={c.allGroups}
           />
-          <span className="text-[0.7rem] text-ivory/40">
+          <span className="text-[0.7rem] text-fg">
             {filteredCopyFields.length} / {copyFields.length}
           </span>
         </div>
 
         <div className="space-y-2 p-4">
           {filteredCopyFields.length === 0 ? (
-            <p className="py-8 text-center text-[0.76rem] text-ivory/40">{c.noCopyResults}</p>
+            <p className="py-8 text-center text-[0.76rem] text-fg">{c.noCopyResults}</p>
           ) : (
             copyGroups.map((group) => {
               const groupFields = filteredCopyFields.filter((field) => field.group === group);
@@ -4421,16 +4386,16 @@ function ContentSection() {
                 <details
                   key={group}
                   open={copyQuery.trim().length > 0 ? true : undefined}
-                  className="group/copy border border-white/8 bg-obsidian/25"
+                  className="group/copy border border-line bg-bg/25"
                 >
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-[0.72rem] font-semibold  text-ivory/65 transition-colors hover:text-gold [&::-webkit-details-marker]:hidden">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-[0.72rem] font-semibold  text-fg transition-colors hover:text-accent [&::-webkit-details-marker]:hidden">
                     <span className="flex items-center gap-2">
-                      <ChevronDown className="h-3.5 w-3.5 text-gold/60 transition-transform duration-300 group-open/copy:rotate-180" />
+                      <ChevronDown className="h-3.5 w-3.5 text-accent transition-transform duration-300 group-open/copy:rotate-180" />
                       {label[locale]}
                     </span>
-                    <span className="tabular text-[0.66rem] text-ivory/35">{groupFields.length}</span>
+                    <span className="tabular text-[0.66rem] text-fg">{groupFields.length}</span>
                   </summary>
-                  <div className="space-y-1 border-t border-white/8 p-3">
+                  <div className="space-y-1 border-t border-line p-3">
                     {groupFields.map((field) => {
                       const customised = Boolean(
                         copyDraft[field.path] || content.copyOverrides[field.path],
@@ -4438,16 +4403,16 @@ function ContentSection() {
                       return (
                         <div
                           key={field.path}
-                          className="grid gap-2 rounded-sm border border-transparent px-2 py-2 transition-colors hover:border-white/8 hover:bg-white/[0.025] lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.2fr)_minmax(0,1.2fr)] lg:items-center"
+                          className="grid gap-2 rounded-sm border border-transparent px-2 py-2 transition-colors hover:border-line hover:bg-surface-2 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.2fr)_minmax(0,1.2fr)] lg:items-center"
                         >
                           <div className="min-w-0">
-                            <code className="block truncate text-[0.7rem] text-ivory/50" dir="ltr">
+                            <code className="block truncate text-[0.7rem] text-fg" dir="ltr">
                               {field.path}
                             </code>
                             <span
                               className={cn(
                                 "mt-0.5 inline-block text-[0.62rem] ",
-                                customised ? "text-gold/70" : "text-ivory/30",
+                                customised ? "text-accent" : "text-fg",
                               )}
                             >
                               {customised ? c.customised : c.original}
@@ -4497,11 +4462,11 @@ function ContentSection() {
           )}
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 p-4">
-          <span className="text-[0.72rem] text-ivory/40">{copyNotice ? c.copySaved : ""}</span>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line p-4">
+          <span className="text-[0.72rem] text-fg">{copyNotice ? c.copySaved : ""}</span>
           <button
             type="submit"
-            className="inline-flex h-9 items-center gap-2 bg-gold px-4 text-[0.7rem] font-semibold  text-obsidian transition-all duration-300 hover:bg-gold-light active:scale-[0.98]"
+            className="inline-flex h-9 items-center gap-2 bg-accent-fill px-4 text-[0.7rem] font-semibold  text-accent-fg transition-all duration-300 hover:bg-accent-fill active:scale-[0.98]"
           >
             {copyNotice ? <Check className="h-3.5 w-3.5" /> : <Save className="h-3.5 w-3.5" />}
             {c.saveCopy}
@@ -4509,18 +4474,18 @@ function ContentSection() {
         </div>
       </form>
 
-      <form onSubmit={saveMedia} className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018]">
-        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-white/10 px-5 py-2">
+      <form onSubmit={saveMedia} className="rounded-[22px] border border-line bg-surface">
+        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-line px-5 py-2">
           <div>
-            <span className="flex items-center gap-2 text-[0.7rem] font-semibold  text-gold">
+            <span className="flex items-center gap-2 text-[0.7rem] font-semibold  text-accent">
               <ImageIcon className="h-3.5 w-3.5" />
               {c.mediaAssets}
             </span>
-            <p className="mt-2 max-w-2xl text-[0.74rem] leading-relaxed text-ivory/45">
+            <p className="mt-2 max-w-2xl text-[0.74rem] leading-relaxed text-fg">
               {c.mediaAssetsText}
             </p>
           </div>
-          <span className="border border-white/10 px-2.5 py-1 text-[0.64rem]  text-ivory/40">
+          <span className="border border-line px-2.5 py-1 text-[0.64rem]  text-fg">
             {mediaCatalog.length}
           </span>
         </div>
@@ -4532,16 +4497,16 @@ function ContentSection() {
             return (
               <details
                 key={group}
-                className="group/media border border-white/8 bg-obsidian/25"
+                className="group/media border border-line bg-bg/25"
               >
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-[0.72rem] font-semibold  text-ivory/65 transition-colors hover:text-gold [&::-webkit-details-marker]:hidden">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-[0.72rem] font-semibold  text-fg transition-colors hover:text-accent [&::-webkit-details-marker]:hidden">
                   <span className="flex items-center gap-2">
-                    <ChevronDown className="h-3.5 w-3.5 text-gold/60 transition-transform duration-300 group-open/media:rotate-180" />
+                    <ChevronDown className="h-3.5 w-3.5 text-accent transition-transform duration-300 group-open/media:rotate-180" />
                     {label[locale]}
                   </span>
-                  <span className="tabular text-[0.66rem] text-ivory/35">{assets.length}</span>
+                  <span className="tabular text-[0.66rem] text-fg">{assets.length}</span>
                 </summary>
-                <div className="grid gap-3 border-t border-white/8 p-3 xl:grid-cols-2">
+                <div className="grid gap-3 border-t border-line p-3 xl:grid-cols-2">
                   {assets.map((asset) => {
                     const value = effectiveMedia(asset.key);
                     const preview = previewMedia(asset.key);
@@ -4553,9 +4518,9 @@ function ContentSection() {
                     return (
                       <div
                         key={asset.key}
-                        className="grid gap-3 border border-white/8 bg-coal/60 p-3 sm:grid-cols-[112px_1fr]"
+                        className="grid gap-3 border border-line bg-surface/60 p-3 sm:grid-cols-[112px_1fr]"
                       >
-                        <div className="relative aspect-[4/3] overflow-hidden border border-white/10 bg-obsidian">
+                        <div className="relative aspect-[4/3] overflow-hidden border border-line bg-bg">
                           {preview ? (
                             <Image
                               src={preview}
@@ -4569,17 +4534,17 @@ function ContentSection() {
                         <div className="min-w-0 space-y-2">
                           <div className="flex items-center justify-between gap-2">
                             <div className="min-w-0">
-                              <p className="truncate text-[0.76rem] text-ivory/65">
+                              <p className="truncate text-[0.76rem] text-fg">
                                 {asset.label[locale]}
                               </p>
-                              <code className="block truncate text-[0.64rem] text-ivory/40" dir="ltr">
+                              <code className="block truncate text-[0.64rem] text-fg" dir="ltr">
                                 {asset.key}
                               </code>
                             </div>
                             <button
                               type="button"
                               onClick={() => resetMedia(asset.key)}
-                              className="shrink-0 text-ivory/35 transition-colors hover:text-gold"
+                              className="shrink-0 text-fg transition-colors hover:text-accent"
                               title={c.resetAsset}
                               aria-label={`${c.resetAsset}: ${asset.key}`}
                             >
@@ -4597,7 +4562,7 @@ function ContentSection() {
                             aria-invalid={srcInvalid}
                           />
                           {srcInvalid ? (
-                            <p className="text-[0.66rem] leading-relaxed text-red-300/80">
+                            <p className="text-[0.66rem] leading-relaxed text-danger">
                               {c.invalidMedia}
                             </p>
                           ) : null}
@@ -4622,10 +4587,10 @@ function ContentSection() {
                             />
                           </div>
                           <div className="flex items-center justify-between gap-2 text-[0.62rem] ">
-                            <span className={customised ? "text-gold/70" : "text-ivory/30"}>
+                            <span className={customised ? "text-accent" : "text-fg"}>
                               {customised ? c.customised : c.original}
                             </span>
-                            <span className="truncate text-ivory/30">{c.mediaHint}</span>
+                            <span className="truncate text-fg">{c.mediaHint}</span>
                           </div>
                         </div>
                       </div>
@@ -4637,11 +4602,11 @@ function ContentSection() {
           })}
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line p-4">
           <span
             className={cn(
               "text-[0.72rem]",
-              mediaError ? "text-red-300/85" : "text-ivory/40",
+              mediaError ? "text-danger" : "text-fg",
             )}
             role={mediaError ? "alert" : undefined}
           >
@@ -4650,7 +4615,7 @@ function ContentSection() {
           <button
             type="submit"
             disabled={mediaValidating}
-            className="inline-flex h-9 items-center gap-2 border border-gold/40 px-4 text-[0.7rem] font-semibold  text-gold transition-all duration-300 hover:bg-gold hover:text-obsidian active:scale-[0.98] disabled:cursor-wait disabled:opacity-60 disabled:hover:bg-transparent disabled:hover:text-gold"
+            className="inline-flex h-9 items-center gap-2 border border-accent/40 px-4 text-[0.7rem] font-semibold  text-accent transition-all duration-300 hover:bg-accent-fill hover:text-accent-fg active:scale-[0.98] disabled:cursor-wait disabled:opacity-60 disabled:hover:bg-transparent disabled:hover:text-accent"
           >
             {mediaValidating ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -4674,10 +4639,10 @@ function MediaSection({ projects }: { projects: WorkspaceProject[] }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col justify-between gap-3 rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018] p-5 sm:flex-row sm:items-center">
+      <div className="flex flex-col justify-between gap-3 rounded-[22px] border border-line bg-surface p-5 sm:flex-row sm:items-center">
         <div>
-          <h2 className="text-[28px] font-bold text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{c.mediaTitle}</h2>
-          <p className="mt-1 max-w-2xl text-[0.76rem] leading-relaxed text-ivory/45">
+          <h2 className="text-[28px] font-bold text-fg [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{c.mediaTitle}</h2>
+          <p className="mt-1 max-w-2xl text-[0.76rem] leading-relaxed text-fg">
             {c.mediaText}
           </p>
         </div>
@@ -4685,10 +4650,10 @@ function MediaSection({ projects }: { projects: WorkspaceProject[] }) {
 
       <div className="grid gap-4 lg:grid-cols-2">
         {projects.map((project) => (
-          <div key={project.slug} className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018] p-4">
+          <div key={project.slug} className="rounded-[22px] border border-line bg-surface p-4">
             <div className="flex items-center justify-between gap-3">
-              <span className="truncate text-[0.82rem] text-ivory/70">{l(project.title)}</span>
-              <span className="text-[0.66rem]  text-ivory/40">
+              <span className="truncate text-[0.82rem] text-fg">{l(project.title)}</span>
+              <span className="text-[0.66rem]  text-fg">
                 {c.cover}: {c.artLabels[project.art]}
               </span>
             </div>
@@ -4708,19 +4673,19 @@ function MediaSection({ projects }: { projects: WorkspaceProject[] }) {
                   className={cn(
                     "group relative aspect-[4/3] overflow-hidden border transition-colors",
                     project.art === variant
-                      ? "border-gold"
-                      : "border-white/10 hover:border-gold/50",
+                      ? "border-accent"
+                      : "border-line hover:border-accent/50",
                   )}
                   aria-label={`${c.setCover}: ${c.artLabels[variant]}`}
                 >
                   <ProjectArt variant={variant} className="h-full w-full" />
-                  <span className="absolute inset-x-0 bottom-0 bg-obsidian/75 px-1 py-0.5 text-[0.6rem]  text-ivory/60">
+                  <span className="absolute inset-x-0 bottom-0 bg-bg/75 px-1 py-0.5 text-[0.6rem]  text-fg">
                     {c.artLabels[variant]}
                   </span>
                 </button>
               ))}
             </div>
-            <p className="mt-3 text-[0.68rem] text-ivory/40">
+            <p className="mt-3 text-[0.68rem] text-fg">
               {c.gallery}: {project.gallery.length}
             </p>
           </div>
@@ -4756,12 +4721,12 @@ function MessagesSection({ projects }: { projects: WorkspaceProject[] }) {
 
   return (
     <div className="grid gap-6 lg:grid-cols-[0.72fr_1.28fr]">
-      <div className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018]">
-        <div className="border-b border-white/10 px-5 py-2">
-          <h2 className="text-[28px] font-bold text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{c.messagesTitle}</h2>
-          <p className="mt-1 text-[0.74rem] leading-relaxed text-ivory/45">{c.messagesText}</p>
+      <div className="rounded-[22px] border border-line bg-surface">
+        <div className="border-b border-line px-5 py-2">
+          <h2 className="text-[28px] font-bold text-fg [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{c.messagesTitle}</h2>
+          <p className="mt-1 text-[0.74rem] leading-relaxed text-fg">{c.messagesText}</p>
         </div>
-        <div className="divide-y divide-white/6">
+        <div className="divide-y divide-line">
           {projects.map((project) => {
             const count = messages.filter((message) => message.projectSlug === project.slug).length;
             return (
@@ -4771,19 +4736,19 @@ function MessagesSection({ projects }: { projects: WorkspaceProject[] }) {
                 onClick={() => setSelected(project.slug)}
                 className={cn(
                   "flex w-full items-center justify-between gap-3 px-5 py-3.5 text-start transition-colors",
-                  activeSlug === project.slug ? "bg-gold/10" : "hover:bg-white/4",
+                  activeSlug === project.slug ? "bg-accent/10" : "hover:bg-surface-2/4",
                 )}
               >
                 <span className="min-w-0">
-                  <span className="block truncate text-[0.8rem] text-ivory/70">
+                  <span className="block truncate text-[0.8rem] text-fg">
                     {l(project.title)}
                   </span>
-                  <span className="text-[0.66rem] text-ivory/40">{l(project.location)}</span>
+                  <span className="text-[0.66rem] text-fg">{l(project.location)}</span>
                 </span>
                 <span
                   className={cn(
                     "tabular flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[0.66rem]",
-                    count ? "bg-gold text-obsidian" : "bg-white/10 text-ivory/40",
+                    count ? "bg-accent-fill text-accent-fg" : "bg-line text-fg",
                   )}
                 >
                   {count}
@@ -4794,12 +4759,12 @@ function MessagesSection({ projects }: { projects: WorkspaceProject[] }) {
         </div>
       </div>
 
-      <div className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018]">
-        <div className="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-2">
-          <span className="text-[0.7rem] font-semibold  text-gold">
+      <div className="rounded-[22px] border border-line bg-surface">
+        <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-2">
+          <span className="text-[0.7rem] font-semibold  text-accent">
             {c.messagesTitle}
           </span>
-          <span className="text-[0.68rem] text-ivory/40">
+          <span className="text-[0.68rem] text-fg">
             {projectMessages.length} {c.messages}
           </span>
         </div>
@@ -4813,16 +4778,16 @@ function MessagesSection({ projects }: { projects: WorkspaceProject[] }) {
                   message.author === "manager" ? "items-end" : "items-start",
                 )}
               >
-                <span className="flex items-center gap-1.5 text-[0.64rem]  text-ivory/40">
+                <span className="flex items-center gap-1.5 text-[0.64rem]  text-fg">
                   {message.author === "manager" ? c.manager : c.client}
-                  <span className="text-ivory/30">{dateFormat.format(new Date(message.at))}</span>
+                  <span className="text-fg">{dateFormat.format(new Date(message.at))}</span>
                 </span>
                 <p
                   className={cn(
                     "max-w-[90%] px-3 py-2 text-[0.82rem] leading-relaxed",
                     message.author === "manager"
-                      ? "bg-gold text-obsidian"
-                      : "border border-white/10 bg-white/5 text-ivory/65",
+                      ? "bg-accent-fill text-accent-fg"
+                      : "border border-line bg-line text-fg",
                   )}
                 >
                   {message.text}
@@ -4830,11 +4795,11 @@ function MessagesSection({ projects }: { projects: WorkspaceProject[] }) {
               </div>
             ))
           ) : (
-            <p className="py-10 text-center text-[0.76rem] text-ivory/40">{c.noMessages}</p>
+            <p className="py-10 text-center text-[0.76rem] text-fg">{c.noMessages}</p>
           )}
         </div>
-        <form onSubmit={submit} className="border-t border-white/10 p-4">
-          <p className="mb-2 text-[0.66rem]  text-ivory/40">{c.reply}</p>
+        <form onSubmit={submit} className="border-t border-line p-4">
+          <p className="mb-2 text-[0.66rem]  text-fg">{c.reply}</p>
           <div className="flex gap-2">
             <FieldInput
               value={draft}
@@ -4845,7 +4810,7 @@ function MessagesSection({ projects }: { projects: WorkspaceProject[] }) {
             />
             <button
               type="submit"
-              className="flex h-10 items-center gap-2 bg-gold px-4 text-[0.7rem] font-semibold  text-obsidian transition-colors hover:bg-gold-light"
+              className="flex h-10 items-center gap-2 bg-accent-fill px-4 text-[0.7rem] font-semibold  text-accent-fg transition-colors hover:bg-accent-fill"
             >
               <Send className="h-3.5 w-3.5" />
               {c.send}

@@ -70,6 +70,13 @@ const ar = {
     copy: "نسخ",
     copied: "تم النسخ",
   },
+  theme: {
+    label: "المظهر",
+    toggle: "تبديل المظهر",
+    light: "فاتح",
+    dark: "داكن",
+    system: "حسب النظام",
+  },
   hero: {
     eyebrow: "منذ ١٩٨٧ · الرياض · المملكة العربية السعودية",
     titleTop: "نبني",
@@ -743,6 +750,13 @@ const en: typeof ar = {
     project: "Project",
     copy: "Copy",
     copied: "Copied",
+  },
+  theme: {
+    label: "Appearance",
+    toggle: "Toggle theme",
+    light: "Light",
+    dark: "Dark",
+    system: "System",
   },
   hero: {
     eyebrow: "Since 1987 · Riyadh · Saudi Arabia",

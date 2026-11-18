@@ -36,17 +36,17 @@ export function Field({
         htmlFor={htmlFor}
         className={cn(
           "flex items-center gap-1.5 text-[14px] font-medium",
-          tone === "light" ? "text-ink/75" : "text-[var(--admin-text,#F1EEE8)]/85",
+          tone === "light" ? "text-fg" : "text-fg",
         )}
       >
         <span>{label}</span>
-        {required ? <span className="text-[#E2B04A]" aria-hidden="true">*</span> : null}
+        {required ? <span className="text-accent" aria-hidden="true">*</span> : null}
       </label>
       {children}
       {error ? (
         <p
           role="alert"
-          className="flex items-start gap-1.5 text-[13px] leading-relaxed text-red-300"
+          className="flex items-start gap-1.5 text-[13px] leading-relaxed text-danger"
         >
           <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
           <span>{error}</span>
@@ -55,7 +55,7 @@ export function Field({
         <p
           className={cn(
             "text-[13px] leading-relaxed",
-            tone === "light" ? "text-ink/45" : "text-[var(--admin-muted,#A6A9B4)]",
+            tone === "light" ? "text-fg" : "text-muted",
           )}
         >
           {hint}

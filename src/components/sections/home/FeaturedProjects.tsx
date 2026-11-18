@@ -33,8 +33,8 @@ export function FeaturedProjects() {
   const featured = projects.filter((project) => project.featured).slice(0, 6);
 
   return (
-    <section className="grain relative overflow-hidden bg-ivory text-ink">
-      <div className="pointer-events-none absolute inset-0 opacity-[0.4] [background-image:linear-gradient(rgba(10,11,14,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(10,11,14,0.035)_1px,transparent_1px)] [background-size:90px_90px]" />
+    <section className="grain relative overflow-hidden bg-fg text-fg">
+      <div className="pointer-events-none absolute inset-0 opacity-[0.4] [background-image:linear-gradient(rgb(var(--fg-rgb)/0.05)_1px,transparent_1px),linear-gradient(90deg,rgb(var(--fg-rgb)/0.05)_1px,transparent_1px)] [background-size:90px_90px]" />
 
       <div className="container-lux section-pad relative">
         <div className="flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
@@ -48,7 +48,7 @@ export function FeaturedProjects() {
           <Reveal delay={200}>
             <Link
               href="/projects"
-              className="group inline-flex shrink-0 items-center gap-3 border border-ink/15 px-5 py-3 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-ink/65 transition-colors hover:border-gold-dark hover:text-gold-dark"
+              className="group inline-flex shrink-0 items-center gap-3 border border-line px-5 py-3 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-fg transition-colors hover:border-accent hover:text-accent"
             >
               {t.featured.cta}
               <ArrowUpRight

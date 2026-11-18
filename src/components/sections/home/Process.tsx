@@ -45,9 +45,9 @@ export function Process() {
   const current = t.process.steps[active] ?? t.process.steps[0];
 
   return (
-    <section id="process" className="grain relative overflow-hidden bg-ivory text-ink">
-      <div className="pointer-events-none absolute inset-0 opacity-[0.4] [background-image:linear-gradient(rgba(10,11,14,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(10,11,14,0.035)_1px,transparent_1px)] [background-size:84px_84px]" />
-      <div className="pointer-events-none absolute -end-10 top-20 select-none text-[18rem] font-semibold leading-none text-ink/[0.03] sm:text-[26rem]">
+    <section id="process" className="grain relative overflow-hidden bg-fg text-fg">
+      <div className="pointer-events-none absolute inset-0 opacity-[0.4] [background-image:linear-gradient(rgb(var(--fg-rgb)/0.05)_1px,transparent_1px),linear-gradient(90deg,rgb(var(--fg-rgb)/0.05)_1px,transparent_1px)] [background-size:84px_84px]" />
+      <div className="pointer-events-none absolute -end-10 top-20 select-none text-[18rem] font-semibold leading-none text-fg/[0.03] sm:text-[26rem]">
         05
       </div>
 
@@ -55,40 +55,40 @@ export function Process() {
         <div className="grid gap-14 lg:grid-cols-[0.78fr_1.22fr] lg:gap-20">
           <div className="lg:sticky lg:top-28 lg:self-start">
             <Reveal>
-              <span className="eyebrow text-gold-dark">{t.process.eyebrow}</span>
+              <span className="eyebrow text-accent">{t.process.eyebrow}</span>
             </Reveal>
             <Reveal delay={80}>
-              <h2 className="display-title mt-6 max-w-md text-[clamp(2.3rem,4.4vw,4.2rem)] text-ink">
+              <h2 className="display-title mt-6 max-w-md text-[clamp(2.3rem,4.4vw,4.2rem)] text-fg">
                 {t.process.title}
               </h2>
             </Reveal>
             <Reveal delay={160}>
-              <p className="mt-5 max-w-sm text-[0.9rem] leading-[1.9] text-ink/55">
+              <p className="mt-5 max-w-sm text-[0.9rem] leading-[1.9] text-fg">
                 {t.process.description}
               </p>
             </Reveal>
 
             <Reveal delay={240}>
-              <div className="mt-10 border border-ink/10 bg-ivory/60 p-6 backdrop-blur">
+              <div className="mt-10 border border-line bg-fg/60 p-6 backdrop-blur">
                 <div className="flex items-center justify-between">
-                  <span className="text-[0.55rem] uppercase tracking-[0.2em] text-ink/35">
+                  <span className="text-[0.55rem] uppercase tracking-[0.2em] text-fg">
                     {t.process.stepLabel}
                   </span>
-                  <span className="tabular text-[0.6rem] text-gold-dark">
+                  <span className="tabular text-[0.6rem] text-accent">
                     {String(active + 1).padStart(2, "0")} / 0{t.process.steps.length}
                   </span>
                 </div>
                 <div className="mt-4 flex items-end gap-4">
-                  <span className="font-display text-5xl italic leading-none text-gold-dark/50">
+                  <span className="font-display text-5xl italic leading-none text-accent">
                     0{active + 1}
                   </span>
-                  <span className="mb-1 font-display text-xl leading-tight text-ink/80">
+                  <span className="mb-1 font-display text-xl leading-tight text-fg">
                     {current.title}
                   </span>
                 </div>
-                <div className="mt-5 h-px w-full overflow-hidden bg-ink/10">
+                <div className="mt-5 h-px w-full overflow-hidden bg-line">
                   <div
-                    className="h-full bg-gold-dark transition-all duration-700"
+                    className="h-full bg-accent-fill transition-all duration-700"
                     style={{ width: `${((active + 1) / t.process.steps.length) * 100}%` }}
                   />
                 </div>
@@ -102,15 +102,15 @@ export function Process() {
                       className={cn(
                         "flex items-center justify-between gap-3 py-1 text-start text-[0.72rem] transition-colors",
                         active === index
-                          ? "text-ink"
-                          : "text-ink/35 hover:text-ink/65",
+                          ? "text-fg"
+                          : "text-fg hover:text-fg",
                       )}
                     >
                       <span className="flex items-center gap-2.5">
                         <span
                           className={cn(
                             "h-1 w-1 rotate-45 transition-colors",
-                            active === index ? "bg-gold-dark" : "bg-ink/20",
+                            active === index ? "bg-accent-fill" : "bg-surface/20",
                           )}
                         />
                         {step.title}
@@ -134,8 +134,8 @@ export function Process() {
                 }}
                 data-index={index}
                 className={cn(
-                  "group border-t border-ink/10 py-9 transition-all duration-500 lg:py-11",
-                  active === index ? "border-t-gold-dark/60" : "",
+                  "group border-t border-line py-9 transition-all duration-500 lg:py-11",
+                  active === index ? "border-t-accent/60" : "",
                 )}
               >
                 <Reveal delay={40}>
@@ -144,46 +144,46 @@ export function Process() {
                       <span
                         className={cn(
                           "font-display text-3xl leading-none transition-colors duration-500",
-                          active === index ? "text-gold-dark" : "text-ink/20",
+                          active === index ? "text-accent" : "text-fg",
                         )}
                       >
                         0{index + 1}
                       </span>
-                      <span className="mt-1 h-px w-6 bg-ink/15 sm:mt-3" />
+                      <span className="mt-1 h-px w-6 bg-surface/15 sm:mt-3" />
                     </div>
 
                     <div>
                       <h3
                         className={cn(
                           "font-display text-[1.6rem] leading-tight transition-colors duration-500 sm:text-[1.9rem]",
-                          active === index ? "text-ink" : "text-ink/55",
+                          active === index ? "text-fg" : "text-fg",
                         )}
                       >
                         {step.title}
                       </h3>
-                      <p className="mt-3 max-w-xl text-[0.84rem] leading-[1.85] text-ink/50">
+                      <p className="mt-3 max-w-xl text-[0.84rem] leading-[1.85] text-fg">
                         {step.text}
                       </p>
-                      <div className="mt-4 flex items-center gap-2 text-[0.58rem] uppercase tracking-[0.16em] text-ink/35 sm:hidden">
-                        <Clock3 className="h-3 w-3 text-gold-dark" />
+                      <div className="mt-4 flex items-center gap-2 text-[0.58rem] uppercase tracking-[0.16em] text-fg sm:hidden">
+                        <Clock3 className="h-3 w-3 text-accent" />
                         {step.duration}
                       </div>
                     </div>
 
                     <div className="flex flex-col gap-3 sm:col-start-2 lg:col-start-auto">
-                      <div className="hidden items-center gap-2 text-[0.58rem] uppercase tracking-[0.16em] text-ink/35 sm:flex">
-                        <Clock3 className="h-3 w-3 text-gold-dark" />
+                      <div className="hidden items-center gap-2 text-[0.58rem] uppercase tracking-[0.16em] text-fg sm:flex">
+                        <Clock3 className="h-3 w-3 text-accent" />
                         {step.duration}
                       </div>
                       <div>
-                        <span className="text-[0.52rem] uppercase tracking-[0.18em] text-ink/30">
+                        <span className="text-[0.52rem] uppercase tracking-[0.18em] text-fg">
                           {t.process.deliverables}
                         </span>
                         <ul className="mt-2 flex flex-wrap gap-1.5">
                           {step.deliverables.map((item) => (
                             <li
                               key={item}
-                              className="border border-ink/10 px-2 py-1 text-[0.55rem] text-ink/55"
+                              className="border border-line px-2 py-1 text-[0.55rem] text-fg"
                             >
                               {item}
                             </li>
@@ -195,7 +195,7 @@ export function Process() {
                 </Reveal>
               </div>
             ))}
-            <div className="border-t border-ink/10" />
+            <div className="border-t border-line" />
           </div>
         </div>
       </div>

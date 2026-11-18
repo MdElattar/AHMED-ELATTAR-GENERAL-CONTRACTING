@@ -21,7 +21,7 @@ export function RouteLoading({
       role="status"
       aria-live="polite"
       aria-busy="true"
-      className="relative min-h-[100svh] overflow-hidden bg-obsidian pt-24"
+      className="relative min-h-[100svh] overflow-hidden bg-bg pt-24"
     >
       <span className="sr-only">{label}</span>
       <div className="blueprint-grid pointer-events-none absolute inset-0 opacity-25" />
@@ -36,23 +36,23 @@ export function RouteLoading({
   );
 }
 
-const bar = "animate-pulse rounded-sm bg-white/[0.06]";
+const bar = "animate-pulse rounded-sm bg-surface-2";
 
 function PageSkeleton() {
   return (
     <div className="flex flex-col gap-16 pb-24">
       <div className="flex max-w-3xl flex-col gap-5 pt-10">
-        <div className={cn(bar, "h-3 w-28 bg-gold/20")} />
+        <div className={cn(bar, "h-3 w-28 bg-accent/20")} />
         <div className={cn(bar, "h-12 w-full max-w-2xl sm:h-16")} />
         <div className={cn(bar, "h-12 w-3/4 max-w-xl sm:h-16")} />
         <div className={cn(bar, "mt-3 h-4 w-full max-w-lg")} />
         <div className={cn(bar, "h-4 w-2/3 max-w-md")} />
       </div>
 
-      <div className="grid gap-px overflow-hidden border border-white/[0.06] bg-white/[0.06] sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-px overflow-hidden border border-line bg-surface-2 sm:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="flex flex-col gap-4 bg-obsidian p-8">
-            <div className={cn(bar, "h-10 w-10 bg-gold/10")} />
+          <div key={i} className="flex flex-col gap-4 bg-bg p-8">
+            <div className={cn(bar, "h-10 w-10 bg-accent/10")} />
             <div className={cn(bar, "h-4 w-3/4")} />
             <div className={cn(bar, "h-3 w-full")} />
             <div className={cn(bar, "h-3 w-5/6")} />
@@ -67,7 +67,7 @@ function DetailSkeleton() {
   return (
     <div className="flex flex-col gap-12 pb-24">
       <div className="flex flex-col gap-5 pt-8">
-        <div className={cn(bar, "h-3 w-24 bg-gold/20")} />
+        <div className={cn(bar, "h-3 w-24 bg-accent/20")} />
         <div className={cn(bar, "h-14 w-full max-w-3xl sm:h-20")} />
         <div className={cn(bar, "h-4 w-full max-w-xl")} />
       </div>
@@ -81,9 +81,9 @@ function DetailSkeleton() {
             <div className={cn(bar, "h-4 w-4/5")} />
           </div>
         </div>
-        <div className="flex flex-col gap-px border border-white/[0.06] bg-white/[0.06]">
+        <div className="flex flex-col gap-px border border-line bg-surface-2">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="flex flex-col gap-2 bg-obsidian p-6">
+            <div key={i} className="flex flex-col gap-2 bg-bg p-6">
               <div className={cn(bar, "h-3 w-20")} />
               <div className={cn(bar, "h-4 w-32")} />
             </div>
@@ -98,7 +98,7 @@ function DashboardSkeleton() {
   return (
     <div className="flex flex-col gap-10 pb-24">
       <div className="flex flex-col gap-4 pt-8">
-        <div className={cn(bar, "h-3 w-24 bg-gold/20")} />
+        <div className={cn(bar, "h-3 w-24 bg-accent/20")} />
         <div className={cn(bar, "h-10 w-72 max-w-full")} />
       </div>
 
@@ -106,7 +106,7 @@ function DashboardSkeleton() {
         {Array.from({ length: 4 }).map((_, i) => (
           <div
             key={i}
-            className="flex flex-col gap-4 border border-white/[0.06] p-6"
+            className="flex flex-col gap-4 border border-line p-6"
           >
             <div className={cn(bar, "h-3 w-20")} />
             <div className={cn(bar, "h-8 w-24")} />
@@ -116,11 +116,11 @@ function DashboardSkeleton() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
-        <div className="h-80 animate-pulse border border-white/[0.06] bg-white/[0.02]" />
-        <div className="flex flex-col gap-px border border-white/[0.06] bg-white/[0.06]">
+        <div className="h-80 animate-pulse border border-line bg-surface-2" />
+        <div className="flex flex-col gap-px border border-line bg-surface-2">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="flex items-center gap-4 bg-obsidian p-5">
-              <div className={cn(bar, "h-10 w-10 shrink-0 bg-gold/10")} />
+            <div key={i} className="flex items-center gap-4 bg-bg p-5">
+              <div className={cn(bar, "h-10 w-10 shrink-0 bg-accent/10")} />
               <div className="flex flex-1 flex-col gap-2">
                 <div className={cn(bar, "h-3 w-3/4")} />
                 <div className={cn(bar, "h-2 w-1/2")} />
@@ -136,8 +136,8 @@ function DashboardSkeleton() {
 function AuthSkeleton() {
   return (
     <div className="flex min-h-[calc(100svh-6rem)] items-center justify-center py-16">
-      <div className="flex w-full max-w-md flex-col gap-6 border border-white/[0.06] p-8 sm:p-10">
-        <div className={cn(bar, "h-3 w-20 bg-gold/20")} />
+      <div className="flex w-full max-w-md flex-col gap-6 border border-line p-8 sm:p-10">
+        <div className={cn(bar, "h-3 w-20 bg-accent/20")} />
         <div className={cn(bar, "h-8 w-3/4")} />
         <div className={cn(bar, "h-3 w-full")} />
         <div className="mt-2 flex flex-col gap-4">
@@ -147,7 +147,7 @@ function AuthSkeleton() {
               <div className={cn(bar, "h-12 w-full")} />
             </div>
           ))}
-          <div className={cn(bar, "mt-2 h-12 w-full bg-gold/15")} />
+          <div className={cn(bar, "mt-2 h-12 w-full bg-accent/15")} />
         </div>
       </div>
     </div>
@@ -157,7 +157,7 @@ function AuthSkeleton() {
 function LegalSkeleton() {
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-8 pb-24 pt-10">
-      <div className={cn(bar, "h-3 w-24 bg-gold/20")} />
+      <div className={cn(bar, "h-3 w-24 bg-accent/20")} />
       <div className={cn(bar, "h-12 w-4/5 sm:h-16")} />
       <div className={cn(bar, "h-4 w-40")} />
       <div className="mt-4 flex flex-col gap-12">

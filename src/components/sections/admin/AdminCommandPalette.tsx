@@ -291,8 +291,8 @@ export function AdminCommandPalette({
       bodyClassName="flex min-h-0 flex-1 flex-col overflow-hidden p-0"
     >
       <div className="flex min-h-0 flex-1 flex-col">
-        <div className="flex items-center gap-3 border-b border-white/10 px-4 py-3 sm:px-5">
-          <Search className="h-4 w-4 shrink-0 text-[#E2B04A]" />
+        <div className="flex items-center gap-3 border-b border-line px-4 py-3 sm:px-5">
+          <Search className="h-4 w-4 shrink-0 text-accent" />
           <input
             autoFocus
             value={query}
@@ -302,23 +302,23 @@ export function AdminCommandPalette({
             }}
             placeholder={c.placeholder}
             aria-label={c.placeholder}
-            className="h-10 min-w-0 flex-1 bg-transparent text-[15px] text-[var(--admin-text,#F1EEE8)] outline-none placeholder:text-white/35"
+            className="h-10 min-w-0 flex-1 bg-transparent text-[15px] text-fg outline-none placeholder:text-muted"
           />
-          <span className="hidden items-center gap-1 rounded-md border border-white/10 px-2 py-1 text-[12px] text-white/40 sm:flex">
+          <span className="hidden items-center gap-1 rounded-md border border-line px-2 py-1 text-[12px] text-fg sm:flex">
             <CommandIcon className="h-3 w-3" /> K
           </span>
         </div>
 
         <div ref={listRef} className="scroll-area min-h-0 flex-1 overflow-y-auto overscroll-contain">
           {loadingIndex ? (
-            <div className="flex items-center justify-center gap-2 px-4 py-10 text-[13px] text-white/45">
-              <Loader2 className="h-4 w-4 animate-spin text-[#E2B04A]" />
+            <div className="flex items-center justify-center gap-2 px-4 py-10 text-[13px] text-fg">
+              <Loader2 className="h-4 w-4 animate-spin text-accent" />
               {c.loading}
             </div>
           ) : groups.length ? (
             groups.map(([group, items]) => (
               <div key={group}>
-                <p className="sticky top-0 z-10 border-b border-white/[.06] bg-[#161820] px-4 py-2 text-[12px] font-medium text-[#E2B04A]/75 sm:px-5">
+                <p className="sticky top-0 z-10 border-b border-line bg-surface px-4 py-2 text-[12px] font-medium text-accent sm:px-5">
                   {group}
                 </p>
                 <div className="p-1.5">
@@ -339,30 +339,30 @@ export function AdminCommandPalette({
                         className={cn(
                           "flex min-h-12 w-full items-center gap-3 rounded-lg px-3 py-2.5 text-start transition-colors",
                           active
-                            ? "bg-[#E2B04A]/12 text-[var(--admin-text,#F1EEE8)]"
-                            : "text-white/65 hover:bg-white/[0.04]",
+                            ? "bg-accent-fill/12 text-fg"
+                            : "text-fg hover:bg-surface-2",
                         )}
                       >
                         <span
                           className={cn(
                             "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border",
                             active
-                              ? "border-[#E2B04A]/45 bg-[#E2B04A]/10 text-[#E2B04A]"
-                              : "border-white/10 text-white/45",
+                              ? "border-accent/45 bg-accent-fill/10 text-accent"
+                              : "border-line text-fg",
                           )}
                         >
                           <Icon className="h-3.5 w-3.5" />
                         </span>
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-[14px]">{command.label}</span>
-                          <span className="block truncate text-[12px] text-white/40">
+                          <span className="block truncate text-[12px] text-fg">
                             {command.meta}
                           </span>
                         </span>
                         <ArrowUpRight
                           className={cn(
                             "h-3.5 w-3.5 shrink-0",
-                            active ? "text-[#E2B04A]" : "text-white/20",
+                            active ? "text-accent" : "text-fg",
                           )}
                         />
                       </button>
@@ -372,11 +372,11 @@ export function AdminCommandPalette({
               </div>
             ))
           ) : (
-            <p className="px-4 py-10 text-center text-[13px] text-white/40">{c.empty}</p>
+            <p className="px-4 py-10 text-center text-[13px] text-fg">{c.empty}</p>
           )}
         </div>
 
-        <div className="flex items-center justify-between gap-3 border-t border-white/10 px-4 py-2.5 text-[12px] text-white/35 sm:px-5">
+        <div className="flex items-center justify-between gap-3 border-t border-line px-4 py-2.5 text-[12px] text-fg sm:px-5">
           <span>{c.hint}</span>
           <span className="hidden sm:inline">{c.open}</span>
         </div>

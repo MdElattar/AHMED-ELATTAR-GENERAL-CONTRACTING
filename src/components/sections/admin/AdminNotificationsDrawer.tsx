@@ -207,16 +207,16 @@ export function AdminNotificationsDrawer({
       }
     >
       <div className="space-y-5">
-        <div className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--admin-card-border)] bg-[var(--admin-pill-surface)] p-4">
+        <div className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-surface-2 p-4">
           <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[rgba(226,176,74,0.14)] text-[#F3C86A]">
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[rgb(var(--accent-rgb)/0.14)] text-accent">
               <BellRing className="h-5 w-5" />
             </span>
             <div>
-              <p className="text-[14px] font-medium text-[var(--admin-text)]">
+              <p className="text-[14px] font-medium text-fg">
                 {isAr ? `${unread} غير مقروء` : `${unread} unread`}
               </p>
-              <p className="text-[12px] text-[var(--admin-muted)]">
+              <p className="text-[12px] text-muted">
                 {isAr ? "تنبيهات الميزانية والاستفسارات والمراحل." : "Budget, inquiry and milestone updates."}
               </p>
             </div>
@@ -227,7 +227,7 @@ export function AdminNotificationsDrawer({
         </div>
 
         {inquiries === null ? (
-          <div className="flex items-center justify-center gap-2 py-10 text-[13px] text-[var(--admin-muted)]">
+          <div className="flex items-center justify-center gap-2 py-10 text-[13px] text-muted">
             <Loader2 className="h-4 w-4 animate-spin" />
             {isAr ? "جارٍ تحميل الاستفسارات…" : "Loading inquiries…"}
           </div>
@@ -239,13 +239,13 @@ export function AdminNotificationsDrawer({
           const Icon = group.icon;
           return (
             <section key={group.id}>
-              <h3 className="mb-2 flex items-center gap-2 text-[13px] font-medium text-[var(--admin-muted)]">
+              <h3 className="mb-2 flex items-center gap-2 text-[13px] font-medium text-muted">
                 <Icon className="h-4 w-4" />
                 {group.label}
-                <span className="tabular-nums text-[var(--admin-muted)]/60">({items.length})</span>
+                <span className="tabular-nums text-muted">({items.length})</span>
               </h3>
               {items.length ? (
-                <ul className="divide-y divide-[var(--admin-card-border)] overflow-hidden rounded-2xl border border-[var(--admin-card-border)]">
+                <ul className="divide-y divide-line overflow-hidden rounded-2xl border border-line">
                   {items.map((notice) => {
                     const unreadItem = !read.has(notice.id);
                     const NoticeIcon = notice.icon;
@@ -254,25 +254,25 @@ export function AdminNotificationsDrawer({
                         <button
                           type="button"
                           onClick={notice.action}
-                          className="admin-focus-ring flex w-full items-start gap-3 p-3.5 text-start transition-colors hover:bg-[var(--admin-pill-surface)]"
+                          className="admin-focus-ring flex w-full items-start gap-3 p-3.5 text-start transition-colors hover:bg-surface-2"
                         >
                           <span
                             className={
                               notice.tone === "danger"
-                                ? "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[rgba(255,107,94,0.12)] text-[#FF9A8F]"
+                                ? "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[rgb(var(--danger-rgb)/0.12)] text-danger"
                                 : notice.tone === "warning"
-                                  ? "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[rgba(226,176,74,0.12)] text-[#F3C86A]"
-                                  : "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--admin-pill-surface)] text-[var(--admin-muted)]"
+                                  ? "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[rgb(var(--accent-rgb)/0.12)] text-accent"
+                                  : "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-2 text-muted"
                             }
                           >
                             <NoticeIcon className="h-4 w-4" />
                           </span>
                           <span className="min-w-0 flex-1">
                             <span className="flex items-center gap-2">
-                              <span className="truncate text-[14px] text-[var(--admin-text)]">{notice.title}</span>
-                              {unreadItem ? <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#E2B04A]" /> : null}
+                              <span className="truncate text-[14px] text-fg">{notice.title}</span>
+                              {unreadItem ? <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent-fill" /> : null}
                             </span>
-                            <span className="mt-0.5 block text-[12px] leading-relaxed text-[var(--admin-muted)]">
+                            <span className="mt-0.5 block text-[12px] leading-relaxed text-muted">
                               {notice.body}
                             </span>
                           </span>
@@ -282,7 +282,7 @@ export function AdminNotificationsDrawer({
                   })}
                 </ul>
               ) : (
-                <p className="rounded-2xl border border-dashed border-[var(--admin-card-border)] px-4 py-5 text-center text-[13px] text-[var(--admin-muted)]">
+                <p className="rounded-2xl border border-dashed border-line px-4 py-5 text-center text-[13px] text-muted">
                   {isAr ? "لا توجد تنبيهات." : "Nothing to report."}
                 </p>
               )}

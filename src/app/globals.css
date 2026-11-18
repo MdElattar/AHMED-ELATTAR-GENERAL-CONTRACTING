@@ -1,23 +1,44 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 @theme inline {
-  --color-obsidian: #0a0b0e;
-  --color-ink: #0e1017;
-  --color-coal: #0e1017;
-  --color-graphite: #15181d;
-  --color-steel: #262b33;
-  --color-ash: #3a404a;
-  --color-ivory: #f3eee4;
-  --color-paper: #e9e2d5;
-  --color-sand: #d8ccb7;
-  --color-muted: #96938b;
-  --color-gold: #b8860b;
-  --color-gold-light: #c59b27;
-  --color-gold-dark: #996515;
-  --color-bronze: #a67c1a;
-  --color-champagne: #c59b27;
-  --color-ember: #b87333;
-  --color-surface: #0e1017;
+  /* Semantic color tokens — every component color resolves through these. */
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-fg: var(--accent-fg);
+  --color-accent-fill: var(--accent-fill);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-info: var(--info);
+
+  /*
+   * Legacy aliases kept so pre-codemod classes keep working. `text-gold`
+   * resolves to the readable accent; `.bg-gold` below additionally receives
+   * the filled-button foreground.
+   */
+  --color-obsidian: var(--bg);
+  --color-ink: var(--surface);
+  --color-coal: var(--surface);
+  --color-graphite: var(--surface-2);
+  --color-steel: var(--line);
+  --color-ash: var(--muted);
+  --color-ivory: var(--fg);
+  --color-paper: var(--surface-2);
+  --color-sand: var(--muted);
+  --color-gold: var(--accent);
+  --color-gold-light: var(--accent);
+  --color-gold-dark: var(--accent);
+  --color-bronze: var(--accent-fill);
+  --color-champagne: var(--accent);
+  --color-ember: var(--warning);
 
   --font-sans: var(--font-body), var(--font-arabic), ui-sans-serif, sans-serif;
   --font-arabic: var(--font-arabic), ui-sans-serif, sans-serif;
@@ -27,51 +48,180 @@
   --ease-lux: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-smooth: cubic-bezier(0.65, 0, 0.35, 1);
 
-  --shadow-lux: 0 30px 80px -30px rgb(0 0 0 / 0.65);
-  --shadow-gold: 0 0 0 1px rgb(166 124 26 / 0.18), 0 20px 60px -20px rgb(166 124 26 / 0.18);
+  /*
+   * Elevation values live in the theme blocks as `--e1/2/3`; the indirection
+   * keeps `shadow-e1` dynamic under Tailwind 4's `@theme inline`.
+   */
+  --shadow-e1: var(--e1);
+  --shadow-e2: var(--e2);
+  --shadow-e3: var(--e3);
+  --shadow-lux: var(--e3);
+  --shadow-gold: var(--e2);
 }
 
-:root {
-  --background: #0a0b0e;
-  --foreground: #f3eee4;
-  --gold: #b8860b;
-  --nav-height: 84px;
-  --scroll-thumb: rgba(255, 255, 255, 0.14);
-  --scroll-thumb-hover: rgba(255, 255, 255, 0.28);
+/*
+ * Exact executive palette. All raw color literals live in these two blocks
+ * (plus the elevation definitions within them); everything else composes
+ * these tokens with `rgb(var(--*-rgb) / alpha)`.
+ */
+:root[data-theme="dark"] {
+  --bg: #0B0E14;
+  --surface: #121722;
+  --surface-2: #181E2B;
+  --line: rgba(255,255,255,.08);
+  --fg: #EAE7DF;
+  --muted: #9AA3B2;
+  --accent: #C9A24A;
+  --accent-strong: #E8C87E;
+  --accent-fg: #1A1405;
+  --accent-fill: var(--accent);
+  --success: #4CB58A;
+  --warning: #E0A94A;
+  --danger: #E5746A;
+  --info: #6FA8DC;
+
+  --bg-rgb: 11 14 20;
+  --surface-rgb: 18 23 34;
+  --surface-2-rgb: 24 30 43;
+  --fg-rgb: 234 231 223;
+  --muted-rgb: 154 163 178;
+  --accent-rgb: 201 162 74;
+  --success-rgb: 76 181 138;
+  --warning-rgb: 224 169 74;
+  --danger-rgb: 229 116 106;
+  --info-rgb: 111 168 220;
+
+  --scroll-thumb: rgb(var(--fg-rgb) / 0.18);
+  --scroll-thumb-hover: rgb(var(--fg-rgb) / 0.32);
+
+  /* Dark elevation: hairline border plus a subtle surface step. */
+  --e1: inset 0 0 0 1px var(--line), 0 1px 0 rgb(var(--surface-2-rgb) / 0.6);
+  --e2: inset 0 0 0 1px var(--line), 0 8px 24px -12px rgb(var(--bg-rgb) / 0.8);
+  --e3: inset 0 0 0 1px var(--line), 0 24px 60px -24px rgb(var(--bg-rgb) / 0.9);
+  --shadow-e1: var(--e1);
+  --shadow-e2: var(--e2);
+  --shadow-e3: var(--e3);
+
+  /* Admin aliases now follow the same semantic palette. */
+  --admin-bg: var(--bg);
+  --admin-bg-glow: rgb(var(--accent-rgb) / 0.10);
+  --admin-card: var(--surface);
+  --admin-card-border: var(--line);
+  --admin-gold: var(--accent);
+  --admin-gold-btn-from: var(--accent-fill);
+  --admin-gold-btn-to: var(--accent);
+  --admin-green: var(--success);
+  --admin-red: var(--danger);
+  --admin-blue: var(--info);
+  --admin-text: var(--fg);
+  --admin-muted: var(--muted);
+  --admin-track: var(--surface-2);
+  --admin-pill-surface: rgb(var(--fg-rgb) / 0.05);
+  --admin-sidebar: var(--surface);
+  --admin-hero: linear-gradient(135deg, rgb(var(--accent-rgb) / 0.12), var(--surface) 55%, var(--bg) 100%);
+  --admin-hero-border: rgb(var(--accent-rgb) / 0.22);
+
   color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  --bg: #F7F5F0;
+  --surface: #FFFFFF;
+  --surface-2: #F1EEE7;
+  --line: rgba(22,27,38,.10);
+  --fg: #161B26;
+  --muted: #5B6474;
+  --accent: #8F6A1A;
+  --accent-strong: #6F520F;
+  --accent-fg: #1A1405;
+  --accent-fill: #C9A24A;
+  --success: #1F7A52;
+  --warning: #9A6412;
+  --danger: #B23A2E;
+  --info: #2A62A0;
+
+  --bg-rgb: 247 245 240;
+  --surface-rgb: 255 255 255;
+  --surface-2-rgb: 241 238 231;
+  --fg-rgb: 22 27 38;
+  --muted-rgb: 91 100 116;
+  --accent-rgb: 143 106 26;
+  --success-rgb: 31 122 82;
+  --warning-rgb: 154 100 18;
+  --danger-rgb: 178 58 46;
+  --info-rgb: 42 98 160;
+
+  --scroll-thumb: rgb(var(--fg-rgb) / 0.22);
+  --scroll-thumb-hover: rgb(var(--fg-rgb) / 0.34);
+
+  /* Light elevation: the soft editorial shadow pair. */
+  --e1: 0 1px 2px rgba(22,27,38,.06), 0 8px 24px rgba(22,27,38,.06);
+  --e2: 0 1px 2px rgba(22,27,38,.08), 0 12px 32px rgba(22,27,38,.08);
+  --e3: 0 1px 2px rgba(22,27,38,.10), 0 24px 60px rgba(22,27,38,.12);
+  --shadow-e1: var(--e1);
+  --shadow-e2: var(--e2);
+  --shadow-e3: var(--e3);
+
+  --admin-bg: var(--bg);
+  --admin-bg-glow: rgb(var(--accent-rgb) / 0.08);
+  --admin-card: var(--surface);
+  --admin-card-border: var(--line);
+  --admin-gold: var(--accent);
+  --admin-gold-btn-from: var(--accent-fill);
+  --admin-gold-btn-to: var(--accent);
+  --admin-green: var(--success);
+  --admin-red: var(--danger);
+  --admin-blue: var(--info);
+  --admin-text: var(--fg);
+  --admin-muted: var(--muted);
+  --admin-track: var(--surface-2);
+  --admin-pill-surface: rgb(var(--fg-rgb) / 0.04);
+  --admin-sidebar: var(--surface);
+  --admin-hero: linear-gradient(135deg, rgb(var(--accent-rgb) / 0.08), var(--surface) 55%, var(--bg) 100%);
+  --admin-hero-border: rgb(var(--accent-rgb) / 0.22);
+
+  color-scheme: light;
+}
+
+/* Legacy CSS variable names remain available to older stylesheets. */
+:root {
+  --background: var(--bg);
+  --foreground: var(--fg);
+  --gold: var(--accent);
+  --nav-height: 84px;
 
   /*
    * Atmosphere tokens. The default is a golden-hour grade; the navigation
-   * toggle swaps these to blue hour or a neutral studio grade. The values are
-   * raw RGB channels so every glow can be composed with a variable alpha.
+   * toggle swaps these to blue hour or a neutral studio grade. The glow values
+   * are raw RGB channels so every glow can be composed with a variable alpha.
    */
-  --atmo-glow: 184 134 11;
-  --atmo-glow-2: 153 101 21;
-  --atmo-accent: #b8860b;
-  --atmo-warm: #c59b27;
+  --atmo-glow: 201 162 74;
+  --atmo-glow-2: 143 106 26;
+  --atmo-accent: var(--accent);
+  --atmo-warm: var(--accent-fill);
   --atmo-photo-filter: saturate(1.08) contrast(1.06) brightness(0.9);
   --pointer-x: 50%;
   --pointer-y: 30%;
 }
 
 html[data-vibe="blue"] {
-  --atmo-glow: 96 148 210;
-  --atmo-glow-2: 130 170 220;
-  --atmo-accent: #b9d3ff;
-  --atmo-warm: #dbe9ff;
+  --atmo-glow: 111 168 220;
+  --atmo-glow-2: 42 98 160;
+  --atmo-accent: var(--info);
+  --atmo-warm: var(--info);
   --atmo-photo-filter: saturate(0.92) contrast(1.04) brightness(0.86) hue-rotate(-8deg);
 }
 
 html[data-vibe="studio"] {
-  --atmo-glow: 236 226 204;
-  --atmo-glow-2: 212 200 180;
-  --atmo-accent: #f5efe2;
-  --atmo-warm: #fff6e4;
+  --atmo-glow: 234 231 223;
+  --atmo-glow-2: 154 163 178;
+  --atmo-accent: var(--muted);
+  --atmo-warm: var(--fg);
   --atmo-photo-filter: saturate(0.82) contrast(1.02) brightness(0.9);
 }
 
 * {
-  border-color: rgb(255 255 255 / 0.08);
+  border-color: var(--line);
 }
 
 html {
@@ -79,9 +229,24 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
+/*
+ * The provider adds this class for exactly 200ms around a user-initiated
+ * theme change, then removes it. System-preference changes and first paint
+ * never animate.
+ */
+html.theme-transition,
+html.theme-transition body,
+html.theme-transition *,
+html.theme-transition *::before,
+html.theme-transition *::after {
+  transition-property: color, background-color, border-color, box-shadow, fill, stroke !important;
+  transition-duration: 200ms !important;
+  transition-timing-function: ease !important;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--bg);
+  color: var(--fg);
   font-family: var(--font-body), var(--font-arabic), ui-sans-serif, sans-serif;
   font-feature-settings: "ss01", "cv11";
   /*
@@ -95,9 +260,6 @@ body {
   overflow-x: clip;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  transition:
-    background-color 0.6s var(--ease-lux),
-    color 0.6s var(--ease-lux);
 }
 
 .tabular-nums,
@@ -107,7 +269,13 @@ body {
 }
 
 .bg-surface {
-  background-color: #0e1017;
+  background-color: var(--surface);
+}
+
+/* Legacy filled-gold button: readable foreground on the solid accent fill. */
+.bg-gold {
+  background-color: var(--accent-fill);
+  color: var(--accent-fg);
 }
 
 @supports not (overflow: clip) {
@@ -122,14 +290,14 @@ html[lang="ar"] body {
 }
 
 ::selection {
-  background: #b8860b;
-  color: #060708;
+  background: rgb(var(--accent-rgb) / 0.34);
+  color: var(--fg);
 }
 
 /* ---------- Scrollbars ---------- */
 /*
  * The admin shell and every overlay use `.scroll-area`. The track is always
- * transparent and the thumb follows the theme, so no white native bar can
+ * transparent and the thumb follows the theme, so no light native bar can
  * appear when a platform switches `color-scheme`.
  */
 html {
@@ -190,19 +358,21 @@ html {
 
 /* Single-row chip rails fade at the edges instead of wrapping. */
 .chips-fade {
-  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
-  mask-image: linear-gradient(to right, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
-}
-
-[data-theme="light"] {
-  --scroll-thumb: rgba(20, 18, 10, 0.22);
-  --scroll-thumb-hover: rgba(20, 18, 10, 0.34);
-  color-scheme: light;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, rgb(var(--fg-rgb)) 14px, rgb(var(--fg-rgb)) calc(100% - 14px), transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, rgb(var(--fg-rgb)) 14px, rgb(var(--fg-rgb)) calc(100% - 14px), transparent 100%);
 }
 
 :focus-visible {
-  outline: 2px solid #c59b27;
+  outline: 2px solid var(--accent);
   outline-offset: 3px;
+}
+
+/* The admin shell can opt into a theme scoped to its own subtree. */
+[data-admin-theme="dark"] {
+  color-scheme: dark;
+}
+[data-admin-theme="light"] {
+  color-scheme: light;
 }
 
 a,
@@ -264,7 +434,7 @@ html:not([data-locale="en"]) .i18n-en {
 .hairline {
   height: 1px;
   width: 100%;
-  background: linear-gradient(90deg, transparent, rgb(184 134 11 / 0.45), transparent);
+  background: linear-gradient(90deg, transparent, rgb(var(--accent-rgb) / 0.45), transparent);
 }
 
 /* Phase description (pinned stages) — visible only where the viewport gives
@@ -288,7 +458,7 @@ html:not([data-locale="en"]) .i18n-en {
   font-weight: 500;
   letter-spacing: 0.28em;
   text-transform: uppercase;
-  color: #b8860b;
+  color: var(--accent);
 }
 
 html[lang="ar"] .eyebrow {
@@ -301,7 +471,7 @@ html[lang="ar"] .eyebrow {
   display: inline-block;
   width: 1.75rem;
   height: 1px;
-  background: #b8860b;
+  background: var(--accent);
   flex: none;
 }
 
@@ -321,7 +491,7 @@ html[lang="ar"] .display-title {
 }
 
 .gold-text {
-  background: linear-gradient(105deg, #996515 0%, #c59b27 40%, #b8860b 66%, #c59b27 100%);
+  background: linear-gradient(105deg, rgb(var(--accent-rgb) / 0.8) 0%, var(--accent) 40%, var(--accent-fill) 66%, var(--accent) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -329,25 +499,25 @@ html[lang="ar"] .display-title {
 
 .text-outline {
   color: transparent;
-  -webkit-text-stroke: 1px rgb(243 238 228 / 0.28);
+  -webkit-text-stroke: 1px rgb(var(--fg-rgb) / 0.28);
 }
 
 .text-outline-gold {
   color: transparent;
-  -webkit-text-stroke: 1px rgb(184 134 11 / 0.55);
+  -webkit-text-stroke: 1px rgb(var(--accent-rgb) / 0.55);
 }
 
 .blueprint-grid {
   background-image:
-    linear-gradient(rgb(184 134 11 / 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(184 134 11 / 0.06) 1px, transparent 1px);
+    linear-gradient(rgb(var(--accent-rgb) / 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(var(--accent-rgb) / 0.06) 1px, transparent 1px);
   background-size: 72px 72px;
 }
 
 .blueprint-grid-fine {
   background-image:
-    linear-gradient(rgb(184 134 11 / 0.075) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(184 134 11 / 0.075) 1px, transparent 1px);
+    linear-gradient(rgb(var(--accent-rgb) / 0.075) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(var(--accent-rgb) / 0.075) 1px, transparent 1px);
   background-size: 24px 24px;
 }
 
@@ -363,19 +533,50 @@ html[lang="ar"] .display-title {
 }
 
 .glass {
-  background: rgb(8 9 11 / 0.72);
-  backdrop-filter: blur(22px) saturate(140%);
-  -webkit-backdrop-filter: blur(22px) saturate(140%);
+  background: var(--bg);
 }
 
 .glass-light {
-  background: rgb(243 238 228 / 0.78);
-  backdrop-filter: blur(22px) saturate(130%);
-  -webkit-backdrop-filter: blur(22px) saturate(130%);
+  background: var(--surface);
+}
+
+/*
+ * Blur is reserved for sticky top bars and overlays. Everything else uses
+ * solid token backgrounds, with an explicit solid fallback where blur is not
+ * supported.
+ */
+@supports (backdrop-filter: blur(1px)) {
+  .admin-topbar,
+  [data-admin-topbar],
+  header[data-sticky="true"],
+  .admin-overlay,
+  .guard-backdrop,
+  [data-overlay] {
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+  }
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .glass,
+  .glass-light,
+  .glass-panel,
+  .glass-panel-soft,
+  .live-pill,
+  .admin-topbar,
+  [data-admin-topbar],
+  header[data-sticky="true"],
+  .admin-overlay,
+  .guard-backdrop,
+  [data-overlay] {
+    background-color: var(--surface);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
 }
 
 .vignette {
-  background: radial-gradient(ellipse at center, transparent 35%, rgb(6 7 8 / 0.75) 100%);
+  background: radial-gradient(ellipse at center, transparent 35%, rgb(var(--bg-rgb) / 0.75) 100%);
 }
 
 .vertical-text {
@@ -384,13 +585,13 @@ html[lang="ar"] .display-title {
 }
 
 .mask-fade-x {
-  -webkit-mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
-  mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, rgb(var(--fg-rgb)) 8%, rgb(var(--fg-rgb)) 92%, transparent);
+  mask-image: linear-gradient(to right, transparent, rgb(var(--fg-rgb)) 8%, rgb(var(--fg-rgb)) 92%, transparent);
 }
 
 .mask-fade-b {
-  -webkit-mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
-  mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, rgb(var(--fg-rgb)) 55%, transparent 100%);
+  mask-image: linear-gradient(to bottom, rgb(var(--fg-rgb)) 55%, transparent 100%);
 }
 
 .no-scrollbar::-webkit-scrollbar {
@@ -530,7 +731,7 @@ html[dir="rtl"] .hero-rule {
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: linear-gradient(110deg, transparent 20%, rgb(255 255 255 / 0.22) 48%, transparent 72%);
+  background: linear-gradient(110deg, transparent 20%, rgb(var(--fg-rgb) / 0.22) 48%, transparent 72%);
   transform: translateX(-120%);
   transition: transform 0.8s var(--ease-lux);
 }
@@ -542,46 +743,46 @@ html[dir="rtl"] .hero-rule {
 .field {
   width: 100%;
   min-height: 2.75rem;
-  background: rgb(255 255 255 / 0.04);
-  border: 1px solid rgb(255 255 255 / 0.1);
+  background: rgb(var(--fg-rgb) / 0.04);
+  border: 1px solid var(--line);
   padding: 0.5rem 0.875rem;
   font-size: 0.9375rem;
   line-height: 1.5;
-  color: #f3eee4;
+  color: var(--fg);
   transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
   border-radius: 0.75rem;
 }
 .field::placeholder {
-  color: rgb(243 238 228 / 0.4);
+  color: rgb(var(--fg-rgb) / 0.4);
 }
 .field:focus,
 .field:focus-visible {
   outline: none;
-  border-color: rgb(226 176 74 / 0.6);
-  box-shadow: 0 0 0 2px rgb(226 176 74 / 0.3);
+  border-color: rgb(var(--accent-rgb) / 0.6);
+  box-shadow: 0 0 0 2px rgb(var(--accent-rgb) / 0.3);
 }
 .field[aria-invalid="true"] {
-  border-color: rgb(248 113 113 / 0.6);
+  border-color: rgb(var(--danger-rgb) / 0.6);
 }
 .field:disabled {
   cursor: not-allowed;
   opacity: 0.5;
 }
 .field-light {
-  color: #0a0b0e;
-  background: rgb(10 11 14 / 0.04);
-  border-color: rgb(10 11 14 / 0.1);
+  color: var(--fg);
+  background: rgb(var(--fg-rgb) / 0.04);
+  border-color: var(--line);
 }
 .field-light::placeholder {
-  color: rgb(10 11 14 / 0.4);
+  color: rgb(var(--fg-rgb) / 0.4);
 }
 .field-light:focus {
-  border-color: rgb(153 101 21 / 0.6);
-  box-shadow: 0 0 0 2px rgb(153 101 21 / 0.2);
+  border-color: rgb(var(--accent-rgb) / 0.6);
+  box-shadow: 0 0 0 2px rgb(var(--accent-rgb) / 0.2);
 }
 select.field option {
-  background: #0f1115;
-  color: #f3eee4;
+  background: var(--surface);
+  color: var(--fg);
 }
 
 /* ---------- Project art ---------- */
@@ -597,11 +798,11 @@ select.field option {
 
 /* ---------- Prose ---------- */
 .prose-lux p {
-  color: rgb(243 238 228 / 0.62);
+  color: rgb(var(--fg-rgb) / 0.62);
   line-height: 1.9;
 }
 .prose-lux-light p {
-  color: rgb(10 11 14 / 0.62);
+  color: rgb(var(--fg-rgb) / 0.62);
   line-height: 1.9;
 }
 
@@ -650,10 +851,10 @@ select.field option {
   background:
     linear-gradient(
       180deg,
-      rgb(6 7 8 / 0.9) 0%,
-      rgb(6 7 8 / 0.22) 32%,
-      rgb(6 7 8 / 0.55) 68%,
-      #060708 100%
+      rgb(var(--bg-rgb) / 0.9) 0%,
+      rgb(var(--bg-rgb) / 0.22) 32%,
+      rgb(var(--bg-rgb) / 0.55) 68%,
+      var(--bg) 100%
     ),
     radial-gradient(ellipse at 72% 34%, rgb(var(--atmo-glow) / 0.18), transparent 58%);
 }
@@ -661,7 +862,7 @@ select.field option {
 .photo-warmth {
   background: linear-gradient(
     115deg,
-    rgb(166 124 26 / 0.14),
+    rgb(var(--accent-rgb) / 0.14),
     transparent 44%,
     rgb(var(--atmo-glow) / 0.12)
   );
@@ -683,7 +884,7 @@ select.field option {
 .hero-aurora {
   background:
     radial-gradient(ellipse at 68% 38%, rgb(var(--atmo-glow) / 0.28), transparent 52%),
-    radial-gradient(ellipse at 28% 72%, rgb(166 124 26 / 0.16), transparent 58%);
+    radial-gradient(ellipse at 28% 72%, rgb(var(--accent-rgb) / 0.16), transparent 58%);
   animation: golden-drift 30s ease-in-out infinite;
 }
 
@@ -700,25 +901,22 @@ select.field option {
 }
 
 .text-shadow-lux {
-  text-shadow: 0 2px 32px rgb(0 0 0 / 0.5);
+  text-shadow: 0 2px 32px rgb(var(--bg-rgb) / 0.55);
 }
 
 /* ---------- Glass ---------- */
 .glass-panel {
-  background: linear-gradient(145deg, rgb(22 20 15 / 0.8), rgb(8 8 9 / 0.68));
-  border: 1px solid rgb(var(--atmo-glow) / 0.16);
-  backdrop-filter: blur(24px) saturate(145%);
-  -webkit-backdrop-filter: blur(24px) saturate(145%);
+  background: linear-gradient(145deg, rgb(var(--surface-rgb) / 0.92), rgb(var(--bg-rgb) / 0.88));
+  border: 1px solid rgb(var(--accent-rgb) / 0.16);
   box-shadow:
-    0 30px 80px -30px rgb(0 0 0 / 0.82),
-    inset 0 1px 0 rgb(255 255 255 / 0.06);
+    var(--shadow-e3),
+    inset 0 1px 0 rgb(var(--fg-rgb) / 0.06);
 }
 
 .glass-panel-soft {
-  background: linear-gradient(145deg, rgb(18 16 13 / 0.62), rgb(8 8 9 / 0.5));
-  border: 1px solid rgb(255 255 255 / 0.1);
-  backdrop-filter: blur(20px) saturate(140%);
-  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  background: linear-gradient(145deg, rgb(var(--surface-rgb) / 0.82), rgb(var(--bg-rgb) / 0.76));
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-e2);
 }
 
 /* ---------- Cursor spotlight ---------- */
@@ -762,15 +960,13 @@ select.field option {
   align-items: center;
   gap: 0.45rem;
   border: 1px solid rgb(var(--atmo-glow) / 0.38);
-  background: rgb(6 7 8 / 0.58);
+  background: rgb(var(--bg-rgb) / 0.72);
   padding: 0.35rem 0.62rem;
   font-size: 0.5rem;
   font-weight: 600;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--atmo-warm);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  color: var(--atmo-accent);
 }
 
 .live-pill::before {
@@ -796,17 +992,17 @@ select.field option {
 
 /* ---------- Timeline ---------- */
 .timeline-rail {
-  background: linear-gradient(180deg, rgb(255 255 255 / 0.14), rgb(255 255 255 / 0.03));
+  background: linear-gradient(180deg, rgb(var(--fg-rgb) / 0.14), rgb(var(--fg-rgb) / 0.03));
 }
 
 .timeline-fill {
-  background: linear-gradient(180deg, var(--atmo-warm), var(--atmo-accent) 45%, #996515);
+  background: linear-gradient(180deg, var(--atmo-accent), var(--atmo-warm) 45%, rgb(var(--accent-rgb) / 0.75));
   box-shadow: 0 0 18px rgb(var(--atmo-glow) / 0.45);
   transform-origin: top;
 }
 
 .timeline-fill-x {
-  background: linear-gradient(90deg, #996515, var(--atmo-accent) 55%, var(--atmo-warm));
+  background: linear-gradient(90deg, rgb(var(--accent-rgb) / 0.75), var(--atmo-accent) 55%, var(--atmo-warm));
   box-shadow: 0 0 18px rgb(var(--atmo-glow) / 0.4);
   transform-origin: left;
 }
@@ -819,7 +1015,7 @@ html[dir="rtl"] .timeline-fill-x {
 .drawer-panel {
   background:
     radial-gradient(ellipse at 70% 0%, rgb(var(--atmo-glow) / 0.08), transparent 48%),
-    #0b0c0f;
+    var(--bg);
 }
 
 /* ---------- Cinematic carousel ---------- */
@@ -878,6 +1074,14 @@ html[dir="rtl"] .carousel-progress {
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
   }
+  /* No cross-fade at all when the visitor prefers reduced motion. */
+  html.theme-transition,
+  html.theme-transition body,
+  html.theme-transition *,
+  html.theme-transition *::before,
+  html.theme-transition *::after {
+    transition: none !important;
+  }
   .reveal,
   .reveal-left,
   .reveal-scale {
@@ -892,8 +1096,8 @@ html[dir="rtl"] .carousel-progress {
   -webkit-appearance: none;
   width: 1.05rem;
   height: 1.05rem;
-  border: 1px solid rgba(184, 134, 11, 0.45);
-  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgb(var(--accent-rgb) / 0.45);
+  background: rgb(var(--fg-rgb) / 0.02);
   display: inline-grid;
   place-content: center;
   cursor: pointer;
@@ -905,55 +1109,39 @@ html[dir="rtl"] .carousel-progress {
   height: 0.55rem;
   transform: scale(0);
   transition: transform 150ms cubic-bezier(0.16, 1, 0.3, 1);
-  background: #0a0b0e;
+  background: var(--accent-fg);
   clip-path: polygon(14% 44%, 0 59%, 43% 100%, 100% 18%, 84% 4%, 42% 68%);
 }
 .lux-checkbox:checked {
-  background: #b8860b;
-  border-color: #c59b27;
-  box-shadow: 0 0 0 1px rgba(184, 134, 11, 0.2);
+  background: var(--accent-fill);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px rgb(var(--accent-rgb) / 0.2);
 }
 .lux-checkbox:checked::before {
   transform: scale(1);
 }
 .lux-checkbox:indeterminate {
-  background: #b8860b;
-  border-color: #c59b27;
-  box-shadow: 0 0 0 1px rgba(184, 134, 11, 0.2);
+  background: var(--accent-fill);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px rgb(var(--accent-rgb) / 0.2);
 }
 .lux-checkbox:indeterminate::before {
   width: 0.55rem;
   height: 2px;
   border-radius: 999px;
-  background: #0a0b0e;
+  background: var(--accent-fg);
   clip-path: none;
   transform: none;
 }
 .lux-checkbox:focus-visible {
-  outline: 2px solid rgba(197, 155, 39, 0.7);
+  outline: 2px solid rgb(var(--accent-rgb) / 0.7);
   outline-offset: 2px;
 }
 
 
 /* ---------- Admin design reference tokens (visual-only restyle) ---------- */
+/* Color tokens now live in the two theme blocks; these are shape-only. */
 :root {
-  --admin-bg: #0b0c10;
-  --admin-bg-glow: rgba(226, 176, 74, 0.1);
-  --admin-card: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.018));
-  --admin-card-border: rgba(255, 255, 255, 0.07);
-  --admin-gold: #e2b04a;
-  --admin-gold-btn-from: #f3c86a;
-  --admin-gold-btn-to: #d9a03a;
-  --admin-green: #4ccb96;
-  --admin-red: #ff6b5e;
-  --admin-blue: #6bb6ff;
-  --admin-text: #f1eee8;
-  --admin-muted: #a6a9b4;
-  --admin-track: #232632;
-  --admin-pill-surface: rgba(255, 255, 255, 0.05);
-  --admin-sidebar: rgba(255, 255, 255, 0.015);
-  --admin-hero: linear-gradient(135deg, #1d1608 0%, #12131a 55%, #0f1117 100%);
-  --admin-hero-border: rgba(226, 176, 74, 0.22);
   --admin-radius-hero: 24px;
   --admin-radius-card: 22px;
   --admin-radius-kpi: 20px;
@@ -964,24 +1152,29 @@ html[dir="rtl"] .carousel-progress {
   --admin-kpi-gap: 16px;
 }
 
-[data-theme="light"] {
-  --admin-bg: #f6f4ef;
-  --admin-bg-glow: rgba(184, 128, 28, 0.08);
-  --admin-card: #ffffff;
-  --admin-card-border: rgba(20, 18, 10, 0.08);
-  --admin-gold: #b8801c;
-  --admin-gold-btn-from: #d9a03a;
-  --admin-gold-btn-to: #b8801c;
-  --admin-green: #2f9e72;
-  --admin-red: #d9534f;
-  --admin-blue: #3a86d1;
-  --admin-text: #17150f;
-  --admin-muted: #5e6068;
-  --admin-track: #e8e4dc;
-  --admin-pill-surface: rgba(20, 18, 10, 0.04);
-  --admin-sidebar: #ffffff;
-  --admin-hero: linear-gradient(135deg, #fff8eb 0%, #f6f4ef 55%, #f0ede6 100%);
-  --admin-hero-border: rgba(184, 128, 28, 0.22);
+/*
+ * The admin shell mirrors the resolved theme on `data-admin-theme`. The color
+ * aliases themselves are inherited from `:root[data-theme=...]`; the parallel
+ * admin work keeps the two attributes in sync via `useTheme()`.
+ */
+[data-admin-theme="dark"],
+[data-admin-theme="light"] {
+  --admin-bg: var(--bg);
+  --admin-bg-glow: rgb(var(--accent-rgb) / 0.10);
+  --admin-card: var(--surface);
+  --admin-card-border: var(--line);
+  --admin-gold: var(--accent);
+  --admin-gold-btn-from: var(--accent-fill);
+  --admin-gold-btn-to: var(--accent);
+  --admin-green: var(--success);
+  --admin-red: var(--danger);
+  --admin-blue: var(--info);
+  --admin-text: var(--fg);
+  --admin-muted: var(--muted);
+  --admin-track: var(--surface-2);
+  --admin-pill-surface: rgb(var(--fg-rgb) / 0.05);
+  --admin-sidebar: var(--surface);
+  --admin-hero-border: rgb(var(--accent-rgb) / 0.22);
 }
 
 .admin-shell {
@@ -997,7 +1190,7 @@ html[dir="rtl"] .carousel-progress {
   font-family: var(--font-inter), var(--font-arabic), system-ui, sans-serif;
 }
 
-[data-theme="light"] .admin-shell {
+:root[data-theme="light"] .admin-shell {
   background:
     radial-gradient(900px 500px at 85% -5%, var(--admin-bg-glow), transparent),
     var(--admin-bg);
@@ -1008,8 +1201,8 @@ html[dir="rtl"] .carousel-progress {
   border: 1px solid var(--admin-card-border);
 }
 
-[data-theme="light"] .admin-card-surface {
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+:root[data-theme="light"] .admin-card-surface {
+  box-shadow: var(--shadow-e1);
 }
 
 .admin-num {
@@ -1040,14 +1233,14 @@ html[dir="rtl"] .carousel-progress {
 .admin-skeleton {
   position: relative;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgb(var(--fg-rgb) / 0.06);
 }
 .admin-skeleton::after {
   content: "";
   position: absolute;
   inset: 0;
   transform: translateX(-100%);
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+  background: linear-gradient(90deg, transparent, rgb(var(--fg-rgb) / 0.08), transparent);
   animation: admin-shimmer 1.4s infinite;
 }
 @keyframes admin-shimmer {
@@ -1202,22 +1395,21 @@ html[dir="rtl"] .carousel-progress {
   place-items: center;
   overflow-y: auto;
   padding: 1.25rem;
-  background: rgb(10 11 14 / 0.82);
-  backdrop-filter: blur(6px);
+  background: rgb(var(--bg-rgb) / 0.82);
 }
 
 .guard-modal,
 .guard-page-card {
   width: min(100%, 32rem);
-  border: 1px solid rgb(184 134 11 / 0.28);
-  background: var(--color-coal, #0e1017);
+  border: 1px solid rgb(var(--accent-rgb) / 0.28);
+  background: var(--surface);
   padding: clamp(1.25rem, 4vw, 2rem);
   box-shadow: var(--shadow-lux);
   animation: guard-modal-in 180ms var(--ease-lux) both;
 }
 
 .guard-modal:focus {
-  outline: 2px solid var(--color-gold, #b8860b);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -1226,8 +1418,8 @@ html[dir="rtl"] .carousel-progress {
   min-height: 100svh;
   place-items: center;
   padding: 6rem 1.25rem 2rem;
-  background: var(--color-obsidian, #0a0b0e);
-  color: var(--color-ivory, #f3eee4);
+  background: var(--bg);
+  color: var(--fg);
 }
 
 .guard-form {
@@ -1249,8 +1441,8 @@ html[dir="rtl"] .carousel-progress {
   justify-content: center;
   inline-size: 2.75rem;
   block-size: 2.75rem;
-  border: 1px solid rgb(184 134 11 / 0.4);
-  color: var(--color-gold, #b8860b);
+  border: 1px solid rgb(var(--accent-rgb) / 0.4);
+  color: var(--accent);
 }
 
 .guard-title {
@@ -1258,7 +1450,7 @@ html[dir="rtl"] .carousel-progress {
   font-family: var(--font-display, Georgia, serif);
   font-size: 1.5rem;
   line-height: 1.25;
-  color: var(--color-ivory, #f3eee4);
+  color: var(--fg);
 }
 
 .guard-copy,
@@ -1266,7 +1458,7 @@ html[dir="rtl"] .carousel-progress {
   margin: 0.35rem 0 0;
   font-size: 0.72rem;
   line-height: 1.7;
-  color: rgb(243 238 228 / 0.6);
+  color: var(--muted);
 }
 
 .guard-hint {
@@ -1280,7 +1472,7 @@ html[dir="rtl"] .carousel-progress {
   padding-inline-start: 1.1rem;
   font-size: 0.68rem;
   line-height: 1.6;
-  color: rgb(243 238 228 / 0.65);
+  color: var(--muted);
   list-style: disc;
 }
 
@@ -1293,20 +1485,20 @@ html[dir="rtl"] .carousel-progress {
   min-block-size: 2.75rem;
   margin: 0;
   padding: 0.65rem 0.85rem;
-  border: 1px solid rgb(184 134 11 / 0.25);
+  border: 1px solid rgb(var(--accent-rgb) / 0.25);
   font-size: 0.68rem;
   line-height: 1.6;
 }
 
 .guard-notice,
 .guard-success {
-  color: var(--color-gold-light, #c59b27);
+  color: var(--accent);
 }
 
 .guard-error {
-  border-color: rgb(248 113 113 / 0.35);
-  background: rgb(248 113 113 / 0.07);
-  color: #fca5a5;
+  border-color: rgb(var(--danger-rgb) / 0.35);
+  background: rgb(var(--danger-rgb) / 0.07);
+  color: var(--danger);
 }
 
 .guard-actions {
@@ -1324,7 +1516,7 @@ html[dir="rtl"] .carousel-progress {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  border: 1px solid var(--color-gold, #b8860b);
+  border: 1px solid var(--accent-fill);
   padding: 0.6rem 1.1rem;
   font-size: 0.62rem;
   font-weight: 600;
@@ -1335,23 +1527,23 @@ html[dir="rtl"] .carousel-progress {
 }
 
 .guard-button-primary {
-  background: var(--color-gold, #b8860b);
-  color: var(--color-obsidian, #0a0b0e);
+  background: var(--accent-fill);
+  color: var(--accent-fg);
 }
 
 .guard-button-primary:hover {
-  background: var(--color-gold-light, #c59b27);
+  background: var(--accent);
 }
 
 .guard-button-quiet {
-  border-color: rgb(255 255 255 / 0.16);
+  border-color: rgb(var(--fg-rgb) / 0.16);
   background: transparent;
-  color: rgb(243 238 228 / 0.7);
+  color: rgb(var(--fg-rgb) / 0.7);
 }
 
 .guard-button-quiet:hover {
-  border-color: var(--color-gold, #b8860b);
-  color: var(--color-gold, #b8860b);
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .guard-button-primary:disabled,
@@ -1363,12 +1555,12 @@ html[dir="rtl"] .carousel-progress {
 .guard-button-primary:focus-visible,
 .guard-button-quiet:focus-visible,
 .guard-link:focus-visible {
-  outline: 2px solid var(--color-gold, #b8860b);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
 .guard-link {
-  color: var(--color-gold, #b8860b);
+  color: var(--accent-strong);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -1379,14 +1571,14 @@ html[dir="rtl"] .carousel-progress {
   font-family: var(--font-mono, monospace);
   font-size: 2.5rem;
   line-height: 1;
-  color: var(--color-gold-light, #c59b27);
+  color: var(--accent-strong);
 }
 
 .guard-inline-status {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  color: var(--color-gold-light, #c59b27);
+  color: var(--accent-strong);
   font-size: 0.7rem;
 }
 
@@ -1394,8 +1586,8 @@ html[dir="rtl"] .carousel-progress {
   display: inline-block;
   inline-size: 0.9rem;
   block-size: 0.9rem;
-  border: 2px solid rgb(184 134 11 / 0.3);
-  border-top-color: var(--color-gold, #b8860b);
+  border: 2px solid rgb(var(--accent-rgb) / 0.3);
+  border-top-color: var(--accent);
   border-radius: 50%;
   animation: guard-spin 700ms linear infinite;
 }

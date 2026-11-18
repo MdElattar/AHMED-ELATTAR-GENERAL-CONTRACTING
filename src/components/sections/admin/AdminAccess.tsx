@@ -382,28 +382,28 @@ export function AdminAccess() {
 
   if (!primary) {
     return (
-      <div className="flex items-start gap-3 rounded-2xl border border-gold/25 bg-gold/[0.05] p-5">
-        <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-gold" />
-        <p className="text-[0.88rem] leading-relaxed text-ivory/65">{c.onlyPrimary}</p>
+      <div className="flex items-start gap-3 rounded-2xl border border-accent/25 bg-accent/[0.05] p-5">
+        <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
+        <p className="text-[0.88rem] leading-relaxed text-fg">{c.onlyPrimary}</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <header className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018]/70 p-6 sm:p-7">
+      <header className="rounded-[22px] border border-line bg-surface p-6 sm:p-7">
         <div className="flex flex-wrap items-start justify-between gap-5">
           <div className="max-w-2xl">
-            <span className="inline-flex items-center gap-2 text-[0.68rem] font-semibold  text-gold">
+            <span className="inline-flex items-center gap-2 text-[0.68rem] font-semibold  text-accent">
               <Crown className="h-3.5 w-3.5" />
               {c.primary}
             </span>
-            <h2 className="mt-3 text-[28px] font-bold leading-tight text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">
+            <h2 className="mt-3 text-[28px] font-bold leading-tight text-fg [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">
               {c.title}
             </h2>
-            <p className="mt-3 text-[0.92rem] leading-relaxed text-ivory/60">{c.subtitle}</p>
+            <p className="mt-3 text-[0.92rem] leading-relaxed text-fg">{c.subtitle}</p>
           </div>
-          <span className="inline-flex items-center gap-2 rounded-full border border-gold/25 bg-gold/[0.05] px-3.5 py-2.5 text-[0.7rem] font-medium  text-gold">
+          <span className="inline-flex items-center gap-2 rounded-full border border-accent/25 bg-accent/[0.05] px-3.5 py-2.5 text-[0.7rem] font-medium  text-accent">
             <LockKeyhole className="h-3.5 w-3.5" />
             {c.secureNote}
           </span>
@@ -427,8 +427,8 @@ export function AdminAccess() {
           className={cn(
             "flex items-center gap-2 rounded-xl border px-4 py-3 text-[0.82rem]",
             noticeError
-              ? "border-red-400/25 bg-red-400/[0.05] text-red-200"
-              : "border-emerald-400/20 bg-emerald-400/[0.05] text-emerald-200",
+              ? "border-danger/25 bg-danger/[0.05] text-danger"
+              : "border-success/20 bg-success/[0.05] text-success",
           )}
         >
           {noticeError ? (
@@ -441,20 +441,20 @@ export function AdminAccess() {
       ) : null}
 
       {pending ? (
-        <form onSubmit={confirmGrant} className="rounded-2xl border border-gold/25 bg-coal/70 p-5 sm:p-6">
-          <div className="flex items-center gap-2 text-[0.7rem] font-semibold  text-gold">
+        <form onSubmit={confirmGrant} className="rounded-2xl border border-accent/25 bg-surface/70 p-5 sm:p-6">
+          <div className="flex items-center gap-2 text-[0.7rem] font-semibold  text-accent">
             <MailCheck className="h-4 w-4" />
             {c.step}
           </div>
-          <h3 className="mt-3 text-[28px] font-bold text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{c.otpTitle}</h3>
-          <p className="mt-2 max-w-2xl text-[0.88rem] leading-relaxed text-ivory/55">
+          <h3 className="mt-3 text-[28px] font-bold text-fg [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{c.otpTitle}</h3>
+          <p className="mt-2 max-w-2xl text-[0.88rem] leading-relaxed text-fg">
             {c.otpText}
           </p>
           <div className="mt-4 flex flex-wrap gap-2 text-[0.76rem]">
-            <span className="rounded-lg border border-white/10 px-3 py-1.5 text-ivory/50">
-              {c.otpTarget}: <strong className="font-medium text-ivory/75">{pending.targetEmail}</strong>
+            <span className="rounded-lg border border-line px-3 py-1.5 text-fg">
+              {c.otpTarget}: <strong className="font-medium text-fg">{pending.targetEmail}</strong>
             </span>
-            <span className="rounded-lg border border-white/10 px-3 py-1.5 text-ivory/50">
+            <span className="rounded-lg border border-line px-3 py-1.5 text-fg">
               {pending.mode === "promote" ? c.promote : c.create}
             </span>
           </div>
@@ -476,7 +476,7 @@ export function AdminAccess() {
           </div>
 
           {confirmError ? (
-            <p role="alert" className="mt-3 text-[0.8rem] text-red-300">
+            <p role="alert" className="mt-3 text-[0.8rem] text-danger">
               {confirmError}
             </p>
           ) : null}
@@ -485,7 +485,7 @@ export function AdminAccess() {
             <button
               type="submit"
               disabled={confirming || code.length !== 6}
-              className="inline-flex h-11 items-center gap-2 rounded-[12px] bg-[linear-gradient(180deg,#F3C86A,#D9A03A)] px-5 text-[15px] font-bold text-[#1a1205] shadow-[0_8px_24px_rgba(226,176,74,0.28)] transition-all hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex h-11 items-center gap-2 rounded-[12px] bg-accent-fill px-5 text-[15px] font-bold text-accent-fg shadow-e1 transition-all hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {confirming ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
               {confirming ? c.confirming : c.confirm}
@@ -497,15 +497,15 @@ export function AdminAccess() {
                 setCode("");
                 setConfirmError("");
               }}
-              className="inline-flex h-11 items-center rounded-xl border border-white/12 px-5 text-[0.76rem] font-semibold  text-ivory/55 transition-colors hover:border-white/25 hover:text-ivory"
+              className="inline-flex h-11 items-center rounded-xl border border-line px-5 text-[0.76rem] font-semibold  text-fg transition-colors hover:border-line hover:text-fg"
             >
               {c.cancel}
             </button>
           </div>
         </form>
       ) : (
-        <form onSubmit={requestGrant} className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018]/70">
-          <div className="grid gap-2 border-b border-white/10 p-3 sm:grid-cols-2">
+        <form onSubmit={requestGrant} className="rounded-[22px] border border-line bg-surface">
+          <div className="grid gap-2 border-b border-line p-3 sm:grid-cols-2">
             <ModeButton
               active={mode === "promote"}
               icon={ShieldCheck}
@@ -527,7 +527,7 @@ export function AdminAccess() {
           </div>
 
           <div className="p-5 sm:p-6">
-            <p className="text-[0.88rem] leading-relaxed text-ivory/55">
+            <p className="text-[0.88rem] leading-relaxed text-fg">
               {mode === "promote" ? c.promoteHint : c.createHint}
             </p>
 
@@ -604,21 +604,21 @@ export function AdminAccess() {
             </div>
 
             {requestError ? (
-              <p role="alert" className="mt-4 flex items-center gap-2 text-[0.8rem] text-red-300">
+              <p role="alert" className="mt-4 flex items-center gap-2 text-[0.8rem] text-danger">
                 <AlertTriangle className="h-4 w-4" />
                 {requestError}
               </p>
             ) : null}
 
-            <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-4">
-              <span className="inline-flex items-center gap-2 text-[0.72rem] text-ivory/40">
-                <KeyRound className="h-3.5 w-3.5 text-gold/60" />
+            <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
+              <span className="inline-flex items-center gap-2 text-[0.72rem] text-fg">
+                <KeyRound className="h-3.5 w-3.5 text-accent" />
                 {c.secureNote}
               </span>
               <button
                 type="submit"
                 disabled={submitting}
-                className="inline-flex h-11 items-center gap-2 rounded-[12px] bg-[linear-gradient(180deg,#F3C86A,#D9A03A)] px-5 text-[15px] font-bold text-[#1a1205] shadow-[0_8px_24px_rgba(226,176,74,0.28)] transition-all hover:-translate-y-0.5 disabled:cursor-wait disabled:opacity-60"
+                className="inline-flex h-11 items-center gap-2 rounded-[12px] bg-accent-fill px-5 text-[15px] font-bold text-accent-fg shadow-e1 transition-all hover:-translate-y-0.5 disabled:cursor-wait disabled:opacity-60"
               >
                 {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <MailCheck className="h-4 w-4" />}
                 {submitting ? c.sendingCode : c.sendCode}
@@ -628,9 +628,9 @@ export function AdminAccess() {
         </form>
       )}
 
-      <section className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018]/70">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-6 py-5">
-          <div className="flex items-center gap-2 text-[0.7rem] font-semibold  text-gold">
+      <section className="rounded-[22px] border border-line bg-surface">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-6 py-5">
+          <div className="flex items-center gap-2 text-[0.7rem] font-semibold  text-accent">
             <ShieldCheck className="h-4 w-4" />
             {c.admins}
           </div>
@@ -638,7 +638,7 @@ export function AdminAccess() {
             type="button"
             onClick={() => void load()}
             disabled={loading}
-            className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-white/10 px-3 text-[0.7rem]  text-ivory/50 transition-colors hover:border-gold/40 hover:text-gold disabled:opacity-50"
+            className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-line px-3 text-[0.7rem]  text-fg transition-colors hover:border-accent/40 hover:text-accent disabled:opacity-50"
           >
             <RefreshCw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
             {c.reload}
@@ -646,18 +646,18 @@ export function AdminAccess() {
         </div>
 
         {loadError ? (
-          <p role="alert" className="px-6 py-7 text-[0.84rem] text-red-300">
+          <p role="alert" className="px-6 py-7 text-[0.84rem] text-danger">
             {loadError}
           </p>
         ) : loading ? (
-          <div className="flex items-center gap-2 px-6 py-7 text-[0.82rem] text-ivory/45">
-            <Loader2 className="h-4 w-4 animate-spin text-gold" />
+          <div className="flex items-center gap-2 px-6 py-7 text-[0.82rem] text-fg">
+            <Loader2 className="h-4 w-4 animate-spin text-accent" />
             {c.reload}...
           </div>
         ) : adminUsers.length === 0 ? (
-          <p className="px-6 py-7 text-[0.82rem] text-ivory/45">{c.noAdmins}</p>
+          <p className="px-6 py-7 text-[0.82rem] text-fg">{c.noAdmins}</p>
         ) : (
-          <ul className="divide-y divide-white/8">
+          <ul className="divide-y divide-line">
             {adminUsers.map((admin) => {
               const isPrimary = admin.email === user?.email;
               return (
@@ -666,30 +666,30 @@ export function AdminAccess() {
                   className="flex flex-wrap items-center justify-between gap-3 px-6 py-5"
                 >
                   <div className="flex min-w-0 items-center gap-3">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-gold/25 bg-gold/[0.06] text-gold">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-accent/25 bg-accent/[0.06] text-accent">
                       {isPrimary ? <Crown className="h-4 w-4" /> : <ShieldCheck className="h-4 w-4" />}
                     </span>
                     <div className="min-w-0">
-                      <p className="truncate text-[0.92rem] font-medium text-ivory">
+                      <p className="truncate text-[0.92rem] font-medium text-fg">
                         {admin.name}
                         {isPrimary ? (
-                          <span className="ms-2 rounded-full border border-gold/25 px-1.5 py-0.5 text-[0.64rem]  text-gold">
+                          <span className="ms-2 rounded-full border border-accent/25 px-1.5 py-0.5 text-[0.64rem]  text-accent">
                             {c.primary}
                           </span>
                         ) : null}
                       </p>
-                      <p className="mt-1 break-all text-[0.8rem] text-ivory/50" dir="ltr">
+                      <p className="mt-1 break-all text-[0.8rem] text-fg" dir="ltr">
                         {admin.email}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="hidden text-[0.7rem] text-ivory/38 sm:block">
+                    <span className="hidden text-[0.7rem] text-fg sm:block">
                       {c.lastLogin}:{" "}
                       {formatDate(admin.lastLoginAt, locale, c.never)}
                     </span>
                     {isPrimary ? (
-                      <span className="inline-flex items-center gap-1 text-[0.7rem]  text-ivory/35">
+                      <span className="inline-flex items-center gap-1 text-[0.7rem]  text-fg">
                         <LockKeyhole className="h-3 w-3" />
                         {c.protected}
                       </span>
@@ -698,7 +698,7 @@ export function AdminAccess() {
                         type="button"
                         onClick={() => setRevokeTarget(admin)}
                         disabled={busyEmail === admin.email}
-                        className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-red-400/25 px-3 text-[0.7rem]  text-red-300/80 transition-colors hover:border-red-400/50 hover:text-red-200 disabled:opacity-50"
+                        className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-danger/25 px-3 text-[0.7rem]  text-danger transition-colors hover:border-danger/50 hover:text-danger disabled:opacity-50"
                       >
                         {busyEmail === admin.email ? (
                           <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -716,8 +716,8 @@ export function AdminAccess() {
         )}
       </section>
 
-      <section className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018]/70">
-        <div className="border-b border-white/10 px-6 py-5 text-[0.7rem] font-semibold  text-gold">
+      <section className="rounded-[22px] border border-line bg-surface">
+        <div className="border-b border-line px-6 py-5 text-[0.7rem] font-semibold  text-accent">
           <span className="inline-flex items-center gap-2">
             <Users className="h-4 w-4" />
             {c.clients}
@@ -725,31 +725,31 @@ export function AdminAccess() {
         </div>
 
         {loading ? (
-          <div className="flex items-center gap-2 px-6 py-7 text-[0.82rem] text-ivory/45">
-            <Loader2 className="h-4 w-4 animate-spin text-gold" />
+          <div className="flex items-center gap-2 px-6 py-7 text-[0.82rem] text-fg">
+            <Loader2 className="h-4 w-4 animate-spin text-accent" />
             {c.reload}...
           </div>
         ) : clientUsers.length === 0 ? (
-          <p className="px-6 py-7 text-[0.82rem] text-ivory/45">{c.noClients}</p>
+          <p className="px-6 py-7 text-[0.82rem] text-fg">{c.noClients}</p>
         ) : (
-          <ul className="divide-y divide-white/8">
+          <ul className="divide-y divide-line">
             {clientUsers.map((client) => (
               <li
                 key={client.email}
                 className="flex flex-wrap items-center justify-between gap-3 px-6 py-5"
               >
                 <div className="min-w-0">
-                  <p className="truncate text-[0.92rem] font-medium text-ivory">{client.name}</p>
-                  <p className="mt-1 break-all text-[0.8rem] text-ivory/48" dir="ltr">
+                  <p className="truncate text-[0.92rem] font-medium text-fg">{client.name}</p>
+                  <p className="mt-1 break-all text-[0.8rem] text-fg" dir="ltr">
                     {client.email}
-                    <span className="mx-2 text-ivory/15">·</span>
+                    <span className="mx-2 text-fg">·</span>
                     {client.company}
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => startPromotion(client)}
-                  className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-gold/30 bg-gold/[0.04] px-3 text-[0.7rem]  text-gold transition-colors hover:border-gold/55 hover:bg-gold/[0.09]"
+                  className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-accent/30 bg-accent/[0.04] px-3 text-[0.7rem]  text-accent transition-colors hover:border-accent/55 hover:bg-accent/[0.09]"
                 >
                   <UserPlus className="h-3.5 w-3.5" />
                   {c.promote}
@@ -793,14 +793,14 @@ function Stat({
   text?: string;
 }) {
   return (
-    <div className="min-w-0 rounded-2xl border border-white/10 bg-obsidian/40 px-6 py-5">
+    <div className="min-w-0 rounded-2xl border border-line bg-bg/40 px-6 py-5">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[0.72rem]  text-ivory/45">{label}</span>
-        <Icon className="h-4 w-4 shrink-0 text-gold/60" />
+        <span className="text-[0.72rem]  text-fg">{label}</span>
+        <Icon className="h-4 w-4 shrink-0 text-accent" />
       </div>
-      <p className="mt-2.5 text-[28px] font-bold leading-none text-[#F1EEE8] [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{value}</p>
+      <p className="mt-2.5 text-[28px] font-bold leading-none text-fg [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif]">{value}</p>
       {text ? (
-        <p className="mt-2 break-words text-[0.76rem] leading-relaxed text-ivory/38">{text}</p>
+        <p className="mt-2 break-words text-[0.76rem] leading-relaxed text-fg">{text}</p>
       ) : null}
     </div>
   );
@@ -825,8 +825,8 @@ function ModeButton({
       className={cn(
         "inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border px-4 text-[0.74rem] font-semibold  transition-colors",
         active
-          ? "border-gold/45 bg-gold/[0.1] text-gold"
-          : "border-white/10 text-ivory/50 hover:border-white/20 hover:text-ivory/70",
+          ? "border-accent/45 bg-accent/[0.1] text-accent"
+          : "border-line text-fg hover:border-line hover:text-fg",
       )}
     >
       <Icon className="h-3.5 w-3.5" />

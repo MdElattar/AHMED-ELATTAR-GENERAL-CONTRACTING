@@ -1,3 +1,4 @@
+import { surfaceTokens, tokenAlpha } from "@/lib/design/tokens";
 import "server-only";
 import type { AdminAlert } from "@/lib/notifications";
 
@@ -28,12 +29,12 @@ const META_LABELS: Record<string, string> = {
 };
 
 const FONT_STACK = "Arial,'Segoe UI',Tahoma,sans-serif";
-const GOLD = "#D4AF37";
-const GOLD_DEEP = "#B8860B";
-const PALE_GOLD_BORDER = "#614F1E";
-const PALE_GOLD_BORDER_RGBA = "rgba(212,175,55,0.25)";
-const IVORY = "#F5EFE4";
-const MUTED = "rgba(245,239,228,0.62)";
+const GOLD = surfaceTokens.accent;
+const GOLD_DEEP = surfaceTokens.accentDeep;
+const PALE_GOLD_BORDER = surfaceTokens.line;
+const PALE_GOLD_BORDER_RGBA = tokenAlpha("accent", 0.25);
+const IVORY = surfaceTokens.fg;
+const MUTED = tokenAlpha("fg", 0.62);
 
 /**
  * Emails are rendered outside the request, so the public site URL must be
@@ -129,13 +130,13 @@ export function renderAdminAlertEmail(alert: AdminAlert) {
     .map(([key, value], index) => {
       const label = escapeHtml(labelFor(key));
       const display = escapeHtml(cleanValue(value));
-      const background = index % 2 === 0 ? "#0E1015" : "#0B0C0F";
+      const background = index % 2 === 0 ? surfaceTokens.surface : surfaceTokens.bg;
       return `
         <tr>
-          <td dir="rtl" align="right" valign="top" width="38%" bgcolor="${background}" style="padding:12px 16px;border-bottom:1px solid #24262D;border-bottom:1px solid rgba(255,255,255,0.07);color:${MUTED};font-family:${FONT_STACK};font-size:12px;line-height:1.6;text-align:right;direction:rtl">
+          <td dir="rtl" align="right" valign="top" width="38%" bgcolor="${background}" style="padding:12px 16px;border-bottom:1px solid ${surfaceTokens.line};border-bottom:1px solid ${tokenAlpha("fg", 0.07)};color:${MUTED};font-family:${FONT_STACK};font-size:12px;line-height:1.6;text-align:right;direction:rtl">
             ${label}
           </td>
-          <td dir="ltr" align="right" valign="top" bgcolor="${background}" style="padding:12px 16px;border-bottom:1px solid #24262D;border-bottom:1px solid rgba(255,255,255,0.07);color:${IVORY};font-family:${FONT_STACK};font-size:13px;font-weight:bold;line-height:1.6;text-align:right;direction:ltr;word-break:break-word">
+          <td dir="ltr" align="right" valign="top" bgcolor="${background}" style="padding:12px 16px;border-bottom:1px solid ${surfaceTokens.line};border-bottom:1px solid ${tokenAlpha("fg", 0.07)};color:${IVORY};font-family:${FONT_STACK};font-size:13px;font-weight:bold;line-height:1.6;text-align:right;direction:ltr;word-break:break-word">
             ${display}
           </td>
         </tr>`;
@@ -143,7 +144,7 @@ export function renderAdminAlertEmail(alert: AdminAlert) {
     .join("");
 
   const referenceBadge = reference
-    ? `<span dir="ltr" style="display:inline-block;padding:6px 10px;border:1px solid ${PALE_GOLD_BORDER};border:1px solid ${PALE_GOLD_BORDER_RGBA};border-radius:999px;background-color:#11131A;color:${GOLD};font-family:${FONT_STACK};font-size:11px;font-weight:bold;letter-spacing:0.4px;line-height:1;direction:ltr">REF · ${escapeHtml(reference)}</span>`
+    ? `<span dir="ltr" style="display:inline-block;padding:6px 10px;border:1px solid ${PALE_GOLD_BORDER};border:1px solid ${PALE_GOLD_BORDER_RGBA};border-radius:999px;background-color:${surfaceTokens.surface2};color:${GOLD};font-family:${FONT_STACK};font-size:11px;font-weight:bold;letter-spacing:0.4px;line-height:1;direction:ltr">REF · ${escapeHtml(reference)}</span>`
     : "";
 
   return `<!doctype html>
@@ -172,12 +173,12 @@ export function renderAdminAlertEmail(alert: AdminAlert) {
     }
   </style>
 </head>
-<body bgcolor="#060708" style="margin:0;padding:0;width:100%;background-color:#060708;color:${IVORY};font-family:${FONT_STACK}">
+<body bgcolor="${surfaceTokens.bg}" style="margin:0;padding:0;width:100%;background-color:${surfaceTokens.bg};color:${IVORY};font-family:${FONT_STACK}">
   <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent">إشعار تنفيذي من شركة أحمد العطار للمقاولات العامة · ${escapeHtml(alert.title)}</div>
 
-  <table role="presentation" class="shell" width="640" align="center" cellpadding="0" cellspacing="0" border="0" bgcolor="#060708" style="width:640px;max-width:640px;margin:0 auto;background-color:#060708">
+  <table role="presentation" class="shell" width="640" align="center" cellpadding="0" cellspacing="0" border="0" bgcolor="${surfaceTokens.bg}" style="width:640px;max-width:640px;margin:0 auto;background-color:${surfaceTokens.bg}">
     <tr>
-      <td class="px" style="padding:26px 32px 18px;background-color:#08090B;border-top:3px solid ${GOLD}">
+      <td class="px" style="padding:26px 32px 18px;background-color:${surfaceTokens.surface};border-top:3px solid ${GOLD}">
         <table role="presentation" dir="rtl" width="100%" cellpadding="0" cellspacing="0" border="0">
           <tr>
             <td align="right" valign="middle" width="46" style="text-align:right">
@@ -197,21 +198,21 @@ export function renderAdminAlertEmail(alert: AdminAlert) {
 
     <tr>
       <td class="px" style="padding:0 32px">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#11131A" style="width:100%;background-color:#11131A;border:1px solid ${PALE_GOLD_BORDER};border:1px solid ${PALE_GOLD_BORDER_RGBA};border-radius:16px">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${surfaceTokens.surface2}" style="width:100%;background-color:${surfaceTokens.surface2};border:1px solid ${PALE_GOLD_BORDER};border:1px solid ${PALE_GOLD_BORDER_RGBA};border-radius:16px">
           <tr>
-            <td style="padding:0;background-color:#151821">
+            <td style="padding:0;background-color:${surfaceTokens.surface2}">
               <img src="${HERO_IMAGE}" alt="Tower cranes rising over a construction site at golden hour" width="640" style="display:block;width:100%;max-width:640px;height:auto;border:0">
             </td>
           </tr>
           <tr>
-            <td class="px" style="padding:24px 24px 22px;background-color:#11131A">
+            <td class="px" style="padding:24px 24px 22px;background-color:${surfaceTokens.surface2}">
               <div dir="rtl" style="color:${GOLD};font-family:${FONT_STACK};font-size:11px;font-weight:bold;letter-spacing:1px;line-height:1.6;text-align:right;direction:rtl">وارد عبر القنوات الرسمية · إشارة للمراجعة الفورية</div>
               <h1 class="hero-title" dir="rtl" style="margin:10px 0 0;color:${IVORY};font-family:${FONT_STACK};font-size:27px;font-weight:bold;line-height:1.25;text-align:right;direction:rtl">إشعار تنفيذي جديد</h1>
               <div dir="ltr" style="margin-top:8px;color:${IVORY};font-family:${FONT_STACK};font-size:15px;line-height:1.6;text-align:right;direction:ltr">${escapeHtml(alert.title)}</div>
               <table role="presentation" dir="rtl" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;margin-top:18px">
                 <tr>
                   <td align="right" style="text-align:right">
-                    <span dir="rtl" style="display:inline-block;padding:6px 10px;border-radius:999px;background-color:${GOLD};color:#0A0B0E;font-family:${FONT_STACK};font-size:11px;font-weight:bold;line-height:1;text-align:right;direction:rtl">${escapeHtml(status.ar)} · ${escapeHtml(status.en)}</span>
+                    <span dir="rtl" style="display:inline-block;padding:6px 10px;border-radius:999px;background-color:${GOLD};color:${surfaceTokens.bg};font-family:${FONT_STACK};font-size:11px;font-weight:bold;line-height:1;text-align:right;direction:rtl">${escapeHtml(status.ar)} · ${escapeHtml(status.en)}</span>
                     &nbsp;&nbsp;${referenceBadge}
                   </td>
                 </tr>
@@ -224,7 +225,7 @@ export function renderAdminAlertEmail(alert: AdminAlert) {
 
     <tr>
       <td class="px" style="padding:22px 32px 0">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#0B0C0F" style="width:100%;background-color:#0B0C0F;border:1px solid ${PALE_GOLD_BORDER};border:1px solid ${PALE_GOLD_BORDER_RGBA};border-radius:16px">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${surfaceTokens.bg}" style="width:100%;background-color:${surfaceTokens.bg};border:1px solid ${PALE_GOLD_BORDER};border:1px solid ${PALE_GOLD_BORDER_RGBA};border-radius:16px">
           <tr>
             <td class="px" style="padding:30px 28px 8px">
               <p dir="rtl" style="margin:0;color:${GOLD};font-family:${FONT_STACK};font-size:13px;font-weight:bold;line-height:1.8;text-align:right;direction:rtl">سعادة الإدارة الموقرة،</p>
@@ -234,7 +235,7 @@ export function renderAdminAlertEmail(alert: AdminAlert) {
           </tr>
           <tr>
             <td class="px" style="padding:14px 28px 0">
-              <table role="presentation" dir="rtl" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#11131A" style="width:100%;background-color:#11131A;border-right:3px solid ${GOLD};border:1px solid ${PALE_GOLD_BORDER};border:1px solid ${PALE_GOLD_BORDER_RGBA};border-right:3px solid ${GOLD};border-radius:10px">
+              <table role="presentation" dir="rtl" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${surfaceTokens.surface2}" style="width:100%;background-color:${surfaceTokens.surface2};border-right:3px solid ${GOLD};border:1px solid ${PALE_GOLD_BORDER};border:1px solid ${PALE_GOLD_BORDER_RGBA};border-right:3px solid ${GOLD};border-radius:10px">
                 <tr>
                   <td class="px" style="padding:16px 18px">
                     <div dir="rtl" style="color:${GOLD};font-family:${FONT_STACK};font-size:10px;font-weight:bold;letter-spacing:1px;line-height:1.6;text-align:right;direction:rtl">ملخص الإشعار</div>
@@ -248,7 +249,7 @@ export function renderAdminAlertEmail(alert: AdminAlert) {
             <td class="px" style="padding:24px 28px 0">
               <table role="presentation" dir="rtl" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border:1px solid ${PALE_GOLD_BORDER};border:1px solid ${PALE_GOLD_BORDER_RGBA};border-radius:12px">
                 <tr>
-                  <td colspan="2" bgcolor="#12141B" style="padding:14px 16px;background-color:#12141B;border-bottom:1px solid ${PALE_GOLD_BORDER};border-bottom:1px solid ${PALE_GOLD_BORDER_RGBA}">
+                  <td colspan="2" bgcolor="${surfaceTokens.surface2}" style="padding:14px 16px;background-color:${surfaceTokens.surface2};border-bottom:1px solid ${PALE_GOLD_BORDER};border-bottom:1px solid ${PALE_GOLD_BORDER_RGBA}">
                     <div dir="rtl" style="color:${IVORY};font-family:${FONT_STACK};font-size:13px;font-weight:bold;line-height:1.6;text-align:right;direction:rtl">مواصفات الطلب</div>
                     <div dir="ltr" style="margin-top:2px;color:${GOLD};font-family:${FONT_STACK};font-size:9px;font-weight:bold;letter-spacing:1.4px;line-height:1.6;text-align:right;direction:ltr">REQUEST SPECIFICATION</div>
                   </td>
@@ -262,11 +263,11 @@ export function renderAdminAlertEmail(alert: AdminAlert) {
               <!--[if mso]>
               <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${ADMIN_URL}" style="height:46px;v-text-anchor:middle;width:210px" arcsize="18%" stroke="f" fillcolor="${GOLD}">
                 <v:fill type="gradient" color="${GOLD}" color2="${GOLD_DEEP}" angle="135"></v:fill>
-                <v:textbox inset="0,0,0,0"><div style="color:#0A0B0E;font-family:Arial,sans-serif;font-size:14px;font-weight:bold;text-align:center">فتح لوحة الإدارة</div></v:textbox>
+                <v:textbox inset="0,0,0,0"><div style="color:${surfaceTokens.bg};font-family:Arial,sans-serif;font-size:14px;font-weight:bold;text-align:center">فتح لوحة الإدارة</div></v:textbox>
               </v:roundrect>
               <![endif]-->
               <!--[if !mso]><!-- -->
-              <a href="${ADMIN_URL}" target="_blank" style="mso-hide:all;display:inline-block;padding:14px 26px;border:1px solid ${GOLD};border-radius:10px;background-color:${GOLD_DEEP};background-image:linear-gradient(135deg,${GOLD} 0%,${GOLD_DEEP} 100%);color:#0A0B0E!important;font-family:${FONT_STACK};font-size:14px;font-weight:bold;line-height:1;text-align:center;text-decoration:none">فتح لوحة الإدارة</a>
+              <a href="${ADMIN_URL}" target="_blank" style="mso-hide:all;display:inline-block;padding:14px 26px;border:1px solid ${GOLD};border-radius:10px;background-color:${GOLD_DEEP};background-image:linear-gradient(135deg,${GOLD} 0%,${GOLD_DEEP} 100%);color:${surfaceTokens.bg}!important;font-family:${FONT_STACK};font-size:14px;font-weight:bold;line-height:1;text-align:center;text-decoration:none">فتح لوحة الإدارة</a>
               <!--<![endif]-->
               <div dir="ltr" style="margin-top:10px;color:${MUTED};font-family:${FONT_STACK};font-size:11px;line-height:1.6;text-align:right;direction:ltr">Open the secure admin workspace</div>
             </td>
@@ -287,7 +288,7 @@ export function renderAdminAlertEmail(alert: AdminAlert) {
               <p dir="rtl" style="margin:12px 0 0;color:${IVORY};font-family:${FONT_STACK};font-size:12px;font-weight:bold;line-height:1.8;text-align:right;direction:rtl">المقر الرئيسي · الرياض، المملكة العربية السعودية</p>
               <p dir="ltr" style="margin:4px 0 0;color:${MUTED};font-family:${FONT_STACK};font-size:11px;line-height:1.7;text-align:right;direction:ltr">King Fahd Road, Ahmed Elattar Tower, Riyadh 12211, Saudi Arabia</p>
             </td>
-            <td class="stack" valign="top" width="42%" style="padding:24px 0 0 18px;text-align:right;border-right:1px solid #24262D;border-right:1px solid rgba(255,255,255,0.07)">
+            <td class="stack" valign="top" width="42%" style="padding:24px 0 0 18px;text-align:right;border-right:1px solid ${surfaceTokens.line};border-right:1px solid ${tokenAlpha("fg", 0.07)}">
               <div dir="rtl" style="color:${GOLD};font-family:${FONT_STACK};font-size:11px;font-weight:bold;letter-spacing:1px;line-height:1.6;text-align:right;direction:rtl">روابط سريعة</div>
               <div dir="ltr" style="margin-top:2px;color:${MUTED};font-family:${FONT_STACK};font-size:9px;font-weight:bold;letter-spacing:1.2px;line-height:1.6;text-align:right;direction:ltr">QUICK LINKS</div>
               <p style="margin:12px 0 0;text-align:right"><a href="${WEBSITE_URL}" style="color:${GOLD};font-family:${FONT_STACK};font-size:12px;line-height:1.9;text-align:right;text-decoration:none">الموقع الرسمي</a></p>
@@ -296,7 +297,7 @@ export function renderAdminAlertEmail(alert: AdminAlert) {
             </td>
           </tr>
           <tr>
-            <td colspan="2" style="padding:22px 0 0;border-top:1px solid #24262D;border-top:1px solid rgba(255,255,255,0.07)">
+            <td colspan="2" style="padding:22px 0 0;border-top:1px solid ${surfaceTokens.line};border-top:1px solid ${tokenAlpha("fg", 0.07)}">
               <div dir="rtl" style="color:${IVORY};font-family:${FONT_STACK};font-size:12px;font-weight:bold;line-height:1.7;text-align:right;direction:rtl">توقيع الشركة · م. أحمد العطار</div>
               <div dir="ltr" style="margin-top:2px;color:${MUTED};font-family:${FONT_STACK};font-size:10px;line-height:1.7;text-align:right;direction:ltr">Eng. Ahmed Alattar — Chairman</div>
               <div dir="ltr" style="margin-top:12px;color:${MUTED};font-family:${FONT_STACK};font-size:10px;line-height:1.7;text-align:right;direction:ltr">© ${year} Ahmed Alattar General Contracting Co. All rights reserved.</div>

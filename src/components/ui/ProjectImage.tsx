@@ -36,39 +36,39 @@ const categoryTones: Record<
   { from: string; via: string; to: string; glow: string; text: string }
 > = {
   infrastructure: {
-    from: "#173B5C",
-    via: "#10263D",
-    to: "#0A1522",
-    glow: "rgba(107,182,255,0.28)",
-    text: "#DCEEFF",
+    from: "rgb(var(--info-rgb)/0.16)",
+    via: "rgb(var(--info-rgb)/0.07)",
+    to: "var(--bg)",
+    glow: "rgb(var(--info-rgb)/0.28)",
+    text: "var(--info)",
   },
   residential: {
-    from: "#173F2D",
-    via: "#10291E",
-    to: "#091710",
-    glow: "rgba(76,203,150,0.26)",
-    text: "#D9F7E9",
+    from: "rgb(var(--success-rgb)/0.16)",
+    via: "rgb(var(--success-rgb)/0.07)",
+    to: "var(--bg)",
+    glow: "rgb(var(--success-rgb)/0.26)",
+    text: "var(--success)",
   },
   commercial: {
-    from: "#4A3510",
-    via: "#2B1F0A",
-    to: "#171106",
-    glow: "rgba(226,176,74,0.3)",
-    text: "#FFF0C7",
+    from: "rgb(var(--accent-rgb)/0.22)",
+    via: "rgb(var(--accent-rgb)/0.09)",
+    to: "var(--bg)",
+    glow: "rgb(var(--accent-rgb)/0.3)",
+    text: "var(--accent)",
   },
   industrial: {
-    from: "#4A261A",
-    via: "#2C160F",
-    to: "#180C08",
-    glow: "rgba(217,120,11,0.3)",
-    text: "#FFE2CC",
+    from: "rgb(var(--warning-rgb)/0.2)",
+    via: "rgb(var(--warning-rgb)/0.08)",
+    to: "var(--bg)",
+    glow: "rgb(var(--warning-rgb)/0.3)",
+    text: "var(--warning)",
   },
   hospitality: {
-    from: "#38204A",
-    via: "#21132C",
-    to: "#120A18",
-    glow: "rgba(176,124,255,0.28)",
-    text: "#EEDCFF",
+    from: "rgb(var(--accent-rgb)/0.14)",
+    via: "rgb(var(--surface-2-rgb)/0.6)",
+    to: "var(--bg)",
+    glow: "rgb(var(--accent-rgb)/0.22)",
+    text: "var(--accent)",
   },
 };
 
@@ -128,7 +128,7 @@ export function ProjectImage({
   const initials = initialsFor(title);
 
   return (
-    <span className={cn("relative block overflow-hidden bg-[#171A22]", className)}>
+    <span className={cn("relative block overflow-hidden bg-surface", className)}>
       {hasImage ? (
         <Image
           src={src}
@@ -168,7 +168,7 @@ export function ProjectImage({
           </span>
           <span
             className="relative max-w-[82%] truncate text-[0.6rem] font-medium uppercase tracking-[0.12em]"
-            style={{ color: `${tone.text}B8` }}
+            style={{ color: tone.text, opacity: 0.72 }}
             dir={locale === "ar" ? "rtl" : "ltr"}
           >
             {title || (locale === "ar" ? "مشروع" : "Project")}
@@ -177,7 +177,7 @@ export function ProjectImage({
       )}
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-white/[0.08]"
+        className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-line"
       />
     </span>
   );
