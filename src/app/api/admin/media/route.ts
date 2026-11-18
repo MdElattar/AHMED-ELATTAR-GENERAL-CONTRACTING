@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/auth/guard";
-import { createAsset } from "@/lib/db";
+import { createAsset, recordAudit } from "@/lib/db";
 import {NO_STORE_HEADERS, clientIp, isSameOrigin, safeLogError } from "@/lib/security/http";
 import { rateLimit } from "@/lib/security/rate-limit";
 
@@ -126,6 +126,13 @@ export async function POST(request: NextRequest) {
       ...(Number.isFinite(height) && height > 0 ? { height: Math.round(height) } : {}),
     });
 
+    await recordAudit({
+      actor: session.email,
+      action: "media.uploaded",
+      entity: "media",
+      entityId: asset.id,
+      ip: clientIp(request),
+    });
     return NextResponse.json(
       { url: `/api/media/${asset.id}`, width: asset.width, height: asset.height, size: asset.size },
       { status: 201, headers: NO_STORE_HEADERS },

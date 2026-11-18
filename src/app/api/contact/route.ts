@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { randomReference } from "@/lib/auth/token";
-import { createInquiry, listServiceSlugs } from "@/lib/db";
+import { createInquiry, listServiceSlugs, recordAudit } from "@/lib/db";
 import { dispatchAdminAlert } from "@/lib/notifications";
 import {NO_STORE_HEADERS,
   clientIp,
@@ -81,6 +81,13 @@ export async function POST(request: NextRequest) {
       message,
       ...(files.length ? { files } : {}),
       reference,
+    });
+    await recordAudit({
+      actor: email,
+      action: "inquiry.created",
+      entity: "inquiry",
+      entityId: reference,
+      ip: clientIp(request),
     });
   } catch (error) {
     safeLogError("[contact] failed to persist inquiry", error);

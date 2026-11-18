@@ -8,9 +8,12 @@ import {
   webauthnUserID,
 } from "@/lib/auth/webauthn";
 import { getUserByEmail, listPasskeys } from "@/lib/db";
-import {NO_STORE_HEADERS,
+import {
+  NO_STORE_HEADERS,
   clientIp,
-  isSameOrigin, safeLogError } from "@/lib/security/http";
+  isSameOrigin,
+  safeLogError,
+} from "@/lib/security/http";
 import { rateLimit } from "@/lib/security/rate-limit";
 
 export async function POST(request: NextRequest) {
@@ -63,15 +66,17 @@ export async function POST(request: NextRequest) {
         id: passkey.credentialId,
         transports: passkey.transports,
       })),
+      // Discoverable credentials are required so a passkey can sign in without
+      // first typing an email address, and user verification is mandatory.
       authenticatorSelection: {
-        residentKey: "preferred",
-        userVerification: "preferred",
+        residentKey: "required",
+        userVerification: "required",
       },
       timeout: 90_000,
     });
 
     const response = NextResponse.json({ options }, { headers: NO_STORE_HEADERS });
-    createWebAuthnChallenge(response, "registration", user.email);
+    await createWebAuthnChallenge(response, "registration", user.email, options.challenge);
     return response;
   } catch (error) {
     if (isAuthConfigError(error)) return authUnavailable();

@@ -74,15 +74,15 @@ export function LightingToggle({
       className={cn(
         "group relative flex h-10 items-center gap-2 border px-3 text-[0.6rem] font-medium uppercase tracking-[0.14em] transition-colors duration-300",
         tone === "light"
-          ? "border-ink/15 text-ink/55 hover:border-gold-dark/60 hover:text-gold-dark"
-          : "border-white/15 text-ivory/65 hover:border-gold/50 hover:text-gold",
+          ? "border-line text-fg hover:border-accent/60 hover:text-accent"
+          : "border-line text-fg hover:border-accent/50 hover:text-accent",
         compact && "w-10 justify-center px-0",
         className,
       )}
     >
-      <Icon className="h-3.5 w-3.5 shrink-0 text-gold" aria-hidden="true" />
+      <Icon className="h-3.5 w-3.5 shrink-0 text-accent" aria-hidden="true" />
       {!compact ? <span>{current.short[locale]}</span> : null}
-      <span className="absolute inset-x-2 -bottom-px h-px scale-x-0 bg-gold transition-transform duration-500 group-hover:scale-x-100" />
+      <span className="absolute inset-x-2 -bottom-px h-px scale-x-0 bg-accent-fill transition-transform duration-500 group-hover:scale-x-100" />
     </button>
   );
 }

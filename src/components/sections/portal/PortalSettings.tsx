@@ -16,8 +16,14 @@ import {
   Trash2,
   UserRound,
 } from "lucide-react";
-import { isAdminUser, useAuth, type PortalPasskey } from "@/components/providers/AuthProvider";
+import {
+  AuthRequestError,
+  isAdminUser,
+  useAuth,
+  type PortalPasskey,
+} from "@/components/providers/AuthProvider";
 import { useI18n } from "@/components/providers/I18nProvider";
+import { BackupCodesPanel } from "@/components/auth/BackupCodesPanel";
 import { PortalShell } from "@/components/sections/portal/PortalShell";
 import { Field, TextInput } from "@/components/ui/Field";
 import { Reveal } from "@/components/ui/Reveal";
@@ -133,13 +139,15 @@ const copy = {
 const PREFERENCES_KEY = "ahmed-elattar-portal-preferences";
 
 export function PortalSettings() {
-  const { locale, toggleLocale } = useI18n();
+  const { locale, toggleLocale, t } = useI18n();
   const {
     user,
     updateProfile,
     listPasskeys,
     registerPasskey,
+    renamePasskey,
     removePasskey,
+    stepUp,
   } = useAuth();
   const c = copy[locale];
   const [name, setName] = useState(user?.name ?? "");
@@ -165,6 +173,11 @@ export function PortalSettings() {
   const [passkeyBusy, setPasskeyBusy] = useState(false);
   const [passkeyMessage, setPasskeyMessage] = useState("");
   const [passkeyError, setPasskeyError] = useState("");
+  const [hasBackupCodes, setHasBackupCodes] = useState(false);
+  const [freshCodes, setFreshCodes] = useState<string[] | undefined>();
+  const [deviceName, setDeviceName] = useState("");
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState("");
 
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
@@ -200,8 +213,11 @@ export function PortalSettings() {
     let cancelled = false;
 
     listPasskeys()
-      .then((items) => {
-        if (!cancelled) setPasskeys(items);
+      .then((result) => {
+        if (!cancelled) {
+          setPasskeys(result.passkeys);
+          setHasBackupCodes(result.hasBackupCodes);
+        }
       })
       .catch(() => {
         if (!cancelled) setPasskeyError(c.passkeyError);
@@ -314,38 +330,86 @@ export function PortalSettings() {
 
   const isAdmin = isAdminUser(user);
 
+  const refreshPasskeys = async () => {
+    const result = await listPasskeys();
+    setPasskeys(result.passkeys);
+    setHasBackupCodes(result.hasBackupCodes);
+  };
+
   const addPasskey = async () => {
     setPasskeyMessage("");
     setPasskeyError("");
     setPasskeyBusy(true);
 
     try {
-      const passkey = await registerPasskey();
+      const result = await registerPasskey(
+        deviceName.trim() || t.security.passkeyDevice,
+      );
       setPasskeys((current) => [
-        passkey,
-        ...current.filter((item) => item.credentialId !== passkey.credentialId),
+        result.passkey,
+        ...current.filter((item) => item.credentialId !== result.passkey.credentialId),
       ]);
-      setPasskeyMessage(c.passkeyAdded);
+      if (result.backupCodes?.length) setFreshCodes(result.backupCodes);
+      setDeviceName("");
+      setPasskeyMessage(t.security.passkeyAdded);
+    } catch (error) {
+      setPasskeyError(
+        error instanceof AuthRequestError && error.code === "unavailable"
+          ? t.security.enrollUnsupported
+          : t.security.passkeyError,
+      );
+    } finally {
+      setPasskeyBusy(false);
+    }
+  };
+
+  const savePasskeyName = async (credentialId: string) => {
+    const name = renameValue.trim();
+    if (!name) return;
+    setPasskeyMessage("");
+    setPasskeyError("");
+    setPasskeyBusy(true);
+    try {
+      await renamePasskey(credentialId, name);
+      await refreshPasskeys();
+      setRenamingId(null);
+      setRenameValue("");
+      setPasskeyMessage(t.security.passkeyRenamed);
     } catch {
-      setPasskeyError(c.passkeyError);
+      setPasskeyError(t.security.passkeyError);
     } finally {
       setPasskeyBusy(false);
     }
   };
 
   const deletePasskey = async (credentialId: string) => {
-    if (!window.confirm(c.passkeyRemoveConfirm)) return;
+    if (!window.confirm(t.security.passkeyRemoveConfirm)) return;
     setPasskeyMessage("");
     setPasskeyError("");
+    setPasskeyBusy(true);
 
     try {
-      await removePasskey(credentialId);
-      setPasskeys((current) =>
-        current.filter((item) => item.credentialId !== credentialId),
+      try {
+        await removePasskey(credentialId);
+      } catch (error) {
+        if (error instanceof AuthRequestError && error.code === "step_up_required") {
+          setPasskeyMessage(t.security.stepUpVerifying);
+          await stepUp();
+          await removePasskey(credentialId);
+        } else {
+          throw error;
+        }
+      }
+      await refreshPasskeys();
+      setPasskeyMessage(t.security.passkeyRemoved);
+    } catch (error) {
+      setPasskeyError(
+        error instanceof AuthRequestError && error.code === "backup_codes_required"
+          ? t.security.backupCodesRequired
+          : t.security.passkeyError,
       );
-      setPasskeyMessage(c.passkeyRemoved);
-    } catch {
-      setPasskeyError(c.passkeyError);
+    } finally {
+      setPasskeyBusy(false);
     }
   };
 
@@ -361,13 +425,13 @@ export function PortalSettings() {
     <PortalShell title={c.title} description={c.description}>
       <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
         <Reveal>
-          <form onSubmit={saveProfile} className="border border-white/10 bg-coal">
-            <div className="flex items-center justify-between gap-3 border-b border-white/10 px-6 py-4">
-              <span className="flex items-center gap-2 text-[0.55rem] font-semibold uppercase tracking-[0.16em] text-gold">
+          <form onSubmit={saveProfile} className="border border-line bg-surface">
+            <div className="flex items-center justify-between gap-3 border-b border-line px-6 py-4">
+              <span className="flex items-center gap-2 text-[0.55rem] font-semibold uppercase tracking-[0.16em] text-accent">
                 <UserRound className="h-4 w-4" />
                 {c.profile}
               </span>
-              <span className="tabular text-[0.55rem] uppercase tracking-[0.14em] text-ivory/40">
+              <span className="tabular text-[0.55rem] uppercase tracking-[0.14em] text-fg">
                 {c.accountId} · {user?.accountId}
               </span>
             </div>
@@ -389,7 +453,7 @@ export function PortalSettings() {
                   readOnly
                   aria-readonly="true"
                   title={c.emailLocked}
-                  className="cursor-not-allowed bg-white/[0.03] text-ivory/55"
+                  className="cursor-not-allowed bg-surface-2 text-fg"
                   required
                 />
               </Field>
@@ -409,18 +473,18 @@ export function PortalSettings() {
               </Field>
             </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line p-4">
               <span
                 role={saveError ? "alert" : "status"}
                 aria-live="polite"
-                className={cn("text-[0.58rem]", saveError ? "text-red-300" : "text-ivory/45")}
+                className={cn("text-[0.58rem]", saveError ? "text-danger" : "text-fg")}
               >
                 {saveError || (saved ? c.saved : c.preferencesNotice)}
               </span>
               <button
                 type="submit"
                 disabled={saving}
-                className="inline-flex h-10 items-center gap-2 bg-gold px-5 text-[0.6rem] font-semibold uppercase tracking-[0.14em] text-obsidian transition-colors hover:bg-gold-light disabled:cursor-wait disabled:opacity-70"
+                className="inline-flex h-10 items-center gap-2 bg-accent-fill px-5 text-[0.6rem] font-semibold uppercase tracking-[0.14em] text-accent-fg transition-colors hover:bg-accent-fill disabled:cursor-wait disabled:opacity-70"
               >
                 {saved ? <Check className="h-3.5 w-3.5" /> : <Save className="h-3.5 w-3.5" />}
                 {saving ? c.saving : saved ? c.saved : c.save}
@@ -431,12 +495,12 @@ export function PortalSettings() {
 
         <div className="flex flex-col gap-6">
           <Reveal delay={80}>
-            <div className="border border-white/10 bg-coal">
-              <div className="flex items-center gap-2 border-b border-white/10 px-6 py-4 text-[0.55rem] font-semibold uppercase tracking-[0.16em] text-gold">
+            <div className="border border-line bg-surface">
+              <div className="flex items-center gap-2 border-b border-line px-6 py-4 text-[0.55rem] font-semibold uppercase tracking-[0.16em] text-accent">
                 <Bell className="h-4 w-4" />
                 {c.preferences}
               </div>
-              <div className="divide-y divide-white/8">
+              <div className="divide-y divide-line">
                 {[
                   { label: c.emailUpdates, value: emailUpdates, set: setEmailUpdates },
                   { label: c.smsUpdates, value: smsUpdates, set: setSmsUpdates },
@@ -448,16 +512,16 @@ export function PortalSettings() {
                     onClick={() => item.set(!item.value)}
                     className="flex w-full items-center justify-between gap-4 px-6 py-4 text-start"
                   >
-                    <span className="text-[0.72rem] text-ivory/65">{item.label}</span>
+                    <span className="text-[0.72rem] text-fg">{item.label}</span>
                     <span
                       className={cn(
                         "relative h-5 w-9 rounded-full transition-colors",
-                        item.value ? "bg-gold" : "bg-white/15",
+                        item.value ? "bg-accent-fill" : "bg-line",
                       )}
                     >
                       <span
                         className={cn(
-                          "absolute top-0.5 h-4 w-4 rounded-full bg-obsidian transition-all",
+                          "absolute top-0.5 h-4 w-4 rounded-full bg-bg transition-all",
                           item.value ? "start-4" : "start-0.5",
                         )}
                       />
@@ -469,20 +533,20 @@ export function PortalSettings() {
           </Reveal>
 
           <Reveal delay={120}>
-            <div className="border border-white/10 bg-coal p-6">
-              <div className="flex items-center gap-2 text-[0.55rem] font-semibold uppercase tracking-[0.16em] text-gold">
+            <div className="border border-line bg-surface p-6">
+              <div className="flex items-center gap-2 text-[0.55rem] font-semibold uppercase tracking-[0.16em] text-accent">
                 <Globe2 className="h-4 w-4" />
                 {c.language}
               </div>
-              <p className="mt-3 text-[0.7rem] leading-relaxed text-ivory/55">{c.languageText}</p>
+              <p className="mt-3 text-[0.7rem] leading-relaxed text-fg">{c.languageText}</p>
               <div className="mt-4 flex items-center justify-between gap-3">
-                <span className="text-[0.72rem] font-medium text-ivory">
+                <span className="text-[0.72rem] font-medium text-fg">
                   {locale === "ar" ? "العربية" : "English"}
                 </span>
                 <button
                   type="button"
                   onClick={toggleLocale}
-                  className="inline-flex h-9 items-center gap-2 border border-white/12 px-3 text-[0.58rem] font-semibold uppercase tracking-[0.12em] text-ivory/65 transition-colors hover:border-gold/50 hover:text-gold"
+                  className="inline-flex h-9 items-center gap-2 border border-line px-3 text-[0.58rem] font-semibold uppercase tracking-[0.12em] text-fg transition-colors hover:border-accent/50 hover:text-accent"
                 >
                   {c.switchLanguage}
                   <Globe2 className="h-3.5 w-3.5" />
@@ -495,16 +559,16 @@ export function PortalSettings() {
             <Reveal delay={160}>
               <Link
                 href="/admin"
-                className="group flex items-center justify-between gap-4 border border-gold/25 bg-gold/[0.06] p-5 transition-colors hover:border-gold/60"
+                className="group flex items-center justify-between gap-4 border border-accent/25 bg-accent/[0.06] p-5 transition-colors hover:border-accent/60"
               >
                 <div>
-                  <p className="flex items-center gap-2 text-[0.72rem] font-medium text-ivory">
-                    <ShieldCheck className="h-4 w-4 text-gold" />
+                  <p className="flex items-center gap-2 text-[0.72rem] font-medium text-fg">
+                    <ShieldCheck className="h-4 w-4 text-accent" />
                     {c.admin}
                   </p>
-                  <p className="mt-1 text-[0.62rem] text-ivory/55">{c.adminText}</p>
+                  <p className="mt-1 text-[0.62rem] text-fg">{c.adminText}</p>
                 </div>
-                <ArrowUpRight className="h-4 w-4 text-gold transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                <ArrowUpRight className="h-4 w-4 text-accent transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
               </Link>
             </Reveal>
           ) : null}
@@ -512,8 +576,8 @@ export function PortalSettings() {
       </div>
 
       <Reveal delay={100}>
-        <form onSubmit={updatePassword} className="mt-6 border border-white/10 bg-coal">
-          <div className="flex items-center gap-2 border-b border-white/10 px-6 py-4 text-[0.55rem] font-semibold uppercase tracking-[0.16em] text-gold">
+        <form onSubmit={updatePassword} className="mt-6 border border-line bg-surface">
+          <div className="flex items-center gap-2 border-b border-line px-6 py-4 text-[0.55rem] font-semibold uppercase tracking-[0.16em] text-accent">
             <KeyRound className="h-4 w-4" />
             {c.security}
           </div>
@@ -553,13 +617,13 @@ export function PortalSettings() {
               />
             </Field>
           </div>
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line p-4">
             <span
               role={passwordError ? "alert" : "status"}
               aria-live="polite"
               className={cn(
                 "text-[0.58rem]",
-                passwordError ? "text-red-300" : "text-ivory/45",
+                passwordError ? "text-danger" : "text-fg",
               )}
             >
               {passwordError || passwordMessage || c.preferencesNotice}
@@ -567,7 +631,7 @@ export function PortalSettings() {
             <button
               type="submit"
               disabled={passwordSaving}
-              className="inline-flex h-10 items-center gap-2 border border-white/15 px-5 text-[0.6rem] font-semibold uppercase tracking-[0.14em] text-ivory/60 transition-colors hover:border-gold/50 hover:text-gold disabled:cursor-wait disabled:opacity-60"
+              className="inline-flex h-10 items-center gap-2 border border-line px-5 text-[0.6rem] font-semibold uppercase tracking-[0.14em] text-fg transition-colors hover:border-accent/50 hover:text-accent disabled:cursor-wait disabled:opacity-60"
             >
               <KeyRound className="h-3.5 w-3.5" />
               {passwordSaving ? c.updatingPassword : c.updatePassword}
@@ -577,79 +641,147 @@ export function PortalSettings() {
       </Reveal>
 
       <Reveal delay={140}>
-        <section className="mt-6 border border-white/10 bg-coal">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-6 py-4">
-            <div className="flex items-center gap-2 text-[0.55rem] font-semibold uppercase tracking-[0.16em] text-gold">
+        <section className="mt-6 border border-line bg-surface" data-testid="passkey-settings">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-6 py-4">
+            <div className="flex items-center gap-2 text-[0.55rem] font-semibold uppercase tracking-[0.16em] text-accent">
               <Fingerprint className="h-4 w-4" />
-              {c.passkeys}
+              {t.security.passkeysTitle}
             </div>
             <button
               type="button"
               onClick={addPasskey}
               disabled={passkeyBusy}
-              className="inline-flex h-10 items-center gap-2 border border-gold/35 bg-gold/[0.07] px-4 text-[0.6rem] font-semibold uppercase tracking-[0.14em] text-gold transition-colors hover:border-gold/60 hover:bg-gold/[0.12] disabled:cursor-wait disabled:opacity-60"
+              data-testid="passkey-add"
+              className="inline-flex min-h-11 items-center gap-2 border border-accent/35 bg-accent/[0.07] px-4 text-[0.6rem] font-semibold uppercase tracking-[0.14em] text-accent transition-colors hover:border-accent/60 hover:bg-accent/[0.12] disabled:cursor-wait disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
             >
               {passkeyBusy ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
               ) : (
                 <Plus className="h-3.5 w-3.5" />
               )}
-              {passkeyBusy ? c.addingPasskey : c.addPasskey}
+              {passkeyBusy ? t.security.addingPasskey : t.security.addPasskey}
             </button>
           </div>
 
           <div className="p-6">
-            <p className="max-w-2xl text-[0.72rem] leading-relaxed text-ivory/55">
-              {c.passkeysText}
+            <p className="max-w-2xl text-[0.72rem] leading-relaxed text-fg">
+              {t.security.passkeysText}
             </p>
 
+            <div className="mt-5 max-w-sm">
+              <Field label={t.security.enrollDeviceLabel} htmlFor="settings-device-name">
+                <TextInput
+                  id="settings-device-name"
+                  data-testid="passkey-device-name"
+                  value={deviceName}
+                  onChange={(event) => setDeviceName(event.target.value)}
+                  placeholder={t.security.enrollDevicePlaceholder}
+                  maxLength={80}
+                  disabled={passkeyBusy}
+                />
+              </Field>
+            </div>
+
             {passkeysLoading ? (
-              <div className="mt-5 flex items-center gap-2 text-[0.65rem] text-ivory/45">
-                <Loader2 className="h-3.5 w-3.5 animate-spin text-gold" />
-                {locale === "ar" ? "جارٍ التحميل..." : "Loading..."}
+              <div className="mt-5 flex items-center gap-2 text-[0.65rem] text-fg" role="status">
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-accent" />
+                {t.common.loading}
               </div>
             ) : passkeys.length === 0 ? (
-              <div className="mt-5 flex items-center gap-3 border border-dashed border-white/10 px-4 py-5 text-[0.68rem] text-ivory/45">
-                <Fingerprint className="h-5 w-5 text-white/20" />
-                {c.noPasskeys}
+              <div className="mt-5 flex items-center gap-3 border border-dashed border-line px-4 py-5 text-[0.68rem] text-fg">
+                <Fingerprint className="h-5 w-5 text-fg" />
+                {t.security.noPasskeys}
               </div>
             ) : (
-              <ul className="mt-5 divide-y divide-white/8 border border-white/10">
+              <ul className="mt-5 divide-y divide-line border border-line">
                 {passkeys.map((passkey) => (
                   <li
                     key={passkey.credentialId}
                     className="flex flex-wrap items-center justify-between gap-4 px-4 py-4"
+                    data-testid="passkey-item"
                   >
                     <div className="flex min-w-0 items-center gap-3">
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center border border-gold/20 bg-gold/[0.05] text-gold">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center border border-accent/20 bg-accent/[0.05] text-accent">
                         <Fingerprint className="h-4 w-4" />
                       </span>
                       <div className="min-w-0">
-                        <p className="truncate text-[0.72rem] font-medium text-ivory">
-                          {passkey.deviceType === "multiDevice"
-                            ? locale === "ar"
-                              ? "مفتاح مرور متزامن"
-                              : "Synced passkey"
-                            : c.passkeyDevice}
+                        <p className="truncate text-[0.72rem] font-medium text-fg">
+                          {passkey.deviceName ??
+                            (passkey.deviceType === "multiDevice"
+                              ? locale === "ar"
+                                ? "مفتاح مرور متزامن"
+                                : "Synced passkey"
+                              : t.security.passkeyDevice)}
+                          {typeof passkey.backedUp === "boolean" ? (
+                            <span className="ms-2 text-[0.56rem] text-accent">
+                              {passkey.backedUp ? t.security.backedUp : t.security.notBackedUp}
+                            </span>
+                          ) : null}
                         </p>
-                        <p className="mt-1 text-[0.58rem] text-ivory/45">
-                          {c.passkeyCreated}: {formatPasskeyDate(passkey.createdAt)}
+                        <p className="mt-1 text-[0.58rem] text-fg">
+                          {t.security.passkeyCreated}: {formatPasskeyDate(passkey.createdAt)}
                           {" · "}
-                          {c.passkeyLastUsed}:{" "}
+                          {t.security.passkeyLastUsed}:{" "}
                           {passkey.lastUsedAt
                             ? formatPasskeyDate(passkey.lastUsedAt)
-                            : c.passkeyNeverUsed}
+                            : t.security.passkeyNeverUsed}
                         </p>
+                        {renamingId === passkey.credentialId ? (
+                          <div className="mt-3 flex flex-wrap items-center gap-2">
+                            <TextInput
+                              aria-label={t.security.renamePasskey}
+                              value={renameValue}
+                              onChange={(event) => setRenameValue(event.target.value)}
+                              placeholder={t.security.renamePlaceholder}
+                              maxLength={80}
+                              data-testid="passkey-rename-input"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => void savePasskeyName(passkey.credentialId)}
+                              disabled={passkeyBusy || !renameValue.trim()}
+                              className="inline-flex min-h-11 items-center border border-accent/40 px-3 text-[0.56rem] uppercase tracking-[0.12em] text-accent disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                              data-testid="passkey-rename-save"
+                            >
+                              {t.security.save}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setRenamingId(null);
+                                setRenameValue("");
+                              }}
+                              className="inline-flex min-h-11 items-center border border-line px-3 text-[0.56rem] uppercase tracking-[0.12em] text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                            >
+                              {t.security.cancel}
+                            </button>
+                          </div>
+                        ) : null}
                       </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => deletePasskey(passkey.credentialId)}
-                      className="inline-flex h-9 items-center gap-1.5 border border-white/10 px-3 text-[0.56rem] uppercase tracking-[0.12em] text-ivory/45 transition-colors hover:border-red-400/35 hover:text-red-300"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                      {locale === "ar" ? "حذف" : "Remove"}
-                    </button>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setRenamingId(passkey.credentialId);
+                          setRenameValue(passkey.deviceName ?? "");
+                        }}
+                        className="inline-flex min-h-11 items-center gap-1.5 border border-line px-3 text-[0.56rem] uppercase tracking-[0.12em] text-fg transition-colors hover:border-accent/40 hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                        data-testid="passkey-rename"
+                      >
+                        {t.security.rename}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => deletePasskey(passkey.credentialId)}
+                        disabled={passkeyBusy}
+                        className="inline-flex min-h-11 items-center gap-1.5 border border-line px-3 text-[0.56rem] uppercase tracking-[0.12em] text-fg transition-colors hover:border-danger/35 hover:text-danger disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                        data-testid="passkey-remove"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        {t.security.remove}
+                      </button>
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -660,13 +792,26 @@ export function PortalSettings() {
               aria-live="polite"
               className={cn(
                 "mt-4 text-[0.6rem]",
-                passkeyError ? "text-red-300" : "text-ivory/45",
+                passkeyError ? "text-danger" : "text-fg",
               )}
             >
               {passkeyError || passkeyMessage || "\u00A0"}
             </p>
           </div>
         </section>
+      </Reveal>
+
+      <Reveal delay={180}>
+        <div className="mt-6">
+          <BackupCodesPanel
+            codes={freshCodes}
+            hasBackupCodes={hasBackupCodes}
+            onCodesGenerated={(codes: string[]) => {
+              setFreshCodes(codes);
+              setHasBackupCodes(true);
+            }}
+          />
+        </div>
       </Reveal>
     </PortalShell>
   );

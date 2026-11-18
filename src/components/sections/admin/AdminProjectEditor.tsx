@@ -323,17 +323,17 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-white/[.07] bg-white/[.025]">
+    <section className="rounded-2xl border border-line bg-surface-2">
       <button
         type="button"
         onClick={() => onToggle(id)}
         aria-expanded={open}
         className="flex w-full items-center justify-between gap-3 rounded-2xl px-4 py-3.5 text-start md:pointer-events-none md:px-5"
       >
-        <h3 className="text-[15px] font-semibold text-[var(--admin-text,#F1EEE8)]">{title}</h3>
+        <h3 className="text-[15px] font-semibold text-fg">{title}</h3>
         <ChevronDown
           className={cn(
-            "h-4 w-4 shrink-0 text-white/35 transition-transform md:hidden",
+            "h-4 w-4 shrink-0 text-fg transition-transform md:hidden",
             open && "rotate-180",
           )}
           aria-hidden="true"
@@ -623,7 +623,7 @@ function ProjectForm({
     >
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-4 py-4 [scrollbar-width:thin] sm:px-6 sm:py-5">
         {draft ? (
-          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-[#E2B04A]/25 bg-[#E2B04A]/[.06] px-4 py-3 text-[13px] text-[#F3C86A]">
+          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-accent/25 bg-accent-fill/[.06] px-4 py-3 text-[13px] text-accent">
             <RotateCcw className="h-4 w-4 shrink-0" aria-hidden="true" />
             <p className="min-w-0 flex-1">{c.draftReady}</p>
             <button
@@ -633,7 +633,7 @@ function ProjectForm({
                 onDirtyChange(true);
                 setDraft(null);
               }}
-              className="rounded-lg bg-[#E2B04A]/15 px-3 py-1.5 font-semibold text-[#F3C86A]"
+              className="rounded-lg bg-accent-fill/15 px-3 py-1.5 font-semibold text-accent"
             >
               {c.restore}
             </button>
@@ -647,7 +647,7 @@ function ProjectForm({
                   // Ignore.
                 }
               }}
-              className="rounded-lg px-2 py-1.5 text-white/45 hover:text-white/75"
+              className="rounded-lg px-2 py-1.5 text-fg hover:text-fg"
             >
               {c.dismiss}
             </button>
@@ -736,7 +736,7 @@ function ProjectForm({
               />
             </Field>
           </div>
-          <p className="mt-3 text-[13px] leading-relaxed text-[var(--admin-muted,#A6A9B4)]">
+          <p className="mt-3 text-[13px] leading-relaxed text-muted">
             {locale === "ar"
               ? "يُستخدم اسم المدينة والحي لبناء عنوان المشروع في الموقع العام."
               : "The city and district are composed into the public project location."}
@@ -802,16 +802,16 @@ function ProjectForm({
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <span
               title={budgetHealthCopy(health, locale).tooltip}
-              className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-[#E2B04A]/25 bg-[#E2B04A]/10 px-3 py-1.5 text-[13px] font-medium text-[#F3C86A]"
+              className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-accent/25 bg-accent-fill/10 px-3 py-1.5 text-[13px] font-medium text-accent"
             >
-              <span className="h-1.5 w-1.5 rounded-full bg-[#F3C86A]" aria-hidden="true" />
+              <span className="h-1.5 w-1.5 rounded-full bg-accent-fill" aria-hidden="true" />
               {c.health}: {budgetHealthCopy(health, locale).short}
             </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[.03] px-3 py-1.5 text-[13px] text-white/65">
-              {c.margin}: <strong className="font-semibold tabular-nums text-white/85">{formatSAR(margin, locale)}</strong>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface-2 px-3 py-1.5 text-[13px] text-fg">
+              {c.margin}: <strong className="font-semibold tabular-nums text-fg">{formatSAR(margin, locale)}</strong>
             </span>
           </div>
-          <p className="mt-2 text-[13px] leading-relaxed text-[var(--admin-muted,#A6A9B4)]">{c.financialHint}</p>
+          <p className="mt-2 text-[13px] leading-relaxed text-muted">{c.financialHint}</p>
         </SectionCard>
 
         <SectionCard id="schedule" title={c.schedule} open={openSections.schedule} onToggle={toggleSection}>
@@ -842,7 +842,7 @@ function ProjectForm({
                   className="w-24 text-center tabular-nums"
                   aria-invalid={Boolean(errors.progress)}
                 />
-                <span className="text-[14px] text-white/45">%</span>
+                <span className="text-[14px] text-fg">%</span>
               </div>
             </Field>
           </div>
@@ -861,11 +861,11 @@ function ProjectForm({
               }}
               variant="thumb"
               sizes="64px"
-              className="h-12 w-16 shrink-0 rounded-xl border border-white/10"
+              className="h-12 w-16 shrink-0 rounded-xl border border-line"
             />
             <div>
-              <p className="text-[14px] font-medium text-[var(--admin-text,#F1EEE8)]">{c.images}</p>
-              <p className="mt-0.5 text-[13px] text-[var(--admin-muted,#A6A9B4)]">{c.imagesHint}</p>
+              <p className="text-[14px] font-medium text-fg">{c.images}</p>
+              <p className="mt-0.5 text-[13px] text-muted">{c.imagesHint}</p>
             </div>
           </div>
           <ImageUpload
@@ -882,7 +882,7 @@ function ProjectForm({
             }}
           />
           {galleryLength(values.gallery) === 0 ? (
-            <div className="mt-3 flex items-start gap-2 rounded-xl border border-white/10 bg-white/[.03] px-3.5 py-3 text-[13px] text-white/50">
+            <div className="mt-3 flex items-start gap-2 rounded-xl border border-line bg-surface-2 px-3.5 py-3 text-[13px] text-fg">
               <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
               {locale === "ar"
                 ? "لا توجد صور بعد. سيستخدم الموقع الغلاف التجاري الافتراضي حتى ترفع صورة."
@@ -902,7 +902,7 @@ function ProjectForm({
         </SectionCard>
       </div>
 
-      <div className="shrink-0 border-t border-white/[.08] bg-[#101218]/85 px-4 py-4 backdrop-blur sm:px-6">
+      <div className="shrink-0 border-t border-line bg-surface/85 px-4 py-4 backdrop-blur sm:px-6">
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <Button variant="ghost" onClick={onClose} disabled={saving} className="sm:min-w-[104px]">
             {c.cancel}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { formatNumber } from "@/lib/utils";
 
 type CounterProps = {
@@ -26,6 +27,7 @@ export function Counter({
   const ref = useRef<HTMLSpanElement | null>(null);
   const [display, setDisplay] = useState(0);
   const started = useRef(false);
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
     const node = ref.current;
@@ -33,7 +35,7 @@ export function Counter({
 
     if (typeof window === "undefined") return;
 
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    if (reducedMotion) {
       // Reduced motion is only knowable after mount.
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setDisplay(value);
@@ -82,7 +84,7 @@ export function Counter({
       observer.disconnect();
       cancelAnimationFrame(frame);
     };
-  }, [duration, value]);
+  }, [duration, reducedMotion, value]);
 
   return (
     <span ref={ref} className={className} dir="ltr">

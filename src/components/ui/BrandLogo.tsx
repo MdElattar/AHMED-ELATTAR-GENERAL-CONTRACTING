@@ -26,7 +26,6 @@ type BrandLogoProps = {
  */
 export function BrandLogo({
   variant = "full",
-  tone = "light",
   locale: localeOverride,
   priority = false,
   collapsed = false,
@@ -62,8 +61,7 @@ export function BrandLogo({
         >
           <span
             className={cn(
-              "whitespace-nowrap font-bold",
-              tone === "light" ? "text-ivory" : "text-ink",
+              "whitespace-nowrap font-bold text-fg",
               isArabic ? "text-[1.1rem] sm:text-[1.3rem]" : "text-[0.82rem] tracking-[0.16em] sm:text-[0.92rem] sm:tracking-[0.18em]",
             )}
           >
@@ -71,9 +69,8 @@ export function BrandLogo({
           </span>
           <span
             className={cn(
-              "mt-1.5 whitespace-nowrap text-[0.56rem] font-medium",
+              "mt-1.5 whitespace-nowrap text-[0.56rem] font-medium text-muted",
               isArabic ? "tracking-[0.02em]" : "uppercase tracking-[0.2em]",
-              tone === "light" ? "text-ivory/55" : "text-ink/45",
             )}
           >
             {isArabic ? "للمقاولات العامة" : "General Contracting"}

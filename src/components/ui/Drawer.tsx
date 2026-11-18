@@ -80,7 +80,7 @@ export function Drawer({
           <motion.button
             type="button"
             aria-label={closeLabel}
-            className="absolute inset-0 cursor-default bg-obsidian/85 backdrop-blur-md"
+            className="absolute inset-0 cursor-default bg-bg/85 backdrop-blur-md"
             onClick={onClose}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -97,7 +97,7 @@ export function Drawer({
             exit={{ opacity: 0, x: 48 }}
             transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
             className={cn(
-              "drawer-panel fixed inset-x-0 bottom-0 z-10 max-h-[92svh] overflow-y-auto border-t border-white/10 shadow-[0_-30px_120px_-30px_rgba(0,0,0,0.9)] sm:inset-x-auto sm:inset-y-0 sm:end-0 sm:h-full sm:max-h-none sm:w-full sm:max-w-xl sm:border-s sm:border-t-0",
+              "drawer-panel fixed inset-x-0 bottom-0 z-10 max-h-[92svh] overflow-y-auto border-t border-line shadow-e3 sm:inset-x-auto sm:inset-y-0 sm:end-0 sm:h-full sm:max-h-none sm:w-full sm:max-w-xl sm:border-s sm:border-t-0",
               className,
             )}
           >
@@ -106,7 +106,7 @@ export function Drawer({
               type="button"
               onClick={onClose}
               aria-label={closeLabel}
-              className="absolute end-4 top-4 z-20 flex h-11 w-11 items-center justify-center border border-white/15 bg-obsidian/70 text-ivory/70 backdrop-blur transition-colors hover:border-gold/60 hover:text-gold"
+              className="absolute end-4 top-4 z-20 flex h-11 w-11 items-center justify-center border border-line bg-bg/70 text-fg backdrop-blur transition-colors hover:border-accent/60 hover:text-accent"
             >
               <X className="h-4 w-4" />
             </button>

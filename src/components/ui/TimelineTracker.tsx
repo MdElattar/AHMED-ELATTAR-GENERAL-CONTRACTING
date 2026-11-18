@@ -42,10 +42,10 @@ export function TimelineTracker({
     return (
       <div className={cn("flex flex-col gap-3", className)}>
         <div className="flex items-center justify-between">
-          <span className="text-[0.55rem] font-semibold uppercase tracking-[0.2em] text-gold">
+          <span className="text-[0.55rem] font-semibold uppercase tracking-[0.2em] text-accent">
             {label}
           </span>
-          <span className="tabular text-[0.55rem] tracking-[0.12em] text-ivory/45">{counter}</span>
+          <span className="tabular text-[0.55rem] tracking-[0.12em] text-fg">{counter}</span>
         </div>
 
         <div className="relative flex items-start justify-between">
@@ -72,14 +72,14 @@ export function TimelineTracker({
                   className={cn(
                     "h-2.5 w-2.5 rounded-full border transition-all duration-300",
                     isActive
-                      ? "scale-125 border-gold bg-gold shadow-[0_0_18px_rgb(var(--atmo-glow)/0.6)]"
-                      : "border-white/25 bg-obsidian group-hover:border-gold/60",
+                      ? "scale-125 border-accent bg-accent-fill shadow-e1"
+                      : "border-line bg-bg group-hover:border-accent/60",
                   )}
                 />
                 <span
                   className={cn(
                     "max-w-16 truncate text-[0.44rem] font-medium uppercase tracking-[0.08em] transition-colors",
-                    isActive ? "text-gold" : "text-ivory/40 group-hover:text-ivory/60",
+                    isActive ? "text-accent" : "text-fg group-hover:text-fg",
                   )}
                 >
                   {step.title}
@@ -95,11 +95,11 @@ export function TimelineTracker({
   return (
     <div className={cn("flex flex-col", className)}>
       <div className="flex items-center gap-3">
-        <span className="text-[0.55rem] font-semibold uppercase tracking-[0.2em] text-gold">
+        <span className="text-[0.55rem] font-semibold uppercase tracking-[0.2em] text-accent">
           {label}
         </span>
-        <span className="h-px w-8 bg-gold/40" />
-        <span className="tabular text-[0.55rem] tracking-[0.12em] text-ivory/45">{counter}</span>
+        <span className="h-px w-8 bg-accent/40" />
+        <span className="tabular text-[0.55rem] tracking-[0.12em] text-fg">{counter}</span>
       </div>
 
       <div className="relative mt-5">
@@ -127,8 +127,8 @@ export function TimelineTracker({
                   className={cn(
                     "relative z-10 mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-all duration-300",
                     isActive
-                      ? "border-gold bg-gold text-obsidian shadow-[0_0_18px_rgb(var(--atmo-glow)/0.55)]"
-                      : "border-white/20 bg-obsidian text-transparent group-hover:border-gold/50",
+                      ? "border-accent bg-accent-fill text-accent-fg shadow-e1"
+                      : "border-line bg-bg text-transparent group-hover:border-accent/50",
                   )}
                 >
                   <span className="h-1 w-1 rounded-full bg-current" />
@@ -138,13 +138,13 @@ export function TimelineTracker({
                   <span
                     className={cn(
                       "block truncate text-[0.72rem] font-medium tracking-wide transition-colors",
-                      isActive ? "text-ivory" : "text-ivory/50 group-hover:text-ivory/70",
+                      isActive ? "text-fg" : "text-fg group-hover:text-fg",
                     )}
                   >
                     {step.title}
                   </span>
                   {step.subtitle ? (
-                    <span className="mt-0.5 block truncate text-[0.48rem] uppercase tracking-[0.14em] text-ivory/35">
+                    <span className="mt-0.5 block truncate text-[0.48rem] uppercase tracking-[0.14em] text-fg">
                       {step.subtitle}
                     </span>
                   ) : null}
@@ -152,7 +152,7 @@ export function TimelineTracker({
 
                 <span
                   className={cn(
-                    "mt-1 h-px w-6 shrink-0 bg-gold/60 transition-opacity duration-300",
+                    "mt-1 h-px w-6 shrink-0 bg-accent/60 transition-opacity duration-300",
                     isActive ? "opacity-100" : "opacity-0",
                   )}
                   aria-hidden="true"

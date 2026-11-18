@@ -13,9 +13,9 @@ export function Certifications() {
   const c = t.sections.certifications;
 
   return (
-    <section id="certifications" className="relative overflow-hidden bg-obsidian">
+    <section id="certifications" className="relative overflow-hidden bg-bg">
       <div className="blueprint-grid pointer-events-none absolute inset-0 opacity-25" />
-      <div className="pointer-events-none absolute end-0 top-0 h-[480px] w-[480px] rounded-full bg-gold/[0.045] blur-[130px]" />
+      <div className="pointer-events-none absolute end-0 top-0 h-[480px] w-[480px] rounded-full bg-accent/[0.045] blur-[130px]" />
       <div className="container-lux section-pad relative">
         <div className="flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
           <SectionHeading
@@ -27,7 +27,7 @@ export function Certifications() {
           <Reveal delay={180}>
             <Link
               href="/about#certifications"
-              className="group inline-flex shrink-0 items-center gap-3 border border-white/15 px-5 py-3 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-ivory/60 transition-colors hover:border-gold/50 hover:text-gold"
+              className="group inline-flex shrink-0 items-center gap-3 border border-line px-5 py-3 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-fg transition-colors hover:border-accent/50 hover:text-accent"
             >
               {c.cta}
               <ArrowUpRight
@@ -40,35 +40,35 @@ export function Certifications() {
           </Reveal>
         </div>
 
-        <div className="mt-14 grid gap-px overflow-hidden border border-white/10 bg-white/10 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-14 grid gap-px overflow-hidden border border-line bg-line sm:grid-cols-2 lg:grid-cols-3">
           {certifications.map((cert, index) => (
             <Reveal key={cert.code} delay={(index % 3) * 70}>
-              <article className="group relative flex h-full flex-col bg-coal p-7 transition-colors duration-500 hover:bg-graphite sm:p-8">
+              <article className="group relative flex h-full flex-col bg-surface p-7 transition-colors duration-500 hover:bg-surface-2 sm:p-8">
                 <div className="flex items-start justify-between gap-4">
-                  <span className="flex h-11 w-11 items-center justify-center rounded-full border border-gold/30 bg-gold/5 text-gold">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-full border border-accent/30 bg-accent/5 text-accent">
                     {index % 2 === 0 ? (
                       <ShieldCheck className="h-5 w-5" />
                     ) : (
                       <BadgeCheck className="h-5 w-5" />
                     )}
                   </span>
-                  <span className="border border-white/10 px-2.5 py-1 text-[0.52rem] uppercase tracking-[0.14em] text-ivory/45">
+                  <span className="border border-line px-2.5 py-1 text-[0.52rem] uppercase tracking-[0.14em] text-fg">
                     {c.year} {cert.year}
                   </span>
                 </div>
 
-                <p className="mt-7 text-[0.58rem] font-semibold uppercase tracking-[0.22em] text-gold">
+                <p className="mt-7 text-[0.58rem] font-semibold uppercase tracking-[0.22em] text-accent">
                   {cert.code}
                 </p>
-                <h3 className="mt-2 text-xl font-medium text-ivory">{l(cert.title)}</h3>
-                <p className="mt-2 text-[0.75rem] leading-relaxed text-ivory/50">
+                <h3 className="mt-2 text-xl font-medium text-fg">{l(cert.title)}</h3>
+                <p className="mt-2 text-[0.75rem] leading-relaxed text-fg">
                   {l(cert.issuer)}
                 </p>
 
-                <div className="mt-auto flex items-center justify-between gap-4 border-t border-white/10 pt-5">
-                  <span className="text-[0.62rem] text-ivory/55">{l(cert.note)}</span>
-                  <span className="flex items-center gap-1.5 text-[0.52rem] uppercase tracking-[0.12em] text-ivory/35">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400/70" />
+                <div className="mt-auto flex items-center justify-between gap-4 border-t border-line pt-5">
+                  <span className="text-[0.62rem] text-fg">{l(cert.note)}</span>
+                  <span className="flex items-center gap-1.5 text-[0.52rem] uppercase tracking-[0.12em] text-fg">
+                    <span className="h-1.5 w-1.5 rounded-full bg-success/70" />
                     {c.audit}
                   </span>
                 </div>

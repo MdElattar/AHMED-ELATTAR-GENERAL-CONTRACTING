@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/auth/guard";
+import { hasRecentStepUp, stepUpRequiredResponse } from "@/lib/auth/step-up";
 import { OTP_MAX_ATTEMPTS, verifyOtpHash } from "@/lib/auth/otp";
 import { isPrimaryAdminEmail, randomAccountId } from "@/lib/auth/token";
 import { adminDirectoryUser } from "@/lib/admin-access";
@@ -56,6 +57,9 @@ export async function POST(request: NextRequest) {
   const session = await requireAdmin();
   if (!session) return unauthorized();
   if (!isPrimaryAdminEmail(session.email)) return forbidden();
+  // Granting administrative rights is a sensitive role change: OTP alone is
+  // not enough if the current session has not recently been step-up verified.
+  if (!hasRecentStepUp(session)) return stepUpRequiredResponse();
 
   const parsed = adminGrantConfirmSchema.safeParse(
     await readJsonBody(request, 4_000),
@@ -112,6 +116,7 @@ export async function POST(request: NextRequest) {
 
   try {
     let target = await getUserByEmail(grant.targetEmail);
+    const beforeRole = target?.role ?? "none";
     if (grant.mode === "promote") {
       if (!target) {
         return NextResponse.json(
@@ -154,6 +159,21 @@ export async function POST(request: NextRequest) {
         throw error;
       }
     }
+
+    await recordAudit({
+      actor: session.email,
+      action: "role_changed",
+      entity: "user",
+      entityId: target.id,
+      meta: {
+        targetEmail: target.email,
+        before: beforeRole,
+        after: target.role,
+        mode: grant.mode,
+        grantId: grant.id,
+      },
+      ip,
+    });
 
     await recordAudit({
       actor: session.email,

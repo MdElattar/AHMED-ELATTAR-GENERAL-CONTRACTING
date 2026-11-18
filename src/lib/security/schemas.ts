@@ -90,6 +90,7 @@ export const signInSchema = strictObject({
   email: emailField,
   password: z.string().min(8).max(128),
   remember: z.boolean().optional().default(false),
+  next: z.string().max(2048).optional(),
 });
 
 export const signUpSchema = strictObject({
@@ -386,4 +387,61 @@ export const adminNotificationSchema = strictObject({
     .optional()
     .default("")
     .transform((value) => cleanMultiline(value, 1000)),
+});
+
+/* --------------------------------------------------- passkeys / recovery */
+
+/** Optional device label; the caller supplies the "This device" fallback. */
+export const deviceNameField = z
+  .string()
+  .max(80)
+  .optional()
+  .default("")
+  .transform((value) => cleanString(value, 80));
+
+export const passkeyRenameSchema = strictObject({
+  credentialId: z
+    .string()
+    .max(2048)
+    .transform((value) => cleanString(value, 2048))
+    .refine((value) => value.length > 0, { message: "invalid_credential" }),
+  deviceName: z
+    .string()
+    .max(80)
+    .transform((value) => cleanString(value, 80))
+    .refine((value) => value.length > 0, { message: "invalid_device_name" }),
+});
+
+export const passkeyOptionsSchema = strictObject({
+  purpose: z.enum(["sign-in", "step-up"]).optional().default("sign-in"),
+  email: emailField.optional(),
+});
+
+export const passkeyAuthVerifySchema = strictObject({
+  response: z.record(z.string(), z.unknown()),
+  purpose: z.enum(["sign-in", "step-up"]).optional().default("sign-in"),
+  remember: z.boolean().optional().default(true),
+  next: z
+    .string()
+    .max(2048)
+    .optional()
+    .transform((value) => (typeof value === "string" ? cleanString(value, 2048) : undefined)),
+});
+
+export const passkeyResetSchema = strictObject({
+  email: emailField,
+  reason: z
+    .string()
+    .max(500)
+    .transform((value) => cleanString(value, 500))
+    .refine((value) => value.length > 0, { message: "invalid_reason" }),
+});
+
+export const backupCodeRedeemSchema = strictObject({
+  email: emailField,
+  code: z
+    .string()
+    .max(64)
+    .transform((value) => cleanString(value, 64))
+    .refine((value) => value.length > 0, { message: "invalid_code" }),
 });

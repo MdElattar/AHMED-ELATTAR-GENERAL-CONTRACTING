@@ -164,6 +164,9 @@ test.describe("admin projects table · container responsive", () => {
         await page.goto("/admin/projects?view=table", { waitUntil: "domcontentloaded" });
         await page.locator('[data-testid="projects-responsive"]').waitFor({ state: "visible" });
         await expect(page.locator('[data-testid="projects-table"], [data-testid="projects-cards"]').first()).toBeVisible();
+        // Wait for real records to render before measuring; the shell can paint
+        // with an empty or skeleton table while the API request is still in flight.
+        await expect(page.locator('[data-testid="project-select"]').first()).toBeVisible({ timeout: 15000 });
         await page.waitForTimeout(500);
 
         const state = await readProjectsState(page);

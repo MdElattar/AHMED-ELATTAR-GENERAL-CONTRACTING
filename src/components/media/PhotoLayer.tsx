@@ -35,7 +35,7 @@ export function PhotoLayer({
 
   return (
     <div
-      className={cn("pointer-events-none absolute inset-0 overflow-hidden bg-obsidian", className)}
+      className={cn("pointer-events-none absolute inset-0 overflow-hidden bg-bg", className)}
       aria-hidden="true"
     >
       {images.map((image, index) => (
@@ -63,7 +63,7 @@ export function PhotoLayer({
           <div
             className={cn(
               "absolute inset-0",
-              overlay === "full" ? "photo-scrim" : "bg-gradient-to-b from-obsidian/80 via-obsidian/20 to-obsidian/90",
+              overlay === "full" ? "photo-scrim" : "bg-gradient-to-b from-bg/80 via-bg/20 to-bg/90",
             )}
           />
           <div className="photo-warmth absolute inset-0" />

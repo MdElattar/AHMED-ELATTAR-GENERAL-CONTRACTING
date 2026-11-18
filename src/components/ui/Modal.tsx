@@ -76,7 +76,7 @@ export function Modal({
           <motion.button
             type="button"
             aria-label={closeLabel}
-            className="absolute inset-0 cursor-default bg-obsidian/85 backdrop-blur-md"
+            className="absolute inset-0 cursor-default bg-bg/85 backdrop-blur-md"
             onClick={onClose}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -92,7 +92,7 @@ export function Modal({
             exit={{ opacity: 0, y: 20, scale: 0.99 }}
             transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
             className={cn(
-              "relative z-10 max-h-[85vh] w-full max-w-5xl overflow-y-auto overscroll-contain border border-white/10 bg-coal shadow-[0_40px_120px_-30px_rgba(0,0,0,0.9)]",
+              "relative z-10 max-h-[85vh] w-full max-w-5xl overflow-y-auto overscroll-contain border border-line bg-surface shadow-e3",
               className,
             )}
           >
@@ -101,7 +101,7 @@ export function Modal({
               type="button"
               onClick={onClose}
               aria-label={closeLabel}
-              className="absolute end-4 top-4 z-20 flex h-11 w-11 items-center justify-center border border-white/15 bg-obsidian/70 text-ivory/70 backdrop-blur transition-colors hover:border-gold/60 hover:text-gold"
+              className="absolute end-4 top-4 z-20 flex h-11 w-11 items-center justify-center border border-line bg-bg/70 text-fg backdrop-blur transition-colors hover:border-accent/60 hover:text-accent"
             >
               <X className="h-4 w-4" />
             </button>

@@ -148,18 +148,21 @@ sign-in without an admin session, while `/api/content` and `/` return 200.
 | `AUTH_SECRET` | ✅ | HMAC signing for sessions + reset tokens (32+ chars) |
 | `JWT_SECRET` | optional | Accepted alias for `AUTH_SECRET` |
 | `MONGODB_URI` | production | MongoDB Atlas / self-hosted connection string |
+| `WEBAUTHN_RP_ID` | production | Bare production hostname for passkeys (e.g. `alattar.sa`) |
+| `NEXT_PUBLIC_SITE_URL` | production | Canonical `https://` origin for links and redirects |
 | `RESEND_API_KEY` | production | OTP email delivery |
 | `OTP_FROM_EMAIL` | production | Verified sender, e.g. `no-reply@alattar.sa` |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | production | First admin bootstrap (hashed by `npm run seed`) |
 | `ADMIN_ALERT_EMAIL` | optional | Recipient for instant admin email alerts |
 | `WHATSAPP_WEBHOOK_URL` | optional | Generic webhook alert transport |
 | `WHATSAPP_TOKEN` / `WHATSAPP_PHONE_NUMBER_ID` / `WHATSAPP_TO` | optional | Meta Cloud API WhatsApp transport |
-| `ALLOW_IN_MEMORY_DB` | optional | Explicitly allows the seeded memory repository in production |
+| `ALLOW_IN_MEMORY_DB` | optional | Development only; production fails closed even when true |
 
-> Production fails closed without `MONGODB_URI` unless `ALLOW_IN_MEMORY_DB=true`.
-> Development falls back to the seeded in-process repository when MongoDB is
-> unreachable. Run `npm run seed` once against the production database to
-> bootstrap the first super-admin and the project/service catalogue.
+> Production fails closed without a reachable `MONGODB_URI`; the in-process
+> repository is never used there. Development falls back to the seeded in-process
+> repository when MongoDB is unreachable. Run `npm run seed` once against the
+> production database to bootstrap the first super-admin and the project/service
+> catalogue. Use `npm run check:deploy` as the production environment preflight.
 
 > The proposal PDF embeds `public/fonts/NotoNaskhArabic.ttf`; keep that asset
 > deployed with the app so Arabic shaping renders on the server.

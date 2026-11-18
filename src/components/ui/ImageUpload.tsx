@@ -355,19 +355,19 @@ export function ImageUpload({
         className={cn(
           "rounded-[16px] border border-dashed p-4 transition-colors",
           dragActive
-            ? "border-gold/70 bg-gold/[0.08]"
-            : "border-white/15 bg-white/[0.02]",
+            ? "border-accent/70 bg-accent/[0.08]"
+            : "border-line bg-surface-2",
         )}
       >
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] border border-gold/25 bg-gold/10 text-gold">
+          <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] border border-accent/25 bg-accent/10 text-accent">
             <UploadCloud className="h-5 w-5" strokeWidth={1.7} />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-[0.85rem] font-semibold text-ivory/85">
+            <p className="text-[0.85rem] font-semibold text-fg">
               {isAr ? "اسحب الصور هنا أو اختر من جهازك" : "Drag images here or choose from your device"}
             </p>
-            <p className="mt-1 text-[0.72rem] leading-relaxed text-ivory/45">
+            <p className="mt-1 text-[0.72rem] leading-relaxed text-fg">
               {isAr
                 ? "ضغط تلقائي إلى WebP بعرض 1600 بكسل، مع صورة مصغرة 400 بكسل وبلور. الحد الأقصى 10 ميجابايت للصورة."
                 : "Automatic WebP compression at 1600px, plus a 400px thumbnail and blur placeholder. Max 10 MB per photo."}
@@ -380,7 +380,7 @@ export function ImageUpload({
               inputRef.current?.click();
             }}
             disabled={busy || value.gallery.length >= maxFiles}
-            className="admin-focus-ring inline-flex min-h-[44px] shrink-0 items-center justify-center gap-2 rounded-[12px] border border-gold/35 bg-gold/10 px-4 text-[0.78rem] font-semibold text-gold transition-colors hover:bg-gold/15 disabled:cursor-not-allowed disabled:opacity-45"
+            className="admin-focus-ring inline-flex min-h-[44px] shrink-0 items-center justify-center gap-2 rounded-[12px] border border-accent/35 bg-accent/10 px-4 text-[0.78rem] font-semibold text-accent transition-colors hover:bg-accent/15 disabled:cursor-not-allowed disabled:opacity-45"
           >
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
             {busy ? (isAr ? "جارٍ الرفع…" : "Uploading…") : isAr ? "اختيار صور" : "Choose images"}
@@ -398,13 +398,13 @@ export function ImageUpload({
 
         {busy ? (
           <div className="mt-4" role="status" aria-live="polite">
-            <div className="flex items-center justify-between text-[0.72rem] text-ivory/55">
+            <div className="flex items-center justify-between text-[0.72rem] text-fg">
               <span>{isAr ? "ضغط ورفع الصور" : "Compressing and uploading"}</span>
               <span className="tabular-nums">{progress}%</span>
             </div>
-            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
+            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-line">
               <span
-                className="block h-full rounded-full bg-[linear-gradient(270deg,#F3C86A,#C98F1E)] transition-[width] duration-200"
+                className="block h-full rounded-full bg-accent-fill transition-[width] duration-200"
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -415,7 +415,7 @@ export function ImageUpload({
       {errors.length ? (
         <div
           role="alert"
-          className="flex gap-2 rounded-[12px] border border-red-400/25 bg-red-400/[0.08] px-3 py-2.5 text-[0.74rem] leading-relaxed text-red-200"
+          className="flex gap-2 rounded-[12px] border border-danger/25 bg-danger/[0.08] px-3 py-2.5 text-[0.74rem] leading-relaxed text-danger"
         >
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
           <ul className="list-none space-y-1 p-0">
@@ -446,7 +446,7 @@ export function ImageUpload({
               onDragEnd={() => {
                 dragIndex.current = null;
               }}
-              className="group relative overflow-hidden rounded-[12px] border border-white/12 bg-[#12141B]"
+              className="group relative overflow-hidden rounded-[12px] border border-line bg-surface"
             >
               <ProjectImage
                 project={{
@@ -470,16 +470,16 @@ export function ImageUpload({
                     : `Project image ${index + 1}`
                 }
               />
-              <span className="absolute start-2 top-2 inline-flex items-center gap-1 rounded-full bg-obsidian/80 px-2 py-0.5 text-[0.58rem] font-semibold text-ivory/80 backdrop-blur">
+              <span className="absolute start-2 top-2 inline-flex items-center gap-1 rounded-full bg-bg/80 px-2 py-0.5 text-[0.58rem] font-semibold text-fg backdrop-blur">
                 <GripVertical className="h-3 w-3" />
                 {index === 0 ? (isAr ? "الغلاف" : "Cover") : index + 1}
               </span>
-              <span className="absolute inset-x-1 bottom-1 flex items-center justify-center gap-1 rounded-[8px] bg-obsidian/80 p-1 opacity-100 backdrop-blur transition-opacity sm:opacity-0 sm:group-focus-within:opacity-100 sm:group-hover:opacity-100">
+              <span className="absolute inset-x-1 bottom-1 flex items-center justify-center gap-1 rounded-[8px] bg-bg/80 p-1 opacity-100 backdrop-blur transition-opacity sm:opacity-0 sm:group-focus-within:opacity-100 sm:group-hover:opacity-100">
                 <button
                   type="button"
                   onClick={() => commitGallery(moveItem(value.gallery, index, index - 1))}
                   disabled={index === 0}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-[6px] text-ivory/70 hover:bg-white/10 hover:text-ivory disabled:opacity-30"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-[6px] text-fg hover:bg-line hover:text-fg disabled:opacity-30"
                   aria-label={isAr ? "تحريك لليسار" : "Move earlier"}
                 >
                   <ArrowLeft className="h-3.5 w-3.5" />
@@ -488,7 +488,7 @@ export function ImageUpload({
                   type="button"
                   onClick={() => commitGallery(moveItem(value.gallery, index, index + 1))}
                   disabled={index === value.gallery.length - 1}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-[6px] text-ivory/70 hover:bg-white/10 hover:text-ivory disabled:opacity-30"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-[6px] text-fg hover:bg-line hover:text-fg disabled:opacity-30"
                   aria-label={isAr ? "تحريك لليمين" : "Move later"}
                 >
                   <ArrowRight className="h-3.5 w-3.5" />
@@ -499,7 +499,7 @@ export function ImageUpload({
                     replaceIndex.current = index;
                     inputRef.current?.click();
                   }}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-[6px] text-ivory/70 hover:bg-white/10 hover:text-ivory"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-[6px] text-fg hover:bg-line hover:text-fg"
                   aria-label={isAr ? "استبدال الصورة" : "Replace image"}
                 >
                   <RefreshCw className="h-3.5 w-3.5" />
@@ -509,7 +509,7 @@ export function ImageUpload({
                   onClick={() =>
                     commitGallery(value.gallery.filter((_, itemIndex) => itemIndex !== index))
                   }
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-[6px] text-[#FF9A8F] hover:bg-red-400/10"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-[6px] text-danger hover:bg-danger/10"
                   aria-label={isAr ? "إزالة الصورة" : "Remove image"}
                 >
                   <Trash2 className="h-3.5 w-3.5" />

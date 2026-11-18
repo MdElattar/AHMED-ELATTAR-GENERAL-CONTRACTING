@@ -144,6 +144,9 @@ async function openProjects(page: Page, width: number, collapsed: boolean) {
   await page.goto("/admin/projects?view=table", { waitUntil: "domcontentloaded" });
   await page.locator('[data-testid="projects-toolbar"]').waitFor({ state: "visible" });
   await expect(page.locator('[data-testid="projects-responsive"]')).toBeVisible();
+  // The table/cards shell mounts before the project API resolves. Waiting for a
+  // row checkbox makes the subsequent geometry assertions deterministic.
+  await expect(page.locator('[data-testid="project-select"]').first()).toBeVisible({ timeout: 15000 });
   await page.waitForTimeout(500);
 }
 

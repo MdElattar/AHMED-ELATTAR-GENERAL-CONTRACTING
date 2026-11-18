@@ -168,14 +168,14 @@ export function PasswordReset({ mode }: PasswordResetProps) {
   };
 
   return (
-    <section className="relative min-h-[100svh] overflow-hidden bg-obsidian pt-20 text-ivory">
+    <section className="relative min-h-[100svh] overflow-hidden bg-bg pt-20 text-fg">
       <div className="grid min-h-[calc(100svh-5rem)] lg:grid-cols-[0.95fr_1.05fr]">
-        <aside className="relative hidden overflow-hidden border-e border-white/10 bg-coal/60 p-10 text-ivory lg:flex lg:flex-col lg:justify-between xl:p-14">
+        <aside className="relative hidden overflow-hidden border-e border-line bg-surface/60 p-10 text-fg lg:flex lg:flex-col lg:justify-between xl:p-14">
           <div className="blueprint-grid pointer-events-none absolute inset-0 opacity-40" />
-          <div className="pointer-events-none absolute -start-20 bottom-10 h-[420px] w-[420px] rounded-full bg-gold/[0.07] blur-[130px]" />
+          <div className="pointer-events-none absolute -start-20 bottom-10 h-[420px] w-[420px] rounded-full bg-accent/[0.07] blur-[130px]" />
 
           <div className="relative">
-            <span className="inline-flex items-center gap-2 border border-white/10 px-3 py-1.5 text-[0.52rem] uppercase tracking-[0.18em] text-gold/80">
+            <span className="inline-flex items-center gap-2 border border-line px-3 py-1.5 text-[0.52rem] uppercase tracking-[0.18em] text-accent">
               <ShieldCheck className="h-3 w-3" />
               {locale === "ar" ? "استعادة آمنة" : "Secure recovery"}
             </span>
@@ -183,16 +183,16 @@ export function PasswordReset({ mode }: PasswordResetProps) {
 
           <div className="relative my-16">
             <span className="eyebrow">{t.portal.eyebrow}</span>
-            <h2 className="display-title mt-6 max-w-md text-[clamp(2.4rem,4vw,3.8rem)] text-ivory">
+            <h2 className="display-title mt-6 max-w-md text-[clamp(2.4rem,4vw,3.8rem)] text-fg">
               {t.auth.asideTitle}
             </h2>
-            <p className="mt-5 max-w-sm text-[0.9rem] leading-[1.9] text-ivory/60">
+            <p className="mt-5 max-w-sm text-[0.9rem] leading-[1.9] text-fg">
               {t.auth.asideText}
             </p>
             <ul className="mt-8 space-y-3">
               {t.auth.asidePoints.map((point) => (
-                <li key={point} className="flex items-center gap-3 text-[0.78rem] text-ivory/60">
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full border border-gold/40 text-gold">
+                <li key={point} className="flex items-center gap-3 text-[0.78rem] text-fg">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full border border-accent/40 text-accent">
                     <Check className="h-3 w-3" />
                   </span>
                   {point}
@@ -203,7 +203,7 @@ export function PasswordReset({ mode }: PasswordResetProps) {
 
           <Link
             href="/"
-            className="relative inline-flex items-center gap-2 text-[0.6rem] uppercase tracking-[0.18em] text-ivory/50 transition-colors hover:text-gold"
+            className="relative inline-flex items-center gap-2 text-[0.6rem] uppercase tracking-[0.18em] text-fg transition-colors hover:text-accent"
           >
             <BackIcon className="h-3.5 w-3.5" />
             {t.auth.backHome}
@@ -214,33 +214,33 @@ export function PasswordReset({ mode }: PasswordResetProps) {
           <div className="blueprint-grid pointer-events-none absolute inset-0 opacity-[0.18]" />
           <div className="relative w-full max-w-md">
             <div className="flex items-center justify-between gap-4 lg:hidden">
-              <span className="text-[0.55rem] uppercase tracking-[0.18em] text-gold/70">
+              <span className="text-[0.55rem] uppercase tracking-[0.18em] text-accent">
                 {t.portal.eyebrow}
               </span>
               <Link
                 href="/"
-                className="inline-flex items-center gap-1.5 text-[0.58rem] uppercase tracking-[0.16em] text-ivory/50 transition-colors hover:text-gold"
+                className="inline-flex items-center gap-1.5 text-[0.58rem] uppercase tracking-[0.16em] text-fg transition-colors hover:text-accent"
               >
                 <BackIcon className="h-3 w-3" />
                 {t.auth.backHome}
               </Link>
             </div>
 
-            <span className="mt-10 block text-[0.58rem] uppercase tracking-[0.2em] text-gold lg:mt-0">
+            <span className="mt-10 block text-[0.58rem] uppercase tracking-[0.2em] text-accent lg:mt-0">
               {t.portal.eyebrow}
             </span>
 
             {step === "code" ? (
               <div className="mt-6">
-                <span className="flex h-14 w-14 items-center justify-center rounded-full border border-gold/30 bg-gold/[0.06] text-gold">
+                <span className="flex h-14 w-14 items-center justify-center rounded-full border border-accent/30 bg-accent/[0.06] text-accent">
                   <MailCheck className="h-6 w-6" />
                 </span>
-                <h1 className="display-title mt-7 text-[clamp(2.2rem,4vw,3.4rem)] text-ivory">
+                <h1 className="display-title mt-7 text-[clamp(2.2rem,4vw,3.4rem)] text-fg">
                   {t.auth.otpSentTitle}
                 </h1>
-                <p className="mt-4 text-[0.85rem] leading-relaxed text-ivory/65">
+                <p className="mt-4 text-[0.85rem] leading-relaxed text-fg">
                   {t.auth.otpSentText}{" "}
-                  <span className="font-semibold text-ivory" dir="ltr">
+                  <span className="font-semibold text-fg" dir="ltr">
                     {email}
                   </span>
                   .
@@ -268,7 +268,7 @@ export function PasswordReset({ mode }: PasswordResetProps) {
 
                   {error ? (
                     <p
-                      className="border border-red-400/25 bg-red-400/[0.06] px-4 py-3 text-[0.72rem] text-red-300"
+                      className="border border-danger/25 bg-danger/[0.06] px-4 py-3 text-[0.72rem] text-danger"
                       role="alert"
                     >
                       {error}
@@ -278,7 +278,7 @@ export function PasswordReset({ mode }: PasswordResetProps) {
                   <button
                     type="submit"
                     disabled={loading || code.length !== 6}
-                    className="btn-shine inline-flex h-12 items-center justify-center gap-2.5 bg-gold px-6 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-obsidian transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-60"
+                    className="btn-shine inline-flex h-12 items-center justify-center gap-2.5 bg-accent-fill px-6 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-accent-fg transition-colors hover:bg-accent-fill disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {loading ? (
                       <>
@@ -299,7 +299,7 @@ export function PasswordReset({ mode }: PasswordResetProps) {
                     type="button"
                     onClick={resend}
                     disabled={resending}
-                    className="inline-flex items-center gap-2 text-ivory/55 transition-colors hover:text-gold disabled:opacity-50"
+                    className="inline-flex items-center gap-2 text-fg transition-colors hover:text-accent disabled:opacity-50"
                   >
                     {resending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
                     {resending ? t.auth.otpResending : t.auth.otpResend}
@@ -311,7 +311,7 @@ export function PasswordReset({ mode }: PasswordResetProps) {
                       setError("");
                       setCode("");
                     }}
-                    className="text-ivory/55 transition-colors hover:text-gold"
+                    className="text-fg transition-colors hover:text-accent"
                   >
                     {t.auth.otpChangeEmail}
                   </button>
@@ -319,18 +319,18 @@ export function PasswordReset({ mode }: PasswordResetProps) {
               </div>
             ) : step === "done" ? (
               <div className="mt-6">
-                <span className="flex h-14 w-14 items-center justify-center rounded-full border border-gold/30 bg-gold/[0.06] text-gold">
+                <span className="flex h-14 w-14 items-center justify-center rounded-full border border-accent/30 bg-accent/[0.06] text-accent">
                   <ShieldCheck className="h-6 w-6" />
                 </span>
-                <h1 className="display-title mt-7 text-[clamp(2.2rem,4vw,3.4rem)] text-ivory">
+                <h1 className="display-title mt-7 text-[clamp(2.2rem,4vw,3.4rem)] text-fg">
                   {t.auth.resetSuccessTitle}
                 </h1>
-                <p className="mt-4 text-[0.85rem] leading-relaxed text-ivory/65">
+                <p className="mt-4 text-[0.85rem] leading-relaxed text-fg">
                   {t.auth.resetSuccessText}
                 </p>
                 <Link
                   href="/sign-in"
-                  className="btn-shine mt-8 inline-flex h-12 w-full items-center justify-center gap-2.5 bg-gold px-6 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-obsidian transition-colors hover:bg-gold-light"
+                  className="btn-shine mt-8 inline-flex h-12 w-full items-center justify-center gap-2.5 bg-accent-fill px-6 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-accent-fg transition-colors hover:bg-accent-fill"
                 >
                   {t.auth.backToSignIn}
                   <ForwardIcon className="h-3.5 w-3.5" />
@@ -338,10 +338,10 @@ export function PasswordReset({ mode }: PasswordResetProps) {
               </div>
             ) : (
               <>
-                <h1 className="display-title mt-4 text-[clamp(2.2rem,4vw,3.4rem)] text-ivory">
+                <h1 className="display-title mt-4 text-[clamp(2.2rem,4vw,3.4rem)] text-fg">
                   {step === "email" ? t.auth.forgotTitle : t.auth.resetTitle}
                 </h1>
-                <p className="mt-3 text-[0.82rem] leading-relaxed text-ivory/60">
+                <p className="mt-3 text-[0.82rem] leading-relaxed text-fg">
                   {step === "email" ? t.auth.forgotSubtitle : t.auth.resetSubtitle}
                 </p>
 
@@ -363,7 +363,7 @@ export function PasswordReset({ mode }: PasswordResetProps) {
 
                     {error ? (
                       <p
-                        className="border border-red-400/25 bg-red-400/[0.06] px-4 py-3 text-[0.72rem] text-red-300"
+                        className="border border-danger/25 bg-danger/[0.06] px-4 py-3 text-[0.72rem] text-danger"
                         role="alert"
                       >
                         {error}
@@ -373,7 +373,7 @@ export function PasswordReset({ mode }: PasswordResetProps) {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="btn-shine mt-1 inline-flex h-12 items-center justify-center gap-2.5 bg-gold px-6 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-obsidian transition-colors hover:bg-gold-light disabled:cursor-wait disabled:opacity-70"
+                      className="btn-shine mt-1 inline-flex h-12 items-center justify-center gap-2.5 bg-accent-fill px-6 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-accent-fg transition-colors hover:bg-accent-fill disabled:cursor-wait disabled:opacity-70"
                     >
                       {loading ? (
                         <>
@@ -416,7 +416,7 @@ export function PasswordReset({ mode }: PasswordResetProps) {
                           type="button"
                           onClick={() => setShowPassword((current) => !current)}
                           aria-label={showPassword ? "Hide password" : "Show password"}
-                          className="absolute end-3 top-1/2 -translate-y-1/2 text-ivory/45 transition-colors hover:text-ivory/70"
+                          className="absolute end-3 top-1/2 -translate-y-1/2 text-fg transition-colors hover:text-fg"
                         >
                           {showPassword ? (
                             <EyeOff className="h-4 w-4" />
@@ -447,7 +447,7 @@ export function PasswordReset({ mode }: PasswordResetProps) {
 
                     {error ? (
                       <div
-                        className="border border-red-400/25 bg-red-400/[0.06] px-4 py-3 text-[0.72rem] text-red-300"
+                        className="border border-danger/25 bg-danger/[0.06] px-4 py-3 text-[0.72rem] text-danger"
                         role="alert"
                       >
                         <p>{error}</p>
@@ -466,7 +466,7 @@ export function PasswordReset({ mode }: PasswordResetProps) {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="btn-shine mt-1 inline-flex h-12 items-center justify-center gap-2.5 bg-gold px-6 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-obsidian transition-colors hover:bg-gold-light disabled:cursor-wait disabled:opacity-70"
+                      className="btn-shine mt-1 inline-flex h-12 items-center justify-center gap-2.5 bg-accent-fill px-6 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-accent-fg transition-colors hover:bg-accent-fill disabled:cursor-wait disabled:opacity-70"
                     >
                       {loading ? (
                         <>
@@ -485,7 +485,7 @@ export function PasswordReset({ mode }: PasswordResetProps) {
 
                 <Link
                   href="/sign-in"
-                  className="mt-6 flex items-center justify-center gap-2 text-[0.72rem] text-ivory/55 transition-colors hover:text-gold"
+                  className="mt-6 flex items-center justify-center gap-2 text-[0.72rem] text-fg transition-colors hover:text-accent"
                 >
                   <BackIcon className="h-3.5 w-3.5" />
                   {t.auth.backToSignIn}
@@ -494,11 +494,11 @@ export function PasswordReset({ mode }: PasswordResetProps) {
             )}
 
             {step === "email" ? (
-              <p className="mt-4 text-center text-[0.72rem] text-ivory/55">
+              <p className="mt-4 text-center text-[0.72rem] text-fg">
                 {t.auth.haveAccount}{" "}
                 <Link
                   href="/sign-in"
-                  className="font-semibold text-gold underline-offset-4 hover:underline"
+                  className="font-semibold text-accent underline-offset-4 hover:underline"
                 >
                   {t.auth.signInLink}
                 </Link>

@@ -29,10 +29,10 @@ export function ScrollProgress() {
   }, []);
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-0 z-[90] h-[2px] bg-white/5">
+    <div className="pointer-events-none fixed inset-x-0 top-0 z-[90] h-[2px] bg-line">
       <div
         ref={ref}
-        className="h-full origin-left bg-gradient-to-r from-gold-dark via-gold to-gold-light"
+        className="h-full origin-left bg-gradient-to-r from-accent via-accent to-accent"
         style={{ transform: "scaleX(0)" }}
       />
     </div>

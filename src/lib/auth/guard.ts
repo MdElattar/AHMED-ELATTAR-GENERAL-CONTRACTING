@@ -1,5 +1,6 @@
 import "server-only";
 import { cookies } from "next/headers";
+import { canAccessAdmin, canManageAccess } from "@/lib/auth/permissions";
 import { getProjectBySlug, getUserByEmail, type StoredProject } from "@/lib/db";
 import {
   SESSION_COOKIE,
@@ -7,6 +8,7 @@ import {
   verifySession,
   type SessionPayload,
 } from "./token";
+import { hasRecentStepUp } from "./step-up";
 
 /**
  * Reads and verifies the signed session cookie for server-side route handlers.
@@ -40,6 +42,16 @@ export async function requirePortalSession(): Promise<SessionPayload | null> {
 }
 
 /**
+ * Active session plus a fresh step-up. Sensitive route handlers should use
+ * this (and `stepUpRequiredResponse()` on failure) instead of trusting the
+ * client to claim that re-authentication happened.
+ */
+export async function requireStepUpSession(maxAgeSeconds?: number): Promise<SessionPayload | null> {
+  const session = await activeSession();
+  return session && hasRecentStepUp(session, maxAgeSeconds) ? session : null;
+}
+
+/**
  * IDOR boundary for every portal resource. Administrators may operate on any
  * project; clients only receive a project when their verified email is stored
  * on the project record. Never derive ownership from a request parameter.
@@ -50,7 +62,7 @@ export async function ownedProject(
 ): Promise<StoredProject | null> {
   const project = await getProjectBySlug(slug);
   if (!project) return null;
-  if (session.role === "admin") return project;
+  if (canAccessAdmin(session.role)) return project;
 
   const email = session.email.trim().toLowerCase();
   const payloadOwners = Array.isArray(project.payload.clientEmails)
@@ -64,12 +76,12 @@ export async function ownedProject(
 
 export async function requireAdmin(): Promise<SessionPayload | null> {
   const session = await activeSession();
-  return session?.role === "admin" ? session : null;
+  return session && canAccessAdmin(session.role) ? session : null;
 }
 
 /** Only the environment-configured super-admin can grant or revoke admins. */
 export async function requirePrimaryAdmin(): Promise<SessionPayload | null> {
   const session = await requireAdmin();
-  if (!session) return null;
+  if (!session || !canManageAccess(session.role)) return null;
   return isPrimaryAdminEmail(session.email) ? session : null;
 }

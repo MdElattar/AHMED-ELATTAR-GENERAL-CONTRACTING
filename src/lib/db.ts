@@ -1,6 +1,7 @@
 import { safeLogError } from "@/lib/security/http";
 import "server-only";
 import type { Model, Mongoose } from "mongoose";
+import { hashBackupCode } from "@/lib/auth/backup-codes";
 import { hashPassword } from "@/lib/auth/password";
 import type { ConsultationMode, ConsultationStatus } from "@/lib/consultation";
 import {
@@ -10,7 +11,7 @@ import {
   seedAdminIdentity,
 } from "@/lib/db-seed";
 
-export type UserRole = "client" | "admin";
+export type UserRole = "client" | "manager" | "admin";
 
 export type StoredUser = {
   id: string;
@@ -29,6 +30,11 @@ export type StoredUser = {
   accountId: string;
   /** Invalidates every previously issued session when incremented. */
   sessionVersion: number;
+  /** Number of times a client deferred passkey enrollment (max 3). */
+  passkeyReminders?: number;
+  /** Hashed one-time recovery codes; plaintext is never persisted. */
+  backupCodeHashes?: string[];
+  backupCodesCreatedAt?: string;
   resetTokenHash?: string;
   resetTokenExpiry?: string;
   createdAt: string;
@@ -45,12 +51,25 @@ export type StoredPasskey = {
   counter: number;
   transports: string[];
   deviceType?: string;
+  deviceName?: string;
   backedUp?: boolean;
   createdAt: string;
   lastUsedAt?: string;
 };
 
 export type NewPasskey = Omit<StoredPasskey, "id" | "createdAt" | "lastUsedAt">;
+
+export type AuthChallengeKind = "registration" | "authentication" | "step-up";
+
+export type StoredAuthChallenge = {
+  id: string;
+  challenge: string;
+  kind: AuthChallengeKind;
+  email: string;
+  expiresAt: string;
+  usedAt?: string;
+  createdAt: string;
+};
 
 export type AdminGrantMode = "promote" | "create";
 
@@ -243,6 +262,7 @@ type MemoryDb = {
   inquiries: Map<string, StoredInquiry>;
   audit: StoredAudit[];
   otps: Map<string, StoredOtp>;
+  challenges: Map<string, StoredAuthChallenge>;
   consultations: Map<string, StoredConsultation>;
   signoffs: Map<string, StoredSignoff>;
   seed: Promise<void> | null;
@@ -266,6 +286,7 @@ type MongoModels = {
   Inquiry: LeanModel;
   AuditLog: LeanModel;
   OtpToken: LeanModel;
+  AuthChallenge: LeanModel;
   Consultation: LeanModel;
   Signoff: LeanModel;
 };
@@ -288,6 +309,7 @@ function memory(): MemoryDb {
       inquiries: new Map(),
       audit: [],
       otps: new Map(),
+      challenges: new Map(),
       consultations: new Map(),
       signoffs: new Map(),
       seed: null,
@@ -472,7 +494,9 @@ async function mongoModels(): Promise<MongoModels> {
     // During development a hot reload can retain an older model cache. Rebuild
     // it when a newly added collection is missing instead of throwing at the
     // first passkey or delegation request.
-    if (models.Passkey && models.AdminGrant && models.Asset) return models;
+    if (models.Passkey && models.AdminGrant && models.Asset && models.AuthChallenge) {
+      return models;
+    }
     cached.models = null;
   }
 
@@ -490,9 +514,17 @@ async function mongoModels(): Promise<MongoModels> {
         company: { type: String, required: true },
         phone: { type: String },
         passwordHash: { type: String, required: true, select: false },
-        role: { type: String, enum: ["client", "admin"], default: "client", index: true },
+        role: {
+          type: String,
+          enum: ["client", "manager", "admin"],
+          default: "client",
+          index: true,
+        },
         accountId: { type: String, required: true, index: true },
         sessionVersion: { type: Number, default: 0 },
+        passkeyReminders: { type: Number, default: 0 },
+        backupCodeHashes: { type: [String], default: [], select: false },
+        backupCodesCreatedAt: Date,
         resetTokenHash: { type: String, index: true, select: false },
         resetTokenExpiry: { type: Date },
         lastLoginAt: { type: Date },
@@ -509,6 +541,7 @@ async function mongoModels(): Promise<MongoModels> {
         counter: { type: Number, default: 0 },
         transports: [{ type: String }],
         deviceType: String,
+        deviceName: String,
         backedUp: Boolean,
         lastUsedAt: Date,
       },
@@ -608,6 +641,24 @@ async function mongoModels(): Promise<MongoModels> {
       { timestamps: true, versionKey: false },
     );
 
+    const authChallengeSchema = new mongoose.Schema(
+      {
+        challenge: { type: String, required: true, select: false },
+        kind: {
+          type: String,
+          enum: ["registration", "authentication", "step-up"],
+          required: true,
+          index: true,
+        },
+        // Discoverable (usernameless) sign-in has no email until the assertion
+        // identifies the credential, so this field is intentionally optional.
+        email: { type: String, lowercase: true, index: true, default: "" },
+        expiresAt: { type: Date, required: true, index: { expires: 0 } },
+        usedAt: Date,
+      },
+      { timestamps: true, versionKey: false },
+    );
+
     const consultationSchema = new mongoose.Schema(
       {
         reference: { type: String, required: true, unique: true, index: true },
@@ -685,6 +736,8 @@ async function mongoModels(): Promise<MongoModels> {
       mongoose.model("AuditLog", auditSchema)) as unknown as LeanModel;
     const OtpToken = (mongoose.models.OtpToken ??
       mongoose.model("OtpToken", otpSchema)) as unknown as LeanModel;
+    const AuthChallenge = (mongoose.models.AuthChallenge ??
+      mongoose.model("AuthChallenge", authChallengeSchema)) as unknown as LeanModel;
     const Consultation = (mongoose.models.Consultation ??
       mongoose.model("Consultation", consultationSchema)) as unknown as LeanModel;
     const Signoff = (mongoose.models.Signoff ??
@@ -699,6 +752,7 @@ async function mongoModels(): Promise<MongoModels> {
       Inquiry,
       AuditLog,
       OtpToken,
+      AuthChallenge,
       Consultation,
       Signoff,
     };
@@ -744,12 +798,23 @@ function mapUser(doc: LeanDoc): StoredUser {
     company: str(doc.company),
     ...(str(doc.phone) ? { phone: str(doc.phone) } : {}),
     passwordHash: str(doc.passwordHash),
-    role: doc.role === "admin" ? "admin" : "client",
+    role:
+      doc.role === "admin" || doc.role === "manager" || doc.role === "client"
+        ? doc.role
+        : "client",
     accountId: str(doc.accountId),
     sessionVersion:
       typeof doc.sessionVersion === "number" && doc.sessionVersion >= 0
         ? Math.floor(doc.sessionVersion)
         : 0,
+    passkeyReminders:
+      typeof doc.passkeyReminders === "number" && doc.passkeyReminders >= 0
+        ? Math.floor(doc.passkeyReminders)
+        : 0,
+    backupCodeHashes: Array.isArray(doc.backupCodeHashes)
+      ? doc.backupCodeHashes.filter((value): value is string => typeof value === "string")
+      : [],
+    ...(doc.backupCodesCreatedAt ? { backupCodesCreatedAt: iso(doc.backupCodesCreatedAt) } : {}),
     ...(str(doc.resetTokenHash) ? { resetTokenHash: str(doc.resetTokenHash) } : {}),
     ...(doc.resetTokenExpiry ? { resetTokenExpiry: iso(doc.resetTokenExpiry) } : {}),
     createdAt: iso(doc.createdAt),
@@ -772,6 +837,7 @@ function mapPasskey(doc: LeanDoc): StoredPasskey {
     counter: typeof doc.counter === "number" ? doc.counter : 0,
     transports,
     ...(str(doc.deviceType) ? { deviceType: str(doc.deviceType) } : {}),
+    ...(str(doc.deviceName) ? { deviceName: str(doc.deviceName) } : {}),
     ...(typeof doc.backedUp === "boolean" ? { backedUp: doc.backedUp } : {}),
     createdAt: iso(doc.createdAt),
     ...(doc.lastUsedAt ? { lastUsedAt: iso(doc.lastUsedAt) } : {}),
@@ -939,7 +1005,7 @@ export async function getUserByEmail(email: string): Promise<StoredUser | null> 
 
   const { User } = await mongoModels();
   const doc = (await User.findOne({ email: normalized })
-    .select("+passwordHash +resetTokenHash")
+    .select("+passwordHash +backupCodeHashes +resetTokenHash")
     .lean()) as LeanDoc | null;
   return doc ? mapUser(doc) : null;
 }
@@ -954,7 +1020,9 @@ export async function getUserById(userId: string): Promise<StoredUser | null> {
   }
 
   const { User } = await mongoModels();
-  const doc = (await User.findById(userId).lean()) as LeanDoc | null;
+  const doc = (await User.findById(userId)
+    .select("+passwordHash +backupCodeHashes +resetTokenHash")
+    .lean()) as LeanDoc | null;
   return doc ? mapUser(doc) : null;
 }
 
@@ -1123,6 +1191,194 @@ export async function deletePasskey(email: string, credentialId: string): Promis
   return Boolean(result.deletedCount);
 }
 
+/** Administrator-assisted recovery: removes every passkey for a target user. */
+export async function deleteAllPasskeys(email: string): Promise<number> {
+  const normalized = email.trim().toLowerCase();
+
+  if ((await activeMode()) === "memory") {
+    const db = memory();
+    let removed = 0;
+    for (const [credentialId, passkey] of db.passkeys) {
+      if (passkey.email === normalized) {
+        db.passkeys.delete(credentialId);
+        removed += 1;
+      }
+    }
+    return removed;
+  }
+
+  const { Passkey } = await mongoModels();
+  const result = (await Passkey.deleteMany({ email: normalized })) as {
+    deletedCount?: number;
+  };
+  return result.deletedCount ?? 0;
+}
+
+export async function renamePasskey(
+  email: string,
+  credentialId: string,
+  deviceName: string,
+): Promise<StoredPasskey | null> {
+  const normalized = email.trim().toLowerCase();
+  if ((await activeMode()) === "memory") {
+    const existing = memory().passkeys.get(credentialId);
+    if (!existing || existing.email !== normalized) return null;
+    const renamed = { ...existing, deviceName };
+    memory().passkeys.set(credentialId, renamed);
+    return renamed;
+  }
+  const { Passkey } = await mongoModels();
+  const doc = (await Passkey.findOneAndUpdate(
+    { email: normalized, credentialId },
+    { $set: { deviceName } },
+    { returnDocument: "after" },
+  ).lean()) as LeanDoc | null;
+  return doc ? mapPasskey(doc) : null;
+}
+
+export async function setBackupCodes(
+  email: string,
+  codes: string[],
+): Promise<StoredUser | null> {
+  return updateUser(email, {
+    backupCodeHashes: codes.map(hashBackupCode),
+    backupCodesCreatedAt: now(),
+  });
+}
+
+export async function consumeBackupCode(
+  email: string,
+  code: string,
+): Promise<StoredUser | null> {
+  const normalized = email.trim().toLowerCase();
+  const hash = hashBackupCode(code);
+
+  if ((await activeMode()) === "memory") {
+    await seedMemory();
+    const db = memory();
+    const user = db.users.get(normalized);
+    if (!user) return null;
+    const remaining = user.backupCodeHashes ?? [];
+    const index = remaining.indexOf(hash);
+    if (index < 0) return null;
+    const next = [...remaining];
+    next.splice(index, 1);
+    return updateUser(normalized, { backupCodeHashes: next });
+  }
+
+  // The filter requires the hash to still be present, so concurrent redemptions
+  // of the same code cannot both succeed. `$pull` removes exactly that code.
+  const { User } = await mongoModels();
+  const doc = (await User.findOneAndUpdate(
+    { email: normalized, backupCodeHashes: hash },
+    { $pull: { backupCodeHashes: hash }, $set: { updatedAt: new Date() } },
+    { new: true },
+  )
+    .select("+passwordHash +backupCodeHashes +resetTokenHash")
+    .lean()) as LeanDoc | null;
+  return doc ? mapUser(doc) : null;
+}
+
+/* ------------------------------------------------- webauthn challenges */
+
+export async function createAuthChallenge(input: {
+  challenge: string;
+  kind: AuthChallengeKind;
+  email: string;
+  ttlSeconds: number;
+}): Promise<StoredAuthChallenge> {
+  const record: StoredAuthChallenge = {
+    id: id(),
+    challenge: input.challenge,
+    kind: input.kind,
+    email: input.email.trim().toLowerCase(),
+    expiresAt: new Date(Date.now() + input.ttlSeconds * 1000).toISOString(),
+    createdAt: now(),
+  };
+
+  if ((await activeMode()) === "memory") {
+    memory().challenges.set(record.id, record);
+    return record;
+  }
+
+  const { AuthChallenge } = await mongoModels();
+  const created = await AuthChallenge.create({
+    ...record,
+    expiresAt: new Date(record.expiresAt),
+  });
+  return mapAuthChallenge((created as unknown as { toObject: () => LeanDoc }).toObject());
+}
+
+/**
+ * Atomically consumes a single-use challenge. A challenge is never accepted
+ * twice, even when the first ceremony fails after the lookup.
+ */
+export async function consumeAuthChallenge(input: {
+  id: string;
+  kind: AuthChallengeKind;
+  email?: string;
+}): Promise<string | null> {
+  if (!input.id) return null;
+  const email = input.email?.trim().toLowerCase();
+
+  if ((await activeMode()) === "memory") {
+    const db = memory();
+    const record = db.challenges.get(input.id);
+    if (!record || record.kind !== input.kind || record.usedAt) return null;
+    if (email && record.email !== email) return null;
+    if (Date.parse(record.expiresAt) <= Date.now()) {
+      db.challenges.delete(input.id);
+      return null;
+    }
+    db.challenges.set(input.id, { ...record, usedAt: now() });
+    return record.challenge;
+  }
+
+  const { AuthChallenge } = await mongoModels();
+  // `sanitizeFilter` wraps operator objects in `$eq`, which makes Mongoose try
+  // to cast `{ $gt: ... }` into a Date. A null check matches both missing and
+  // null Date fields and stays compatible with sanitized filters.
+  const filter: Record<string, unknown> = {
+    _id: input.id,
+    kind: input.kind,
+    usedAt: null,
+  };
+  if (email) filter.email = email;
+  // The atomic claim still guarantees one-time use. Expiry is checked after
+  // the claim and expired records are removed, so a stale challenge can never
+  // be accepted (and cannot be retried later).
+  const doc = (await AuthChallenge.findOneAndUpdate(
+    filter,
+    { $set: { usedAt: new Date() } },
+    { returnDocument: "after" },
+  )
+    .select("+challenge")
+    .lean()) as LeanDoc | null;
+  if (!doc) return null;
+  if (Date.parse(iso(doc.expiresAt)) <= Date.now()) {
+    await AuthChallenge.deleteOne({ _id: input.id });
+    return null;
+  }
+  // `challenge` is `select: false` on the schema, so it must be explicitly
+  // included in the returning query or the consumed value would be empty.
+  return str(doc.challenge);
+}
+
+function mapAuthChallenge(doc: LeanDoc): StoredAuthChallenge {
+  return {
+    id: docId(doc),
+    challenge: str(doc.challenge),
+    kind:
+      doc.kind === "registration" || doc.kind === "authentication" || doc.kind === "step-up"
+        ? doc.kind
+        : "authentication",
+    email: str(doc.email),
+    expiresAt: iso(doc.expiresAt),
+    ...(doc.usedAt ? { usedAt: iso(doc.usedAt) } : {}),
+    createdAt: iso(doc.createdAt),
+  };
+}
+
 /* ---------------------------------------------------------- admin grants */
 
 export async function saveAdminGrant(
@@ -1192,13 +1448,19 @@ export async function consumeAdminGrant(grantId: string): Promise<boolean> {
 
   const { AdminGrant } = await mongoModels();
   // The conditional update makes confirmation one-time even if two requests
-  // race each other with the same valid code.
+  // race each other with the same valid code. Null matches missing/null dates
+  // without operator objects, which `sanitizeFilter` would wrap in `$eq`.
   const doc = (await AdminGrant.findOneAndUpdate(
-    { grantId, consumedAt: { $exists: false }, expiresAt: { $gt: new Date() } },
+    { grantId, consumedAt: null },
     { $set: { consumedAt: new Date() } },
     { new: true },
   ).lean()) as LeanDoc | null;
-  return Boolean(doc);
+  if (!doc) return false;
+  if (Date.parse(iso(doc.expiresAt)) <= Date.now()) {
+    await deleteAdminGrant(grantId);
+    return false;
+  }
+  return true;
 }
 
 export async function deleteAdminGrant(grantId: string): Promise<void> {
@@ -1271,6 +1533,9 @@ export async function updateUser(
       | "lastLoginAt"
       | "role"
       | "sessionVersion"
+      | "passkeyReminders"
+      | "backupCodeHashes"
+      | "backupCodesCreatedAt"
       | "resetTokenHash"
       | "resetTokenExpiry"
     >
@@ -1298,7 +1563,7 @@ export async function updateUser(
     { $set: { ...patch, updatedAt: new Date() } },
     { new: true },
   )
-    .select("+passwordHash +resetTokenHash")
+    .select("+passwordHash +backupCodeHashes +resetTokenHash")
     .lean()) as LeanDoc | null;
   return doc ? mapUser(doc) : null;
 }
@@ -1799,14 +2064,20 @@ export async function listBookedSlots(
   }
 
   const { Consultation } = await mongoModels();
-  const docs = (await Consultation.find({
-    date,
-    mode: "boardroom",
-    status: { $in: ["requested", "confirmed"] },
-  })
-    .select("slot")
+  // Avoid operator objects in filters because `sanitizeFilter` wraps them in
+  // `$eq`; a small date-scoped read plus an in-memory status check is enough.
+  const docs = (await Consultation.find({ date, mode: "boardroom" })
+    .select("slot status")
     .lean()) as LeanDoc[];
-  return [...new Set(docs.map((doc) => str(doc.slot)).filter(Boolean))];
+  const active = new Set(["requested", "confirmed"]);
+  return [
+    ...new Set(
+      docs
+        .filter((doc) => active.has(str(doc.status)))
+        .map((doc) => str(doc.slot))
+        .filter(Boolean),
+    ),
+  ];
 }
 
 /* --------------------------------------------------------------- sign-offs */

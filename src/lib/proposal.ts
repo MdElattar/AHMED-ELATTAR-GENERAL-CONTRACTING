@@ -1,3 +1,4 @@
+import { tokenRgb } from "@/lib/design/tokens";
 import { safeLogError } from "@/lib/security/http";
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -5,7 +6,6 @@ import fontkit, { type Font } from "@pdf-lib/fontkit";
 import {
   PDFDocument,
   StandardFonts,
-  rgb,
   type PDFFont,
   type PDFPage,
   type RGB,
@@ -56,15 +56,15 @@ const PAGE_WIDTH = 595.28;
 const PAGE_HEIGHT = 841.89;
 const MARGIN = 52;
 
-const obsidian = rgb(0.024, 0.027, 0.031);
-const ivory = rgb(0.953, 0.933, 0.894);
-const gold = rgb(0.831, 0.686, 0.216);
-const champagne = rgb(0.949, 0.875, 0.722);
-const muted = rgb(0.588, 0.576, 0.545);
-const ink = rgb(0.09, 0.09, 0.1);
-const body = rgb(0.28, 0.28, 0.3);
-const hairline = rgb(0.86, 0.84, 0.79);
-const paper = rgb(0.975, 0.968, 0.952);
+const obsidian = tokenRgb("bg");
+const ivory = tokenRgb("fg");
+const gold = tokenRgb("accent");
+const champagne = tokenRgb("accentLight");
+const muted = tokenRgb("muted");
+const ink = tokenRgb("surface");
+const body = tokenRgb("muted");
+const hairline = tokenRgb("fg");
+const paper = tokenRgb("surface2");
 
 function wrapText(text: string, font: PDFFont, size: number, maxWidth: number): string[] {
   const words = text.split(/\s+/).filter(Boolean);
@@ -126,18 +126,18 @@ function rule(page: PDFPage, x: number, y: number, width: number, color = hairli
  */
 function drawBrandMark(page: PDFPage, x: number, y: number, scale = 0.1) {
   const polygons: { color: RGB; points: [number, number][] }[] = [
-    { color: rgb(1, 0.827, 0.42), points: [[48, 0], [190, 0], [142, 48], [68, 48]] },
-    { color: rgb(1, 0.753, 0.239), points: [[0, 48], [48, 0], [68, 48], [48, 68]] },
-    { color: rgb(0.969, 0.635, 0.106), points: [[0, 48], [48, 68], [48, 142], [0, 162]] },
-    { color: rgb(0.91, 0.541, 0.063), points: [[0, 162], [48, 142], [68, 162], [48, 210]] },
-    { color: rgb(0.851, 0.471, 0.043), points: [[68, 162], [142, 162], [142, 210], [48, 210]] },
-    { color: rgb(0.639, 0.086, 0.129), points: [[142, 48], [190, 0], [190, 258], [142, 210]] },
-    { color: rgb(1, 0.478, 0.271), points: [[248, 70], [390, 70], [342, 118], [268, 118]] },
-    { color: rgb(0.976, 0.376, 0.184), points: [[200, 118], [248, 70], [268, 118], [248, 138]] },
-    { color: rgb(0.933, 0.29, 0.125), points: [[200, 118], [248, 138], [248, 212], [200, 232]] },
-    { color: rgb(0.867, 0.227, 0.106), points: [[200, 232], [248, 212], [268, 232], [248, 280]] },
-    { color: rgb(0.788, 0.18, 0.094), points: [[268, 232], [342, 232], [342, 280], [248, 280]] },
-    { color: rgb(0.557, 0.067, 0.094), points: [[342, 118], [390, 70], [390, 328], [342, 280]] },
+    { color: tokenRgb("accentLight"), points: [[48, 0], [190, 0], [142, 48], [68, 48]] },
+    { color: tokenRgb("accent"), points: [[0, 48], [48, 0], [68, 48], [48, 68]] },
+    { color: tokenRgb("warning"), points: [[0, 48], [48, 68], [48, 142], [0, 162]] },
+    { color: tokenRgb("accentDeep"), points: [[0, 162], [48, 142], [68, 162], [48, 210]] },
+    { color: tokenRgb("accentDeep"), points: [[68, 162], [142, 162], [142, 210], [48, 210]] },
+    { color: tokenRgb("danger"), points: [[142, 48], [190, 0], [190, 258], [142, 210]] },
+    { color: tokenRgb("accentLight"), points: [[248, 70], [390, 70], [342, 118], [268, 118]] },
+    { color: tokenRgb("warning"), points: [[200, 118], [248, 70], [268, 118], [248, 138]] },
+    { color: tokenRgb("danger"), points: [[200, 118], [248, 138], [248, 212], [200, 232]] },
+    { color: tokenRgb("accentDeep"), points: [[200, 232], [248, 212], [268, 232], [248, 280]] },
+    { color: tokenRgb("danger"), points: [[268, 232], [342, 232], [342, 280], [248, 280]] },
+    { color: tokenRgb("danger"), points: [[342, 118], [390, 70], [390, 328], [342, 280]] },
   ];
 
   for (const polygon of polygons) {
@@ -233,7 +233,7 @@ function drawCover(
     y: 42,
     width: PAGE_WIDTH - 84,
     height: PAGE_HEIGHT - 84,
-    borderColor: rgb(0.55, 0.46, 0.22),
+    borderColor: tokenRgb("accentDeep"),
     borderWidth: 0.35,
   });
 
@@ -264,7 +264,7 @@ function drawCover(
     });
   }
 
-  rule(page, MARGIN, PAGE_HEIGHT - 132, PAGE_WIDTH - MARGIN * 2, rgb(0.3, 0.26, 0.16));
+  rule(page, MARGIN, PAGE_HEIGHT - 132, PAGE_WIDTH - MARGIN * 2, tokenRgb("line"));
 
   page.drawText("PROJECT PROPOSAL", {
     x: MARGIN,
@@ -354,7 +354,7 @@ function drawCover(
   }
 
   const metaY = 178;
-  rule(page, MARGIN, metaY + 28, PAGE_WIDTH - MARGIN * 2, rgb(0.3, 0.26, 0.16));
+  rule(page, MARGIN, metaY + 28, PAGE_WIDTH - MARGIN * 2, tokenRgb("line"));
   const meta = [
     ["REFERENCE", input.reference],
     ["ISSUED", input.issuedAt.toISOString().slice(0, 10)],

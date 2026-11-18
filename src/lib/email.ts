@@ -1,3 +1,4 @@
+import { surfaceTokens, tokenAlpha } from "@/lib/design/tokens";
 import { safeLogError } from "@/lib/security/http";
 import "server-only";
 const BRAND_LOGO_URL = `${(process.env.NEXT_PUBLIC_SITE_URL?.trim() || "https://alattar.sa").replace(/\/$/, "")}/brand/logo-full.svg`;
@@ -105,15 +106,15 @@ function template(
         ? `طلب تفويض صلاحية إدارية للحساب ${target || "المحدد"} على منصة أحمد العطار. رمز التحقق هو ${code}. ينتهي خلال ${minutes} دقائق. إذا لم تطلب ذلك، تجاهل الرسالة وراجع أمان الحساب.`
         : `رمز التحقق الخاص بك هو ${code}. ينتهي خلال ${minutes} دقائق. إذا لم تطلب إعادة تعيين كلمة المرور، تجاهل هذه الرسالة.`,
       html: `
-        <div dir="rtl" style="background:#060708;padding:40px 20px;font-family:Tahoma,Arial,sans-serif;color:#f3eee4">
-          <div style="max-width:520px;margin:0 auto;border:1px solid rgba(184,134,11,.25);background:#0b0c0f;padding:36px">
+        <div dir="rtl" style="background:${surfaceTokens.bg};padding:40px 20px;font-family:Tahoma,Arial,sans-serif;color:${surfaceTokens.fg}">
+          <div style="max-width:520px;margin:0 auto;border:1px solid ${tokenAlpha("accentDeep", 0.25)};background:${surfaceTokens.surface};padding:36px">
             <img src="${BRAND_LOGO_URL}" alt="أحمد العطار للمقاولات العامة" width="230" style="display:block;height:auto;max-width:230px;margin:0 0 22px" />
             <h1 style="margin:18px 0 0;font-size:26px;font-weight:600">${isDelegation ? "تأكيد تفويض صلاحية إدارية" : "رمز إعادة تعيين كلمة المرور"}</h1>
-            <p style="margin:14px 0 0;color:rgba(243,238,228,.62);font-size:14px;line-height:1.8">${isDelegation ? `طلب تفويض صلاحية إدارية للحساب <strong dir="ltr">${target}</strong>. أدخل الرمز التالي للموافقة. الرمز صالح لمدة ${minutes} دقائق ولمرة واحدة فقط.` : `أدخل الرمز التالي لإكمال إعادة التعيين. الرمز صالح لمدة ${minutes} دقائق ولمرة واحدة فقط.`}</p>
-            <div style="margin:28px 0;padding:20px;text-align:center;border:1px solid rgba(184,134,11,.35);background:#060708">
-              <span style="font-size:38px;letter-spacing:12px;color:#c59b27;font-weight:700">${code}</span>
+            <p style="margin:14px 0 0;color:${tokenAlpha("fg", 0.62)};font-size:14px;line-height:1.8">${isDelegation ? `طلب تفويض صلاحية إدارية للحساب <strong dir="ltr">${target}</strong>. أدخل الرمز التالي للموافقة. الرمز صالح لمدة ${minutes} دقائق ولمرة واحدة فقط.` : `أدخل الرمز التالي لإكمال إعادة التعيين. الرمز صالح لمدة ${minutes} دقائق ولمرة واحدة فقط.`}</p>
+            <div style="margin:28px 0;padding:20px;text-align:center;border:1px solid ${tokenAlpha("accentDeep", 0.35)};background:${surfaceTokens.bg}">
+              <span style="font-size:38px;letter-spacing:12px;color:${surfaceTokens.accent};font-weight:700">${code}</span>
             </div>
-            <p style="margin:0;color:rgba(243,238,228,.38);font-size:12px;line-height:1.8">${isDelegation ? "إذا لم تطلب هذا التفويض، تجاهل الرسالة ولا تشارك الرمز مع أي شخص." : "إذا لم تطلب إعادة تعيين كلمة المرور، تجاهل هذه الرسالة — لن يتغير حسابك."}</p>
+            <p style="margin:0;color:${tokenAlpha("fg", 0.38)};font-size:12px;line-height:1.8">${isDelegation ? "إذا لم تطلب هذا التفويض، تجاهل الرسالة ولا تشارك الرمز مع أي شخص." : "إذا لم تطلب إعادة تعيين كلمة المرور، تجاهل هذه الرسالة — لن يتغير حسابك."}</p>
           </div>
         </div>`,
     };
@@ -127,15 +128,15 @@ function template(
       ? `A request was made to grant admin access to ${target || "the specified account"} on the Ahmed Elattar platform. Your verification code is ${code}. It expires in ${minutes} minutes. If you did not request this, ignore this email and review account security.`
       : `Your verification code is ${code}. It expires in ${minutes} minutes. If you did not request a password reset, ignore this email.`,
     html: `
-      <div style="background:#060708;padding:40px 20px;font-family:Arial,Helvetica,sans-serif;color:#f3eee4">
-        <div style="max-width:520px;margin:0 auto;border:1px solid rgba(184,134,11,.25);background:#0b0c0f;padding:36px">
+      <div style="background:${surfaceTokens.bg};padding:40px 20px;font-family:Arial,Helvetica,sans-serif;color:${surfaceTokens.fg}">
+        <div style="max-width:520px;margin:0 auto;border:1px solid ${tokenAlpha("accentDeep", 0.25)};background:${surfaceTokens.surface};padding:36px">
           <img src="${BRAND_LOGO_URL}" alt="Ahmed Elattar General Contracting" width="230" style="display:block;height:auto;max-width:230px;margin:0 0 22px" />
           <h1 style="margin:18px 0 0;font-size:26px;font-weight:600">${isDelegation ? "Confirm admin delegation" : "Reset your password"}</h1>
-          <p style="margin:14px 0 0;color:rgba(243,238,228,.62);font-size:14px;line-height:1.8">${isDelegation ? `A request was made to grant admin access to <strong dir="ltr">${target}</strong>. Enter the code below to approve it. It is valid for ${minutes} minutes and can be used once.` : `Enter the code below to complete the reset. It is valid for ${minutes} minutes and can be used once.`}</p>
-          <div style="margin:28px 0;padding:20px;text-align:center;border:1px solid rgba(184,134,11,.35);background:#060708">
-            <span style="font-size:38px;letter-spacing:12px;color:#c59b27;font-weight:700">${code}</span>
+          <p style="margin:14px 0 0;color:${tokenAlpha("fg", 0.62)};font-size:14px;line-height:1.8">${isDelegation ? `A request was made to grant admin access to <strong dir="ltr">${target}</strong>. Enter the code below to approve it. It is valid for ${minutes} minutes and can be used once.` : `Enter the code below to complete the reset. It is valid for ${minutes} minutes and can be used once.`}</p>
+          <div style="margin:28px 0;padding:20px;text-align:center;border:1px solid ${tokenAlpha("accentDeep", 0.35)};background:${surfaceTokens.bg}">
+            <span style="font-size:38px;letter-spacing:12px;color:${surfaceTokens.accent};font-weight:700">${code}</span>
           </div>
-          <p style="margin:0;color:rgba(243,238,228,.38);font-size:12px;line-height:1.8">${isDelegation ? "If you did not request this delegation, ignore this email and do not share the code with anyone." : "If you did not request a reset, ignore this email — your account will not change."}</p>
+          <p style="margin:0;color:${tokenAlpha("fg", 0.38)};font-size:12px;line-height:1.8">${isDelegation ? "If you did not request this delegation, ignore this email and do not share the code with anyone." : "If you did not request a reset, ignore this email — your account will not change."}</p>
         </div>
       </div>`,
   };

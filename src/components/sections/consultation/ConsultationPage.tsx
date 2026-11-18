@@ -166,36 +166,36 @@ export function ConsultationPage({ dates }: { dates: ConsultationDay[] }) {
   };
 
   return (
-    <main className="bg-obsidian text-ivory">
-      <section className="relative overflow-hidden border-b border-white/10 pb-16 pt-36 sm:pb-20 sm:pt-44">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_70%_0%,rgba(184,134,11,0.12),transparent_55%)]" />
+    <main className="bg-bg text-fg">
+      <section className="relative overflow-hidden border-b border-line pb-16 pt-36 sm:pb-20 sm:pt-44">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_70%_0%,rgb(var(--accent-rgb)/0.12),transparent_55%)]" />
         <div className="blueprint-grid pointer-events-none absolute inset-0 opacity-25" />
         <div className="container-lux relative">
           <Reveal>
             <span className="eyebrow">{c.eyebrow}</span>
           </Reveal>
           <Reveal delay={80}>
-            <h1 className="display-title mt-6 max-w-4xl text-[clamp(2.6rem,6vw,6rem)] text-ivory">
+            <h1 className="display-title mt-6 max-w-4xl text-[clamp(2.6rem,6vw,6rem)] text-fg">
               {c.title}
             </h1>
           </Reveal>
           <Reveal delay={160}>
-            <p className="mt-5 max-w-2xl text-[0.95rem] leading-[1.95] text-ivory/60">
+            <p className="mt-5 max-w-2xl text-[0.95rem] leading-[1.95] text-fg">
               {c.description}
             </p>
           </Reveal>
           <Reveal delay={220}>
-            <div className="mt-8 flex flex-wrap items-center gap-5 text-[0.55rem] uppercase tracking-[0.16em] text-ivory/45">
+            <div className="mt-8 flex flex-wrap items-center gap-5 text-[0.55rem] uppercase tracking-[0.16em] text-fg">
               <span className="flex items-center gap-2">
-                <ShieldCheck className="h-3.5 w-3.5 text-gold" />
+                <ShieldCheck className="h-3.5 w-3.5 text-accent" />
                 {c.concierge}
               </span>
               <span className="flex items-center gap-2">
-                <Clock3 className="h-3.5 w-3.5 text-gold" />
+                <Clock3 className="h-3.5 w-3.5 text-accent" />
                 {c.timezone}
               </span>
               <span className="flex items-center gap-2">
-                <CalendarDays className="h-3.5 w-3.5 text-gold" />
+                <CalendarDays className="h-3.5 w-3.5 text-accent" />
                 {c.capacity}
               </span>
             </div>
@@ -205,30 +205,30 @@ export function ConsultationPage({ dates }: { dates: ConsultationDay[] }) {
 
       <section className="relative overflow-hidden py-16 sm:py-24">
         <div className="container-lux grid gap-8 lg:grid-cols-[1.15fr_0.85fr]">
-          <div className="border border-white/10 bg-coal p-6 sm:p-10">
+          <div className="border border-line bg-surface p-6 sm:p-10">
             {confirmation ? (
               <div className="flex min-h-[34rem] flex-col justify-center">
-                <span className="flex h-14 w-14 items-center justify-center border border-gold/40 bg-gold/10 text-gold">
+                <span className="flex h-14 w-14 items-center justify-center border border-accent/40 bg-accent/10 text-accent">
                   <CheckCircle2 className="h-6 w-6" />
                 </span>
-                <h2 className="display-title mt-6 text-[clamp(2rem,4vw,3.4rem)] text-ivory">
+                <h2 className="display-title mt-6 text-[clamp(2rem,4vw,3.4rem)] text-fg">
                   {c.confirmation}
                 </h2>
-                <p className="mt-4 max-w-xl text-[0.86rem] leading-[1.9] text-ivory/60">
+                <p className="mt-4 max-w-xl text-[0.86rem] leading-[1.9] text-fg">
                   {c.confirmationText}
                 </p>
-                <dl className="mt-8 grid gap-px overflow-hidden border border-white/10 bg-white/10 sm:grid-cols-2">
+                <dl className="mt-8 grid gap-px overflow-hidden border border-line bg-line sm:grid-cols-2">
                   {[
                     [c.reference, confirmation.reference],
                     [c.date, dateLabel(confirmation.date, locale)],
                     [c.slot, confirmation.slot],
                     [c.mode, c[confirmation.mode]],
                   ].map(([label, value]) => (
-                    <div key={label} className="bg-obsidian p-4">
-                      <dt className="text-[0.48rem] uppercase tracking-[0.14em] text-ivory/40">
+                    <div key={label} className="bg-bg p-4">
+                      <dt className="text-[0.48rem] uppercase tracking-[0.14em] text-fg">
                         {label}
                       </dt>
-                      <dd className="mt-1.5 text-[0.78rem] text-ivory/75">{value}</dd>
+                      <dd className="mt-1.5 text-[0.78rem] text-fg">{value}</dd>
                     </div>
                   ))}
                 </dl>
@@ -244,7 +244,7 @@ export function ConsultationPage({ dates }: { dates: ConsultationDay[] }) {
                       anchor.click();
                       URL.revokeObjectURL(url);
                     }}
-                    className="inline-flex h-11 items-center gap-2 bg-gold px-5 text-[0.58rem] font-semibold uppercase tracking-[0.14em] text-obsidian transition-colors hover:bg-gold-light"
+                    className="inline-flex h-11 items-center gap-2 bg-accent-fill px-5 text-[0.58rem] font-semibold uppercase tracking-[0.14em] text-accent-fg transition-colors hover:bg-accent-fill"
                   >
                     <CalendarDays className="h-4 w-4" />
                     {c.addCalendar}
@@ -252,7 +252,7 @@ export function ConsultationPage({ dates }: { dates: ConsultationDay[] }) {
                   <button
                     type="button"
                     onClick={reset}
-                    className="inline-flex h-11 items-center gap-2 border border-white/15 px-5 text-[0.58rem] font-semibold uppercase tracking-[0.14em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
+                    className="inline-flex h-11 items-center gap-2 border border-line px-5 text-[0.58rem] font-semibold uppercase tracking-[0.14em] text-fg transition-colors hover:border-accent/40 hover:text-accent"
                   >
                     {c.another}
                   </button>
@@ -261,7 +261,7 @@ export function ConsultationPage({ dates }: { dates: ConsultationDay[] }) {
             ) : (
               <form onSubmit={submit}>
                 <span className="eyebrow">{c.formTitle}</span>
-                <p className="mt-3 max-w-xl text-[0.82rem] leading-[1.9] text-ivory/55">
+                <p className="mt-3 max-w-xl text-[0.82rem] leading-[1.9] text-fg">
                   {c.formText}
                 </p>
 
@@ -319,7 +319,7 @@ export function ConsultationPage({ dates }: { dates: ConsultationDay[] }) {
                 </div>
 
                 <div className="mt-7">
-                  <p className="mb-3 text-[0.58rem] font-semibold uppercase tracking-[0.16em] text-ivory/55">
+                  <p className="mb-3 text-[0.58rem] font-semibold uppercase tracking-[0.16em] text-fg">
                     {c.mode}
                   </p>
                   <div className="grid gap-2 sm:grid-cols-3">
@@ -334,15 +334,15 @@ export function ConsultationPage({ dates }: { dates: ConsultationDay[] }) {
                           className={cn(
                             "flex flex-col items-start gap-2 border p-3 text-start transition-colors",
                             mode === item
-                              ? "border-gold bg-gold/[0.06]"
-                              : "border-white/10 hover:border-white/25",
+                              ? "border-accent bg-accent/[0.06]"
+                              : "border-line hover:border-line",
                           )}
                         >
-                          <Icon className={cn("h-4 w-4", mode === item ? "text-gold" : "text-ivory/45")} />
-                          <span className={cn("text-[0.68rem]", mode === item ? "text-ivory" : "text-ivory/60")}>
+                          <Icon className={cn("h-4 w-4", mode === item ? "text-accent" : "text-fg")} />
+                          <span className={cn("text-[0.68rem]", mode === item ? "text-fg" : "text-fg")}>
                             {c[item]}
                           </span>
-                          <span className="text-[0.5rem] leading-relaxed text-ivory/40">
+                          <span className="text-[0.5rem] leading-relaxed text-fg">
                             {c[`${item}Note` as "boardroomNote" | "videoNote" | "siteNote"]}
                           </span>
                         </button>
@@ -364,7 +364,7 @@ export function ConsultationPage({ dates }: { dates: ConsultationDay[] }) {
                     />
                   </Field>
                   <div>
-                    <p className="mb-2 text-[0.65rem] font-medium uppercase tracking-[0.18em] text-ivory/55">
+                    <p className="mb-2 text-[0.65rem] font-medium uppercase tracking-[0.18em] text-fg">
                       {c.slot}
                     </p>
                     <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
@@ -380,10 +380,10 @@ export function ConsultationPage({ dates }: { dates: ConsultationDay[] }) {
                             className={cn(
                               "h-9 border text-[0.58rem] tabular transition-colors",
                               isBooked
-                                ? "cursor-not-allowed border-white/5 text-ivory/30 line-through"
+                                ? "cursor-not-allowed border-line text-fg line-through"
                                 : slot === item
-                                  ? "border-gold bg-gold text-obsidian"
-                                  : "border-white/10 text-ivory/65 hover:border-gold/40 hover:text-gold",
+                                  ? "border-accent bg-accent-fill text-accent-fg"
+                                  : "border-line text-fg hover:border-accent/40 hover:text-accent",
                             )}
                           >
                             {item}
@@ -391,14 +391,14 @@ export function ConsultationPage({ dates }: { dates: ConsultationDay[] }) {
                         );
                       })}
                     </div>
-                    <p className="mt-2 text-[0.5rem] text-ivory/35">
+                    <p className="mt-2 text-[0.5rem] text-fg">
                       {loadingSlots ? "…" : mode === "boardroom" ? `${booked.length} ${c.booked}` : c.available}
                     </p>
                   </div>
                 </div>
 
                 {mode === "boardroom" && booked.length >= CONSULTATION_SLOTS.length ? (
-                  <p className="mt-4 border border-[#d98572]/30 bg-[#d98572]/10 px-4 py-3 text-[0.68rem] text-[#e6a99a]">
+                  <p className="mt-4 border border-danger/30 bg-danger/10 px-4 py-3 text-[0.68rem] text-danger">
                     {c.allBooked}
                   </p>
                 ) : null}
@@ -417,7 +417,7 @@ export function ConsultationPage({ dates }: { dates: ConsultationDay[] }) {
                 {error ? (
                   <p
                     role="alert"
-                    className="mt-5 border border-[#d98572]/30 bg-[#d98572]/10 px-4 py-3 text-[0.7rem] text-[#e6a99a]"
+                    className="mt-5 border border-danger/30 bg-danger/10 px-4 py-3 text-[0.7rem] text-danger"
                   >
                     {error}
                   </p>
@@ -426,7 +426,7 @@ export function ConsultationPage({ dates }: { dates: ConsultationDay[] }) {
                 <button
                   type="submit"
                   disabled={busy || !date || (mode === "boardroom" && booked.includes(slot))}
-                  className="mt-7 inline-flex h-12 w-full items-center justify-center gap-2 bg-gold px-6 text-[0.6rem] font-semibold uppercase tracking-[0.16em] text-obsidian transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                  className="mt-7 inline-flex h-12 w-full items-center justify-center gap-2 bg-accent-fill px-6 text-[0.6rem] font-semibold uppercase tracking-[0.16em] text-accent-fg transition-colors hover:bg-accent-fill disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                 >
                   {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowUpRight className="h-4 w-4" />}
                   {busy ? c.working : c.submit}
@@ -436,40 +436,40 @@ export function ConsultationPage({ dates }: { dates: ConsultationDay[] }) {
           </div>
 
           <aside className="flex flex-col gap-5">
-            <div className="relative overflow-hidden border border-white/10 bg-obsidian p-6 sm:p-8">
-              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_80%_0%,rgba(184,134,11,0.12),transparent_60%)]" />
-              <span className="relative flex h-11 w-11 items-center justify-center border border-gold/40 bg-gold/10 text-gold">
+            <div className="relative overflow-hidden border border-line bg-bg p-6 sm:p-8">
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_80%_0%,rgb(var(--accent-rgb)/0.12),transparent_60%)]" />
+              <span className="relative flex h-11 w-11 items-center justify-center border border-accent/40 bg-accent/10 text-accent">
                 <Building2 className="h-5 w-5" />
               </span>
-              <h2 className="relative mt-5 font-display text-2xl text-ivory">{c.boardroomTitle}</h2>
-              <p className="relative mt-3 text-[0.76rem] leading-[1.9] text-ivory/55">
+              <h2 className="relative mt-5 font-display text-2xl text-fg">{c.boardroomTitle}</h2>
+              <p className="relative mt-3 text-[0.76rem] leading-[1.9] text-fg">
                 {c.boardroomText}
               </p>
-              <dl className="relative mt-6 space-y-3 border-t border-white/10 pt-5">
+              <dl className="relative mt-6 space-y-3 border-t border-line pt-5">
                 {[
                   [c.address, "King Fahd Road, Riyadh"],
                   [c.capacity, "8"],
                   [c.concierge, "executive@alattar.sa"],
                 ].map(([label, value]) => (
                   <div key={label} className="flex items-center justify-between gap-4">
-                    <dt className="text-[0.52rem] uppercase tracking-[0.14em] text-ivory/40">{label}</dt>
-                    <dd className="text-end text-[0.68rem] text-ivory/65">{value}</dd>
+                    <dt className="text-[0.52rem] uppercase tracking-[0.14em] text-fg">{label}</dt>
+                    <dd className="text-end text-[0.68rem] text-fg">{value}</dd>
                   </div>
                 ))}
               </dl>
             </div>
 
-            <div className="border border-white/10 bg-coal p-6 sm:p-8">
-              <span className="text-[0.52rem] uppercase tracking-[0.16em] text-gold">{c.protocol}</span>
+            <div className="border border-line bg-surface p-6 sm:p-8">
+              <span className="text-[0.52rem] uppercase tracking-[0.16em] text-accent">{c.protocol}</span>
               <ol className="mt-5 space-y-5">
                 {c.steps.map((step, index) => (
                   <li key={step.title} className="flex gap-4">
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center border border-white/10 font-mono text-[0.58rem] text-gold">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center border border-line font-mono text-[0.58rem] text-accent">
                       {String(index + 1).padStart(2, "0")}
                     </span>
                     <span>
-                      <span className="block text-[0.72rem] text-ivory/75">{step.title}</span>
-                      <span className="mt-1 block text-[0.64rem] leading-relaxed text-ivory/45">
+                      <span className="block text-[0.72rem] text-fg">{step.title}</span>
+                      <span className="mt-1 block text-[0.64rem] leading-relaxed text-fg">
                         {step.text}
                       </span>
                     </span>

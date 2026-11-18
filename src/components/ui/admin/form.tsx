@@ -50,22 +50,22 @@ export function Field({
     <div className={cn("flex flex-col gap-2", className)}>
       <label
         htmlFor={htmlFor}
-        className="flex items-center gap-1.5 text-[14px] font-medium text-[var(--admin-text,#F1EEE8)]/85"
+        className="flex items-center gap-1.5 text-[14px] font-medium text-fg"
       >
         <span>{label}</span>
-        {required ? <span className="text-[#E2B04A]" aria-hidden="true">*</span> : null}
+        {required ? <span className="text-accent" aria-hidden="true">*</span> : null}
       </label>
       {children}
       {error ? (
         <p
           role="alert"
-          className="flex items-start gap-1.5 text-[13px] leading-relaxed text-red-300"
+          className="flex items-start gap-1.5 text-[13px] leading-relaxed text-danger"
         >
           <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
           <span>{error}</span>
         </p>
       ) : hint ? (
-        <p className="text-[13px] leading-relaxed text-[var(--admin-muted,#A6A9B4)]">
+        <p className="text-[13px] leading-relaxed text-muted">
           {hint}
         </p>
       ) : null}
@@ -78,7 +78,7 @@ export function Field({
 /* -------------------------------------------------------------------------- */
 
 export const controlClassName =
-  "h-11 w-full rounded-xl border border-white/10 bg-white/[.04] px-3.5 text-[15px] text-[var(--admin-text,#F1EEE8)] placeholder:text-white/40 transition focus-visible:border-[#E2B04A]/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E2B04A]/30 aria-[invalid=true]:border-red-400/60 disabled:cursor-not-allowed disabled:opacity-50";
+  "h-11 w-full rounded-xl border border-line bg-surface-2 px-3.5 text-[15px] text-fg placeholder:text-muted transition focus-visible:border-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 aria-[invalid=true]:border-danger/60 disabled:cursor-not-allowed disabled:opacity-50";
 
 export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(
   function Input({ className, ...props }, ref) {
@@ -153,20 +153,20 @@ export function Select({
         aria-label={ariaLabel}
         className={cn(
           controlClassName,
-          "flex items-center justify-between gap-2 text-start data-[placeholder]:text-white/40",
+          "flex items-center justify-between gap-2 text-start data-[placeholder]:text-fg",
           className,
         )}
       >
         <SelectPrimitive.Value placeholder={placeholder} />
         <SelectPrimitive.Icon asChild>
-          <ChevronDown className="h-4 w-4 shrink-0 text-white/40" aria-hidden="true" />
+          <ChevronDown className="h-4 w-4 shrink-0 text-fg" aria-hidden="true" />
         </SelectPrimitive.Icon>
       </SelectPrimitive.Trigger>
       <SelectPrimitive.Portal>
         <SelectPrimitive.Content
           position="popper"
           sideOffset={6}
-          className="scroll-area z-[300] max-h-72 min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-xl border border-white/10 bg-[#161820] p-1 text-[var(--admin-text,#F1EEE8)] shadow-[0_18px_60px_rgba(0,0,0,.55)]"
+          className="scroll-area z-[300] max-h-72 min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-xl border border-line bg-surface p-1 text-fg shadow-e2"
         >
           <SelectPrimitive.Viewport className="scroll-area p-0">
             {options.map((option) => (
@@ -174,11 +174,11 @@ export function Select({
                 key={option.value}
                 value={option.value}
                 disabled={option.disabled}
-                className="relative flex min-h-10 cursor-default select-none items-center rounded-lg px-3 pe-9 text-[14px] outline-none data-[disabled]:pointer-events-none data-[highlighted]:bg-white/[.07] data-[disabled]:opacity-40"
+                className="relative flex min-h-10 cursor-default select-none items-center rounded-lg px-3 pe-9 text-[14px] outline-none data-[disabled]:pointer-events-none data-[highlighted]:bg-surface-2 data-[disabled]:opacity-40"
               >
                 <SelectPrimitive.ItemText>{option.label}</SelectPrimitive.ItemText>
                 <SelectPrimitive.ItemIndicator className="absolute end-2 inline-flex items-center">
-                  <Check className="h-4 w-4 text-[#E2B04A]" aria-hidden="true" />
+                  <Check className="h-4 w-4 text-accent" aria-hidden="true" />
                 </SelectPrimitive.ItemIndicator>
               </SelectPrimitive.Item>
             ))}
@@ -235,7 +235,7 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
     return (
       <div className="relative">
         {currency ? (
-          <span className="pointer-events-none absolute inset-y-0 start-3.5 flex items-center text-[13px] font-medium text-white/40">
+          <span className="pointer-events-none absolute inset-y-0 start-3.5 flex items-center text-[13px] font-medium text-fg">
             SAR
           </span>
         ) : null}
@@ -287,7 +287,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
           className={cn(controlClassName, "pe-10 [color-scheme:dark]", className)}
         />
         <CalendarDays
-          className="pointer-events-none absolute end-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35"
+          className="pointer-events-none absolute end-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-fg"
           aria-hidden="true"
         />
       </div>
@@ -322,7 +322,7 @@ export function SegmentedControl<T extends string>({
       role="radiogroup"
       aria-label={label}
       className={cn(
-        "inline-flex h-10 gap-1 rounded-xl border border-white/10 bg-white/[.04] p-1",
+        "inline-flex h-10 gap-1 rounded-xl border border-line bg-surface-2 p-1",
         className,
       )}
     >
@@ -338,8 +338,8 @@ export function SegmentedControl<T extends string>({
             className={cn(
               "h-8 min-w-0 flex-1 whitespace-nowrap rounded-lg px-3 text-[13px] font-medium transition-colors admin-focus-ring",
               active
-                ? "bg-[linear-gradient(180deg,#F3C86A,#D9A03A)] text-[#1a1205] shadow-[0_4px_14px_rgba(226,176,74,.18)]"
-                : "text-white/55 hover:bg-white/[.05] hover:text-white/80",
+                ? "bg-accent-fill text-accent-fg shadow-e1"
+                : "text-fg hover:bg-surface-2 hover:text-fg",
             )}
           >
             {option.label}
@@ -387,10 +387,10 @@ export function Slider({
         className,
       )}
     >
-      <SliderPrimitive.Track className="relative h-1.5 w-full grow overflow-hidden rounded-full bg-white/10">
-        <SliderPrimitive.Range className="absolute h-full bg-[linear-gradient(90deg,#D9A03A,#F3C86A)]" />
+      <SliderPrimitive.Track className="relative h-1.5 w-full grow overflow-hidden rounded-full bg-line">
+        <SliderPrimitive.Range className="absolute h-full bg-accent-fill" />
       </SliderPrimitive.Track>
-      <SliderPrimitive.Thumb className="block h-4 w-4 rounded-full border border-[#F3C86A] bg-[#161820] shadow-[0_0_0_4px_rgba(226,176,74,.12)] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E2B04A]/40" />
+      <SliderPrimitive.Thumb className="block h-4 w-4 rounded-full border border-accent bg-surface shadow-e1 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40" />
     </SliderPrimitive.Root>
   );
 }
@@ -415,16 +415,16 @@ export function Switch({
   id?: string;
 }) {
   return (
-    <div className="flex items-start justify-between gap-4 rounded-xl border border-white/10 bg-white/[.03] px-4 py-3">
+    <div className="flex items-start justify-between gap-4 rounded-xl border border-line bg-surface-2 px-4 py-3">
       <div className="min-w-0">
         <label
           htmlFor={id}
-          className="text-[14px] font-medium text-[var(--admin-text,#F1EEE8)]"
+          className="text-[14px] font-medium text-fg"
         >
           {label}
         </label>
         {description ? (
-          <p className="mt-1 text-[13px] leading-relaxed text-[var(--admin-muted,#A6A9B4)]">
+          <p className="mt-1 text-[13px] leading-relaxed text-muted">
             {description}
           </p>
         ) : null}
@@ -434,9 +434,9 @@ export function Switch({
         checked={checked}
         onCheckedChange={onCheckedChange}
         disabled={disabled}
-        className="relative mt-0.5 h-6 w-11 shrink-0 rounded-full border border-white/10 bg-white/10 transition-colors data-[state=checked]:border-transparent data-[state=checked]:bg-[linear-gradient(180deg,#F3C86A,#D9A03A)] disabled:opacity-50"
+        className="relative mt-0.5 h-6 w-11 shrink-0 rounded-full border border-line bg-line transition-colors data-[state=checked]:border-transparent data-[state=checked]:bg-accent-fill disabled:opacity-50"
       >
-        <SwitchPrimitive.Thumb className="block h-5 w-5 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[22px] rtl:data-[state=checked]:-translate-x-[22px]" />
+        <SwitchPrimitive.Thumb className="block h-5 w-5 translate-x-0.5 rounded-full bg-surface-2 shadow transition-transform data-[state=checked]:translate-x-[22px] rtl:data-[state=checked]:-translate-x-[22px]" />
       </SwitchPrimitive.Root>
     </div>
   );
@@ -476,7 +476,7 @@ export function Combobox({
   return (
     <div className="relative">
       <div className="relative">
-        <Search className="pointer-events-none absolute start-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" />
+        <Search className="pointer-events-none absolute start-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-fg" />
         <input
           id={id}
           role="combobox"
@@ -496,13 +496,13 @@ export function Combobox({
           }}
           className={cn(controlClassName, "ps-10")}
         />
-        <ChevronDown className="pointer-events-none absolute end-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" />
+        <ChevronDown className="pointer-events-none absolute end-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-fg" />
       </div>
       {open ? (
         <div
           id={listId}
           role="listbox"
-          className="scroll-area absolute inset-x-0 top-[calc(100%+6px)] z-[310] max-h-56 overflow-y-auto rounded-xl border border-white/10 bg-[#161820] p-1 shadow-[0_18px_60px_rgba(0,0,0,.55)]"
+          className="scroll-area absolute inset-x-0 top-[calc(100%+6px)] z-[310] max-h-56 overflow-y-auto rounded-xl border border-line bg-surface p-1 shadow-e2"
         >
           {filtered.length ? (
             filtered.map((option) => (
@@ -518,15 +518,15 @@ export function Combobox({
                   setOpen(false);
                 }}
                 className={cn(
-                  "flex min-h-10 w-full items-center rounded-lg px-3 text-start text-[14px] hover:bg-white/[.07]",
-                  option.value === value ? "text-[#F3C86A]" : "text-white/80",
+                  "flex min-h-10 w-full items-center rounded-lg px-3 text-start text-[14px] hover:bg-surface-2",
+                  option.value === value ? "text-accent" : "text-fg",
                 )}
               >
                 {option.label}
               </button>
             ))
           ) : (
-            <p className="px-3 py-2 text-[13px] text-white/40">{emptyLabel}</p>
+            <p className="px-3 py-2 text-[13px] text-fg">{emptyLabel}</p>
           )}
         </div>
       ) : null}

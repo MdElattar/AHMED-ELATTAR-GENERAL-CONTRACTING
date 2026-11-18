@@ -118,9 +118,20 @@ AHMED-ELATTAR-GENERAL-CONTRACTING/
 
 ## 🔐 Deployment & Environment (Vercel)
 
+See [docs/deployment.md](docs/deployment.md) for the full production runbook,
+including the environment matrix, preflight check, passkey RP ID setup, smoke
+checks and rollback procedure. The essential variables are:
+
 | Variable | Required | Notes |
 | :--- | :---: | :--- |
 | `AUTH_SECRET` | **Production: yes** | At least 32 characters. Generate with `openssl rand -base64 48` and add it under **Project → Settings → Environment Variables** for Production/Preview. |
+| `MONGODB_URI` | **Production: yes** | The in-process repository is development only; production fails closed without a reachable database. |
+| `WEBAUTHN_RP_ID` | **Production: yes** | Bare production hostname, e.g. `alattar.sa`. Passkeys cannot be enrolled on `*.vercel.app`. |
+| `NEXT_PUBLIC_SITE_URL` | **Production: yes** | Canonical `https://` origin. |
+| `RESEND_API_KEY` / `OTP_FROM_EMAIL` | **Production: yes** | Transactional OTP delivery. |
+
+Run `npm run check:deploy` with production variables exported to validate the
+configuration without printing any values.
 
 * Sessions are signed with HMAC-SHA256 into the `alattar_session` cookie (`httpOnly`, `SameSite=Strict`, `Secure` in production).
 * `src/proxy.ts` gates `/portal` and `/admin` on the server; the admin role is re-verified server-side on every request.

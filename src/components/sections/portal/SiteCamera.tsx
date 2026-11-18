@@ -66,61 +66,61 @@ export function SiteCamera({
   ];
 
   return (
-    <div className="overflow-hidden border border-white/10 bg-obsidian text-ivory">
-      <div className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-3">
+    <div className="overflow-hidden border border-line bg-bg text-fg">
+      <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
         <div className="flex items-center gap-2">
           <span className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-60" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-danger opacity-60" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-danger" />
           </span>
-          <span className="text-[0.52rem] font-semibold uppercase tracking-[0.16em] text-red-300">
+          <span className="text-[0.52rem] font-semibold uppercase tracking-[0.16em] text-danger">
             {c.live}
           </span>
-          <span className="text-[0.5rem] uppercase tracking-[0.14em] text-ivory/40">
+          <span className="text-[0.5rem] uppercase tracking-[0.14em] text-fg">
             {c.camera}
           </span>
         </div>
-        <div className="flex items-center gap-2 text-[0.5rem] uppercase tracking-[0.14em] text-ivory/45">
-          <Signal className="h-3 w-3 text-emerald-400/80" />
+        <div className="flex items-center gap-2 text-[0.5rem] uppercase tracking-[0.14em] text-fg">
+          <Signal className="h-3 w-3 text-success" />
           {c.signal}
-          <span className="tabular text-ivory/60">{now}</span>
+          <span className="tabular text-fg">{now}</span>
         </div>
       </div>
 
       <div className="relative aspect-[16/10] overflow-hidden">
         <ProjectArt variant={cams[cam].art} className="h-full w-full" />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-obsidian/80 via-transparent to-obsidian/25" />
-        <div className="pointer-events-none absolute inset-0 opacity-30 [background-image:linear-gradient(rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px)] [background-size:56px_56px]" />
-        <div className="site-scan pointer-events-none absolute inset-x-0 h-16 bg-gradient-to-b from-transparent via-gold/12 to-transparent" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-bg/80 via-transparent to-bg/25" />
+        <div className="pointer-events-none absolute inset-0 opacity-30 [background-image:linear-gradient(rgb(var(--fg-rgb)/0.08)_1px,transparent_1px),linear-gradient(90deg,rgb(var(--fg-rgb)/0.08)_1px,transparent_1px)] [background-size:56px_56px]" />
+        <div className="site-scan pointer-events-none absolute inset-x-0 h-16 bg-gradient-to-b from-transparent via-accent/12 to-transparent" />
 
         <div className="absolute inset-x-4 top-4 flex items-start justify-between gap-3">
-          <span className="border border-white/20 bg-obsidian/55 px-2.5 py-1 text-[0.5rem] uppercase tracking-[0.14em] text-ivory/70 backdrop-blur">
+          <span className="border border-line bg-bg/55 px-2.5 py-1 text-[0.5rem] uppercase tracking-[0.14em] text-fg backdrop-blur">
             {cams[cam].label}
           </span>
-          <span className="border border-gold/30 bg-obsidian/55 px-2.5 py-1 text-[0.5rem] uppercase tracking-[0.14em] text-gold backdrop-blur">
+          <span className="border border-accent/30 bg-bg/55 px-2.5 py-1 text-[0.5rem] uppercase tracking-[0.14em] text-accent backdrop-blur">
             {progress}% {c.progress}
           </span>
         </div>
 
         <div className="absolute inset-x-4 bottom-4">
-          <p className="truncate text-sm font-medium text-ivory">{title}</p>
-          <p className="mt-0.5 truncate text-[0.58rem] text-ivory/55">{location}</p>
-          <div className="mt-3 h-1 overflow-hidden bg-white/15">
+          <p className="truncate text-sm font-medium text-fg">{title}</p>
+          <p className="mt-0.5 truncate text-[0.58rem] text-fg">{location}</p>
+          <div className="mt-3 h-1 overflow-hidden bg-line">
             <div
-              className="h-full bg-gradient-to-r from-gold-dark to-gold"
+              className="h-full bg-gradient-to-r from-accent to-accent"
               style={{ width: `${progress}%` }}
             />
           </div>
         </div>
 
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="flex h-10 w-10 items-center justify-center rounded-full border border-white/25 bg-obsidian/35 text-ivory/70 backdrop-blur">
+          <span className="flex h-10 w-10 items-center justify-center rounded-full border border-line bg-bg/35 text-fg backdrop-blur">
             <Camera className="h-4 w-4" />
           </span>
         </div>
       </div>
 
-      <div className="flex items-center justify-between gap-2 border-t border-white/10 px-3 py-2">
+      <div className="flex items-center justify-between gap-2 border-t border-line px-3 py-2">
         <div className="flex items-center gap-1.5">
           {cams.map((item, index) => (
             <button
@@ -130,16 +130,16 @@ export function SiteCamera({
               className={cn(
                 "h-7 border px-2.5 text-[0.5rem] uppercase tracking-[0.12em] transition-colors",
                 cam === index
-                  ? "border-gold bg-gold text-obsidian"
-                  : "border-white/12 text-ivory/55 hover:border-gold/40 hover:text-gold",
+                  ? "border-accent bg-accent-fill text-accent-fg"
+                  : "border-line text-fg hover:border-accent/40 hover:text-accent",
               )}
             >
               {item.label}
             </button>
           ))}
         </div>
-        <span className="flex items-center gap-1.5 text-[0.5rem] uppercase tracking-[0.12em] text-ivory/35">
-          <Radio className="h-3 w-3 text-gold/70" />
+        <span className="flex items-center gap-1.5 text-[0.5rem] uppercase tracking-[0.12em] text-fg">
+          <Radio className="h-3 w-3 text-accent" />
           {c.updated} {now}
         </span>
       </div>

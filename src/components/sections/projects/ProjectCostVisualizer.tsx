@@ -19,10 +19,17 @@ import type { Project } from "@/data/projects";
 import { cn } from "@/lib/utils";
 
 const colors: Record<EstimatePart["key"], string> = {
-  structure: "#b8860b",
-  finishes: "#c59b27",
-  mep: "#a67c1a",
-  management: "#7d5e15",
+  structure: "var(--accent)",
+  finishes: "var(--accent-fill)",
+  mep: "var(--info)",
+  management: "var(--success)",
+};
+
+const softColors: Record<EstimatePart["key"], string> = {
+  structure: "rgb(var(--accent-rgb)/0.33)",
+  finishes: "rgb(var(--accent-rgb)/0.33)",
+  mep: "rgb(var(--info-rgb)/0.33)",
+  management: "rgb(var(--success-rgb)/0.33)",
 };
 
 const icons: Record<EstimatePart["key"], typeof Building2> = {
@@ -87,7 +94,7 @@ export function ProjectCostVisualizer({
   };
 
   return (
-    <section className="relative overflow-hidden bg-obsidian text-ivory">
+    <section className="relative overflow-hidden bg-bg text-fg">
       <div className="blueprint-grid pointer-events-none absolute inset-0 opacity-30" />
       <div className="container-lux section-pad relative">
         <SectionHeading
@@ -97,8 +104,8 @@ export function ProjectCostVisualizer({
           titleClassName="max-w-2xl"
         />
 
-        <div className="mt-12 grid gap-px overflow-hidden border border-white/10 bg-white/10 lg:grid-cols-[0.9fr_1.1fr]">
-          <div className="flex flex-col items-center justify-center bg-coal p-8 sm:p-12">
+        <div className="mt-12 grid gap-px overflow-hidden border border-line bg-line lg:grid-cols-[0.9fr_1.1fr]">
+          <div className="flex flex-col items-center justify-center bg-surface p-8 sm:p-12">
             <div className="relative h-64 w-64">
               <svg viewBox="0 0 220 220" className="h-full w-full -rotate-90">
                 <circle
@@ -106,7 +113,7 @@ export function ProjectCostVisualizer({
                   cy="110"
                   r={radius}
                   fill="none"
-                  stroke="rgba(255,255,255,0.06)"
+                  stroke="rgb(var(--fg-rgb)/0.06)"
                   strokeWidth="22"
                 />
                 {segments.map((part) => (
@@ -128,33 +135,33 @@ export function ProjectCostVisualizer({
                 ))}
               </svg>
               <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
-                <span className="max-w-[8rem] text-[0.5rem] uppercase tracking-[0.16em] text-ivory/45">
+                <span className="max-w-[8rem] text-[0.5rem] uppercase tracking-[0.16em] text-fg">
                   {c.parts[active.key]}
                 </span>
-                <span className="mt-1 font-display text-4xl text-gold">{active.pct}%</span>
-                <span className="mt-1 text-[0.62rem] text-ivory/65">{money(activeAmount)}</span>
+                <span className="mt-1 font-display text-4xl text-accent">{active.pct}%</span>
+                <span className="mt-1 text-[0.62rem] text-fg">{money(activeAmount)}</span>
               </div>
             </div>
 
-            <div className="mt-8 grid w-full grid-cols-3 gap-px overflow-hidden border border-white/10 bg-white/10 text-center">
+            <div className="mt-8 grid w-full grid-cols-3 gap-px overflow-hidden border border-line bg-line text-center">
               {[
                 { label: c.total, value: money(totalSar) },
                 { label: c.area, value: areaSqm ? `${new Intl.NumberFormat(locale === "ar" ? "ar-SA" : "en-US").format(areaSqm)} m²` : "—" },
                 { label: c.perM2, value: areaSqm ? money(totalSar / areaSqm) : "—" },
               ].map((fact) => (
-                <div key={fact.label} className="bg-obsidian p-3">
-                  <p className="text-[0.44rem] uppercase tracking-[0.12em] text-ivory/40">
+                <div key={fact.label} className="bg-bg p-3">
+                  <p className="text-[0.44rem] uppercase tracking-[0.12em] text-fg">
                     {fact.label}
                   </p>
-                  <p className="mt-1 text-[0.64rem] text-ivory/70">{fact.value}</p>
+                  <p className="mt-1 text-[0.64rem] text-fg">{fact.value}</p>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="bg-obsidian p-6 sm:p-10">
-            <div className="flex items-center gap-2 text-[0.55rem] uppercase tracking-[0.16em] text-ivory/45">
-              <Layers3 className="h-3.5 w-3.5 text-gold" />
+          <div className="bg-bg p-6 sm:p-10">
+            <div className="flex items-center gap-2 text-[0.55rem] uppercase tracking-[0.16em] text-fg">
+              <Layers3 className="h-3.5 w-3.5 text-accent" />
               {c.selected}
             </div>
 
@@ -173,19 +180,19 @@ export function ProjectCostVisualizer({
                     className={cn(
                       "flex w-full items-center gap-4 border p-4 text-start transition-colors",
                       selected
-                        ? "border-gold/40 bg-gold/[0.06]"
-                        : "border-white/8 bg-white/[0.015] hover:border-white/20",
+                        ? "border-accent/40 bg-accent/[0.06]"
+                        : "border-line bg-surface-2 hover:border-line",
                     )}
                   >
                     <span
                       className="flex h-9 w-9 shrink-0 items-center justify-center border"
-                      style={{ borderColor: `${colors[part.key]}55`, color: colors[part.key] }}
+                      style={{ borderColor: softColors[part.key], color: colors[part.key] }}
                     >
                       <Icon className="h-4 w-4" />
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block text-[0.72rem] text-ivory/75">{c.parts[part.key]}</span>
-                      <span className="mt-1 block h-1 overflow-hidden bg-white/10">
+                      <span className="block text-[0.72rem] text-fg">{c.parts[part.key]}</span>
+                      <span className="mt-1 block h-1 overflow-hidden bg-line">
                         <span
                           className="block h-full"
                           style={{ width: `${part.pct}%`, background: colors[part.key] }}
@@ -193,20 +200,20 @@ export function ProjectCostVisualizer({
                       </span>
                     </span>
                     <span className="shrink-0 text-end">
-                      <span className="block text-[0.66rem] text-ivory/55">{money((totalSar * part.pct) / 100)}</span>
-                      <span className="block font-display text-xl text-gold">{part.pct}%</span>
+                      <span className="block text-[0.66rem] text-fg">{money((totalSar * part.pct) / 100)}</span>
+                      <span className="block font-display text-xl text-accent">{part.pct}%</span>
                     </span>
                   </button>
                 );
               })}
             </div>
 
-            <div className="mt-6 flex flex-col gap-4 border-t border-white/10 pt-5 sm:flex-row sm:items-center sm:justify-between">
-              <p className="max-w-sm text-[0.58rem] leading-relaxed text-ivory/40">{c.note}</p>
+            <div className="mt-6 flex flex-col gap-4 border-t border-line pt-5 sm:flex-row sm:items-center sm:justify-between">
+              <p className="max-w-sm text-[0.58rem] leading-relaxed text-fg">{c.note}</p>
               <button
                 type="button"
                 onClick={() => setProposalOpen(true)}
-                className="inline-flex h-10 shrink-0 items-center justify-center gap-2 border border-gold/35 px-4 text-[0.56rem] font-semibold uppercase tracking-[0.14em] text-gold transition-colors hover:border-gold hover:bg-gold/10"
+                className="inline-flex h-10 shrink-0 items-center justify-center gap-2 border border-accent/35 px-4 text-[0.56rem] font-semibold uppercase tracking-[0.14em] text-accent transition-colors hover:border-accent hover:bg-accent/10"
               >
                 <Download className="h-3.5 w-3.5" />
                 {c.proposal}

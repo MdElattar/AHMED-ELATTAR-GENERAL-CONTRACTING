@@ -9,8 +9,11 @@ import {
   SESSION_TTL_SECONDS,
   createSession,
   publicSessionUser,
+  sessionInputFromUser,
 } from "@/lib/auth/token";
 import { setSessionCookie } from "@/lib/auth/cookie";
+import { resolvePostLoginPath } from "@/lib/auth/redirect";
+import { activeSession } from "@/lib/auth/guard";
 import { authUnavailable, isAuthConfigError } from "@/lib/auth/response";
 import {
   clearWebAuthnChallenge,
@@ -24,12 +27,15 @@ import {
   touchPasskey,
   updateUser,
 } from "@/lib/db";
-import {NO_STORE_HEADERS,
+import {
+  NO_STORE_HEADERS,
   clientIp,
   isSameOrigin,
-  readJsonBody, safeLogError } from "@/lib/security/http";
+  readValidatedJson,
+  safeLogError,
+} from "@/lib/security/http";
 import { rateLimit } from "@/lib/security/rate-limit";
-import { isPlainObject } from "@/lib/security/validation";
+import { passkeyAuthVerifySchema } from "@/lib/security/schemas";
 
 export async function POST(request: NextRequest) {
   if (!isSameOrigin(request)) {
@@ -48,16 +54,33 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const fail = async (email: string, entityId?: string) => {
+    await recordAudit({
+      actor: email || "unknown",
+      action: "login_failed",
+      entity: "user",
+      ...(entityId ? { entityId } : {}),
+      meta: { method: "passkey" },
+      ip,
+    });
+    return NextResponse.json(
+      { error: "invalid_credentials" },
+      { status: 401, headers: NO_STORE_HEADERS },
+    );
+  };
+
   try {
-    const body = await readJsonBody(request, 96_000);
-    if (!isPlainObject(body) || !isPlainObject(body.response)) {
+    const parsed = await readValidatedJson(request, passkeyAuthVerifySchema, 96_000);
+    if (!parsed.data) {
       return NextResponse.json(
         { error: "invalid_response" },
         { status: 400, headers: NO_STORE_HEADERS },
       );
     }
 
-    const challenge = readWebAuthnChallenge(request, "authentication");
+    const { purpose, remember, next } = parsed.data;
+    const challengeKind = purpose === "step-up" ? "step-up" : "authentication";
+    const challenge = await readWebAuthnChallenge(request, challengeKind);
     if (!challenge) {
       return NextResponse.json(
         { error: "expired_challenge" },
@@ -65,33 +88,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const assertion = body.response as unknown as AuthenticationResponseJSON;
-    const credentialId =
-      typeof assertion.id === "string" ? assertion.id : "";
+    const assertion = parsed.data.response as unknown as AuthenticationResponseJSON;
+    const credentialId = typeof assertion.id === "string" ? assertion.id : "";
     const passkey = credentialId
       ? await getPasskeyByCredentialId(credentialId)
       : null;
 
-    if (!passkey) {
-      return NextResponse.json(
-        { error: "invalid_credentials" },
-        { status: 401, headers: NO_STORE_HEADERS },
-      );
-    }
+    if (!passkey) return await fail(challenge.email ?? "", undefined);
     if (challenge.email && challenge.email !== passkey.email) {
+      return await fail(passkey.email, passkey.userId);
+    }
+
+    const stepUpSession = purpose === "step-up" ? await activeSession() : null;
+    if (purpose === "step-up" && (!stepUpSession || stepUpSession.email !== passkey.email)) {
       return NextResponse.json(
-        { error: "invalid_credentials" },
+        { error: "unauthorized" },
         { status: 401, headers: NO_STORE_HEADERS },
       );
     }
 
     const user = await getUserByEmail(passkey.email);
-    if (!user) {
-      return NextResponse.json(
-        { error: "invalid_credentials" },
-        { status: 401, headers: NO_STORE_HEADERS },
-      );
-    }
+    if (!user) return await fail(passkey.email, passkey.userId);
 
     const { rpID, origin } = relyingParty(request);
     const verification = await verifyAuthenticationResponse({
@@ -105,60 +122,60 @@ export async function POST(request: NextRequest) {
         counter: passkey.counter,
         transports: passkey.transports,
       },
-      requireUserVerification: false,
+      requireUserVerification: purpose === "step-up",
     });
 
-    if (!verification.verified) {
-      await recordAudit({
-        actor: passkey.email,
-        action: "auth.passkey_failed",
-        entity: "user",
-        entityId: user.id,
-        ip,
-      });
-      return NextResponse.json(
-        { error: "invalid_credentials" },
-        { status: 401, headers: NO_STORE_HEADERS },
-      );
-    }
+    if (!verification.verified) return await fail(passkey.email, user.id);
 
     await touchPasskey(credentialId, verification.authenticationInfo.newCounter);
 
-    const remember =
-      typeof body.remember === "boolean" ? body.remember : true;
-    const ttl = remember ? REMEMBERED_SESSION_TTL_SECONDS : SESSION_TTL_SECONDS;
+    const now = Math.floor(Date.now() / 1000);
+    await updateUser(user.email, { lastLoginAt: new Date().toISOString() });
+
+    // Current sessionVersion is used as-is: it is already persisted, so the
+    // token survives activeSession()'s reconciliation check.
+    const ttl =
+      purpose === "step-up"
+        ? SESSION_TTL_SECONDS
+        : remember
+          ? REMEMBERED_SESSION_TTL_SECONDS
+          : SESSION_TTL_SECONDS;
     const { token, session } = await createSession(
-      {
-        sub: user.id,
-        email: user.email,
-        name: user.name,
-        ...(user.nameAr ? { nameAr: user.nameAr } : {}),
-        ...(user.honorific ? { honorific: user.honorific } : {}),
-        ...(user.honorificAr ? { honorificAr: user.honorificAr } : {}),
-        company: user.company,
-        accountId: user.accountId,
-        ...(user.phone ? { phone: user.phone } : {}),
-        role: user.role,
-        sessionVersion: user.sessionVersion ?? 0,
-      },
+      sessionInputFromUser(user, {
+        passkeyEnrolled: true,
+        stepUpAt: purpose === "step-up" ? now : 0,
+      }),
       ttl,
     );
 
-    await updateUser(user.email, { lastLoginAt: new Date().toISOString() });
-    await recordAudit({
-      actor: user.email,
-      action: "auth.passkey_sign_in",
-      entity: "user",
-      entityId: user.id,
-      meta: { credentialId },
-      ip,
-    });
+    if (purpose === "step-up") {
+      await recordAudit({
+        actor: user.email,
+        action: "step_up_verified",
+        entity: "user",
+        entityId: user.id,
+        meta: { method: "passkey", credentialId },
+        ip,
+      });
+    } else {
+      await recordAudit({
+        actor: user.email,
+        action: "login_success",
+        entity: "user",
+        entityId: user.id,
+        meta: { method: "passkey", credentialId },
+        ip,
+      });
+    }
 
-    const response = NextResponse.json(
-      { user: publicSessionUser(session) },
-      { headers: NO_STORE_HEADERS },
-    );
-    setSessionCookie(response, token, remember ? ttl : undefined);
+    const body = purpose === "step-up"
+      ? { user: publicSessionUser(session), stepUpAt: session.stepUpAt, ok: true }
+      : {
+          user: publicSessionUser(session),
+          redirectTo: resolvePostLoginPath(user.role, next, true),
+        };
+    const response = NextResponse.json(body, { headers: NO_STORE_HEADERS });
+    setSessionCookie(response, token, ttl);
     clearWebAuthnChallenge(response);
     return response;
   } catch (error) {

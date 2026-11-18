@@ -1,17 +1,18 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { generateAuthenticationOptions } from "@simplewebauthn/server";
+import { activeSession } from "@/lib/auth/guard";
 import { authUnavailable, isAuthConfigError } from "@/lib/auth/response";
-import {
-  createWebAuthnChallenge,
-  relyingParty,
-} from "@/lib/auth/webauthn";
+import { createWebAuthnChallenge, relyingParty } from "@/lib/auth/webauthn";
 import { getUserByEmail, listPasskeys } from "@/lib/db";
-import {NO_STORE_HEADERS,
+import {
+  NO_STORE_HEADERS,
   clientIp,
   isSameOrigin,
-  readJsonBody, safeLogError } from "@/lib/security/http";
+  readJsonBody,
+  safeLogError,
+} from "@/lib/security/http";
 import { rateLimit } from "@/lib/security/rate-limit";
-import { normalizeEmail } from "@/lib/security/validation";
+import { passkeyOptionsSchema } from "@/lib/security/schemas";
 
 export async function POST(request: NextRequest) {
   if (!isSameOrigin(request)) {
@@ -32,30 +33,47 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await readJsonBody(request, 4_000);
-    const email =
-      body && typeof body.email === "string"
-        ? normalizeEmail(body.email)
-        : "";
+    const parsed = passkeyOptionsSchema.safeParse(body ?? {});
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "invalid_request" },
+        { status: 400, headers: NO_STORE_HEADERS },
+      );
+    }
 
+    const { purpose } = parsed.data;
+    const session = purpose === "step-up" ? await activeSession() : null;
+    if (purpose === "step-up" && !session) {
+      return NextResponse.json(
+        { error: "unauthorized" },
+        { status: 401, headers: NO_STORE_HEADERS },
+      );
+    }
+
+    // Step-up always re-authenticates the signed-in account; sign-in may omit
+    // the email to allow discoverable (usernameless) credentials.
+    const email = session?.email ?? parsed.data.email ?? "";
     const user = email ? await getUserByEmail(email) : null;
     const credentials = user ? await listPasskeys(user.email) : [];
     const { rpID } = relyingParty(request);
 
-    // An empty allowCredentials list enables discoverable-credential
-    // (usernameless) passkey sign-in. When an email is supplied we narrow the
-    // browser prompt to that account's registered authenticators.
     const options = await generateAuthenticationOptions({
       rpID,
       allowCredentials: credentials.map((passkey) => ({
         id: passkey.credentialId,
         transports: passkey.transports,
       })),
-      userVerification: "preferred",
+      userVerification: purpose === "step-up" ? "required" : "preferred",
       timeout: 90_000,
     });
 
     const response = NextResponse.json({ options }, { headers: NO_STORE_HEADERS });
-    createWebAuthnChallenge(response, "authentication", email || undefined);
+    await createWebAuthnChallenge(
+      response,
+      purpose === "step-up" ? "step-up" : "authentication",
+      email || undefined,
+      options.challenge,
+    );
     return response;
   } catch (error) {
     if (isAuthConfigError(error)) return authUnavailable();

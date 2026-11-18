@@ -90,11 +90,12 @@ type WorkspaceState = {
 
 type WorkspaceContextValue = WorkspaceState & {
   ready: boolean;
-  addProject: (project: WorkspaceProject) => void;
-  updateProject: (slug: string, patch: Partial<WorkspaceProject>) => void;
-  deleteProject: (slug: string) => void;
-  updateContent: (patch: Partial<SiteContent>) => void;
-  updateService: (slug: string, patch: Partial<ServiceOverride>) => void;
+  /** Resolves true only after the server confirms the write. */
+  addProject: (project: WorkspaceProject) => Promise<boolean>;
+  updateProject: (slug: string, patch: Partial<WorkspaceProject>) => Promise<boolean>;
+  deleteProject: (slug: string) => Promise<boolean>;
+  updateContent: (patch: Partial<SiteContent>) => Promise<boolean>;
+  updateService: (slug: string, patch: Partial<ServiceOverride>) => Promise<boolean>;
   addMessage: (projectSlug: string, text: string) => void;
   replyMessage: (projectSlug: string, text: string) => void;
   resetWorkspace: () => void;
@@ -677,32 +678,55 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     };
   }, [ready, commit]);
 
-  const persistProject = useCallback((project: WorkspaceProject) => {
-    void fetch("/api/admin/projects", {
-      method: "POST",
-      credentials: "same-origin",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ project }),
-    }).catch(() => undefined);
+  const persistProject = useCallback(async (project: WorkspaceProject) => {
+    try {
+      const response = await fetch("/api/admin/projects", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ project }),
+      });
+      return response.ok;
+    } catch {
+      return false;
+    }
   }, []);
 
-  const persistProjectPatch = useCallback((project: WorkspaceProject) => {
-    void fetch(`/api/admin/projects/${encodeURIComponent(project.slug)}`, {
-      method: "PATCH",
-      credentials: "same-origin",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ project }),
-    }).catch(() => undefined);
+  const persistProjectPatch = useCallback(async (project: WorkspaceProject) => {
+    try {
+      const response = await fetch(`/api/admin/projects/${encodeURIComponent(project.slug)}`, {
+        method: "PATCH",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ project }),
+      });
+      return response.ok;
+    } catch {
+      return false;
+    }
   }, []);
 
-  const persistContent = useCallback((content: SiteContent) => {
-    void fetch("/api/admin/content", {
-      method: "PATCH",
-      credentials: "same-origin",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content }),
-    }).catch(() => undefined);
+  const persistContent = useCallback(async (content: SiteContent) => {
+    try {
+      const response = await fetch("/api/admin/content", {
+        method: "PATCH",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content }),
+      });
+      return response.ok;
+    } catch {
+      return false;
+    }
   }, []);
+
+  /** Restore a snapshot only when no newer mutation has replaced it. */
+  const rollback = useCallback(
+    (previous: WorkspaceState, optimistic: WorkspaceState) => {
+      if (stateRef.current === optimistic) commit(previous);
+    },
+    [commit],
+  );
 
   useEffect(() => {
     if (!ready) return;
@@ -714,25 +738,28 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   }, [ready, state]);
 
   const addProject = useCallback(
-    (project: WorkspaceProject) => {
+    async (project: WorkspaceProject) => {
       const normalized = normalizeProject(project);
-      if (!normalized) return;
+      if (!normalized) return false;
 
       const current = stateRef.current;
-      commit({
+      const optimistic: WorkspaceState = {
         ...current,
         projects: [
           normalized,
           ...current.projects.filter((item) => item.slug !== normalized.slug),
         ].slice(0, 100),
-      });
-      persistProject(normalized);
+      };
+      commit(optimistic);
+      const saved = await persistProject(normalized);
+      if (!saved) rollback(current, optimistic);
+      return saved;
     },
-    [commit, persistProject],
+    [commit, persistProject, rollback],
   );
 
   const updateProject = useCallback(
-    (slug: string, patch: Partial<WorkspaceProject>) => {
+    async (slug: string, patch: Partial<WorkspaceProject>) => {
       const current = stateRef.current;
       const projects = current.projects.map((project) => {
         if (project.slug !== slug) return project;
@@ -745,36 +772,43 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
           : normalized;
       });
       const updated = projects.find((project) => project.slug === slug);
+      if (!updated) return false;
 
-      commit({ ...current, projects });
-      if (updated) persistProjectPatch(updated);
+      const optimistic = { ...current, projects };
+      commit(optimistic);
+      const saved = await persistProjectPatch(updated);
+      if (!saved) rollback(current, optimistic);
+      return saved;
     },
-    [commit, persistProjectPatch],
+    [commit, persistProjectPatch, rollback],
   );
 
   const deleteProject = useCallback(
     (slug: string) => {
       // The delete contract is now a recoverable archive, never a hard
       // removal that would make a row silently disappear.
-      updateProject(slug, { archivedAt: new Date().toISOString() });
+      return updateProject(slug, { archivedAt: new Date().toISOString() });
     },
     [updateProject],
   );
 
   const updateContent = useCallback(
-    (patch: Partial<SiteContent>) => {
+    async (patch: Partial<SiteContent>) => {
       const current = stateRef.current;
       const content = normalizeContent({ ...current.content, ...patch });
-      commit({ ...current, content });
-      persistContent(content);
+      const optimistic = { ...current, content };
+      commit(optimistic);
+      const saved = await persistContent(content);
+      if (!saved) rollback(current, optimistic);
+      return saved;
     },
-    [commit, persistContent],
+    [commit, persistContent, rollback],
   );
 
   const updateService = useCallback(
-    (slug: string, patch: Partial<ServiceOverride>) => {
+    async (slug: string, patch: Partial<ServiceOverride>) => {
       const normalizedSlug = slug.trim().toLowerCase().slice(0, 80);
-      if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(normalizedSlug)) return;
+      if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(normalizedSlug)) return false;
 
       const current = stateRef.current;
       const content: SiteContent = {
@@ -792,10 +826,13 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         },
       };
 
-      commit({ ...current, content });
-      persistContent(content);
+      const optimistic = { ...current, content };
+      commit(optimistic);
+      const saved = await persistContent(content);
+      if (!saved) rollback(current, optimistic);
+      return saved;
     },
-    [commit, persistContent],
+    [commit, persistContent, rollback],
   );
 
   const addMessage = useCallback(

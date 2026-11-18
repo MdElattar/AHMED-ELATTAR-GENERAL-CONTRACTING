@@ -20,7 +20,7 @@ export function Hero() {
   const heroImage = resolveMedia(content.mediaOverrides, "hero", heroPhoto, locale);
 
   return (
-    <section className="relative min-h-[100svh] overflow-hidden bg-obsidian">
+    <section className="relative min-h-[100svh] overflow-hidden bg-bg">
       <PhotoLayer
         images={[heroImage]}
         preloadFirst
@@ -33,21 +33,21 @@ export function Hero() {
       <HeroScene />
       <div className="hero-aurora pointer-events-none absolute inset-0 z-[2] opacity-80" aria-hidden="true" />
       <div className="atmo-glow pointer-events-none absolute inset-0 z-[2] opacity-60" aria-hidden="true" />
-      <div className="pointer-events-none absolute inset-0 z-[2] bg-gradient-to-b from-obsidian/78 via-obsidian/18 to-obsidian" />
-      <div className="pointer-events-none absolute inset-0 z-[2] bg-[radial-gradient(ellipse_at_18%_42%,rgba(6,7,8,0.82),transparent_62%)]" />
-      <div className="pointer-events-none absolute inset-0 z-[2] bg-[radial-gradient(ellipse_at_78%_28%,rgba(184,134,11,0.14),transparent_55%)]" />
+      <div className="pointer-events-none absolute inset-0 z-[2] bg-gradient-to-b from-bg/78 via-bg/18 to-bg" />
+      <div className="pointer-events-none absolute inset-0 z-[2] bg-[radial-gradient(ellipse_at_18%_42%,rgb(var(--bg-rgb)/0.82),transparent_62%)]" />
+      <div className="pointer-events-none absolute inset-0 z-[2] bg-[radial-gradient(ellipse_at_78%_28%,rgb(var(--accent-rgb)/0.14),transparent_55%)]" />
 
       <div className="relative z-10 flex min-h-[100svh] flex-col">
         <div className="container-lux flex flex-1 flex-col justify-center pb-36 pt-32 sm:pb-40 sm:pt-36">
           <div className="max-w-3xl">
             <div className="hero-fade flex items-center gap-4" style={{ animationDelay: "120ms" }}>
-              <span className="h-px w-10 bg-gold/70" />
-              <span className="text-[0.6rem] font-medium uppercase tracking-[0.24em] text-gold sm:text-[0.68rem]">
+              <span className="h-px w-10 bg-accent/70" />
+              <span className="text-[0.6rem] font-medium uppercase tracking-[0.24em] text-accent sm:text-[0.68rem]">
                 {t.hero.eyebrow}
               </span>
             </div>
 
-            <h1 className="display-title text-shadow-lux mt-7 text-[clamp(3.4rem,10vw,8.4rem)] text-ivory">
+            <h1 className="display-title text-shadow-lux mt-7 text-[clamp(3.4rem,10vw,8.4rem)] text-fg">
               <span className="hero-line">
                 <span style={{ animationDelay: "180ms" }}>{t.hero.titleTop}</span>
               </span>
@@ -59,7 +59,7 @@ export function Hero() {
             </h1>
 
             <p
-              className="hero-fade text-shadow-lux mt-7 max-w-lg text-[0.95rem] leading-[1.95] text-ivory/70 sm:text-base"
+              className="hero-fade text-shadow-lux mt-7 max-w-lg text-[0.95rem] leading-[1.95] text-fg sm:text-base"
               style={{ animationDelay: "460ms" }}
             >
               {t.hero.description}
@@ -71,7 +71,7 @@ export function Hero() {
             >
               <Link
                 href="/projects"
-                className="btn-shine group inline-flex h-13 items-center justify-center gap-3 bg-gold px-7 text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-obsidian transition-colors duration-500 hover:bg-gold-light"
+                className="btn-shine group inline-flex h-13 items-center justify-center gap-3 bg-accent-fill px-7 text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-accent-fg transition-colors duration-500 hover:bg-accent-fill"
               >
                 {t.hero.primary}
                 <ArrowUpRight
@@ -83,7 +83,7 @@ export function Hero() {
               </Link>
               <Link
                 href="/contact"
-                className="group inline-flex h-13 items-center justify-center gap-3 border border-white/20 px-7 text-[0.7rem] font-medium uppercase tracking-[0.16em] text-ivory/80 transition-all duration-500 hover:border-gold/60 hover:text-gold"
+                className="group inline-flex h-13 items-center justify-center gap-3 border border-line px-7 text-[0.7rem] font-medium uppercase tracking-[0.16em] text-fg transition-all duration-500 hover:border-accent/60 hover:text-accent"
               >
                 {t.hero.secondary}
                 <span className="flex h-5 w-5 items-center justify-center rounded-full border border-current">
@@ -94,11 +94,11 @@ export function Hero() {
               <button
                 type="button"
                 onClick={() => scrollTo("#live-sites", -84)}
-                className="group inline-flex h-13 items-center gap-2.5 px-1 text-[0.62rem] font-medium uppercase tracking-[0.16em] text-ivory/65 transition-colors hover:text-gold"
+                className="group inline-flex h-13 items-center gap-2.5 px-1 text-[0.62rem] font-medium uppercase tracking-[0.16em] text-fg transition-colors hover:text-accent"
               >
                 <span className="relative flex h-1.5 w-1.5">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-gold/60" />
-                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-gold" />
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent/60" />
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-accent-fill" />
                 </span>
                 {t.sections.inline.heroLiveSites}
                 <ArrowUpRight
@@ -113,20 +113,20 @@ export function Hero() {
         </div>
 
         <div className="container-lux relative z-10">
-          <div className="flex flex-col gap-6 border-t border-white/[0.1] py-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-6 border-t border-line py-6 sm:flex-row sm:items-center sm:justify-between">
             <div className="grid grid-cols-3 gap-6 sm:gap-10">
               {t.hero.stats.map((stat, index) => (
                 <div
                   key={stat.label}
                   className={cn(
                     "flex flex-col gap-1",
-                    index !== 0 && "border-s border-white/[0.1] ps-6 sm:ps-10",
+                    index !== 0 && "border-s border-line ps-6 sm:ps-10",
                   )}
                 >
-                  <span className="tabular text-xl font-light text-ivory sm:text-2xl">
+                  <span className="tabular text-xl font-light text-fg sm:text-2xl">
                     {stat.value}
                   </span>
-                  <span className="text-[0.58rem] uppercase leading-relaxed tracking-[0.14em] text-ivory/45 sm:text-[0.62rem]">
+                  <span className="text-[0.58rem] uppercase leading-relaxed tracking-[0.14em] text-fg sm:text-[0.62rem]">
                     {stat.label}
                   </span>
                 </div>
@@ -134,13 +134,13 @@ export function Hero() {
             </div>
 
             <div className="flex items-center gap-4 sm:gap-6">
-              <div className="flex items-center gap-3 text-[0.6rem] uppercase tracking-[0.2em] text-ivory/45">
+              <div className="flex items-center gap-3 text-[0.6rem] uppercase tracking-[0.2em] text-fg">
                 <span>{t.hero.scroll}</span>
-                <span className="relative flex h-9 w-5 items-start justify-center rounded-full border border-white/20 p-1">
-                  <span className="scroll-dot h-1.5 w-1.5 rounded-full bg-gold" />
+                <span className="relative flex h-9 w-5 items-start justify-center rounded-full border border-line p-1">
+                  <span className="scroll-dot h-1.5 w-1.5 rounded-full bg-accent-fill" />
                 </span>
               </div>
-              <div className="hidden items-center gap-2 text-[0.58rem] uppercase tracking-[0.18em] text-ivory/35 md:flex">
+              <div className="hidden items-center gap-2 text-[0.58rem] uppercase tracking-[0.18em] text-fg md:flex">
                 <MoveDown className="h-3 w-3" />
                 24.7136° N · 46.6753° E
               </div>
@@ -150,20 +150,20 @@ export function Hero() {
       </div>
 
       <div className="pointer-events-none absolute end-5 top-1/2 z-10 hidden -translate-y-1/2 items-center gap-3 xl:flex">
-        <span className="vertical-text text-[0.55rem] uppercase tracking-[0.28em] text-ivory/35">
+        <span className="vertical-text text-[0.55rem] uppercase tracking-[0.28em] text-fg">
           {t.hero.vertical}
         </span>
-        <span className="h-16 w-px bg-gradient-to-b from-gold/60 to-transparent" />
+        <span className="h-16 w-px bg-gradient-to-b from-accent/60 to-transparent" />
       </div>
 
       <div className="pointer-events-none absolute start-5 top-1/2 z-10 hidden -translate-y-1/2 xl:flex">
-        <span className="vertical-text text-[0.55rem] uppercase tracking-[0.3em] text-ivory/30">
+        <span className="vertical-text text-[0.55rem] uppercase tracking-[0.3em] text-fg">
           EST. 1987 — RIYADH
         </span>
       </div>
 
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] h-24 bg-gradient-to-t from-obsidian to-transparent" />
-      <ArrowDown className="pointer-events-none absolute bottom-5 start-1/2 z-10 hidden h-4 w-4 -translate-x-1/2 text-gold/40 sm:block" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] h-24 bg-gradient-to-t from-bg to-transparent" />
+      <ArrowDown className="pointer-events-none absolute bottom-5 start-1/2 z-10 hidden h-4 w-4 -translate-x-1/2 text-accent sm:block" />
     </section>
   );
 }

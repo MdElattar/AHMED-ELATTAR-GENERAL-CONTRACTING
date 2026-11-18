@@ -61,14 +61,14 @@ export function AdminMaintenance() {
 
       <Card className="space-y-4 p-5">
         <div className="flex items-start gap-3">
-          <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] border border-[rgba(226,176,74,0.25)] bg-[rgba(226,176,74,0.1)] text-[#E2B04A]">
+          <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] border border-[rgb(var(--accent-rgb)/0.25)] bg-[rgb(var(--accent-rgb)/0.1)] text-accent">
             <ImageIcon className="h-5 w-5" strokeWidth={1.7} />
           </span>
           <div className="min-w-0">
-            <h2 className="text-[16px] font-semibold text-[var(--admin-text)]">
+            <h2 className="text-[16px] font-semibold text-fg">
               {isAr ? "توليد الصور المصغرة الناقصة" : "Generate missing thumbnails"}
             </h2>
-            <p className="mt-1 max-w-2xl text-[13px] leading-relaxed text-[var(--admin-muted)]">
+            <p className="mt-1 max-w-2xl text-[13px] leading-relaxed text-muted">
               {isAr
                 ? "يفحص كل مشروع، يعيد استخدام صورة الغلاف الحالية، ويولّد نسخة WebP بعرض 400 بكسل مع بلور صغير. شغّل المعاينة أولاً لمعرفة ما سيتم تغييره. تظهر فقط المشاريع التي ينقصها thumbUrl أو blurDataURL."
                 : "Scans every project, reuses the existing cover, and generates a 400px WebP thumbnail plus a tiny blur placeholder. Run the dry run first to preview changes. Only projects missing thumbUrl or blurDataURL are touched."}
@@ -100,7 +100,7 @@ export function AdminMaintenance() {
         {error ? (
           <p
             role="alert"
-            className="flex items-center gap-2 rounded-[12px] border border-red-400/25 bg-red-400/[0.08] px-3 py-2.5 text-[13px] text-red-200"
+            className="flex items-center gap-2 rounded-[12px] border border-danger/25 bg-danger/[0.08] px-3 py-2.5 text-[13px] text-danger"
           >
             <AlertCircle className="h-4 w-4 shrink-0" />
             {error}
@@ -108,9 +108,9 @@ export function AdminMaintenance() {
         ) : null}
 
         {report ? (
-          <div className="space-y-3 border-t border-[var(--admin-card-border)] pt-4">
-            <p className="flex items-center gap-2 text-[14px] font-semibold text-[var(--admin-text)]">
-              <Check className="h-4 w-4 text-[#4CCB96]" />
+          <div className="space-y-3 border-t border-line pt-4">
+            <p className="flex items-center gap-2 text-[14px] font-semibold text-fg">
+              <Check className="h-4 w-4 text-success" />
               {report.dryRun
                 ? isAr
                   ? `المعاينة: ${report.count} مشروعاً يحتاج تحديثاً.`
@@ -125,10 +125,10 @@ export function AdminMaintenance() {
                 {report.candidates.map((candidate) => (
                   <li
                     key={candidate.slug}
-                    className="flex items-center justify-between gap-2 rounded-[10px] bg-[var(--admin-pill-surface)] px-3 py-2 text-[12px]"
+                    className="flex items-center justify-between gap-2 rounded-[10px] bg-surface-2 px-3 py-2 text-[12px]"
                   >
-                    <span className="truncate text-[var(--admin-text)]">{candidate.slug}</span>
-                    <span className="shrink-0 text-[var(--admin-muted)]">
+                    <span className="truncate text-fg">{candidate.slug}</span>
+                    <span className="shrink-0 text-muted">
                       {[candidate.needsThumb ? "thumb" : "", candidate.needsBlur ? "blur" : ""]
                         .filter(Boolean)
                         .join(" · ")}
@@ -139,7 +139,7 @@ export function AdminMaintenance() {
             ) : null}
 
             {report.failed?.length ? (
-              <ul className="list-none space-y-1 p-0 text-[12px] text-[#FF9A8F]">
+              <ul className="list-none space-y-1 p-0 text-[12px] text-danger">
                 {report.failed.map((failure) => (
                   <li key={failure.slug}>
                     {failure.slug}: {failure.reason}

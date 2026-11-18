@@ -135,17 +135,17 @@ export function ExecutiveKpiBar() {
     : [];
 
   return (
-    <div className="rounded-[22px] border border-white/[.07] bg-gradient-to-b from-white/[.05] to-white/[.018]/60">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-5 py-2">
+    <div className="rounded-[22px] border border-line bg-surface">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-2">
         <div className="flex flex-wrap items-center gap-3">
-          <span className="inline-flex items-center gap-1.5 border border-gold/30 bg-gold/[0.06] px-2.5 py-1.5 text-[0.68rem] font-semibold  text-gold">
+          <span className="inline-flex items-center gap-1.5 border border-accent/30 bg-accent/[0.06] px-2.5 py-1.5 text-[0.68rem] font-semibold  text-accent">
             <span
               aria-hidden="true"
-              className="h-1.5 w-1.5 rounded-full bg-gold [animation:live-pulse_3.8s_ease-out_infinite]"
+              className="h-1.5 w-1.5 rounded-full bg-accent-fill [animation:live-pulse_3.8s_ease-out_infinite]"
             />
             {c.live}
           </span>
-          <span className="text-[0.74rem] text-ivory/40">
+          <span className="text-[0.74rem] text-fg">
             {c.updated}{" "}
             {kpis
               ? new Intl.DateTimeFormat(locale === "ar" ? "ar-SA" : "en-GB", {
@@ -159,7 +159,7 @@ export function ExecutiveKpiBar() {
           type="button"
           onClick={() => void load(false)}
           disabled={refreshing}
-          className="inline-flex h-10 items-center gap-1.5 border border-white/10 px-3 text-[0.68rem] font-semibold  text-ivory/50 transition-colors hover:border-gold/40 hover:text-gold disabled:opacity-50"
+          className="inline-flex h-10 items-center gap-1.5 border border-line px-3 text-[0.68rem] font-semibold  text-fg transition-colors hover:border-accent/40 hover:text-accent disabled:opacity-50"
           aria-label={c.refresh}
         >
           {refreshing ? (
@@ -172,27 +172,27 @@ export function ExecutiveKpiBar() {
       </div>
 
       {error ? (
-        <p className="border-b border-red-400/15 bg-red-400/[0.05] px-5 py-3 text-[0.76rem] text-red-300/80">
+        <p className="border-b border-danger/15 bg-danger/[0.05] px-5 py-3 text-[0.76rem] text-danger">
           {c.unavailable}
         </p>
       ) : null}
 
-      <div className="grid grid-cols-2 gap-px bg-white/10 lg:grid-cols-3 2xl:grid-cols-6">
+      <div className="grid grid-cols-2 gap-px bg-line lg:grid-cols-3 2xl:grid-cols-6">
         {loading && !kpis
           ? Array.from({ length: 6 }).map((_, index) => (
-              <div key={index} className="bg-coal p-5" aria-hidden="true">
-                <span className="block h-4 w-4 animate-pulse rounded-sm bg-white/10" />
-                <span className="mt-3 block h-6 w-16 animate-pulse bg-white/10" />
-                <span className="mt-2 block h-2 w-20 animate-pulse bg-white/[0.07]" />
+              <div key={index} className="bg-surface p-5" aria-hidden="true">
+                <span className="block h-4 w-4 animate-pulse rounded-sm bg-line" />
+                <span className="mt-3 block h-6 w-16 animate-pulse bg-line" />
+                <span className="mt-2 block h-2 w-20 animate-pulse bg-surface-2" />
               </div>
             ))
           : stats.map(({ label, value, icon: Icon }) => (
-              <div key={label} className="min-w-0 bg-coal p-5">
-                <Icon className="h-4 w-4 text-gold" />
-                <p className="mt-3 tabular-nums [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif] text-[1.9rem] leading-none text-ivory">
+              <div key={label} className="min-w-0 bg-surface p-5">
+                <Icon className="h-4 w-4 text-accent" />
+                <p className="mt-3 tabular-nums [font-family:var(--font-inter),var(--font-arabic),system-ui,sans-serif] text-[1.9rem] leading-none text-fg">
                   {value}
                 </p>
-                <p className="mt-2.5 text-[0.72rem] leading-snug  text-ivory/40">
+                <p className="mt-2.5 text-[0.72rem] leading-snug  text-fg">
                   {label}
                 </p>
               </div>

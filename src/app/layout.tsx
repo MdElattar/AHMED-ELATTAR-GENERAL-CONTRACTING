@@ -1,12 +1,18 @@
 import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, Inter, Manrope, Tajawal } from "next/font/google";
+import { Suspense } from "react";
 import "./globals.css";
 import { I18nProvider } from "@/components/providers/I18nProvider";
 import { AtmosphereProvider } from "@/components/providers/AtmosphereProvider";
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { WorkspaceProvider } from "@/components/providers/WorkspaceProvider";
+import { BRAND } from "@/lib/brand";
 import { RouteChrome } from "@/components/layout/RouteChrome";
+import IdleGuard from "@/components/auth/IdleGuard";
+import PasskeyEnrollmentGate from "@/components/auth/PasskeyEnrollmentGate";
 import { ToastProvider } from "@/components/ui/Toast";
+import { ServiceWorkerRegistrar } from "@/components/providers/ServiceWorkerRegistrar";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const arabic = Tajawal({
@@ -39,17 +45,16 @@ const display = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://alattar.sa"),
+  metadataBase: new URL(BRAND.siteUrl),
   title: {
-    default: "شركة أحمد العطار للمقاولات العامة | نبني ما يبقى",
-    template: "%s | أحمد العطار",
+    default: `${BRAND.nameAr} | ${BRAND.descriptionAr}`,
+    template: `%s | ${BRAND.shortAr}`,
   },
-  description:
-    "شركة أحمد العطار للمقاولات العامة — أربعة عقود من الهندسة الدقيقة والمشاريع الضخمة في المملكة العربية السعودية. من الرؤية الأولى إلى آخر مسمار.",
+  description: `${BRAND.nameAr} — ${BRAND.descriptionAr}`,
   icons: {
     icon: [{ url: "/brand/logo-mark.svg", type: "image/svg+xml" }],
     shortcut: "/brand/logo-mark.svg",
-    apple: "/brand/logo-mark.svg",
+    apple: "/icons/icon-180.png",
   },
   keywords: [
     "مقاولات",
@@ -65,22 +70,21 @@ export const metadata: Metadata = {
     "Saudi Arabia",
     "contracting",
   ],
-  authors: [{ name: "Ahmed Elattar General Contracting Co." }],
-  creator: "Ahmed Elattar General Contracting Co.",
+  authors: [{ name: BRAND.nameEn }],
+  creator: BRAND.nameEn,
   openGraph: {
     type: "website",
     locale: "ar_SA",
     alternateLocale: ["en_US"],
-    siteName: "Ahmed Elattar General Contracting Co.",
-    title: "شركة أحمد العطار للمقاولات العامة | نبني ما يبقى",
-    description:
-      "أربعة عقود من الهندسة الدقيقة والمشاريع الضخمة في المملكة العربية السعودية.",
-    url: "https://alattar.sa",
+    siteName: BRAND.nameEn,
+    title: `${BRAND.nameAr} | ${BRAND.shortAr}`,
+    description: BRAND.descriptionAr,
+    url: BRAND.siteUrl,
   },
   twitter: {
     card: "summary_large_image",
-    title: "Ahmed Elattar General Contracting Co.",
-    description: "We build what endures. Four decades of precision construction in Saudi Arabia.",
+    title: BRAND.nameEn,
+    description: BRAND.descriptionEn,
   },
   robots: {
     index: true,
@@ -89,9 +93,9 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0a0b0e",
   width: "device-width",
   initialScale: 1,
+  themeColor: BRAND.themeColor,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -99,6 +103,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html
       lang="ar"
       dir="rtl"
+      data-theme="dark"
       suppressHydrationWarning
       className={`${arabic.variable} ${body.variable} ${display.variable} ${inter.variable} h-full antialiased`}
     >
@@ -115,23 +120,39 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               "(function(){try{var k='alattar-atmosphere';var v=localStorage.getItem(k);if(v!=='golden'&&v!=='blue'&&v!=='studio'){v='golden';}document.documentElement.dataset.vibe=v;}catch(e){document.documentElement.dataset.vibe='golden';}})();",
           }}
         />
+        {/* Resolve the executive theme before first paint — no flash of the wrong palette. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "(function(){try{var k='alattar-theme';var v=null;try{v=localStorage.getItem(k);}catch(e){}if(v!=='system'&&v!=='light'&&v!=='dark'){v='system';}var d=!!(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);var t=v==='system'?(d?'dark':'light'):v;var r=document.documentElement;r.dataset.themePreference=v;r.dataset.theme=t;r.style.colorScheme=t;}catch(e){var r=document.documentElement;r.dataset.themePreference='system';r.dataset.theme='dark';r.style.colorScheme='dark';}})();",
+          }}
+        />
       </head>
-      <body className="min-h-full bg-obsidian font-sans text-ivory">
+      <body className="min-h-full bg-bg font-sans text-fg">
         <WorkspaceProvider>
           <I18nProvider>
             <AtmosphereProvider>
-              <AuthProvider>
-                <ToastProvider>
-                  <a
-                    href="#main"
-                    className="sr-only z-[300] bg-gold px-5 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-obsidian focus:not-sr-only focus:fixed focus:start-4 focus:top-4"
-                  >
-                    تجاوز إلى المحتوى / Skip to content
-                  </a>
-                  <RouteChrome>{children}</RouteChrome>
-                  <SpeedInsights />
-                </ToastProvider>
-              </AuthProvider>
+              <ThemeProvider>
+                <AuthProvider>
+                  <ToastProvider>
+                    <a
+                      href="#main"
+                      className="sr-only z-[300] bg-accent-fill px-5 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-accent-fg focus:not-sr-only focus:fixed focus:start-4 focus:top-4"
+                    >
+                      تجاوز إلى المحتوى / Skip to content
+                    </a>
+                    <RouteChrome>{children}</RouteChrome>
+                    <Suspense fallback={null}>
+                      <PasskeyEnrollmentGate />
+                    </Suspense>
+                    <Suspense fallback={null}>
+                      <IdleGuard />
+                    </Suspense>
+                    <SpeedInsights />
+                    <ServiceWorkerRegistrar />
+                  </ToastProvider>
+                </AuthProvider>
+              </ThemeProvider>
             </AtmosphereProvider>
           </I18nProvider>
         </WorkspaceProvider>
