@@ -11,6 +11,8 @@
   <img src="https://img.shields.io/badge/i18n-Arabic_%2F_English-C5A059?style=for-the-badge" alt="i18n Support" />
 </p>
 
+> 📸 **Portfolio showcase:** [Executive overview & generated screenshots](portfolio-showcase/PROJECT_OVERVIEW.md)
+
 > **"Innovating Construction... Building a Legacy That Endures"**  
 > *نبتكر في البناء.. لنترك أثراً يخلده الزمن*
 

@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { ArrowDown, ArrowUpRight, MoveDown } from "lucide-react";
 import { useI18n } from "@/components/providers/I18nProvider";
@@ -9,6 +10,8 @@ import { PhotoLayer } from "@/components/media/PhotoLayer";
 import { heroPhoto } from "@/data/media";
 import { resolveMedia } from "@/lib/cms";
 import { cn } from "@/lib/utils";
+
+const HeroScene = dynamic(() => import("@/components/media/HeroScene"), { ssr: false });
 
 export function Hero() {
   const { t, isRTL, locale } = useI18n();
@@ -27,6 +30,7 @@ export function Hero() {
         imageClassName="brightness-[0.82]"
       />
 
+      <HeroScene />
       <div className="hero-aurora pointer-events-none absolute inset-0 z-[2] opacity-80" aria-hidden="true" />
       <div className="atmo-glow pointer-events-none absolute inset-0 z-[2] opacity-60" aria-hidden="true" />
       <div className="pointer-events-none absolute inset-0 z-[2] bg-gradient-to-b from-obsidian/78 via-obsidian/18 to-obsidian" />

@@ -13,6 +13,7 @@
     "smoke:proposal": "tsx --env-file=.env scripts/proposal-smoke.ts",
     "test:projects": "playwright test tests/projects-responsive.spec.ts tests/projects-toolbar-bulkbar.spec.ts",
     "test:security": "playwright test tests/security-hardening.spec.ts",
+    "test:portfolio": "playwright test --project=portfolio",
     "security:scan": "node scripts/security-scan.mjs"
   },
   "dependencies": {
@@ -23,6 +24,7 @@
     "@radix-ui/react-select": "^2.4.1",
     "@radix-ui/react-slider": "^1.6.1",
     "@radix-ui/react-switch": "^1.4.1",
+    "@react-three/fiber": "^9.8.2",
     "@simplewebauthn/browser": "^14.0.0",
     "@simplewebauthn/server": "^14.1.0",
     "@vercel/speed-insights": "^2.1.0",
@@ -41,6 +43,7 @@
     "sharp": "^0.35.5",
     "sonner": "^2.0.8",
     "tailwind-merge": "^3.7.0",
+    "three": "^0.187.0",
     "zod": "^4.6.7"
   },
   "devDependencies": {
@@ -49,6 +52,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/three": "^0.187.0",
     "eslint": "^9",
     "eslint-config-next": "16.4.6",
     "tailwindcss": "4.3.3",
