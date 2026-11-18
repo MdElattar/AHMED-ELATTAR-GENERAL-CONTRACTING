@@ -87,16 +87,20 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const isUpdate = (await listProjects()).some((project) => project.slug === slug);
     const project = await upsertProject(slug, candidate);
     await recordAudit({
       actor: session.email,
-      action: "project.created",
+      action: isUpdate ? "project.updated" : "project.created",
       entity: "project",
       entityId: slug,
       ip: clientIp(request),
     });
     revalidatePublicContent(slug);
-    return NextResponse.json({ project }, { status: 201, headers: NO_STORE_HEADERS });
+    return NextResponse.json(
+      { project },
+      { status: isUpdate ? 200 : 201, headers: NO_STORE_HEADERS },
+    );
   } catch (error) {
     safeLogError("[admin] failed to create project", error);
     return NextResponse.json(

@@ -114,6 +114,19 @@ const MEDIA_EXTENSIONS = new Set([
 ]);
 
 /**
+ * Remote media hosts are explicitly allow-listed. An extension check alone
+ * lets an attacker point the image proxy / inspector at any internal service.
+ * Add new photography CDNs here deliberately.
+ */
+const MEDIA_HOSTS = new Set([
+  "images.unsplash.com",
+  "storage.googleapis.com",
+  "firebasestorage.googleapis.com",
+  "alattar.sa",
+  "www.alattar.sa",
+]);
+
+/**
  * Validate a CMS media link before it reaches next/image. Relative paths must
  * stay on this origin, and remote assets must use HTTPS with a recognised image
  * extension when one is present.
@@ -129,6 +142,7 @@ export function isAllowedMediaSource(value: string): boolean {
     const url = new URL(source);
     if (url.protocol !== "https:" || url.username || url.password) return false;
     if (url.pathname.includes("..")) return false;
+    if (!MEDIA_HOSTS.has(url.hostname.toLowerCase())) return false;
 
     const fileName = url.pathname.split("/").pop() ?? "";
     const extension = fileName.includes(".")

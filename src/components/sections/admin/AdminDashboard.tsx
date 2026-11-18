@@ -204,6 +204,7 @@ const copy = {
     archived: "المؤرشفة",
     restore: "استعادة",
     undo: "تراجع",
+    saveFailed: "تعذّر حفظ التغيير. لم يتم تعديل البيانات.",
     archiveTitle: "أرشفة المشروع؟",
     archiveBody: "سيُخفى المشروع من الموقع العام ويمكنك استعادته من تبويب المؤرشفة.",
     archivedToast: "تمت أرشفة المشروع",
@@ -366,6 +367,7 @@ const copy = {
     archived: "Archived",
     restore: "Restore",
     undo: "Undo",
+    saveFailed: "The change could not be saved. No data was modified.",
     archiveTitle: "Archive project?",
     archiveBody: "The project will be hidden from the public site. Restore it any time from the Archived tab.",
     archivedToast: "Project archived",
@@ -2176,7 +2178,7 @@ function ProjectsSection({
     setDetail(project);
   };
 
-  const applyInline = (
+  const applyInline = async (
     project: WorkspaceProject,
     patch: Partial<Pick<WorkspaceProject, "status" | "progress">>,
   ) => {
@@ -2184,20 +2186,30 @@ function ProjectsSection({
       status: project.status,
       progress: project.progress,
     };
-    updateProject(project.slug, patch);
+    const saved = await updateProject(project.slug, patch);
+    if (!saved) {
+      toast(c.saveFailed, "error");
+      return;
+    }
     sonnerToast.success(locale === "ar" ? "تم تحديث المشروع" : "Project updated", {
       duration: 7000,
       action: {
         label: c.undo,
         onClick: () => {
-          updateProject(project.slug, previous);
-          sonnerToast.success(locale === "ar" ? "تم التراجع" : "Change undone");
+          void updateProject(project.slug, previous).then((undone) =>
+            toast(
+              undone
+                ? locale === "ar" ? "تم التراجع" : "Change undone"
+                : c.saveFailed,
+              undone ? "success" : "error",
+            ),
+          );
         },
       },
     });
   };
 
-  const duplicateProject = (project: WorkspaceProject) => {
+  const duplicateProject = async (project: WorkspaceProject) => {
     const base = `${project.slug}-copy`;
     let slug = base;
     let index = 2;
@@ -2207,7 +2219,7 @@ function ProjectsSection({
     }
     const { archivedAt: _archivedAt, ...copy } = project;
     void _archivedAt;
-    addProject({
+    const saved = await addProject({
       ...copy,
       slug,
       featured: false,
@@ -2217,10 +2229,13 @@ function ProjectsSection({
       },
     });
     setRowActions(null);
-    toast(locale === "ar" ? "تم نسخ المشروع" : "Project duplicated", "success");
+    toast(
+      saved ? locale === "ar" ? "تم نسخ المشروع" : "Project duplicated" : c.saveFailed,
+      saved ? "success" : "error",
+    );
   };
 
-  const commitBulkArchive = () => {
+  const commitBulkArchive = async () => {
     const archived = [...selected]
       .map((slug) => projects.find((project) => project.slug === slug))
       .filter((project): project is WorkspaceProject => Boolean(project && !project.archivedAt));
@@ -2230,7 +2245,13 @@ function ProjectsSection({
       return;
     }
     const stamp = new Date().toISOString();
-    archived.forEach((project) => updateProject(project.slug, { archivedAt: stamp }));
+    const results = await Promise.all(
+      archived.map((project) => updateProject(project.slug, { archivedAt: stamp })),
+    );
+    if (results.some((saved) => !saved)) {
+      toast(c.saveFailed, "error");
+      return;
+    }
     setSelected(new Set<string>());
     lastSelectedRef.current = null;
     sonnerToast.success(
@@ -2242,22 +2263,36 @@ function ProjectsSection({
         action: {
           label: c.undo,
           onClick: () => {
-            archived.forEach((project) => updateProject(project.slug, { archivedAt: null }));
-            sonnerToast.success(locale === "ar" ? "تمت الاستعادة" : "Projects restored");
+            void Promise.all(
+              archived.map((project) => updateProject(project.slug, { archivedAt: null })),
+            ).then((undone) =>
+              toast(
+                undone.every(Boolean)
+                  ? locale === "ar" ? "تمت الاستعادة" : "Projects restored"
+                  : c.saveFailed,
+                undone.every(Boolean) ? "success" : "error",
+              ),
+            );
           },
         },
       },
     );
   };
 
-  const applyBulkStatus = (status: WorkspaceProject["status"]) => {
+  const applyBulkStatus = async (status: WorkspaceProject["status"]) => {
     setBulkStatusOpen(false);
     const targets = [...selected]
       .map((slug) => projects.find((project) => project.slug === slug))
       .filter((project): project is WorkspaceProject => Boolean(project));
     if (!targets.length) return;
     const previous = targets.map((project) => ({ slug: project.slug, status: project.status }));
-    targets.forEach((project) => updateProject(project.slug, { status }));
+    const results = await Promise.all(
+      targets.map((project) => updateProject(project.slug, { status })),
+    );
+    if (results.some((saved) => !saved)) {
+      toast(c.saveFailed, "error");
+      return;
+    }
     setSelected(new Set<string>());
     lastSelectedRef.current = null;
     sonnerToast.success(
@@ -2269,8 +2304,16 @@ function ProjectsSection({
         action: {
           label: c.undo,
           onClick: () => {
-            previous.forEach((project) => updateProject(project.slug, { status: project.status }));
-            sonnerToast.success(locale === "ar" ? "تم التراجع" : "Change undone");
+            void Promise.all(
+              previous.map((project) => updateProject(project.slug, { status: project.status })),
+            ).then((undone) =>
+              toast(
+                undone.every(Boolean)
+                  ? locale === "ar" ? "تم التراجع" : "Change undone"
+                  : c.saveFailed,
+                undone.every(Boolean) ? "success" : "error",
+              ),
+            );
           },
         },
       },

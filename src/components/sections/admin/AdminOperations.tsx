@@ -115,6 +115,7 @@ const copy = {
     lost: "مفقود",
     mark: "تحديث الحالة",
     updated: "تم التحديث.",
+    saveFailed: "تعذّر حفظ التغيير. لم يتم تعديل البيانات.",
     actor: "المستخدم",
     action: "الإجراء",
     entity: "الكيان",
@@ -199,6 +200,7 @@ const copy = {
     lost: "Lost",
     mark: "Update status",
     updated: "Updated.",
+    saveFailed: "The change could not be saved. No data was modified.",
     actor: "Actor",
     action: "Action",
     entity: "Entity",
@@ -1203,16 +1205,16 @@ export function MilestonesPanel() {
     setFormError("");
   };
 
-  const setStatus = (index: number, status: PortalMilestone["status"]) => {
+  const setStatus = async (index: number, status: PortalMilestone["status"]) => {
     if (!active) return;
     const milestones = active.milestones.map((milestone, milestoneIndex) =>
       milestoneIndex === index ? { ...milestone, status } : milestone,
     );
-    updateProject(active.slug, { milestones });
-    toast(c.updated, "success");
+    const saved = await updateProject(active.slug, { milestones });
+    toast(saved ? c.updated : c.saveFailed, saved ? "success" : "error");
   };
 
-  const addMilestone = () => {
+  const addMilestone = async () => {
     if (!active) return;
     const titleAr = draft.titleAr.trim();
     const titleEn = draft.titleEn.trim();
@@ -1230,19 +1232,21 @@ export function MilestonesPanel() {
       },
     ];
 
-    updateProject(active.slug, { milestones });
-    setDraft(emptyMilestoneDraft);
-    setFormError("");
-    setAdding(false);
-    toast(c.updated, "success");
+    const saved = await updateProject(active.slug, { milestones });
+    if (saved) {
+      setDraft(emptyMilestoneDraft);
+      setFormError("");
+      setAdding(false);
+    }
+    toast(saved ? c.updated : c.saveFailed, saved ? "success" : "error");
   };
 
-  const removeMilestone = (index: number) => {
+  const removeMilestone = async (index: number) => {
     if (!active) return;
-    updateProject(active.slug, {
+    const saved = await updateProject(active.slug, {
       milestones: active.milestones.filter((_, milestoneIndex) => milestoneIndex !== index),
     });
-    toast(c.updated, "success");
+    toast(saved ? c.updated : c.saveFailed, saved ? "success" : "error");
   };
 
   return (

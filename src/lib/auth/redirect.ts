@@ -1,3 +1,4 @@
+import { canAccessAdmin } from "@/lib/auth/permissions";
 import { isSafeInternalPath } from "@/lib/security/validation";
 
 /**
@@ -43,16 +44,16 @@ export function resolvePostLoginPath(
   next?: string | null,
   passkeyEnrolled?: boolean,
 ): string {
-  const fallback = role === "client" ? "/portal" : "/admin";
+  const fallback = canAccessAdmin(role) ? "/admin" : "/portal";
   let destination = fallback;
 
   if (typeof next === "string" && isSafeInternalPath(next)) {
     const pathname = pathnameOf(next);
-    const allowedForRole = role !== "client" || !isAdminPath(pathname);
+    const allowedForRole = canAccessAdmin(role) || !isAdminPath(pathname);
     if (!isAuthPath(pathname) && allowedForRole) destination = next;
   }
 
-  if (role !== "client" && passkeyEnrolled === false) {
+  if (canAccessAdmin(role) && passkeyEnrolled === false) {
     return `/passkey-enroll?next=${encodeURIComponent(destination)}`;
   }
 

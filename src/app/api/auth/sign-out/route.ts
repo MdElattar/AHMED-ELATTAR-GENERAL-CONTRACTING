@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { activeSession } from "@/lib/auth/guard";
 import { clearResetCookie, clearSessionCookie } from "@/lib/auth/cookie";
-import { updateUser } from "@/lib/db";
+import { recordAudit, updateUser } from "@/lib/db";
 import { NO_STORE_HEADERS, clientIp, isSameOrigin } from "@/lib/security/http";
 import { rateLimit } from "@/lib/security/rate-limit";
 
@@ -27,6 +27,13 @@ export async function POST(request: NextRequest) {
     // Sign-out is an explicit revocation; unlike sign-in, incrementing here is
     // safe because no new token is issued from the new version.
     await updateUser(session.email, { sessionVersion: session.sessionVersion + 1 });
+    await recordAudit({
+      actor: session.email,
+      action: "auth.sign_out",
+      entity: "session",
+      entityId: session.email,
+      ip,
+    });
   }
 
   const response = NextResponse.json({ ok: true }, { headers: NO_STORE_HEADERS });

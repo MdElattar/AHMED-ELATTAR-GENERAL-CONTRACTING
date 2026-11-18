@@ -1,5 +1,6 @@
 import { NextResponse, connection, type NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/auth/guard";
+import { recordAudit } from "@/lib/db";
 import { dispatchAdminAlert, notificationConfig } from "@/lib/notifications";
 import {
   NO_STORE_HEADERS,
@@ -74,6 +75,14 @@ export async function POST(request: NextRequest) {
       Environment: process.env.NODE_ENV ?? "development",
     },
     channels: [...channels],
+  });
+
+  await recordAudit({
+    actor: session.email,
+    action: "notification.dispatched",
+    entity: "notification",
+    entityId: data.channel,
+    ip: clientIp(request),
   });
 
   return NextResponse.json({ result, config: notificationConfig() }, { headers: NO_STORE_HEADERS });

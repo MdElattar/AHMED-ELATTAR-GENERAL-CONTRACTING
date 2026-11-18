@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { canAccessAdmin } from "@/lib/auth/permissions";
 import { SESSION_COOKIE, verifySession } from "@/lib/auth/token";
 import { NO_STORE_HEADERS } from "@/lib/security/http";
 import { applySecurityHeaders } from "@/lib/security/headers";
@@ -115,14 +116,14 @@ export async function proxy(request: NextRequest) {
   const session = token ? await verifySession(token) : null;
   if (!session) return deny(request, 401, "session_expired");
 
-  if (area === "admin" && session.role === "client") {
+  if (area === "admin" && !canAccessAdmin(session.role)) {
     if (isApi) return denyApi(request, 403, "forbidden");
     return redirectTo(request, "/portal");
   }
 
   if (
     area === "admin" &&
-    (session.role === "admin" || session.role === "manager") &&
+    canAccessAdmin(session.role) &&
     session.passkeyEnrolled === false
   ) {
     if (isApi) return denyApi(request, 403, "passkey_enrollment_required");

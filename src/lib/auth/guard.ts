@@ -1,5 +1,6 @@
 import "server-only";
 import { cookies } from "next/headers";
+import { canAccessAdmin, canManageAccess } from "@/lib/auth/permissions";
 import { getProjectBySlug, getUserByEmail, type StoredProject } from "@/lib/db";
 import {
   SESSION_COOKIE,
@@ -61,7 +62,7 @@ export async function ownedProject(
 ): Promise<StoredProject | null> {
   const project = await getProjectBySlug(slug);
   if (!project) return null;
-  if (session.role === "admin") return project;
+  if (canAccessAdmin(session.role)) return project;
 
   const email = session.email.trim().toLowerCase();
   const payloadOwners = Array.isArray(project.payload.clientEmails)
@@ -75,12 +76,12 @@ export async function ownedProject(
 
 export async function requireAdmin(): Promise<SessionPayload | null> {
   const session = await activeSession();
-  return session?.role === "admin" ? session : null;
+  return session && canAccessAdmin(session.role) ? session : null;
 }
 
 /** Only the environment-configured super-admin can grant or revoke admins. */
 export async function requirePrimaryAdmin(): Promise<SessionPayload | null> {
   const session = await requireAdmin();
-  if (!session) return null;
+  if (!session || !canManageAccess(session.role)) return null;
   return isPrimaryAdminEmail(session.email) ? session : null;
 }

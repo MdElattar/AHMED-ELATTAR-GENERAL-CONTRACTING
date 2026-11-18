@@ -74,6 +74,12 @@ export default defineConfig({
       use: { storageState: { cookies: [], origins: [] } },
     },
     {
+      name: "enterprise",
+      testMatch: /enterprise-.*\.spec\.ts/,
+      dependencies: ["setup"],
+      use: { storageState: "tests/.auth/portal.json" },
+    },
+    {
       name: "portal-setup",
       testMatch: /portal\.setup\.ts/,
       dependencies: ["setup"],

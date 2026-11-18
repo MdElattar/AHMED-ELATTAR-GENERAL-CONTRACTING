@@ -14,6 +14,7 @@ import {
   startAuthentication,
   startRegistration,
 } from "@simplewebauthn/browser";
+import { canAccessAdmin } from "@/lib/auth/permissions";
 import { isEmail, isSafeInternalPath } from "@/lib/security/validation";
 
 export type PortalRole = "client" | "manager" | "admin";
@@ -338,7 +339,7 @@ export function broadcastSessionEvent(type: SessionEventType, detail?: Record<st
 }
 
 export function isPrivilegedRole(role: PortalRole | undefined) {
-  return role === "admin" || role === "manager";
+  return canAccessAdmin(role);
 }
 
 /** Backwards-compatible helper used across the portal chrome. */

@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { createInquiry, listInquiries } from "@/lib/db";
+import { createInquiry, listInquiries, recordAudit } from "@/lib/db";
 import {NO_STORE_HEADERS,
   clientIp,
   isSameOrigin,
@@ -42,6 +42,13 @@ export async function POST(request: NextRequest) {
 
     if (!subscribed) {
       await createInquiry({ kind: "newsletter", email });
+      await recordAudit({
+        actor: email,
+        action: "newsletter.subscribed",
+        entity: "newsletter",
+        entityId: email,
+        ip: clientIp(request),
+      });
     }
   } catch (error) {
     safeLogError("[newsletter] failed to persist subscription", error);

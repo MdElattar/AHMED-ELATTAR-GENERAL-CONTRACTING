@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/auth/guard";
+import { hasRecentStepUp, stepUpRequiredResponse } from "@/lib/auth/step-up";
 import {
   deleteProject,
   listProjects,
@@ -27,12 +28,15 @@ function unauthorized() {
   );
 }
 
-async function guard(request: NextRequest, limitKey: string) {
+async function guard(request: NextRequest, limitKey: string, requireStepUp = false) {
   if (!isSameOrigin(request)) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
   const session = await requireAdmin();
   if (!session) return unauthorized();
+  // Irreversible hard deletes require a fresh passkey step-up. Soft archiving
+  // through PATCH stays recoverable and is intentionally exempt.
+  if (requireStepUp && !hasRecentStepUp(session)) return stepUpRequiredResponse();
 
   const limited = rateLimit(`${limitKey}:${clientIp(request)}`, 60, 60 * 1000);
   if (!limited.ok) {
@@ -101,7 +105,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 }
 
 export async function DELETE(request: NextRequest, context: RouteContext) {
-  const guarded = await guard(request, "admin-projects-delete");
+  const guarded = await guard(request, "admin-projects-delete", true);
   if (guarded instanceof NextResponse) return guarded;
 
   const { slug: rawSlug } = await context.params;

@@ -58,6 +58,8 @@ const copy = {
     },
     noticeSigned: "تم توقيع العقد وتوثيق البصمة.",
     noticeVerified: "تم توثيق المرحلة.",
+    loadError: "تعذّر تحميل حالة العقد. لم يتم تغيير أي بيانات.",
+    retry: "إعادة المحاولة",
   },
   en: {
     title: "Contract & digital sign-off",
@@ -94,6 +96,8 @@ const copy = {
     },
     noticeSigned: "Contract signed and digest recorded.",
     noticeVerified: "Milestone verified.",
+    loadError: "The contract status could not be loaded. No data was changed.",
+    retry: "Try again",
   },
 };
 
@@ -112,6 +116,7 @@ export function PortalContract({ project }: { project: WorkspaceProject }) {
   const [verifying, setVerifying] = useState("");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -138,9 +143,10 @@ export function PortalContract({ project }: { project: WorkspaceProject }) {
     return () => {
       cancelled = true;
     };
-  }, [project.slug]);
+  }, [project.slug, reloadKey]);
 
   const loaded = state?.slug === project.slug;
+  const loadFailed = loaded && state.error;
   const signoff = loaded ? state.signoff : null;
   const outdated = loaded ? state.outdated : false;
   const signed = Boolean(signoff) && !outdated;
@@ -334,6 +340,17 @@ export function PortalContract({ project }: { project: WorkspaceProject }) {
                 </li>
               ) : null}
             </ul>
+          </div>
+        ) : loadFailed ? (
+          <div role="alert" className="mt-5 border border-danger/30 bg-danger/[0.06] p-4">
+            <p className="text-[0.62rem] leading-relaxed text-danger">{c.loadError}</p>
+            <button
+              type="button"
+              onClick={() => setReloadKey((value) => value + 1)}
+              className="mt-3 inline-flex min-h-11 min-w-11 items-center justify-center border border-line px-4 text-[0.58rem] font-semibold uppercase tracking-[0.14em] text-fg transition-colors hover:border-accent/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            >
+              {c.retry}
+            </button>
           </div>
         ) : (
           <form onSubmit={sign} className="mt-5 space-y-4">
