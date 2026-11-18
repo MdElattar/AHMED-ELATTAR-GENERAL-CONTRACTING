@@ -61,5 +61,22 @@ export default defineConfig({
       dependencies: ["setup"],
       use: { storageState: { cookies: [], origins: [] } },
     },
+    {
+      name: "portal-setup",
+      testMatch: /portal\.setup\.ts/,
+      dependencies: ["setup"],
+    },
+    {
+      // Portfolio captures use a larger retina-equivalent viewport, then
+      // override it locally for the responsive admin views.
+      name: "portfolio",
+      testMatch: /portfolio-showcase\.spec\.ts/,
+      dependencies: ["setup", "portal-setup"],
+      use: {
+        storageState: { cookies: [], origins: [] },
+        viewport: { width: 1600, height: 1000 },
+        deviceScaleFactor: 2,
+      },
+    },
   ],
 });
