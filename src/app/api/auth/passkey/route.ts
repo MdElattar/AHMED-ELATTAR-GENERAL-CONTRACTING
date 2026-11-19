@@ -196,6 +196,7 @@ export async function DELETE(request: NextRequest) {
     const { token } = await createSession(
       sessionInputFromUser(user, {
         passkeyEnrolled: remaining > 0,
+        passkeyPrompt: remaining > 0 ? false : session.passkeyPrompt,
         stepUpAt: session.stepUpAt,
       }),
     );

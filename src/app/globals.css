@@ -28,17 +28,17 @@
   --color-ink: var(--surface);
   --color-coal: var(--surface);
   --color-graphite: var(--surface-2);
-  --color-steel: var(--line);
-  --color-ash: var(--muted);
+  --color-steel: var(--steel);
+  --color-ash: var(--ash);
   --color-ivory: var(--fg);
-  --color-paper: var(--surface-2);
-  --color-sand: var(--muted);
+  --color-paper: var(--paper);
+  --color-sand: var(--sand);
   --color-gold: var(--accent);
-  --color-gold-light: var(--accent);
-  --color-gold-dark: var(--accent);
-  --color-bronze: var(--accent-fill);
-  --color-champagne: var(--accent);
-  --color-ember: var(--warning);
+  --color-gold-light: var(--accent-strong);
+  --color-gold-dark: var(--accent-dark);
+  --color-bronze: var(--bronze);
+  --color-champagne: var(--accent-strong);
+  --color-ember: var(--ember);
 
   --font-sans: var(--font-body), var(--font-arabic), ui-sans-serif, sans-serif;
   --font-arabic: var(--font-arabic), ui-sans-serif, sans-serif;
@@ -65,31 +65,41 @@
  * these tokens with `rgb(var(--*-rgb) / alpha)`.
  */
 :root[data-theme="dark"] {
-  --bg: #0B0E14;
-  --surface: #121722;
-  --surface-2: #181E2B;
+  /* The original executive palette, before the theme-engine codemod. */
+  --bg: #0A0B0E;
+  --surface: #0E1017;
+  --surface-2: #15181D;
   --line: rgba(255,255,255,.08);
-  --fg: #EAE7DF;
-  --muted: #9AA3B2;
-  --accent: #C9A24A;
-  --accent-strong: #E8C87E;
-  --accent-fg: #1A1405;
-  --accent-fill: var(--accent);
-  --success: #4CB58A;
-  --warning: #E0A94A;
-  --danger: #E5746A;
-  --info: #6FA8DC;
+  --fg: #F3EEE4;
+  --muted: #96938B;
+  --accent: #B8860B;
+  --accent-strong: #C59B27;
+  --accent-dark: #996515;
+  --accent-fg: #060708;
+  --accent-fill: #C59B27;
+  --bronze: #A67C1A;
+  --champagne: #C59B27;
+  --ember: #B87333;
+  --paper: #E9E2D5;
+  --sand: #D8CCB7;
+  --ash: #3A404A;
+  --steel: #262B33;
+  --success: #4CCB96;
+  --warning: #E2B04A;
+  --danger: #FF6B5E;
+  --info: #6BB6FF;
 
-  --bg-rgb: 11 14 20;
-  --surface-rgb: 18 23 34;
-  --surface-2-rgb: 24 30 43;
-  --fg-rgb: 234 231 223;
-  --muted-rgb: 154 163 178;
-  --accent-rgb: 201 162 74;
-  --success-rgb: 76 181 138;
-  --warning-rgb: 224 169 74;
-  --danger-rgb: 229 116 106;
-  --info-rgb: 111 168 220;
+  --bg-rgb: 10 11 14;
+  --surface-rgb: 14 16 23;
+  --surface-2-rgb: 21 24 29;
+  --fg-rgb: 243 238 228;
+  --muted-rgb: 150 147 139;
+  --accent-rgb: 184 134 11;
+  --accent-strong-rgb: 197 155 39;
+  --success-rgb: 76 203 150;
+  --warning-rgb: 226 176 74;
+  --danger-rgb: 255 107 94;
+  --info-rgb: 107 182 255;
 
   --scroll-thumb: rgb(var(--fg-rgb) / 0.18);
   --scroll-thumb-hover: rgb(var(--fg-rgb) / 0.32);
@@ -124,7 +134,8 @@
   color-scheme: dark;
 }
 
-:root[data-theme="light"] {
+/* Light is an Admin Panel preference only; the public site stays original dark. */
+:root[data-admin-theme="light"] {
   --bg: #F7F5F0;
   --surface: #FFFFFF;
   --surface-2: #F1EEE7;
@@ -134,8 +145,16 @@
   /* Darkened so 10–15% tinted pills keep AA contrast on white surfaces. */
   --accent: #7A5812;
   --accent-strong: #6F520F;
+  --accent-dark: #5C430C;
   --accent-fg: #1A1405;
   --accent-fill: #C9A24A;
+  --bronze: #8A5F12;
+  --champagne: #7A5812;
+  --ember: #9A6412;
+  --paper: #F1EEE7;
+  --sand: #CFC3AC;
+  --ash: #C9CDD6;
+  --steel: #D7DBE3;
   --success: #166B47;
   --warning: #9A6412;
   --danger: #B23A2E;
@@ -147,6 +166,7 @@
   --fg-rgb: 22 27 38;
   --muted-rgb: 91 100 116;
   --accent-rgb: 122 88 18;
+  --accent-strong-rgb: 111 82 15;
   --success-rgb: 22 107 71;
   --warning-rgb: 154 100 18;
   --danger-rgb: 178 58 46;
@@ -1157,15 +1177,15 @@ html[dir="rtl"] .carousel-progress {
   --admin-radius-kpi: 20px;
   --admin-radius-control: 12px;
   --admin-radius-pill: 999px;
-  --admin-page-pad: 36px;
+  --admin-page-pad: 32px;
   --admin-card-gap: 22px;
   --admin-kpi-gap: 16px;
 }
 
 /*
  * The admin shell mirrors the resolved theme on `data-admin-theme`. The color
- * aliases themselves are inherited from `:root[data-theme=...]`; the parallel
- * admin work keeps the two attributes in sync via `useTheme()`.
+ * aliases are inherited from the root; the light block is scoped to the admin
+ * preference so the public site keeps its original dark palette.
  */
 [data-admin-theme="dark"],
 [data-admin-theme="light"] {
@@ -1200,7 +1220,27 @@ html[dir="rtl"] .carousel-progress {
   font-family: var(--font-inter), var(--font-arabic), system-ui, sans-serif;
 }
 
-:root[data-theme="light"] .admin-shell {
+/*
+ * The admin content area owns its scroll container. Its thumb stays invisible
+ * on first paint and only appears on deliberate hover, removing the right-edge
+ * line seen after refresh without changing the available content width.
+ */
+.admin-shell [data-scroll-root="main"] {
+  scrollbar-color: transparent transparent;
+}
+.admin-shell [data-scroll-root="main"]:hover,
+.admin-shell [data-scroll-root="main"]:not(:focus):focus-within {
+  scrollbar-color: var(--scroll-thumb) transparent;
+}
+.admin-shell [data-scroll-root="main"]::-webkit-scrollbar-thumb {
+  background: transparent;
+}
+.admin-shell [data-scroll-root="main"]:hover::-webkit-scrollbar-thumb,
+.admin-shell [data-scroll-root="main"]:not(:focus):focus-within::-webkit-scrollbar-thumb {
+  background: var(--scroll-thumb);
+}
+
+:root[data-admin-theme="light"] .admin-shell {
   background:
     radial-gradient(900px 500px at 85% -5%, var(--admin-bg-glow), transparent),
     var(--admin-bg);
@@ -1211,7 +1251,7 @@ html[dir="rtl"] .carousel-progress {
   border: 1px solid var(--admin-card-border);
 }
 
-:root[data-theme="light"] .admin-card-surface {
+:root[data-admin-theme="light"] .admin-card-surface {
   box-shadow: var(--shadow-e1);
 }
 
@@ -1421,6 +1461,65 @@ html[dir="rtl"] .carousel-progress {
 .guard-modal:focus {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+
+/*
+ * The sign-in reminder is a nudge, not a gate. The backdrop never intercepts
+ * clicks; only the compact card is interactive and it can always be dismissed.
+ */
+.guard-prompt-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 1rem;
+  padding-block-end: calc(1rem + var(--safe-bottom));
+  pointer-events: none;
+}
+.guard-prompt-card {
+  position: relative;
+  inline-size: min(100%, 23rem);
+  padding: 1.25rem 1.25rem 1.1rem;
+  border: 1px solid rgb(var(--accent-rgb) / 0.28);
+  border-radius: 18px;
+  background: var(--surface);
+  color: var(--fg);
+  box-shadow: var(--shadow-lux);
+  pointer-events: auto;
+  animation: guard-modal-in 180ms var(--ease-lux) both;
+}
+.guard-close {
+  display: inline-flex;
+  min-inline-size: 44px;
+  min-block-size: 44px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  transition: color 140ms ease, background-color 140ms ease;
+}
+.guard-close:hover {
+  background: rgb(var(--fg-rgb) / 0.06);
+  color: var(--fg);
+}
+.guard-prompt-card .guard-close {
+  position: absolute;
+  inset-block-start: 0.6rem;
+  inset-inline-end: 0.6rem;
+}
+.guard-heading .guard-close {
+  margin-inline-start: auto;
+}
+
+@media (max-width: 640px) {
+  .guard-prompt-backdrop {
+    justify-content: center;
+    padding-inline: 1rem;
+  }
 }
 
 .guard-page {
@@ -1668,10 +1767,6 @@ html[dir="rtl"] .carousel-progress {
     min-inline-size: var(--touch-min);
   }
 
-  main#main {
-    padding-inline-start: var(--safe-inline-start);
-    padding-inline-end: var(--safe-inline-end);
-  }
 }
 
 @media (pointer: coarse) {

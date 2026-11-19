@@ -177,7 +177,7 @@ export function ProjectImage({
       )}
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-line"
+        className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-white/[0.08]"
       />
     </span>
   );

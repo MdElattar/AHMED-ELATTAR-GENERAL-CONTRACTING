@@ -1200,7 +1200,7 @@ export function AdminDashboard({
               id="main"
               tabIndex={-1}
               data-scroll-root="main"
-              className="scroll-area relative min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain px-4 py-5 pb-[calc(64px+env(safe-area-inset-bottom,0px)+20px)] focus:outline-none sm:px-6 md:px-8 md:py-6 md:pb-6 lg:px-[var(--admin-page-pad)]"
+              className="scroll-area scroll-area--autohide relative min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain px-4 py-5 pb-[calc(64px+env(safe-area-inset-bottom,0px)+20px)] focus:outline-none sm:px-6 md:px-8 md:py-6 md:pb-6 lg:px-[var(--admin-page-pad)]"
             >
               <div
                 ref={topSentinelRef}

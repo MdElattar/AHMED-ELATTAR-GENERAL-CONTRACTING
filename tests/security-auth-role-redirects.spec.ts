@@ -35,6 +35,14 @@ function navCalls(page: import("@playwright/test").Page) {
   return page.evaluate(() => (window as unknown as { __navCalls: string[] }).__navCalls ?? []);
 }
 
+/** Avoid filling controlled inputs before React has attached its handlers. */
+async function waitForHydration(page: import("@playwright/test").Page) {
+  await page.waitForFunction(() => {
+    const field = document.querySelector('[data-testid="auth-email"]');
+    return Boolean(field && Object.keys(field).some((key) => key.startsWith("__reactProps$")));
+  });
+}
+
 test.describe("authentication role redirects", () => {
   test("clients land in the portal after sign-in", async ({ context, page }) => {
     await createClientSession(context);
@@ -71,11 +79,7 @@ test.describe("authentication role redirects", () => {
     expect(["admin", "manager"]).toContain(data.user?.role);
 
     await page.goto("/sign-in");
-    if (data.user?.passkeyEnrolled === false) {
-      await expect(page).toHaveURL(/\/passkey-enroll/);
-    } else {
-      await expect(page).toHaveURL(/\/admin\/?$/);
-    }
+    await expect(page).toHaveURL(/\/admin\/?$/);
   });
 
   test("a late session response cannot undo a fresh sign-in", async ({ context, page }) => {
@@ -112,6 +116,7 @@ test.describe("authentication role redirects", () => {
     });
 
     await page.goto("/sign-in");
+    await waitForHydration(page);
     await page.getByTestId("auth-email").fill("race@example.com");
     await page.getByTestId("auth-password").fill("Password!2026");
     await page.getByTestId("auth-submit").click();

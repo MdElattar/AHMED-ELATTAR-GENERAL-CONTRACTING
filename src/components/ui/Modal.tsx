@@ -76,7 +76,7 @@ export function Modal({
           <motion.button
             type="button"
             aria-label={closeLabel}
-            className="absolute inset-0 cursor-default bg-bg/85 backdrop-blur-md"
+            className="absolute inset-0 cursor-default bg-obsidian/85 backdrop-blur-md"
             onClick={onClose}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -101,7 +101,7 @@ export function Modal({
               type="button"
               onClick={onClose}
               aria-label={closeLabel}
-              className="absolute end-4 top-4 z-20 flex h-11 w-11 items-center justify-center border border-line bg-bg/70 text-fg backdrop-blur transition-colors hover:border-accent/60 hover:text-accent"
+              className="absolute end-4 top-4 z-20 flex h-11 w-11 items-center justify-center border border-white/15 bg-obsidian/70 text-ivory/70 backdrop-blur transition-colors hover:border-gold/60 hover:text-gold"
             >
               <X className="h-4 w-4" />
             </button>

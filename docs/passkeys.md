@@ -29,8 +29,8 @@ auth_unavailable` response (or `passkey_unavailable` on WebAuthn endpoints).
 
 - Signed HMAC token in the `alattar_session` cookie: HttpOnly, Secure in
   production, SameSite=Strict, absolute TTL of 12 hours.
-- The token carries `passkeyEnrolled` and `stepUpAt` in addition to the usual
-  identity/role claims.
+- The token carries `passkeyEnrolled`, `passkeyPrompt`, and `stepUpAt` in
+  addition to the usual identity/role claims.
 - `sessionVersion` is **only** incremented by explicit revocations: role
   changes, admin revocation, sign-out and administrator passkey resets. Sign-in
   never rotates it, so a freshly issued token always matches the persisted
@@ -50,8 +50,13 @@ auth_unavailable` response (or `passkey_unavailable` on WebAuthn endpoints).
 3. Response: `201 { passkey, user, redirectTo, backupCodes? }`. Plaintext backup
    codes appear only in this response and in `POST /api/auth/backup-codes`.
 
-Managers and admins without a passkey are optimistically redirected to
-`/passkey-enroll?next=…` by `src/proxy.ts`. Clients are never forced to enroll.
+Enrollment is always optional and never blocks an authorised destination. The
+server sets `passkeyPrompt` on the initial password sign-in without a passkey;
+if it is dismissed, `StoredUser.passkeyReminders` advances the cadence and the
+reminder is only shown again on every fourth subsequent sign-in. The global
+nudge is a dismissible card with a close (×) button and a link to Account
+Settings › Security, where the full setup and management experience lives.
+`src/proxy.ts` never redirects for missing passkeys.
 
 ## Sign-in and recovery
 

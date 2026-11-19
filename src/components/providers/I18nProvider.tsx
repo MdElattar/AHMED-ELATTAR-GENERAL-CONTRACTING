@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -36,18 +37,6 @@ const I18nContext = createContext<I18nContextValue | null>(null);
 const STORAGE_KEY = "alattar-locale";
 const COOKIE_KEY = "alattar-locale";
 
-function readCookieLocale(): Locale | null {
-  try {
-    const match = document.cookie
-      .split("; ")
-      .find((row) => row.startsWith(`${COOKIE_KEY}=`));
-    const value = match?.split("=")[1];
-    return value === "ar" || value === "en" ? value : null;
-  } catch {
-    return null;
-  }
-}
-
 function writeLocale(locale: Locale) {
   try {
     window.localStorage.setItem(STORAGE_KEY, locale);
@@ -61,46 +50,44 @@ function writeLocale(locale: Locale) {
   }
 }
 
-function readInitialLocale(): Locale {
-  if (typeof window === "undefined") return "ar";
-  try {
-    const query = new URLSearchParams(window.location.search).get("lang");
-    if (query === "ar" || query === "en") {
-      writeLocale(query);
-      return query;
-    }
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    if (stored === "ar" || stored === "en") return stored;
-    const cookie = readCookieLocale();
-    if (cookie) return cookie;
-    const preloaded = document.documentElement.dataset.locale;
-    if (preloaded === "ar" || preloaded === "en") return preloaded;
-  } catch {
-    // Storage can be unavailable in private mode.
-  }
-  return readCookieLocale() ?? "ar";
-}
-
-export function I18nProvider({ children }: { children: ReactNode }) {
+export function I18nProvider({
+  children,
+  initialLocale = "ar",
+}: {
+  children: ReactNode;
+  /** Resolved on the server from the locale cookie, so the first paint matches. */
+  initialLocale?: Locale;
+}) {
   const { content } = useWorkspace();
-  const [locale, setLocaleState] = useState<Locale>("ar");
-  const [ready, setReady] = useState(false);
+  const [locale, setLocaleState] = useState<Locale>(initialLocale);
+  const mounted = useRef(false);
+  const ready = true;
 
   useEffect(() => {
-    // The inline script in the root layout has already applied the stored
-    // locale to <html> before paint. Sync React to the same value.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setLocaleState(readInitialLocale());
-    setReady(true);
-  }, []);
-
-  useEffect(() => {
-    if (!ready) return;
+    // The server rendered this locale and the inline script applied dir/lang
+    // before paint. Keep the DOM attributes aligned on client navigations.
     const dir = dirFor(locale);
     const root = document.documentElement;
     root.lang = locale;
     root.dir = dir;
     root.dataset.locale = locale;
+
+    if (!mounted.current) {
+      mounted.current = true;
+      // A stored preference without a cookie is the only case the server could
+      // not know about. Adopt it once; the next refresh is server-rendered.
+      let stored: string | null = null;
+      try {
+        stored = window.localStorage.getItem(STORAGE_KEY);
+      } catch {
+        // Storage may be unavailable.
+      }
+      if ((stored === "ar" || stored === "en") && stored !== locale) {
+        setLocaleState(stored);
+        return;
+      }
+      return;
+    }
     writeLocale(locale);
 
     // Keep shareable ?lang= links in sync when the visitor toggles locale.
@@ -118,7 +105,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     } catch {
       // Ignore history failures.
     }
-  }, [locale, ready]);
+  }, [locale]);
 
   const setLocale = useCallback((next: Locale) => setLocaleState(next), []);
   const toggleLocale = useCallback(

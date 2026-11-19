@@ -100,7 +100,8 @@ curl -sS https://alattar.sa/manifest.webmanifest | head -c 200
 
 Also confirm in a browser:
 
-- light/dark theme toggle persists with no flash on reload;
+- the admin-only light/dark toggle persists with no flash on reload and never
+  changes the public palette;
 - `/portal` and `/admin` show localized loading, empty and error states;
 - service worker installs with scope `/` and never caches private routes;
 - axe reports no color-contrast violations in light or dark theme.

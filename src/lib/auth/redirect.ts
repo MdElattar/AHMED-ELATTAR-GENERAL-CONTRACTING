@@ -35,14 +35,12 @@ function isAdminPath(pathname: string) {
  * value. Only same-origin relative paths are accepted, auth routes are always
  * rejected, and clients can never be redirected into the admin area.
  *
- * Managers and admins who have no passkey are sent to enrollment first; the
- * already-authorised destination is carried in `next` so it survives the
- * ceremony. Clients are never forced to enroll.
+ * Enrollment is optional and never blocks the authorised destination; the
+ * account settings area owns the full setup flow.
  */
 export function resolvePostLoginPath(
   role: "client" | "manager" | "admin",
   next?: string | null,
-  passkeyEnrolled?: boolean,
 ): string {
   const fallback = canAccessAdmin(role) ? "/admin" : "/portal";
   let destination = fallback;
@@ -51,10 +49,6 @@ export function resolvePostLoginPath(
     const pathname = pathnameOf(next);
     const allowedForRole = canAccessAdmin(role) || !isAdminPath(pathname);
     if (!isAuthPath(pathname) && allowedForRole) destination = next;
-  }
-
-  if (canAccessAdmin(role) && passkeyEnrolled === false) {
-    return `/passkey-enroll?next=${encodeURIComponent(destination)}`;
   }
 
   return destination;

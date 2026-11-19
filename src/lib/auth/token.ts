@@ -23,6 +23,8 @@ export type SessionPayload = {
   sessionVersion: number;
   /** True when the account has at least one registered passkey. */
   passkeyEnrolled: boolean;
+  /** True only for this sign-in's optional enrollment reminder. */
+  passkeyPrompt: boolean;
   /** Unix seconds of the last successful step-up verification; `0` when none. */
   stepUpAt: number;
   iat: number;
@@ -31,9 +33,9 @@ export type SessionPayload = {
 
 export type SessionInput = Omit<
   SessionPayload,
-  "iat" | "exp" | "passkeyEnrolled" | "stepUpAt"
+  "iat" | "exp" | "passkeyEnrolled" | "passkeyPrompt" | "stepUpAt"
 > &
-  Partial<Pick<SessionPayload, "passkeyEnrolled" | "stepUpAt">>;
+  Partial<Pick<SessionPayload, "passkeyEnrolled" | "passkeyPrompt" | "stepUpAt">>;
 
 export type PublicSessionUser = {
   name: string;
@@ -46,6 +48,7 @@ export type PublicSessionUser = {
   phone?: string;
   role: SessionRole;
   passkeyEnrolled: boolean;
+  passkeyPrompt: boolean;
   /** True only for the configured super-admin identity. */
   primaryAdmin: boolean;
 };
@@ -172,6 +175,7 @@ export async function createSession(
   const session: SessionPayload = {
     ...input,
     passkeyEnrolled: input.passkeyEnrolled ?? false,
+    passkeyPrompt: input.passkeyPrompt ?? false,
     stepUpAt: input.stepUpAt ?? 0,
     iat: now,
     exp: now + ttlSeconds,
@@ -220,6 +224,7 @@ export async function verifySession(token: string): Promise<SessionPayload | nul
         ? Math.floor(parsed.sessionVersion)
         : 0;
     const passkeyEnrolled = parsed.passkeyEnrolled === true;
+    const passkeyPrompt = !passkeyEnrolled && parsed.passkeyPrompt === true;
     const stepUpAt =
       typeof parsed.stepUpAt === "number" && parsed.stepUpAt > 0
         ? Math.floor(parsed.stepUpAt)
@@ -243,6 +248,7 @@ export async function verifySession(token: string): Promise<SessionPayload | nul
       role,
       sessionVersion,
       passkeyEnrolled,
+      passkeyPrompt,
       stepUpAt,
       iat,
       exp,
@@ -264,6 +270,7 @@ export function publicSessionUser(session: SessionPayload): PublicSessionUser {
     ...(session.phone ? { phone: session.phone } : {}),
     role: session.role,
     passkeyEnrolled: session.passkeyEnrolled,
+    passkeyPrompt: session.passkeyPrompt,
     primaryAdmin: isPrimaryAdminEmail(session.email),
   };
 }
@@ -295,7 +302,7 @@ export type SessionUserSource = {
  */
 export function sessionInputFromUser(
   user: SessionUserSource,
-  options: { passkeyEnrolled?: boolean; stepUpAt?: number } = {},
+  options: { passkeyEnrolled?: boolean; passkeyPrompt?: boolean; stepUpAt?: number } = {},
 ): SessionInput {
   return {
     sub: user.id,
@@ -310,6 +317,7 @@ export function sessionInputFromUser(
     role: user.role,
     sessionVersion: user.sessionVersion ?? 0,
     passkeyEnrolled: options.passkeyEnrolled ?? false,
+    passkeyPrompt: options.passkeyEnrolled ? false : (options.passkeyPrompt ?? false),
     stepUpAt: options.stepUpAt ?? 0,
   };
 }

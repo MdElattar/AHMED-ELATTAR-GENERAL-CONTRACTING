@@ -75,15 +75,15 @@ export function ProfileMenu({ tone = "dark", compact = false, onNavigate }: Prof
           "group flex items-center gap-2 border transition-colors",
           compact ? "h-11 w-11 justify-center" : "h-11 px-2.5",
           light
-            ? "border-line text-fg hover:border-accent/60"
-            : "border-line text-fg hover:border-accent/50",
-          open && (light ? "border-accent/60" : "border-accent/60"),
+            ? "border-ink/15 text-ink hover:border-gold-dark/60"
+            : "border-white/15 text-ivory hover:border-gold/50",
+          open && (light ? "border-gold-dark/60" : "border-gold/60"),
         )}
       >
         <span
           className={cn(
             "flex h-6 w-6 items-center justify-center rounded-full text-[0.58rem] font-semibold tracking-wide",
-            light ? "bg-surface text-fg" : "bg-accent-fill text-accent-fg",
+            light ? "bg-ink text-ivory" : "bg-gold text-obsidian",
           )}
         >
           {loading ? (
@@ -127,11 +127,11 @@ export function ProfileMenu({ tone = "dark", compact = false, onNavigate }: Prof
             className={cn(
               "absolute top-[calc(100%+0.65rem)] z-[95] w-72 overflow-hidden border shadow-e3 backdrop-blur-2xl",
               isRTL ? "start-0" : "end-0",
-              light ? "border-line bg-fg/97 text-fg" : "border-line bg-bg/96 text-fg",
+              light ? "border-ink/10 bg-ivory/97 text-ink" : "border-white/12 bg-obsidian/96 text-ivory",
             )}
           >
-            <div className={cn("border-b px-4 py-4", light ? "border-line" : "border-line")}>
-              <p className="text-[0.55rem] font-semibold uppercase tracking-[0.18em] text-accent">
+            <div className={cn("border-b px-4 py-4", light ? "border-ink/10" : "border-white/10")}>
+              <p className="text-[0.55rem] font-semibold uppercase tracking-[0.18em] text-gold">
                 {user ? t.nav.account : t.nav.guest}
               </p>
               <p className="mt-2 truncate text-sm font-semibold">
@@ -143,7 +143,7 @@ export function ProfileMenu({ tone = "dark", compact = false, onNavigate }: Prof
                   t.nav.portal
                 )}
               </p>
-              <p className={cn("mt-0.5 truncate text-[0.68rem]", light ? "text-fg" : "text-fg")}>
+              <p className={cn("mt-0.5 truncate text-[0.68rem]", light ? "text-ink/45" : "text-ivory/50")}>
                 {loading ? (
                   <span className="block h-2.5 w-40 animate-pulse rounded bg-current opacity-20" aria-hidden="true" />
                 ) : user ? (
@@ -163,16 +163,16 @@ export function ProfileMenu({ tone = "dark", compact = false, onNavigate }: Prof
                   onClick={close}
                   className={cn(
                     "flex min-h-10 items-center gap-3 px-3 py-2.5 text-[0.7rem] font-medium transition-colors",
-                    light ? "text-fg hover:bg-surface-2 hover:text-fg" : "text-fg hover:bg-line hover:text-fg",
+                    light ? "text-ink/65 hover:bg-ink/5 hover:text-ink" : "text-ivory/65 hover:bg-white/6 hover:text-ivory",
                   )}
                 >
-                  <Icon className="h-4 w-4 shrink-0 text-accent" />
+                  <Icon className="h-4 w-4 shrink-0 text-gold" />
                   <span className="flex-1">{label}</span>
                 </Link>
               ))}
             </div>
 
-            <div className={cn("border-t p-2", light ? "border-line" : "border-line")}>
+            <div className={cn("border-t p-2", light ? "border-ink/10" : "border-white/10")}>
               {user ? (
                 <button
                   type="button"
@@ -183,10 +183,10 @@ export function ProfileMenu({ tone = "dark", compact = false, onNavigate }: Prof
                   }}
                   className={cn(
                     "flex min-h-10 w-full items-center gap-3 px-3 py-2.5 text-start text-[0.7rem] font-medium transition-colors",
-                    light ? "text-fg hover:bg-surface-2 hover:text-fg" : "text-fg hover:bg-line hover:text-fg",
+                    light ? "text-ink/55 hover:bg-ink/5 hover:text-ink" : "text-ivory/65 hover:bg-white/6 hover:text-ivory",
                   )}
                 >
-                  <LogOut className="h-4 w-4 text-accent" />
+                  <LogOut className="h-4 w-4 text-gold" />
                   {t.nav.signOut}
                 </button>
               ) : (
@@ -194,7 +194,7 @@ export function ProfileMenu({ tone = "dark", compact = false, onNavigate }: Prof
                   href="/sign-in"
                   role="menuitem"
                   onClick={close}
-                  className="flex items-center justify-center gap-2 bg-accent-fill px-3 py-2.5 text-[0.66rem] font-semibold uppercase tracking-[0.14em] text-accent-fg"
+                  className="flex items-center justify-center gap-2 bg-gold px-3 py-2.5 text-[0.66rem] font-semibold uppercase tracking-[0.14em] text-obsidian"
                 >
                   <UserRound className="h-3.5 w-3.5" />
                   {t.nav.signIn}

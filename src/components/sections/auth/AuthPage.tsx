@@ -84,11 +84,6 @@ export function AuthPage({ mode }: AuthPageProps) {
 
   useEffect(() => {
     if (!ready || !user?.sessionVerified) return;
-    const privileged = user.role === "admin" || user.role === "manager";
-    if (privileged && !user.passkeyEnrolled) {
-      router.replace(`/passkey-enroll?next=${encodeURIComponent("/admin")}`);
-      return;
-    }
     router.replace(resolveRedirectTarget(defaultPathForRole(user.role), user));
   }, [ready, user, router]);
 

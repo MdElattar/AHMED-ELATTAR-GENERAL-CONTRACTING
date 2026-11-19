@@ -29,7 +29,7 @@ export function ProjectArt({ variant, className, label, priority = false }: Proj
   const photo = resolveMedia(content.mediaOverrides, `project.${variant}`, fallback, locale);
 
   return (
-    <div className={cn("relative h-full w-full overflow-hidden bg-surface", className)}>
+    <div className={cn("relative h-full w-full overflow-hidden bg-coal", className)}>
       <Image
         src={photo.src}
         alt={label ?? photo.alt}
@@ -41,11 +41,11 @@ export function ProjectArt({ variant, className, label, priority = false }: Proj
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-gradient-to-t from-bg/50 via-bg/5 to-transparent"
+        className="pointer-events-none absolute inset-0 bg-gradient-to-t from-obsidian/50 via-obsidian/5 to-transparent"
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-line"
+        className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-white/[0.06]"
       />
     </div>
   );

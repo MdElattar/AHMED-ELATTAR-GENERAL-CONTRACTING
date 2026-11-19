@@ -641,7 +641,7 @@ export function PortalSettings() {
       </Reveal>
 
       <Reveal delay={140}>
-        <section className="mt-6 border border-line bg-surface" data-testid="passkey-settings">
+        <section id="security" className="mt-6 border border-line bg-surface" data-testid="passkey-settings">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-6 py-4">
             <div className="flex items-center gap-2 text-[0.55rem] font-semibold uppercase tracking-[0.16em] text-accent">
               <Fingerprint className="h-4 w-4" />

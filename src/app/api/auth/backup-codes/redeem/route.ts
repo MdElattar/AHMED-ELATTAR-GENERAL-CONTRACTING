@@ -6,9 +6,10 @@ import {
 } from "@/lib/auth/token";
 import { setSessionCookie } from "@/lib/auth/cookie";
 import { resolvePostLoginPath } from "@/lib/auth/redirect";
+import { advancePasskeyReminder, isPasskeyPromptDue } from "@/lib/auth/passkey-prompt";
 import { authUnavailable, isAuthConfigError } from "@/lib/auth/response";
 import { normalizeBackupCode } from "@/lib/auth/backup-codes";
-import { consumeBackupCode, listPasskeys, recordAudit } from "@/lib/db";
+import { consumeBackupCode, listPasskeys, recordAudit, updateUser } from "@/lib/db";
 import {
   NO_STORE_HEADERS,
   clientIp,
@@ -63,15 +64,23 @@ export async function POST(request: NextRequest) {
   }
 
   const passkeyEnrolled = (await listPasskeys(user.email)).length > 0;
+  const passkeyPrompt = !passkeyEnrolled && isPasskeyPromptDue(user.passkeyReminders);
+  const nextReminder = passkeyEnrolled
+    ? user.passkeyReminders
+    : advancePasskeyReminder(user.passkeyReminders, passkeyPrompt);
 
   let created: Awaited<ReturnType<typeof createSession>>;
   try {
     created = await createSession(
-      sessionInputFromUser(user, { passkeyEnrolled, stepUpAt: 0 }),
+      sessionInputFromUser(user, { passkeyEnrolled, passkeyPrompt, stepUpAt: 0 }),
     );
   } catch (error) {
     if (isAuthConfigError(error)) return authUnavailable();
     throw error;
+  }
+
+  if (nextReminder !== undefined) {
+    await updateUser(user.email, { passkeyReminders: nextReminder });
   }
 
   await recordAudit({
@@ -86,7 +95,7 @@ export async function POST(request: NextRequest) {
   const response = NextResponse.json(
     {
       user: publicSessionUser(created.session),
-      redirectTo: resolvePostLoginPath(user.role, null, passkeyEnrolled),
+      redirectTo: resolvePostLoginPath(user.role, null),
     },
     { headers: NO_STORE_HEADERS },
   );

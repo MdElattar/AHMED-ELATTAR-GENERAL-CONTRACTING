@@ -87,6 +87,9 @@ export async function PATCH(request: NextRequest) {
       ...(phone ? { phone } : {}),
       role: session.role,
       sessionVersion: session.sessionVersion,
+      passkeyEnrolled: session.passkeyEnrolled,
+      passkeyPrompt: session.passkeyPrompt,
+      stepUpAt: session.stepUpAt,
     });
   } catch (error) {
     if (isAuthConfigError(error)) {

@@ -176,7 +176,7 @@ export async function POST(request: NextRequest) {
         },
         user: publicSessionUser(refreshed),
         stepUpAt,
-        redirectTo: resolvePostLoginPath(session.role, next, true),
+        redirectTo: resolvePostLoginPath(session.role, next),
         ...(backupCodes ? { backupCodes } : {}),
       },
       { status: 201, headers: NO_STORE_HEADERS },

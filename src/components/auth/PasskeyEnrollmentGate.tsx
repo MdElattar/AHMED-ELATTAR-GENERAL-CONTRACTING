@@ -3,11 +3,10 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Fingerprint, KeyRound, ShieldCheck } from "lucide-react";
+import { Fingerprint, KeyRound, ShieldCheck, X } from "lucide-react";
 
 import {
   AuthRequestError,
-  isPrivilegedRole,
   resolveRedirectTarget,
   safeNextParam,
   useAuth,
@@ -16,30 +15,19 @@ import { useI18n } from "@/components/providers/I18nProvider";
 import { Field, TextInput } from "@/components/ui/Field";
 import { BackupCodesPanel } from "./BackupCodesPanel";
 
-const REMINDER_KEY = "alattar-passkey-reminder-count";
-const MAX_REMINDERS = 3;
-
 type EnrollmentFormProps = {
-  variant?: "page" | "modal";
   onDismiss?: () => void;
   onEnrolled?: () => void;
   onContinue?: () => void;
 };
 
-/** Shared enrollment UI used by the dedicated route and the global gate. */
+/** Full enrollment form, used only by Account Settings and the dedicated route. */
 export function PasskeyEnrollmentForm({
-  variant = "page",
   onDismiss,
   onEnrolled,
   onContinue,
 }: EnrollmentFormProps) {
-  const {
-    user,
-    registerPasskey,
-    signOut,
-    webAuthnSupported,
-    webAuthnChecked,
-  } = useAuth();
+  const { user, registerPasskey, webAuthnSupported, webAuthnChecked } = useAuth();
   const { t } = useI18n();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -50,23 +38,6 @@ export function PasskeyEnrollmentForm({
   const [error, setError] = useState("");
   const [codes, setCodes] = useState<string[] | undefined>();
   const [redirectTo, setRedirectTo] = useState<string | undefined>();
-  const [remindersUsed, setRemindersUsed] = useState(MAX_REMINDERS);
-
-  const privileged = isPrivilegedRole(user?.role);
-  const canRemind = !privileged && remindersUsed < MAX_REMINDERS;
-
-  useEffect(() => {
-    queueMicrotask(() => {
-      try {
-        const raw = window.localStorage.getItem(REMINDER_KEY);
-        setRemindersUsed(
-          raw ? Math.min(Math.max(Number.parseInt(raw, 10) || 0, 0), MAX_REMINDERS) : 0,
-        );
-      } catch {
-        setRemindersUsed(0);
-      }
-    });
-  }, []);
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -101,23 +72,9 @@ export function PasskeyEnrollmentForm({
     }
   };
 
-  const continueToDestination = () => {
-    const target = resolveRedirectTarget(redirectTo ?? next, user);
+  const leave = () => {
     onContinue?.();
-    router.replace(target);
-  };
-
-  const remindLater = () => {
-    if (privileged || remindersUsed >= MAX_REMINDERS) return;
-    const used = remindersUsed + 1;
-    setRemindersUsed(used);
-    try {
-      window.localStorage.setItem(REMINDER_KEY, String(used));
-    } catch {
-      // Storage may be unavailable; the in-memory count still applies.
-    }
-    onDismiss?.();
-    if (variant === "page") continueToDestination();
+    router.replace(resolveRedirectTarget(redirectTo ?? next, user));
   };
 
   if (!user?.sessionVerified) return null;
@@ -140,7 +97,7 @@ export function PasskeyEnrollmentForm({
           <button
             type="button"
             className="guard-button-primary"
-            onClick={continueToDestination}
+            onClick={leave}
             data-testid="passkey-enroll-continue"
           >
             {t.security.enrollContinue}
@@ -160,10 +117,20 @@ export function PasskeyEnrollmentForm({
           <h2 className="guard-title" id="passkey-enroll-title">
             {t.security.enrollTitle}
           </h2>
-          <p className="guard-copy">
-            {privileged ? t.security.enrollRequired : t.security.enrollBenefitTwo}
-          </p>
+          <p className="guard-copy">{t.security.enrollBenefitTwo}</p>
         </div>
+        {onDismiss ? (
+          <button
+            type="button"
+            className="guard-close"
+            onClick={onDismiss}
+            aria-label={t.common.close}
+            title={t.common.close}
+            data-testid="passkey-enroll-close"
+          >
+            <X className="h-4 w-4" aria-hidden="true" />
+          </button>
+        ) : null}
       </div>
 
       <ul className="guard-benefits">
@@ -209,38 +176,19 @@ export function PasskeyEnrollmentForm({
           <KeyRound className="h-4 w-4" aria-hidden="true" />
           {busy ? t.security.enrollCreating : t.security.enrollCreate}
         </button>
-        {canRemind ? (
-          <button
-            type="button"
-            className="guard-button-quiet"
-            onClick={remindLater}
-            disabled={busy}
-            data-testid="passkey-enroll-remind"
-          >
-            {t.security.enrollRemind}
-          </button>
-        ) : null}
-        {!canRemind ? (
-          <button
-            type="button"
-            className="guard-button-quiet"
-            onClick={() => void signOut()}
-            data-testid="passkey-enroll-sign-out"
-          >
-            {t.security.enrollSignOut}
-          </button>
-        ) : null}
+        <button
+          type="button"
+          className="guard-button-quiet"
+          onClick={onDismiss ?? leave}
+          disabled={busy}
+          data-testid="passkey-enroll-remind"
+        >
+          {t.security.enrollRemind}
+        </button>
       </div>
 
-      {canRemind ? (
-        <p className="guard-hint">
-          {t.security.enrollRemindersLeft}
-          {MAX_REMINDERS - remindersUsed}
-        </p>
-      ) : null}
-
       <p className="guard-hint">
-        <Link href="/portal/settings" className="guard-link">
+        <Link href="/portal/settings#security" className="guard-link">
           {t.nav.settings}
         </Link>
       </p>
@@ -248,54 +196,77 @@ export function PasskeyEnrollmentForm({
   );
 }
 
-/** Global, non-skippable-for-staff prompt shown after sign-in. */
+/**
+ * A dismissible nudge shown once on the initial sign-in and then at most once
+ * every four sign-ins. It never overlays the page with a blocking dialog; the
+ * complete setup and management experience lives in Account Settings › Security.
+ */
 export default function PasskeyEnrollmentGate() {
   const pathname = usePathname();
   const { user, ready } = useAuth();
+  const { t } = useI18n();
   const [hidden, setHidden] = useState(false);
-  const [completedHere, setCompletedHere] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
 
+  const inSettings = pathname === "/portal/settings" || pathname === "/passkey-enroll";
   const shouldShow =
     ready &&
     !hidden &&
-    pathname !== "/passkey-enroll" &&
-    Boolean(user?.sessionVerified) &&
-    (!user?.passkeyEnrolled || completedHere);
+    !inSettings &&
+    user?.sessionVerified === true &&
+    user.passkeyPrompt &&
+    !user.passkeyEnrolled;
 
   useEffect(() => {
-    queueMicrotask(() => {
-      setHidden(false);
-      setCompletedHere(false);
-    });
+    queueMicrotask(() => setHidden(false));
   }, [user?.email]);
-
-  useEffect(() => {
-    if (shouldShow) sectionRef.current?.focus();
-  }, [shouldShow]);
 
   if (!shouldShow) return null;
 
   return (
-    <div className="guard-backdrop">
+    <div className="guard-prompt-backdrop">
       <section
         ref={sectionRef}
-        className="guard-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="passkey-enroll-title"
-        tabIndex={-1}
+        className="guard-prompt-card"
+        role="status"
+        aria-labelledby="passkey-prompt-title"
         data-testid="passkey-enroll-gate"
       >
-        <PasskeyEnrollmentForm
-          variant="modal"
-          onDismiss={() => setHidden(true)}
-          onEnrolled={() => setCompletedHere(true)}
-          onContinue={() => {
-            setCompletedHere(false);
-            setHidden(true);
-          }}
-        />
+        <button
+          type="button"
+          className="guard-close"
+          onClick={() => setHidden(true)}
+          aria-label={t.common.close}
+          title={t.common.close}
+          data-testid="passkey-prompt-close"
+        >
+          <X className="h-4 w-4" aria-hidden="true" />
+        </button>
+        <span className="guard-icon" aria-hidden="true">
+          <Fingerprint className="h-5 w-5" />
+        </span>
+        <h2 className="guard-title" id="passkey-prompt-title">
+          {t.security.enrollTitle}
+        </h2>
+        <p className="guard-copy">{t.security.enrollBenefitTwo}</p>
+        <div className="guard-actions">
+          <Link
+            href="/portal/settings#security"
+            className="guard-button-primary"
+            data-testid="passkey-prompt-settings"
+            onClick={() => setHidden(true)}
+          >
+            {t.security.enrollCreate}
+          </Link>
+          <button
+            type="button"
+            className="guard-button-quiet"
+            onClick={() => setHidden(true)}
+            data-testid="passkey-prompt-later"
+          >
+            {t.security.enrollRemind}
+          </button>
+        </div>
       </section>
     </div>
   );

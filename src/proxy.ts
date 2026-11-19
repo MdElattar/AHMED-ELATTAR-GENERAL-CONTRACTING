@@ -108,8 +108,36 @@ export async function proxy(request: NextRequest) {
     return applySecurityHeaders(NextResponse.redirect(httpsUrl, 308));
   }
 
+  // A ?lang= link must be reflected by the server render, not patched in after
+  // paint. Mirror it into the request headers before the layout reads cookies.
+  let requestHeaders: Headers | null = null;
+  const lang = request.nextUrl.searchParams.get("lang");
+  if (lang === "ar" || lang === "en") {
+    requestHeaders = new Headers(request.headers);
+    const remaining = (requestHeaders.get("cookie") ?? "")
+      .split("; ")
+      .filter((part) => part && !part.startsWith("alattar-locale="));
+    remaining.push(`alattar-locale=${lang}`);
+    requestHeaders.set("cookie", remaining.join("; "));
+  }
+  const continueWithLocale = () => {
+    const response = NextResponse.next(
+      requestHeaders ? { request: { headers: requestHeaders } } : undefined,
+    );
+    // Keep the browser cookie in sync with the query so the inline bootstrap in
+    // layout.tsx sees the same locale the server just rendered (no post-paint flip).
+    if (lang === "ar" || lang === "en") {
+      response.cookies.set("alattar-locale", lang, {
+        path: "/",
+        maxAge: 31536000,
+        sameSite: "lax",
+      });
+    }
+    return applySecurityHeaders(response);
+  };
+
   const area = areaFor(request.nextUrl.pathname);
-  if (!area) return applySecurityHeaders(NextResponse.next());
+  if (!area) return continueWithLocale();
 
   const isApi = request.nextUrl.pathname.startsWith("/api/");
   const token = request.cookies.get(SESSION_COOKIE)?.value;
@@ -121,16 +149,7 @@ export async function proxy(request: NextRequest) {
     return redirectTo(request, "/portal");
   }
 
-  if (
-    area === "admin" &&
-    canAccessAdmin(session.role) &&
-    session.passkeyEnrolled === false
-  ) {
-    if (isApi) return denyApi(request, 403, "passkey_enrollment_required");
-    return redirectTo(request, "/passkey-enroll", relativePath(request));
-  }
-
-  return applySecurityHeaders(NextResponse.next());
+  return continueWithLocale();
 }
 
 export const config = {

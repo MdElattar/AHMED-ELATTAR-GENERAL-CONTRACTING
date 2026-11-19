@@ -223,27 +223,27 @@ export function BidForm() {
     return (
       <div
         ref={successRef}
-        className="relative flex min-h-[560px] flex-col items-center justify-center border border-line bg-surface-2 p-8 text-center sm:p-12"
+        className="relative flex min-h-[560px] flex-col items-center justify-center border border-ink/10 bg-paper/50 p-8 text-center sm:p-12"
       >
-        <span className="flex h-16 w-16 items-center justify-center rounded-full border border-accent/40 bg-fg text-accent">
+        <span className="flex h-16 w-16 items-center justify-center rounded-full border border-gold-dark/40 bg-ivory text-gold-dark">
           <Check className="h-7 w-7" />
         </span>
-        <h3 className="display-title mt-7 text-[clamp(2rem,3.4vw,3rem)] text-fg">
+        <h3 className="display-title mt-7 text-[clamp(2rem,3.4vw,3rem)] text-ink">
           {t.contactPage.form.successTitle}
         </h3>
-        <p className="mt-4 max-w-md text-[0.9rem] leading-relaxed text-fg">
+        <p className="mt-4 max-w-md text-[0.9rem] leading-relaxed text-ink/55">
           {t.contactPage.form.successText}
         </p>
-        <div className="mt-8 border border-line bg-fg px-8 py-5">
-          <span className="text-[0.55rem] uppercase tracking-[0.18em] text-fg">
+        <div className="mt-8 border border-ink/12 bg-ivory px-8 py-5">
+          <span className="text-[0.55rem] uppercase tracking-[0.18em] text-ink/40">
             {t.contactPage.form.reference}
           </span>
-          <p className="mt-2 tabular font-display text-2xl text-accent">{reference}</p>
+          <p className="mt-2 tabular font-display text-2xl text-gold-dark">{reference}</p>
         </div>
         <button
           type="button"
           onClick={reset}
-          className="mt-8 text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-fg underline-offset-4 transition-colors hover:text-accent hover:underline"
+          className="mt-8 text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-ink/50 underline-offset-4 transition-colors hover:text-gold-dark hover:underline"
         >
           {t.contactPage.form.again}
         </button>
@@ -253,7 +253,7 @@ export function BidForm() {
 
   return (
     <form
-      className="border border-line bg-fg"
+      className="border border-ink/10 bg-ivory"
       onSubmit={(event) => {
         event.preventDefault();
         if (step < 2) {
@@ -264,19 +264,19 @@ export function BidForm() {
       }}
       noValidate
     >
-      <div className="border-b border-line p-6 sm:p-8">
+      <div className="border-b border-ink/10 p-6 sm:p-8">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
           <div>
-            <h2 className="font-display text-2xl text-fg sm:text-3xl">
+            <h2 className="font-display text-2xl text-ink sm:text-3xl">
               {t.contactPage.form.title}
             </h2>
-            <p className="mt-2 max-w-lg text-[0.78rem] leading-relaxed text-fg">
+            <p className="mt-2 max-w-lg text-[0.78rem] leading-relaxed text-ink/45">
               {t.contactPage.form.subtitle}
             </p>
           </div>
-          <span className="shrink-0 text-[0.58rem] uppercase tracking-[0.16em] text-fg">
+          <span className="shrink-0 text-[0.58rem] uppercase tracking-[0.16em] text-ink/40">
             {t.contactPage.form.stepOf}{" "}
-            <span className="tabular text-accent">{step + 1}</span> / 3
+            <span className="tabular text-gold-dark">{step + 1}</span> / 3
           </span>
         </div>
 
@@ -286,13 +286,13 @@ export function BidForm() {
               <span
                 className={cn(
                   "h-0.5 w-full transition-colors duration-500",
-                  index <= step ? "bg-accent-fill" : "bg-line",
+                  index <= step ? "bg-gold-dark" : "bg-ink/10",
                 )}
               />
               <span
                 className={cn(
                   "text-[0.55rem] uppercase tracking-[0.12em] transition-colors",
-                  index === step ? "text-fg" : "text-fg",
+                  index === step ? "text-ink/70" : "text-ink/30",
                 )}
               >
                 {label}
@@ -428,7 +428,7 @@ export function BidForm() {
         {step === 2 ? (
           <div className="flex flex-col gap-6">
             <div>
-              <span className="text-[0.65rem] font-medium uppercase tracking-[0.18em] text-fg">
+              <span className="text-[0.65rem] font-medium uppercase tracking-[0.18em] text-ink/55">
                 {t.contactPage.form.files}
               </span>
               <div
@@ -440,20 +440,20 @@ export function BidForm() {
                 onDrop={onDrop}
                 className={cn(
                   "mt-2 flex flex-col items-center justify-center gap-3 border border-dashed px-6 py-10 text-center transition-colors",
-                  dragging ? "border-accent bg-accent/5" : "border-line bg-surface-2/30",
+                  dragging ? "border-gold-dark bg-gold/5" : "border-ink/20 bg-paper/30",
                 )}
               >
-                <span className="flex h-11 w-11 items-center justify-center rounded-full border border-line text-accent">
+                <span className="flex h-11 w-11 items-center justify-center rounded-full border border-ink/15 text-gold-dark">
                   <Upload className="h-4 w-4" />
                 </span>
                 <button
                   type="button"
                   onClick={() => inputRef.current?.click()}
-                  className="text-[0.8rem] font-medium text-fg transition-colors hover:text-accent"
+                  className="text-[0.8rem] font-medium text-ink/70 transition-colors hover:text-gold-dark"
                 >
                   {t.contactPage.form.filesHint}
                 </button>
-                <p className="text-[0.62rem] text-fg">{t.contactPage.form.filesTypes}</p>
+                <p className="text-[0.62rem] text-ink/35">{t.contactPage.form.filesTypes}</p>
                 <input
                   ref={inputRef}
                   type="file"
@@ -469,14 +469,14 @@ export function BidForm() {
             </div>
 
             {files.length ? (
-              <ul className="divide-y divide-line border border-line">
+              <ul className="divide-y divide-ink/10 border border-ink/10">
                 {files.map((file, index) => (
                   <li key={`${file.name}-${index}`} className="flex items-center gap-3 px-4 py-3">
-                    <FileText className="h-4 w-4 shrink-0 text-accent" />
-                    <span className="min-w-0 flex-1 truncate text-[0.75rem] text-fg">
+                    <FileText className="h-4 w-4 shrink-0 text-gold-dark" />
+                    <span className="min-w-0 flex-1 truncate text-[0.75rem] text-ink/65">
                       {file.name}
                     </span>
-                    <span className="tabular shrink-0 text-[0.6rem] text-fg">
+                    <span className="tabular shrink-0 text-[0.6rem] text-ink/35">
                       {formatBytes(file.size)}
                     </span>
                     <button
@@ -492,12 +492,12 @@ export function BidForm() {
               </ul>
             ) : null}
 
-            <div className="border border-line bg-surface-2 p-4">
-              <p className="flex items-center gap-2 text-[0.68rem] font-medium uppercase tracking-[0.12em] text-fg">
-                <ShieldCheck className="h-4 w-4 text-accent" />
+            <div className="border border-ink/10 bg-paper/40 p-4">
+              <p className="flex items-center gap-2 text-[0.68rem] font-medium uppercase tracking-[0.12em] text-ink/55">
+                <ShieldCheck className="h-4 w-4 text-gold-dark" />
                 {t.footer.privacy}
               </p>
-              <label className="mt-3 flex cursor-pointer items-start gap-3 text-[0.78rem] leading-relaxed text-fg">
+              <label className="mt-3 flex cursor-pointer items-start gap-3 text-[0.78rem] leading-relaxed text-ink/60">
                 <input
                   type="checkbox"
                   checked={consent}
@@ -531,12 +531,12 @@ export function BidForm() {
           </div>
         ) : null}
 
-        <div className="mt-8 flex items-center justify-between gap-4 border-t border-line pt-6">
+        <div className="mt-8 flex items-center justify-between gap-4 border-t border-ink/10 pt-6">
           <button
             type="button"
             onClick={goBack}
             disabled={step === 0}
-            className="inline-flex items-center gap-2 text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-fg transition-colors hover:text-fg disabled:pointer-events-none disabled:opacity-30"
+            className="inline-flex items-center gap-2 text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-ink/45 transition-colors hover:text-ink disabled:pointer-events-none disabled:opacity-30"
           >
             <BackIcon className="h-3.5 w-3.5" />
             {t.contactPage.form.back}
@@ -546,7 +546,7 @@ export function BidForm() {
             <button
               type="button"
               onClick={goNext}
-              className="group inline-flex h-11 items-center justify-center gap-2 bg-surface px-6 text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-accent-fg transition-colors hover:bg-accent-fill"
+              className="group inline-flex h-11 items-center justify-center gap-2 bg-ink px-6 text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-ivory transition-colors hover:bg-gold-dark"
             >
               {t.contactPage.form.next}
               <NextIcon className="h-3.5 w-3.5" />
@@ -555,7 +555,7 @@ export function BidForm() {
             <button
               type="submit"
               disabled={submitting}
-              className="btn-shine inline-flex h-11 items-center justify-center gap-2 bg-accent-fill px-6 text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-accent-fg transition-colors hover:bg-accent-fill disabled:cursor-wait disabled:opacity-70"
+              className="btn-shine inline-flex h-11 items-center justify-center gap-2 bg-gold px-6 text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-obsidian transition-colors hover:bg-gold-light disabled:cursor-wait disabled:opacity-70"
             >
               {submitting ? t.contactPage.form.submitting : t.contactPage.form.submit}
               {submitting ? null : <Check className="h-3.5 w-3.5" />}

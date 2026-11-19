@@ -61,8 +61,8 @@ function EnrollContent() {
     <main className="guard-page" id="main" tabIndex={-1}>
       <section className="guard-page-card" aria-labelledby="passkey-enroll-title">
         <PasskeyEnrollmentForm
-          variant="page"
           onEnrolled={() => setEnrolledHere(true)}
+          onDismiss={() => router.replace(resolveRedirectTarget(next, auth.user))}
         />
       </section>
     </main>

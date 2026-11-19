@@ -31,6 +31,7 @@ function sessionUser(role: Role, passkeyEnrolled: boolean) {
     accountId: role === "admin" ? "ADM-1" : "CLI-1",
     role,
     passkeyEnrolled,
+    passkeyPrompt: !passkeyEnrolled,
     primaryAdmin: false,
   };
 }
@@ -96,30 +97,45 @@ test.describe("passkey UX", () => {
     await expect(page.locator("main").getByTestId("passkey-sign-in")).toBeDisabled();
   });
 
-  test("privileged users cannot dismiss passkey enrollment", async ({ page }) => {
+  test("the sign-in prompt is a dismissible nudge, even for admins", async ({ page }) => {
     await stubSession(page, "admin", false);
-    await page.goto("/passkey-enroll?next=%2Fadmin");
+    await page.goto("/");
 
-    await expect(page.getByTestId("passkey-enroll-form")).toBeVisible();
-    await expect(page.getByTestId("passkey-device-name")).toBeVisible();
-    await expect(page.getByTestId("passkey-enroll-remind")).toHaveCount(0);
-    await expect(page.getByTestId("passkey-enroll-sign-out")).toBeVisible();
+    const gate = page.getByTestId("passkey-enroll-gate");
+    await expect(gate).toBeVisible();
+    await expect(gate.getByTestId("passkey-prompt-close")).toBeVisible();
+    await expect(gate.getByTestId("passkey-prompt-settings")).toHaveAttribute(
+      "href",
+      "/portal/settings#security",
+    );
+    await expect(page.locator("main")).toBeVisible();
+
+    await gate.getByTestId("passkey-prompt-close").click();
+    await expect(gate).toHaveCount(0);
+    await expect(page.locator("main")).toBeVisible();
   });
 
-  test("clients can remind later and the count is remembered", async ({ context, page }) => {
+  test("clients can skip enrollment and continue in Account Settings", async ({ context, page }) => {
     await createClientSession(context);
     await stubSession(page, "client", false);
     await recordNavigation(page);
     await page.goto("/passkey-enroll");
 
+    await expect(page.getByTestId("passkey-enroll-close")).toBeVisible();
     await expect(page.getByTestId("passkey-enroll-remind")).toBeVisible();
     await page.getByTestId("passkey-enroll-remind").click();
 
-    const count = await page.evaluate(() =>
+    await expect.poll(() => navCalls(page)).toContain("/portal");
+    const stored = await page.evaluate(() =>
       window.localStorage.getItem("alattar-passkey-reminder-count"),
     );
-    expect(count).toBe("1");
-    await expect.poll(() => navCalls(page)).toContain("/portal");
+    expect(stored).toBeNull();
+  });
+
+  test("the prompt only opens from the sign-in cadence flag", async ({ page }) => {
+    await stubSession(page, "client", true);
+    await page.goto("/");
+    await expect(page.getByTestId("passkey-enroll-gate")).toHaveCount(0);
   });
 
   test("enrollment shows backup codes and continues to the admin area", async ({ page }) => {

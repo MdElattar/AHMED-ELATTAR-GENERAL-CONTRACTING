@@ -31,6 +31,8 @@ export type PortalUser = {
   role: PortalRole;
   primaryAdmin: boolean;
   passkeyEnrolled: boolean;
+  /** This sign-in's optional, dismissible enrollment reminder. */
+  passkeyPrompt: boolean;
   sessionVerified: boolean;
 };
 
@@ -183,6 +185,7 @@ function parseUser(value: unknown, verified: boolean): PortalUser | null {
     role,
     primaryAdmin: verified && value.primaryAdmin === true,
     passkeyEnrolled: verified && value.passkeyEnrolled === true,
+    passkeyPrompt: verified && !value.passkeyEnrolled && value.passkeyPrompt === true,
     sessionVerified: verified,
   };
 }

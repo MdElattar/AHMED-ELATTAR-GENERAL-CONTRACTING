@@ -34,13 +34,13 @@ export function Marquee({
           <span key={`${item}-${index}`} className="flex items-center">
             <span
               className={cn(
-                "whitespace-nowrap text-sm font-medium tracking-wide text-fg",
+                "whitespace-nowrap text-sm font-medium tracking-wide text-ivory/55",
                 itemClassName,
               )}
             >
               {item}
             </span>
-            <span className="mx-8 inline-block h-1 w-1 rotate-45 bg-accent/60" />
+            <span className="mx-8 inline-block h-1 w-1 rotate-45 bg-gold/60" />
           </span>
         ))}
       </div>

@@ -30,7 +30,7 @@ export type StoredUser = {
   accountId: string;
   /** Invalidates every previously issued session when incremented. */
   sessionVersion: number;
-  /** Number of times a client deferred passkey enrollment (max 3). */
+  /** Sign-ins since the last optional passkey prompt (0 = due). */
   passkeyReminders?: number;
   /** Hashed one-time recovery codes; plaintext is never persisted. */
   backupCodeHashes?: string[];

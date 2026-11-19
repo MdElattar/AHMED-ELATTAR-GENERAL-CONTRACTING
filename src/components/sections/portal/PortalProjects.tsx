@@ -151,11 +151,11 @@ export function PortalProjects() {
   if (!project) {
     return (
       <PortalShell title={c.title} description={c.description}>
-        <div className="border border-line bg-surface px-6 py-16 text-center">
-          <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-accent/30 text-accent">
+        <div className="border border-white/10 bg-coal px-6 py-16 text-center">
+          <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-gold/30 text-gold">
             <CalendarDays className="h-5 w-5" />
           </span>
-          <p className="mx-auto mt-5 max-w-md text-[0.8rem] leading-relaxed text-fg">
+          <p className="mx-auto mt-5 max-w-md text-[0.8rem] leading-relaxed text-ivory/55">
             {c.empty}
           </p>
         </div>
@@ -178,8 +178,8 @@ export function PortalProjects() {
             className={cn(
               "flex flex-1 flex-col gap-2 border p-4 text-start transition-colors",
               item.slug === activeSlug
-                ? "border-accent/40 bg-accent/[0.08] text-fg"
-                : "border-line bg-surface text-fg hover:border-line",
+                ? "border-gold/40 bg-gold/[0.08] text-ivory"
+                : "border-white/10 bg-coal text-ivory/70 hover:border-white/25",
             )}
           >
             <span className="flex items-center justify-between gap-3">
@@ -187,7 +187,7 @@ export function PortalProjects() {
               <span
                 className={cn(
                   "tabular shrink-0 text-[0.6rem]",
-                  item.slug === activeSlug ? "text-accent" : "text-accent",
+                  item.slug === activeSlug ? "text-gold" : "text-gold/70",
                 )}
               >
                 {item.progress}%
@@ -196,7 +196,7 @@ export function PortalProjects() {
             <span
               className={cn(
                 "text-[0.54rem] uppercase tracking-[0.12em]",
-                item.slug === activeSlug ? "text-fg" : "text-fg",
+                item.slug === activeSlug ? "text-ivory/50" : "text-ivory/40",
               )}
             >
               {l(item.location)}
@@ -208,18 +208,18 @@ export function PortalProjects() {
       <div className="mt-6 grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
         <div className="flex flex-col gap-6">
           <Reveal>
-            <div className="border border-line bg-surface">
-              <div className="flex flex-wrap items-start justify-between gap-4 border-b border-line px-6 py-5">
+            <div className="border border-white/10 bg-coal">
+              <div className="flex flex-wrap items-start justify-between gap-4 border-b border-white/10 px-6 py-5">
                 <div>
-                  <span className="text-[0.52rem] uppercase tracking-[0.16em] text-fg">
+                  <span className="text-[0.52rem] uppercase tracking-[0.16em] text-ivory/45">
                     {c.select}
                   </span>
-                  <h2 className="mt-1 font-display text-2xl leading-tight text-fg">
+                  <h2 className="mt-1 font-display text-2xl leading-tight text-ivory">
                     {l(project.title)}
                   </h2>
-                  <p className="mt-1 text-[0.62rem] text-fg">{l(project.location)}</p>
+                  <p className="mt-1 text-[0.62rem] text-ivory/50">{l(project.location)}</p>
                 </div>
-                <span className="border border-accent/30 px-3 py-1 text-[0.55rem] uppercase tracking-[0.14em] text-accent">
+                <span className="border border-gold/30 px-3 py-1 text-[0.55rem] uppercase tracking-[0.14em] text-gold">
                   {tStatus(project.status, c)}
                 </span>
               </div>
@@ -227,16 +227,16 @@ export function PortalProjects() {
               <div className="grid gap-5 p-6 sm:grid-cols-2">
                 <div className="sm:col-span-2">
                   <div className="flex items-end justify-between gap-4">
-                    <span className="text-[0.55rem] uppercase tracking-[0.16em] text-fg">
+                    <span className="text-[0.55rem] uppercase tracking-[0.16em] text-ivory/50">
                       {c.progress}
                     </span>
-                    <span className="tabular font-display text-3xl leading-none text-fg">
+                    <span className="tabular font-display text-3xl leading-none text-ivory">
                       {project.progress}%
                     </span>
                   </div>
-                  <div className="mt-3 h-1.5 w-full overflow-hidden bg-line">
+                  <div className="mt-3 h-1.5 w-full overflow-hidden bg-white/10">
                     <div
-                      className="h-full bg-accent-fill transition-all duration-700"
+                      className="h-full bg-gold transition-all duration-700"
                       style={{ width: `${project.progress}%` }}
                     />
                   </div>
@@ -249,24 +249,24 @@ export function PortalProjects() {
                   { label: c.next, value: l(nextMilestone) },
                 ].map((fact) => (
                   <div key={fact.label}>
-                    <p className="text-[0.5rem] uppercase tracking-[0.14em] text-fg">
+                    <p className="text-[0.5rem] uppercase tracking-[0.14em] text-ivory/45">
                       {fact.label}
                     </p>
-                    <p className="mt-1 text-[0.76rem] leading-snug text-fg">{fact.value}</p>
+                    <p className="mt-1 text-[0.76rem] leading-snug text-ivory/70">{fact.value}</p>
                   </div>
                 ))}
               </div>
 
               {project.artGallery.length ? (
-                <div className="border-t border-line p-4">
-                  <p className="mb-3 text-[0.5rem] uppercase tracking-[0.14em] text-fg">
+                <div className="border-t border-white/10 p-4">
+                  <p className="mb-3 text-[0.5rem] uppercase tracking-[0.14em] text-ivory/45">
                     {c.gallery}
                   </p>
                   <div className="grid grid-cols-3 gap-2">
                     {project.artGallery.slice(0, 3).map((variant, index) => (
                       <div
                         key={`${variant}-${index}`}
-                        className="relative aspect-[4/3] overflow-hidden border border-line"
+                        className="relative aspect-[4/3] overflow-hidden border border-white/10"
                       >
                         <ProjectArt variant={variant} className="h-full w-full" />
                       </div>
@@ -289,14 +289,14 @@ export function PortalProjects() {
 
         <div className="flex flex-col gap-6">
           <Reveal delay={100}>
-            <div className="border border-line bg-surface">
-              <div className="flex items-center justify-between gap-3 border-b border-line px-6 py-4">
-                <span className="text-[0.55rem] font-semibold uppercase tracking-[0.16em] text-accent">
+            <div className="border border-white/10 bg-coal">
+              <div className="flex items-center justify-between gap-3 border-b border-white/10 px-6 py-4">
+                <span className="text-[0.55rem] font-semibold uppercase tracking-[0.16em] text-gold">
                   {c.timeline}
                 </span>
-                <CalendarDays className="h-4 w-4 text-accent" />
+                <CalendarDays className="h-4 w-4 text-gold/60" />
               </div>
-              <ol className="divide-y divide-line">
+              <ol className="divide-y divide-white/8">
                 {project.milestones.length ? (
                   project.milestones.map((milestone) => (
                     <li key={milestone.title.en} className="flex items-start gap-3 px-6 py-3.5">
@@ -304,10 +304,10 @@ export function PortalProjects() {
                         className={cn(
                           "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border",
                           milestone.status === "complete"
-                            ? "border-accent bg-accent-fill text-accent-fg"
+                            ? "border-gold bg-gold text-obsidian"
                             : milestone.status === "current"
-                              ? "border-accent text-accent"
-                              : "border-line text-fg",
+                              ? "border-gold text-gold"
+                              : "border-white/15 text-ivory/35",
                         )}
                       >
                         {milestone.status === "complete" ? (
@@ -322,17 +322,17 @@ export function PortalProjects() {
                         <p
                           className={cn(
                             "text-[0.75rem] leading-snug",
-                            milestone.status === "upcoming" ? "text-fg" : "text-fg",
+                            milestone.status === "upcoming" ? "text-ivory/50" : "text-ivory/75",
                           )}
                         >
                           {l(milestone.title)}
                         </p>
-                        <span className="text-[0.58rem] text-fg">{l(milestone.date)}</span>
+                        <span className="text-[0.58rem] text-ivory/45">{l(milestone.date)}</span>
                       </div>
                     </li>
                   ))
                 ) : (
-                  <li className="px-6 py-6 text-center text-[0.68rem] text-fg">
+                  <li className="px-6 py-6 text-center text-[0.68rem] text-ivory/45">
                     {c.noMilestones}
                   </li>
                 )}
@@ -345,27 +345,27 @@ export function PortalProjects() {
           </Reveal>
 
           <Reveal delay={140}>
-            <div className="border border-line bg-surface">
-              <div className="flex items-center justify-between gap-3 border-b border-line px-6 py-4">
-                <span className="text-[0.55rem] font-semibold uppercase tracking-[0.16em] text-accent">
+            <div className="border border-white/10 bg-coal">
+              <div className="flex items-center justify-between gap-3 border-b border-white/10 px-6 py-4">
+                <span className="text-[0.55rem] font-semibold uppercase tracking-[0.16em] text-gold">
                   {c.blueprints}
                 </span>
-                <FileText className="h-4 w-4 text-accent" />
+                <FileText className="h-4 w-4 text-gold/60" />
               </div>
-              <ul className="divide-y divide-line">
+              <ul className="divide-y divide-white/8">
                 {project.documents.map((doc) => (
                   <li key={doc.name.en} className="flex items-center gap-3 px-6 py-4">
-                    <FileText className="h-4 w-4 shrink-0 text-accent" />
+                    <FileText className="h-4 w-4 shrink-0 text-gold" />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-[0.74rem] text-fg">{l(doc.name)}</p>
-                      <span className="text-[0.55rem] text-fg">
+                      <p className="truncate text-[0.74rem] text-ivory/75">{l(doc.name)}</p>
+                      <span className="text-[0.55rem] text-ivory/45">
                         {c.docTypes[doc.type]} · {doc.size} · {doc.date}
                       </span>
                     </div>
                     <button
                       type="button"
                       onClick={() => downloadDocument(doc, l(project.title))}
-                      className="flex h-8 w-8 shrink-0 items-center justify-center border border-line text-fg transition-colors hover:border-accent hover:text-accent"
+                      className="flex h-8 w-8 shrink-0 items-center justify-center border border-white/12 text-ivory/55 transition-colors hover:border-gold hover:text-gold"
                       aria-label={`${c.download} ${l(doc.name)}`}
                     >
                       <Download className="h-3.5 w-3.5" />
@@ -373,7 +373,7 @@ export function PortalProjects() {
                   </li>
                 ))}
                 {project.documents.length === 0 ? (
-                  <li className="px-6 py-6 text-center text-[0.68rem] text-fg">
+                  <li className="px-6 py-6 text-center text-[0.68rem] text-ivory/45">
                     {locale === "ar" ? "لا توجد مستندات بعد." : "No documents yet."}
                   </li>
                 ) : null}
@@ -382,12 +382,12 @@ export function PortalProjects() {
           </Reveal>
 
           <Reveal delay={180}>
-            <div className="border border-line bg-surface">
-              <div className="flex items-center justify-between gap-3 border-b border-line px-6 py-4">
-                <span className="text-[0.55rem] font-semibold uppercase tracking-[0.16em] text-accent">
+            <div className="border border-white/10 bg-coal">
+              <div className="flex items-center justify-between gap-3 border-b border-white/10 px-6 py-4">
+                <span className="text-[0.55rem] font-semibold uppercase tracking-[0.16em] text-gold">
                   {c.messages}
                 </span>
-                <MessageSquare className="h-4 w-4 text-accent" />
+                <MessageSquare className="h-4 w-4 text-gold/60" />
               </div>
 
               <div className="max-h-64 space-y-3 overflow-y-auto p-5">
@@ -400,14 +400,14 @@ export function PortalProjects() {
                         message.author === "client" ? "items-end" : "items-start",
                       )}
                     >
-                      <span className="flex items-center gap-1.5 text-[0.5rem] uppercase tracking-[0.12em] text-fg">
+                      <span className="flex items-center gap-1.5 text-[0.5rem] uppercase tracking-[0.12em] text-ivory/45">
                         {message.author === "client" ? (
                           <UserRound className="h-3 w-3" />
                         ) : (
-                          <MessageSquare className="h-3 w-3 text-accent" />
+                          <MessageSquare className="h-3 w-3 text-gold" />
                         )}
                         {message.author === "client" ? c.client : c.managerRole}
-                        <span className="text-fg">
+                        <span className="text-ivory/35">
                           {dateFormat.format(new Date(message.at))}
                         </span>
                       </span>
@@ -415,8 +415,8 @@ export function PortalProjects() {
                         className={cn(
                           "max-w-[90%] px-3 py-2 text-[0.7rem] leading-relaxed",
                           message.author === "client"
-                            ? "bg-accent-fill text-accent-fg"
-                            : "border border-line bg-surface-2 text-fg",
+                            ? "bg-gold text-obsidian"
+                            : "border border-white/10 bg-white/[0.04] text-ivory/70",
                         )}
                       >
                         {message.text}
@@ -424,20 +424,20 @@ export function PortalProjects() {
                     </div>
                   ))
                 ) : (
-                  <p className="py-6 text-center text-[0.68rem] text-fg">{c.noMessages}</p>
+                  <p className="py-6 text-center text-[0.68rem] text-ivory/45">{c.noMessages}</p>
                 )}
               </div>
 
-              <form onSubmit={submit} className="flex gap-2 border-t border-line p-3">
+              <form onSubmit={submit} className="flex gap-2 border-t border-white/10 p-3">
                 <input
                   value={draft}
                   onChange={(event) => setDraft(event.target.value)}
                   placeholder={c.messagePlaceholder}
-                  className="h-10 min-w-0 flex-1 border border-line bg-transparent px-3 text-[0.7rem] text-fg outline-none placeholder:text-muted focus:border-accent/60"
+                  className="h-10 min-w-0 flex-1 border border-white/12 bg-transparent px-3 text-[0.7rem] text-ivory outline-none placeholder:text-ivory/40 focus:border-gold/60"
                 />
                 <button
                   type="submit"
-                  className="flex h-10 w-10 shrink-0 items-center justify-center bg-accent-fill text-accent-fg transition-colors hover:bg-accent-fill"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center bg-gold text-obsidian transition-colors hover:bg-gold-light"
                   aria-label={c.send}
                 >
                   <Send className="h-3.5 w-3.5" />
@@ -447,19 +447,19 @@ export function PortalProjects() {
           </Reveal>
 
           <Reveal delay={220}>
-            <div className="flex items-center justify-between gap-3 border border-line bg-surface-2 px-5 py-4">
+            <div className="flex items-center justify-between gap-3 border border-white/10 bg-white/[0.03] px-5 py-4">
               <div className="flex items-center gap-3">
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-accent-fill text-accent-fg">
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gold text-obsidian">
                   <UserRound className="h-4 w-4" />
                 </span>
                 <div>
-                  <p className="text-[0.72rem] font-medium text-fg">{l(project.manager)}</p>
-                  <p className="text-[0.55rem] uppercase tracking-[0.12em] text-fg">
+                  <p className="text-[0.72rem] font-medium text-ivory">{l(project.manager)}</p>
+                  <p className="text-[0.55rem] uppercase tracking-[0.12em] text-ivory/45">
                     {c.managerRole}
                   </p>
                 </div>
               </div>
-              <ArrowUpRight className="h-4 w-4 text-accent" />
+              <ArrowUpRight className="h-4 w-4 text-gold" />
             </div>
           </Reveal>
         </div>

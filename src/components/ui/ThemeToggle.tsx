@@ -1,6 +1,6 @@
 "use client";
 
-import { Monitor, Moon, Sun } from "lucide-react";
+import { Moon, Sun } from "lucide-react";
 import { useTheme, type Theme } from "@/components/providers/ThemeProvider";
 import { cn } from "@/lib/utils";
 
@@ -15,16 +15,12 @@ type ThemeToggleProps = {
 };
 
 const FALLBACK_LABELS = {
-  system: "System",
   light: "Light",
   dark: "Dark",
   cycle: "Switch theme",
 } as const;
 
-/**
- * Compact 44px theme control. Cycle order is system → light → dark → system.
- * Drop it in the admin topbar or the public navigation without adding copies.
- */
+/** Compact 44px control that toggles the Admin Panel between dark and light. */
 export function ThemeToggle({ labels, className, variant = "icon" }: ThemeToggleProps) {
   const { theme, cycleTheme } = useTheme();
   const cycleLabel = labels?.cycle ?? labels?.toggle ?? labels?.label ?? FALLBACK_LABELS.cycle;
@@ -43,9 +39,7 @@ export function ThemeToggle({ labels, className, variant = "icon" }: ThemeToggle
         className,
       )}
     >
-      {theme === "system" ? (
-        <Monitor aria-hidden="true" className="h-4 w-4" />
-      ) : theme === "light" ? (
+      {theme === "light" ? (
         <Sun aria-hidden="true" className="h-4 w-4" />
       ) : (
         <Moon aria-hidden="true" className="h-4 w-4" />

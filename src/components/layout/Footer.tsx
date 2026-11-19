@@ -87,18 +87,18 @@ export function Footer() {
   };
 
   return (
-    <footer className="relative overflow-hidden border-t border-line bg-surface">
+    <footer className="relative overflow-hidden border-t border-white/10 bg-ink">
       <div className="blueprint-grid pointer-events-none absolute inset-0 opacity-30" />
-      <div className="pointer-events-none absolute -top-40 end-0 h-[520px] w-[520px] rounded-full bg-accent/5 blur-[140px]" />
+      <div className="pointer-events-none absolute -top-40 end-0 h-[520px] w-[520px] rounded-full bg-gold/5 blur-[140px]" />
 
       <div className="container-lux relative">
-        <div className="grid gap-14 border-b border-line py-16 lg:grid-cols-[1.4fr_1fr] lg:py-20">
+        <div className="grid gap-14 border-b border-white/10 py-16 lg:grid-cols-[1.4fr_1fr] lg:py-20">
           <div>
             <p className="eyebrow">{t.footer.newsletter}</p>
-            <h2 className="display-title mt-6 max-w-xl text-[clamp(2.1rem,4vw,3.8rem)] text-fg">
+            <h2 className="display-title mt-6 max-w-xl text-[clamp(2.1rem,4vw,3.8rem)] text-ivory">
               {t.footer.tagline}
             </h2>
-            <p className="mt-5 max-w-md text-sm leading-relaxed text-fg">
+            <p className="mt-5 max-w-md text-sm leading-relaxed text-ivory/55">
               {t.footer.newsletterText}
             </p>
             <form
@@ -146,14 +146,14 @@ export function Footer() {
               <button
                 type="submit"
                 disabled={subscribing}
-                className="flex h-12 shrink-0 items-center gap-2 bg-accent-fill px-5 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-accent-fg transition-colors hover:bg-accent-fill disabled:cursor-wait disabled:opacity-70"
+                className="flex h-12 shrink-0 items-center gap-2 bg-gold px-5 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-obsidian transition-colors hover:bg-gold-light disabled:cursor-wait disabled:opacity-70"
               >
                 {t.footer.subscribe}
                 <ArrowUpRight className={cn("h-3.5 w-3.5", isRTL && "-scale-x-100")} />
               </button>
             </form>
             {subscribed ? (
-              <p className="mt-3 text-xs text-accent">{t.footer.subscribed}</p>
+              <p className="mt-3 text-xs text-gold">{t.footer.subscribed}</p>
             ) : null}
             {subscribeError ? (
               <p className="mt-3 text-xs text-danger" role="alert">
@@ -164,7 +164,7 @@ export function Footer() {
 
           <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:justify-items-end">
             <div>
-              <h3 className="text-[0.62rem] font-medium uppercase tracking-[0.22em] text-fg">
+              <h3 className="text-[0.62rem] font-medium uppercase tracking-[0.22em] text-ivory/45">
                 {t.footer.company}
               </h3>
               <ul className="mt-5 space-y-3">
@@ -173,7 +173,7 @@ export function Footer() {
                     <Link
                       href={link.href}
                       onClick={(event) => handleNavigation(event, link.href)}
-                      className="text-sm text-fg transition-colors hover:text-accent"
+                      className="text-sm text-ivory/60 transition-colors hover:text-gold"
                     >
                       {t.nav[link.key]}
                     </Link>
@@ -183,7 +183,7 @@ export function Footer() {
             </div>
 
             <div>
-              <h3 className="text-[0.62rem] font-medium uppercase tracking-[0.22em] text-fg">
+              <h3 className="text-[0.62rem] font-medium uppercase tracking-[0.22em] text-ivory/45">
                 {t.footer.expertise}
               </h3>
               <ul className="mt-5 space-y-3">
@@ -192,7 +192,7 @@ export function Footer() {
                     <Link
                       href={href}
                       onClick={(event) => handleNavigation(event, href)}
-                      className="text-sm text-fg transition-colors hover:text-accent"
+                      className="text-sm text-ivory/60 transition-colors hover:text-gold"
                     >
                       {t.sections.footerExpertise[index]?.title[locale] ?? href}
                     </Link>
@@ -202,18 +202,18 @@ export function Footer() {
             </div>
 
             <div className="col-span-2 sm:col-span-1">
-              <h3 className="text-[0.62rem] font-medium uppercase tracking-[0.22em] text-fg">
+              <h3 className="text-[0.62rem] font-medium uppercase tracking-[0.22em] text-ivory/45">
                 {t.footer.contact}
               </h3>
-              <ul className="mt-5 space-y-3 text-sm text-fg">
+              <ul className="mt-5 space-y-3 text-sm text-ivory/60">
                 <li className="leading-relaxed">{t.contactPage.address}</li>
                 <li>
-                  <a href="tel:+966114821987" className="tabular hover:text-accent" dir="ltr">
+                  <a href="tel:+966114821987" className="tabular hover:text-gold" dir="ltr">
                     +966 11 482 1987
                   </a>
                 </li>
                 <li>
-                  <a href="mailto:projects@alattar.sa" className="hover:text-accent">
+                  <a href="mailto:projects@alattar.sa" className="hover:text-gold">
                     projects@alattar.sa
                   </a>
                 </li>
@@ -226,7 +226,7 @@ export function Footer() {
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={label}
-                    className="flex h-10 w-10 items-center justify-center border border-line text-fg transition-colors hover:border-accent/50 hover:text-accent"
+                    className="flex h-10 w-10 items-center justify-center border border-white/12 text-ivory/55 transition-colors hover:border-gold/50 hover:text-gold"
                   >
                     <svg
                       viewBox="0 0 24 24"
@@ -247,17 +247,17 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="grid gap-6 border-b border-line py-8 sm:grid-cols-3">
+        <div className="grid gap-6 border-b border-white/10 py-8 sm:grid-cols-3">
           {[
             { city: t.footer.riyadh, detail: t.contactPage.offices[0].detail },
             { city: t.footer.jeddah, detail: t.contactPage.offices[1].detail },
             { city: t.footer.dubai, detail: t.contactPage.offices[2].detail },
           ].map((office) => (
             <div key={office.city} className="flex flex-col gap-1.5">
-              <span className="text-[0.62rem] font-medium uppercase tracking-[0.2em] text-accent">
+              <span className="text-[0.62rem] font-medium uppercase tracking-[0.2em] text-gold/80">
                 {office.city}
               </span>
-              <span className="text-xs leading-relaxed text-fg">{office.detail}</span>
+              <span className="text-xs leading-relaxed text-ivory/45">{office.detail}</span>
             </div>
           ))}
         </div>
@@ -265,33 +265,33 @@ export function Footer() {
         <div className="relative flex flex-col gap-6 py-10">
           <div className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
             <BrandLogo />
-            <div className="flex flex-wrap items-center gap-5 text-[0.65rem] text-fg">
+            <div className="flex flex-wrap items-center gap-5 text-[0.65rem] text-ivory/45">
               <span>{t.footer.license}</span>
               <Link
                 href="/privacy"
                 onClick={(event) => handleNavigation(event, "/privacy")}
-                className="inline-flex min-h-10 items-center hover:text-accent"
+                className="inline-flex min-h-10 items-center hover:text-gold"
               >
                 {t.footer.privacy}
               </Link>
               <Link
                 href="/terms"
                 onClick={(event) => handleNavigation(event, "/terms")}
-                className="inline-flex min-h-10 items-center hover:text-accent"
+                className="inline-flex min-h-10 items-center hover:text-gold"
               >
                 {t.footer.terms}
               </Link>
               <button
                 type="button"
                 onClick={() => scrollTo(0)}
-                className="inline-flex min-h-10 items-center gap-1.5 uppercase tracking-[0.14em] hover:text-accent"
+                className="inline-flex min-h-10 items-center gap-1.5 uppercase tracking-[0.14em] hover:text-gold"
               >
                 {t.footer.backToTop}
                 <ArrowUp className="h-3 w-3" />
               </button>
             </div>
           </div>
-          <div className="flex flex-col items-start justify-between gap-4 text-[0.62rem] text-fg sm:flex-row sm:items-center">
+          <div className="flex flex-col items-start justify-between gap-4 text-[0.62rem] text-ivory/45 sm:flex-row sm:items-center">
             <span suppressHydrationWarning>
               © {CURRENT_YEAR} Ahmed Elattar General Contracting Co. {t.footer.rights}
             </span>
@@ -300,12 +300,12 @@ export function Footer() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Developed by Mohamed Elattar"
-              className="group inline-flex min-h-10 items-center gap-1.5 text-fg transition-colors hover:text-accent"
+              className="group inline-flex min-h-10 items-center gap-1.5 text-ivory/45 transition-colors hover:text-gold"
             >
-              <span className="text-fg transition-colors group-hover:text-accent">
+              <span className="text-ivory/40 transition-colors group-hover:text-gold/50">
                 Developed by
               </span>{" "}
-              <span className="font-medium tracking-[0.04em] text-fg transition-colors group-hover:text-accent">
+              <span className="font-medium tracking-[0.04em] text-ivory/65 transition-colors group-hover:text-gold">
                 Mohamed Elattar
               </span>
               <ArrowUpRight className="h-3 w-3 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />

@@ -6,12 +6,12 @@ type Variant = "gold" | "outline" | "light" | "ghost" | "dark";
 type Size = "sm" | "md" | "lg";
 
 const variants: Record<Variant, string> = {
-  gold: "bg-accent-fill text-accent-fg hover:bg-accent-fill border border-accent",
+  gold: "bg-gold text-obsidian hover:bg-gold-light border border-gold",
   outline:
-    "border border-line text-fg hover:border-accent/70 hover:text-accent bg-transparent",
-  light: "bg-fg text-muted hover:bg-surface-2 border border-line",
-  ghost: "text-fg hover:text-accent border border-transparent",
-  dark: "bg-bg text-fg hover:bg-surface-2 border border-line",
+    "border border-white/20 text-ivory hover:border-gold/70 hover:text-gold bg-transparent",
+  light: "bg-ivory text-obsidian hover:bg-paper border border-ivory",
+  ghost: "text-ivory/80 hover:text-gold border border-transparent",
+  dark: "bg-obsidian text-ivory hover:bg-graphite border border-obsidian",
 };
 
 const sizes: Record<Size, string> = {

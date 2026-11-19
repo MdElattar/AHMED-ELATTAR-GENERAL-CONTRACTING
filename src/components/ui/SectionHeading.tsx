@@ -35,14 +35,14 @@ export function SectionHeading({
     >
       {eyebrow ? (
         <Reveal>
-          <span className={cn("eyebrow", light && "text-accent")}>{eyebrow}</span>
+          <span className={cn("eyebrow", light && "text-gold-dark")}>{eyebrow}</span>
         </Reveal>
       ) : null}
       <Reveal delay={80}>
         <h2
           className={cn(
             "display-title max-w-4xl text-[clamp(2.2rem,4.6vw,4.6rem)]",
-            light ? "text-fg" : "text-fg",
+            light ? "text-ink" : "text-ivory",
             titleClassName,
           )}
         >
@@ -54,7 +54,7 @@ export function SectionHeading({
           <p
             className={cn(
               "max-w-2xl text-[0.95rem] leading-[1.9]",
-              light ? "text-fg" : "text-fg",
+              light ? "text-ink/60" : "text-ivory/65",
               align === "center" && "mx-auto",
             )}
           >

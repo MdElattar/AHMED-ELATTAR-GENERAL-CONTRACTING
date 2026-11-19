@@ -66,34 +66,34 @@ export function PortalDashboard() {
 
   if (!ready) {
     return (
-      <section className="flex min-h-[70svh] items-center justify-center bg-bg pt-24">
-        <span className="h-8 w-8 animate-spin rounded-full border border-line border-t-accent" />
+      <section className="flex min-h-[70svh] items-center justify-center bg-obsidian pt-24">
+        <span className="h-8 w-8 animate-spin rounded-full border border-white/15 border-t-gold" />
       </section>
     );
   }
 
   if (!user) {
     return (
-      <section className="relative flex min-h-[100svh] items-center overflow-hidden bg-bg pt-24">
+      <section className="relative flex min-h-[100svh] items-center overflow-hidden bg-obsidian pt-24">
         <div className="blueprint-grid pointer-events-none absolute inset-0 opacity-40" />
-        <div className="pointer-events-none absolute start-1/3 top-1/3 h-[420px] w-[420px] rounded-full bg-accent/[0.06] blur-[140px]" />
+        <div className="pointer-events-none absolute start-1/3 top-1/3 h-[420px] w-[420px] rounded-full bg-gold/[0.06] blur-[140px]" />
         <div className="container-lux relative">
           <div className="mx-auto flex max-w-lg flex-col items-center text-center">
             <span className="eyebrow">{t.portal.eyebrow}</span>
-            <h1 className="display-title mt-6 text-[clamp(2.6rem,5vw,4.4rem)] text-fg">
+            <h1 className="display-title mt-6 text-[clamp(2.6rem,5vw,4.4rem)] text-ivory">
               {t.portal.noAccessTitle}
             </h1>
-            <p className="mt-5 max-w-md text-[0.9rem] leading-[1.9] text-fg">
+            <p className="mt-5 max-w-md text-[0.9rem] leading-[1.9] text-ivory/60">
               {t.portal.noAccessText}
             </p>
             <Link
               href="/sign-in"
-              className="btn-shine mt-9 inline-flex h-12 items-center gap-2.5 bg-accent-fill px-7 text-[0.66rem] font-semibold uppercase tracking-[0.16em] text-accent-fg transition-colors hover:bg-accent-fill"
+              className="btn-shine mt-9 inline-flex h-12 items-center gap-2.5 bg-gold px-7 text-[0.66rem] font-semibold uppercase tracking-[0.16em] text-obsidian transition-colors hover:bg-gold-light"
             >
               {t.portal.signIn}
               <ArrowUpRight className={cn("h-4 w-4", isRTL && "-scale-x-100")} />
             </Link>
-            <p className="mt-6 text-[0.62rem] text-fg">{t.auth.secureNote}</p>
+            <p className="mt-6 text-[0.62rem] text-ivory/40">{t.auth.secureNote}</p>
           </div>
         </div>
       </section>
@@ -102,22 +102,22 @@ export function PortalDashboard() {
 
   if (!project) {
     return (
-      <section className="relative flex min-h-[100svh] items-center overflow-hidden bg-bg pt-24">
+      <section className="relative flex min-h-[100svh] items-center overflow-hidden bg-obsidian pt-24">
         <div className="blueprint-grid pointer-events-none absolute inset-0 opacity-40" />
         <div className="container-lux relative">
           <div className="mx-auto flex max-w-lg flex-col items-center text-center">
             <span className="eyebrow">{t.portal.eyebrow}</span>
-            <h1 className="display-title mt-6 text-[clamp(2.4rem,5vw,4.2rem)] text-fg">
+            <h1 className="display-title mt-6 text-[clamp(2.4rem,5vw,4.2rem)] text-ivory">
               {locale === "ar" ? "لا يوجد مشروع بعد." : "No project yet."}
             </h1>
-            <p className="mt-5 max-w-md text-[0.9rem] leading-[1.9] text-fg">
+            <p className="mt-5 max-w-md text-[0.9rem] leading-[1.9] text-ivory/60">
               {locale === "ar"
                 ? "سيظهر مشروعك هنا بمجرد إسناده من فريق المشاريع."
                 : "Your project will appear here as soon as it is assigned by our project team."}
             </p>
             <Link
               href="/contact"
-              className="btn-shine mt-9 inline-flex h-12 items-center gap-2.5 border border-accent/40 px-7 text-[0.66rem] font-semibold uppercase tracking-[0.16em] text-accent transition-colors hover:bg-accent-fill hover:text-accent-fg"
+              className="btn-shine mt-9 inline-flex h-12 items-center gap-2.5 border border-gold/40 px-7 text-[0.66rem] font-semibold uppercase tracking-[0.16em] text-gold transition-colors hover:bg-gold hover:text-obsidian"
             >
               {t.cta.primary}
               <ArrowUpRight className="h-4 w-4" />
@@ -151,9 +151,9 @@ export function PortalDashboard() {
 
   return (
     <>
-      <section className="relative overflow-hidden bg-bg pb-12 pt-32 sm:pt-40">
+      <section className="relative overflow-hidden bg-obsidian pb-12 pt-32 sm:pt-40">
         <div className="blueprint-grid pointer-events-none absolute inset-0 opacity-40" />
-        <div className="pointer-events-none absolute -end-20 top-10 select-none text-[14rem] font-semibold leading-none tracking-tighter text-fg/[0.02] sm:text-[20rem]">
+        <div className="pointer-events-none absolute -end-20 top-10 select-none text-[14rem] font-semibold leading-none tracking-tighter text-ivory/[0.02] sm:text-[20rem]">
           PORTAL
         </div>
 
@@ -164,12 +164,12 @@ export function PortalDashboard() {
                 <span className="eyebrow">{t.portal.eyebrow}</span>
               </Reveal>
               <Reveal delay={70}>
-                <h1 className="display-title mt-5 text-[clamp(2.4rem,5vw,4.6rem)] text-fg">
+                <h1 className="display-title mt-5 text-[clamp(2.4rem,5vw,4.6rem)] text-ivory">
                   {t.portal.welcome}، <span className="gold-text">{user.name}</span>
                 </h1>
               </Reveal>
               <Reveal delay={130}>
-                <p className="mt-3 text-[0.85rem] leading-relaxed text-fg">
+                <p className="mt-3 text-[0.85rem] leading-relaxed text-ivory/55">
                   {t.portal.subtitle}
                 </p>
               </Reveal>
@@ -178,8 +178,8 @@ export function PortalDashboard() {
             <Reveal delay={150}>
               <div className="flex items-center gap-3">
                 <span className="hidden text-end sm:block">
-                  <span className="block text-[0.62rem] text-fg">{user.company}</span>
-                  <span className="mt-0.5 block tabular text-[0.55rem] uppercase tracking-[0.14em] text-accent">
+                  <span className="block text-[0.62rem] text-ivory/65">{user.company}</span>
+                  <span className="mt-0.5 block tabular text-[0.55rem] uppercase tracking-[0.14em] text-gold/70">
                     {user.accountId}
                   </span>
                 </span>
@@ -189,7 +189,7 @@ export function PortalDashboard() {
                     signOut();
                     router.push("/");
                   }}
-                  className="inline-flex h-10 items-center gap-2 border border-line px-4 text-[0.58rem] font-semibold uppercase tracking-[0.14em] text-fg transition-colors hover:border-accent/50 hover:text-accent"
+                  className="inline-flex h-10 items-center gap-2 border border-white/15 px-4 text-[0.58rem] font-semibold uppercase tracking-[0.14em] text-ivory/65 transition-colors hover:border-gold/50 hover:text-gold"
                 >
                   <LogOut className="h-3.5 w-3.5" />
                   {t.portal.signOut}
@@ -198,7 +198,7 @@ export function PortalDashboard() {
             </Reveal>
           </div>
 
-          <div className="mt-10 grid grid-cols-2 gap-px border border-line bg-line lg:grid-cols-4">
+          <div className="mt-10 grid grid-cols-2 gap-px border border-white/10 bg-white/10 lg:grid-cols-4">
             {[
               { label: t.portal.activeProjects, value: `${projects.length}` },
               { label: t.portal.totalValue, value: totalValueLabel },
@@ -208,11 +208,11 @@ export function PortalDashboard() {
                 value: `${milestoneRate}%`,
               },
             ].map((stat) => (
-              <div key={stat.label} className="bg-bg px-5 py-5">
-                <span className="text-[0.5rem] uppercase tracking-[0.16em] text-fg">
+              <div key={stat.label} className="bg-obsidian px-5 py-5">
+                <span className="text-[0.5rem] uppercase tracking-[0.16em] text-ivory/40">
                   {stat.label}
                 </span>
-                <p className="mt-2 text-[0.82rem] leading-snug text-fg">{stat.value}</p>
+                <p className="mt-2 text-[0.82rem] leading-snug text-ivory/80">{stat.value}</p>
               </div>
             ))}
           </div>
@@ -220,21 +220,21 @@ export function PortalDashboard() {
           <div className="mt-5 flex flex-wrap gap-2">
             <Link
               href="/portal/projects"
-              className="inline-flex h-9 items-center gap-2 border border-line px-3.5 text-[0.56rem] font-semibold uppercase tracking-[0.12em] text-fg transition-colors hover:border-accent/40 hover:text-accent"
+              className="inline-flex h-9 items-center gap-2 border border-white/12 px-3.5 text-[0.56rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
             >
               <FolderKanban className="h-3.5 w-3.5" />
               {t.nav.portalProjects}
             </Link>
             <Link
               href="/portal/financials"
-              className="inline-flex h-9 items-center gap-2 border border-line px-3.5 text-[0.56rem] font-semibold uppercase tracking-[0.12em] text-fg transition-colors hover:border-accent/40 hover:text-accent"
+              className="inline-flex h-9 items-center gap-2 border border-white/12 px-3.5 text-[0.56rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
             >
               <Wallet className="h-3.5 w-3.5" />
               {t.nav.financials}
             </Link>
             <Link
               href="/portal/settings"
-              className="inline-flex h-9 items-center gap-2 border border-line px-3.5 text-[0.56rem] font-semibold uppercase tracking-[0.12em] text-fg transition-colors hover:border-accent/40 hover:text-accent"
+              className="inline-flex h-9 items-center gap-2 border border-white/12 px-3.5 text-[0.56rem] font-semibold uppercase tracking-[0.12em] text-ivory/60 transition-colors hover:border-gold/40 hover:text-gold"
             >
               <Settings className="h-3.5 w-3.5" />
               {t.nav.settings}
@@ -242,7 +242,7 @@ export function PortalDashboard() {
             {isAdminUser(user) ? (
               <Link
                 href="/admin"
-                className="inline-flex h-9 items-center gap-2 border border-accent/30 px-3.5 text-[0.56rem] font-semibold uppercase tracking-[0.12em] text-accent transition-colors hover:bg-accent-fill hover:text-accent-fg"
+                className="inline-flex h-9 items-center gap-2 border border-gold/30 px-3.5 text-[0.56rem] font-semibold uppercase tracking-[0.12em] text-gold transition-colors hover:bg-gold hover:text-obsidian"
               >
                 {t.nav.admin}
                 <ArrowUpRight className="h-3.5 w-3.5" />
@@ -252,7 +252,7 @@ export function PortalDashboard() {
         </div>
       </section>
 
-      <section className="relative min-h-[60svh] overflow-hidden border-t border-line bg-bg">
+      <section className="relative min-h-[60svh] overflow-hidden border-t border-white/10 bg-obsidian">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_80%_0%,rgb(var(--accent-rgb)/0.05),transparent_55%)]" />
         <div className="container-lux relative pb-20 pt-10">
           <div className="grid gap-2 sm:grid-cols-3">
@@ -267,8 +267,8 @@ export function PortalDashboard() {
                 className={cn(
                   "flex flex-col gap-2 border p-4 text-start transition-colors",
                   item.slug === project.slug
-                    ? "border-accent/40 bg-accent/[0.08] text-fg"
-                    : "border-line bg-surface text-fg hover:border-line",
+                    ? "border-gold/40 bg-gold/[0.08] text-ivory"
+                    : "border-white/10 bg-coal text-ivory/70 hover:border-white/25",
                 )}
               >
                 <span className="flex items-center justify-between gap-3">
@@ -276,7 +276,7 @@ export function PortalDashboard() {
                   <span
                     className={cn(
                       "tabular shrink-0 text-[0.6rem]",
-                      item.slug === project.slug ? "text-accent" : "text-accent",
+                      item.slug === project.slug ? "text-gold" : "text-gold/70",
                     )}
                   >
                     {item.progress}%
@@ -285,7 +285,7 @@ export function PortalDashboard() {
                 <span
                   className={cn(
                     "text-[0.55rem] uppercase tracking-[0.12em]",
-                    item.slug === project.slug ? "text-fg" : "text-fg",
+                    item.slug === project.slug ? "text-ivory/50" : "text-ivory/40",
                   )}
                 >
                   {l(item.location)}
@@ -295,42 +295,42 @@ export function PortalDashboard() {
           </div>
 
           <div className="mt-6 grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-            <div className="border border-line bg-surface">
-              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-line px-6 py-5">
+            <div className="border border-white/10 bg-coal">
+              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 px-6 py-5">
                 <div>
-                  <span className="text-[0.52rem] uppercase tracking-[0.16em] text-fg">
+                  <span className="text-[0.52rem] uppercase tracking-[0.16em] text-ivory/45">
                     {t.portal.project}
                   </span>
-                  <h2 className="mt-1 font-display text-2xl leading-tight text-fg">
+                  <h2 className="mt-1 font-display text-2xl leading-tight text-ivory">
                     {l(project.title)}
                   </h2>
-                  <p className="mt-1 flex items-center gap-1.5 text-[0.62rem] text-fg">
-                    <MapPin className="h-3 w-3 text-accent" />
+                  <p className="mt-1 flex items-center gap-1.5 text-[0.62rem] text-ivory/50">
+                    <MapPin className="h-3 w-3 text-gold" />
                     {l(project.location)}
                   </p>
                 </div>
-                <span className="border border-accent/30 px-3 py-1 text-[0.55rem] uppercase tracking-[0.14em] text-accent">
+                <span className="border border-gold/30 px-3 py-1 text-[0.55rem] uppercase tracking-[0.14em] text-gold">
                   {t.projectsPage.status[project.status]}
                 </span>
               </div>
 
               <div className="p-6">
                 <div className="flex items-end justify-between gap-4">
-                  <span className="text-[0.55rem] uppercase tracking-[0.16em] text-fg">
+                  <span className="text-[0.55rem] uppercase tracking-[0.16em] text-ivory/50">
                     {t.portal.progress}
                   </span>
-                  <span className="tabular font-display text-3xl leading-none text-fg">
+                  <span className="tabular font-display text-3xl leading-none text-ivory">
                     {project.progress}%
                   </span>
                 </div>
-                <div className="mt-3 h-1.5 w-full overflow-hidden bg-line">
+                <div className="mt-3 h-1.5 w-full overflow-hidden bg-white/10">
                   <div
-                    className="h-full bg-accent-fill transition-all duration-700"
+                    className="h-full bg-gold transition-all duration-700"
                     style={{ width: `${project.progress}%` }}
                   />
                 </div>
 
-                <dl className="mt-7 grid grid-cols-2 gap-x-6 gap-y-5 border-t border-line pt-6">
+                <dl className="mt-7 grid grid-cols-2 gap-x-6 gap-y-5 border-t border-white/10 pt-6">
                   {[
                     { label: t.portal.phase, value: l(project.phase) },
                     { label: t.portal.value, value: l(project.value) },
@@ -338,10 +338,10 @@ export function PortalDashboard() {
                     { label: t.portal.lastUpdate, value: l(project.lastUpdate) },
                   ].map((fact) => (
                     <div key={fact.label}>
-                      <dt className="text-[0.5rem] uppercase tracking-[0.14em] text-fg">
+                      <dt className="text-[0.5rem] uppercase tracking-[0.14em] text-ivory/45">
                         {fact.label}
                       </dt>
-                      <dd className="mt-1 text-[0.76rem] leading-snug text-fg">
+                      <dd className="mt-1 text-[0.76rem] leading-snug text-ivory/70">
                         {fact.value}
                       </dd>
                     </div>
@@ -349,7 +349,7 @@ export function PortalDashboard() {
                 </dl>
               </div>
 
-              <div className="flex gap-1 border-t border-line p-2">
+              <div className="flex gap-1 border-t border-white/10 p-2">
                 {tabs.map((item) => (
                   <button
                     key={item.id}
@@ -358,8 +358,8 @@ export function PortalDashboard() {
                     className={cn(
                       "flex-1 px-3 py-2.5 text-[0.58rem] font-semibold uppercase tracking-[0.12em] transition-colors",
                       tab === item.id
-                        ? "bg-accent-fill text-accent-fg"
-                        : "text-fg hover:text-fg",
+                        ? "bg-gold text-obsidian"
+                        : "text-ivory/50 hover:text-ivory/70",
                     )}
                   >
                     {item.label}
@@ -370,23 +370,23 @@ export function PortalDashboard() {
 
             <div className="flex flex-col gap-6">
               {tab === "overview" ? (
-                <div className="border border-line bg-surface">
-                  <div className="border-b border-line px-6 py-4">
-                    <span className="text-[0.55rem] font-semibold uppercase tracking-[0.16em] text-accent">
+                <div className="border border-white/10 bg-coal">
+                  <div className="border-b border-white/10 px-6 py-4">
+                    <span className="text-[0.55rem] font-semibold uppercase tracking-[0.16em] text-gold">
                       {t.portal.milestones}
                     </span>
                   </div>
-                  <ol className="divide-y divide-line">
+                  <ol className="divide-y divide-white/8">
                     {project.milestones.map((milestone) => (
                       <li key={milestone.title.en} className="flex items-start gap-3 px-6 py-3.5">
                         <span
                           className={cn(
                             "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border",
                             milestone.status === "complete"
-                              ? "border-accent bg-accent-fill text-accent-fg"
+                              ? "border-gold bg-gold text-obsidian"
                               : milestone.status === "current"
-                                ? "border-accent text-accent"
-                                : "border-line text-fg",
+                                ? "border-gold text-gold"
+                                : "border-white/15 text-ivory/35",
                           )}
                         >
                           {milestone.status === "complete" ? (
@@ -401,19 +401,19 @@ export function PortalDashboard() {
                           <p
                             className={cn(
                               "text-[0.75rem] leading-snug",
-                              milestone.status === "upcoming" ? "text-fg" : "text-fg",
+                              milestone.status === "upcoming" ? "text-ivory/50" : "text-ivory/75",
                             )}
                           >
                             {l(milestone.title)}
                           </p>
-                          <span className="text-[0.58rem] text-fg">
+                          <span className="text-[0.58rem] text-ivory/45">
                             {l(milestone.date)}
                           </span>
                         </div>
                       </li>
                     ))}
                     {project.milestones.length === 0 ? (
-                      <li className="px-6 py-6 text-center text-[0.68rem] text-fg">
+                      <li className="px-6 py-6 text-center text-[0.68rem] text-ivory/45">
                         {locale === "ar" ? "لا توجد مراحل مجدولة بعد." : "No milestones yet."}
                       </li>
                     ) : null}
@@ -422,26 +422,26 @@ export function PortalDashboard() {
               ) : null}
 
               {tab === "documents" ? (
-                <div className="border border-line bg-surface">
-                  <div className="border-b border-line px-6 py-4">
-                    <span className="text-[0.55rem] font-semibold uppercase tracking-[0.16em] text-accent">
+                <div className="border border-white/10 bg-coal">
+                  <div className="border-b border-white/10 px-6 py-4">
+                    <span className="text-[0.55rem] font-semibold uppercase tracking-[0.16em] text-gold">
                       {t.portal.documents}
                     </span>
                   </div>
-                  <ul className="divide-y divide-line">
+                  <ul className="divide-y divide-white/8">
                     {project.documents.map((doc) => (
                       <li key={doc.name.en} className="flex items-center gap-3 px-6 py-4">
-                        <FileText className="h-4 w-4 shrink-0 text-accent" />
+                        <FileText className="h-4 w-4 shrink-0 text-gold" />
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-[0.75rem] text-fg">{l(doc.name)}</p>
-                          <span className="text-[0.56rem] text-fg">
+                          <p className="truncate text-[0.75rem] text-ivory/75">{l(doc.name)}</p>
+                          <span className="text-[0.56rem] text-ivory/45">
                             {t.portal.documentTypes[doc.type]} · {doc.size} · {doc.date}
                           </span>
                         </div>
                         <button
                           type="button"
                           onClick={() => downloadRecord(doc, l(project.title))}
-                          className="flex h-8 w-8 shrink-0 items-center justify-center border border-line text-fg transition-colors hover:border-accent hover:text-accent"
+                          className="flex h-8 w-8 shrink-0 items-center justify-center border border-white/12 text-ivory/55 transition-colors hover:border-gold hover:text-gold"
                           aria-label={t.portal.download}
                         >
                           <Download className="h-3.5 w-3.5" />
@@ -449,7 +449,7 @@ export function PortalDashboard() {
                       </li>
                     ))}
                     {project.documents.length === 0 ? (
-                      <li className="px-6 py-6 text-center text-[0.68rem] text-fg">
+                      <li className="px-6 py-6 text-center text-[0.68rem] text-ivory/45">
                         {locale === "ar" ? "لا توجد مستندات بعد." : "No documents yet."}
                       </li>
                     ) : null}
@@ -458,34 +458,34 @@ export function PortalDashboard() {
               ) : null}
 
               {tab === "invoices" ? (
-                <div className="border border-line bg-surface">
-                  <div className="border-b border-line px-6 py-4">
-                    <span className="text-[0.55rem] font-semibold uppercase tracking-[0.16em] text-accent">
+                <div className="border border-white/10 bg-coal">
+                  <div className="border-b border-white/10 px-6 py-4">
+                    <span className="text-[0.55rem] font-semibold uppercase tracking-[0.16em] text-gold">
                       {t.portal.invoices}
                     </span>
                   </div>
-                  <ul className="divide-y divide-line">
+                  <ul className="divide-y divide-white/8">
                     {project.invoices.map((invoice) => (
                       <li key={invoice.number} className="flex items-center gap-3 px-6 py-4">
-                        <Receipt className="h-4 w-4 shrink-0 text-accent" />
+                        <Receipt className="h-4 w-4 shrink-0 text-gold" />
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-[0.75rem] text-fg">
+                          <p className="truncate text-[0.75rem] text-ivory/75">
                             {l(invoice.title)}
                           </p>
-                          <span className="tabular text-[0.56rem] text-fg">
+                          <span className="tabular text-[0.56rem] text-ivory/45">
                             {invoice.number} · {invoice.date}
                           </span>
                         </div>
                         <div className="shrink-0 text-end">
-                          <p className="tabular text-[0.68rem] text-fg">{invoice.amount}</p>
+                          <p className="tabular text-[0.68rem] text-ivory/70">{invoice.amount}</p>
                           <span
                             className={cn(
                               "text-[0.52rem] uppercase tracking-[0.1em]",
                               invoice.status === "paid"
                                 ? "text-success"
                                 : invoice.status === "due"
-                                  ? "text-accent"
-                                  : "text-fg",
+                                  ? "text-gold"
+                                  : "text-ivory/45",
                             )}
                           >
                             {t.portal.invoiceStatus[invoice.status]}
@@ -494,7 +494,7 @@ export function PortalDashboard() {
                       </li>
                     ))}
                     {project.invoices.length === 0 ? (
-                      <li className="px-6 py-6 text-center text-[0.68rem] text-fg">
+                      <li className="px-6 py-6 text-center text-[0.68rem] text-ivory/45">
                         {locale === "ar" ? "لا توجد فواتير بعد." : "No invoices yet."}
                       </li>
                     ) : null}
@@ -502,21 +502,21 @@ export function PortalDashboard() {
                 </div>
               ) : null}
 
-              <div className="flex items-center justify-between gap-3 border border-line bg-surface-2 px-5 py-4">
+              <div className="flex items-center justify-between gap-3 border border-white/10 bg-white/[0.03] px-5 py-4">
                 <div className="flex items-center gap-3">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-accent-fill text-accent-fg">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gold text-obsidian">
                     <UserRound className="h-4 w-4" />
                   </span>
                   <div>
-                    <p className="text-[0.72rem] font-medium text-fg">{l(project.manager)}</p>
-                    <p className="text-[0.55rem] uppercase tracking-[0.12em] text-fg">
+                    <p className="text-[0.72rem] font-medium text-ivory">{l(project.manager)}</p>
+                    <p className="text-[0.55rem] uppercase tracking-[0.12em] text-ivory/45">
                       {t.portal.siteManager}
                     </p>
                   </div>
                 </div>
                 <Link
                   href="/portal/projects"
-                  className="flex h-8 w-8 items-center justify-center border border-line text-fg transition-colors hover:border-accent hover:text-accent"
+                  className="flex h-8 w-8 items-center justify-center border border-white/12 text-ivory/55 transition-colors hover:border-gold hover:text-gold"
                   aria-label={t.nav.portalProjects}
                 >
                   <ArrowUpRight className="h-3.5 w-3.5" />
@@ -525,11 +525,11 @@ export function PortalDashboard() {
             </div>
           </div>
 
-          <div className="mt-8 flex flex-col items-start justify-between gap-3 border-t border-line pt-5 text-[0.6rem] text-fg sm:flex-row sm:items-center">
+          <div className="mt-8 flex flex-col items-start justify-between gap-3 border-t border-white/10 pt-5 text-[0.6rem] text-ivory/45 sm:flex-row sm:items-center">
             <span>{t.auth.secureNote}</span>
             <Link
               href="/contact"
-              className="inline-flex items-center gap-1.5 font-semibold uppercase tracking-[0.12em] transition-colors hover:text-accent"
+              className="inline-flex items-center gap-1.5 font-semibold uppercase tracking-[0.12em] transition-colors hover:text-gold"
             >
               {t.cta.primary}
               <ArrowUpRight className={cn("h-3 w-3", isRTL && "-scale-x-100")} />

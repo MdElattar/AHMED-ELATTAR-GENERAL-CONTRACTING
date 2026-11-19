@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 
 const statusTone = {
   delivered: "bg-success/70",
-  active: "bg-accent-fill",
+  active: "bg-gold",
   upcoming: "bg-info/70",
 };
 
@@ -22,9 +22,9 @@ export function RegionalMap() {
   const active = regionMarkers.find((marker) => marker.id === activeId) ?? regionMarkers[0];
 
   return (
-    <section className="relative overflow-hidden bg-surface">
+    <section className="relative overflow-hidden bg-ink">
       <div className="blueprint-grid pointer-events-none absolute inset-0 opacity-30" />
-      <div className="pointer-events-none absolute start-1/3 top-0 h-[420px] w-[420px] rounded-full bg-accent/[0.05] blur-[130px]" />
+      <div className="pointer-events-none absolute start-1/3 top-0 h-[420px] w-[420px] rounded-full bg-gold/[0.05] blur-[130px]" />
       <div className="container-lux section-pad relative">
         <SectionHeading
           eyebrow={c.eyebrow}
@@ -33,8 +33,8 @@ export function RegionalMap() {
           titleClassName="max-w-3xl"
         />
 
-        <div className="mt-12 grid gap-px overflow-hidden border border-line bg-line lg:grid-cols-[1.45fr_0.55fr]">
-          <div className="relative min-h-[420px] overflow-hidden bg-surface p-4 sm:min-h-[520px] sm:p-6">
+        <div className="mt-12 grid gap-px overflow-hidden border border-white/10 bg-white/10 lg:grid-cols-[1.45fr_0.55fr]">
+          <div className="relative min-h-[420px] overflow-hidden bg-coal p-4 sm:min-h-[520px] sm:p-6">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_55%_48%,rgb(var(--accent-rgb)/0.10),transparent_55%)]" />
             <svg
               viewBox="0 0 1000 600"
@@ -125,24 +125,24 @@ export function RegionalMap() {
                       className={cn(
                         "absolute inset-0 -m-3 rounded-full border transition-all duration-500",
                         isActive
-                          ? "scale-100 border-accent/60 bg-accent/10"
-                          : "scale-75 border-transparent group-hover:border-accent/30",
+                          ? "scale-100 border-gold/60 bg-gold/10"
+                          : "scale-75 border-transparent group-hover:border-gold/30",
                       )}
                     />
                     <span
                       className={cn(
                         "relative flex h-3 w-3 items-center justify-center rounded-full transition-all duration-300",
-                        isActive ? "bg-accent-fill" : "bg-fg/50 group-hover:bg-accent-fill",
+                        isActive ? "bg-gold" : "bg-ivory/50 group-hover:bg-gold",
                       )}
                     >
                       {isActive ? (
-                        <span className="absolute h-6 w-6 animate-ping rounded-full bg-accent/30" />
+                        <span className="absolute h-6 w-6 animate-ping rounded-full bg-gold/30" />
                       ) : null}
                     </span>
                     <span
                       className={cn(
                         "absolute start-1/2 top-5 -translate-x-1/2 whitespace-nowrap text-[0.55rem] font-medium uppercase tracking-[0.14em] transition-colors",
-                        isActive ? "text-accent" : "text-fg group-hover:text-fg",
+                        isActive ? "text-gold" : "text-ivory/45 group-hover:text-ivory/70",
                       )}
                     >
                       {l(marker.city)}
@@ -152,64 +152,64 @@ export function RegionalMap() {
               })}
             </div>
 
-            <div className="absolute inset-x-4 bottom-4 flex flex-wrap gap-3 border border-line bg-bg/60 px-4 py-3 backdrop-blur sm:inset-x-6 sm:bottom-6">
+            <div className="absolute inset-x-4 bottom-4 flex flex-wrap gap-3 border border-white/10 bg-obsidian/60 px-4 py-3 backdrop-blur sm:inset-x-6 sm:bottom-6">
               {Object.entries(c.status).map(([status, label]) => (
                 <span
                   key={status}
-                  className="flex items-center gap-2 text-[0.52rem] uppercase tracking-[0.14em] text-fg"
+                  className="flex items-center gap-2 text-[0.52rem] uppercase tracking-[0.14em] text-ivory/50"
                 >
                   <span className={cn("h-1.5 w-1.5 rounded-full", statusTone[status as keyof typeof statusTone])} />
                   {label}
                 </span>
               ))}
-              <span className="ms-auto hidden items-center gap-2 text-[0.52rem] uppercase tracking-[0.14em] text-fg sm:flex">
-                <MapPin className="h-3 w-3 text-accent" />
+              <span className="ms-auto hidden items-center gap-2 text-[0.52rem] uppercase tracking-[0.14em] text-ivory/40 sm:flex">
+                <MapPin className="h-3 w-3 text-gold" />
                 {c.select}
               </span>
             </div>
           </div>
 
-          <div className="flex flex-col justify-between bg-surface p-7 sm:p-8">
+          <div className="flex flex-col justify-between bg-coal p-7 sm:p-8">
             <div>
               <span className="eyebrow">{c.flagship}</span>
-              <h3 className="mt-4 font-display text-[clamp(2rem,3.5vw,3rem)] leading-tight text-fg">
+              <h3 className="mt-4 font-display text-[clamp(2rem,3.5vw,3rem)] leading-tight text-ivory">
                 {l(active.city)}
               </h3>
-              <p className="mt-1 text-[0.7rem] uppercase tracking-[0.16em] text-fg">
+              <p className="mt-1 text-[0.7rem] uppercase tracking-[0.16em] text-ivory/45">
                 {l(active.country)}
               </p>
 
-              <div className="mt-7 border border-line bg-bg/40 p-5">
+              <div className="mt-7 border border-white/10 bg-obsidian/40 p-5">
                 <div className="flex items-center justify-between gap-4">
-                  <span className="text-[0.52rem] uppercase tracking-[0.16em] text-fg">
+                  <span className="text-[0.52rem] uppercase tracking-[0.16em] text-ivory/45">
                     {c.status[active.status]}
                   </span>
                   <span className={cn("h-1.5 w-1.5 rounded-full", statusTone[active.status])} />
                 </div>
-                <p className="mt-3 text-sm leading-relaxed text-fg">{l(active.flagship)}</p>
-                <div className="mt-5 flex items-end justify-between border-t border-line pt-4">
+                <p className="mt-3 text-sm leading-relaxed text-ivory/75">{l(active.flagship)}</p>
+                <div className="mt-5 flex items-end justify-between border-t border-white/10 pt-4">
                   <div>
-                    <p className="tabular text-2xl font-light text-accent">{active.projects}</p>
-                    <p className="mt-1 text-[0.5rem] uppercase tracking-[0.14em] text-fg">
+                    <p className="tabular text-2xl font-light text-gold">{active.projects}</p>
+                    <p className="mt-1 text-[0.5rem] uppercase tracking-[0.14em] text-ivory/40">
                       {c.projects}
                     </p>
                   </div>
-                  <p className="text-sm font-medium text-fg">{active.value}</p>
+                  <p className="text-sm font-medium text-ivory/60">{active.value}</p>
                 </div>
               </div>
             </div>
 
             <div className="mt-7">
-              <div className="grid grid-cols-2 gap-px overflow-hidden border border-line bg-line">
+              <div className="grid grid-cols-2 gap-px overflow-hidden border border-white/10 bg-white/10">
                 {[
                   { value: `${regionStats.countries}`, label: c.countries },
                   { value: `${regionStats.projects}+`, label: c.projects },
                   { value: regionStats.value, label: c.value },
                   { value: `${regionStats.cities}`, label: c.cities },
                 ].map((item) => (
-                  <div key={item.label} className="bg-bg/60 p-4">
-                    <p className="tabular text-lg font-light text-fg">{item.value}</p>
-                    <p className="mt-1 text-[0.48rem] uppercase tracking-[0.14em] text-fg">
+                  <div key={item.label} className="bg-obsidian/60 p-4">
+                    <p className="tabular text-lg font-light text-ivory">{item.value}</p>
+                    <p className="mt-1 text-[0.48rem] uppercase tracking-[0.14em] text-ivory/40">
                       {item.label}
                     </p>
                   </div>
@@ -217,7 +217,7 @@ export function RegionalMap() {
               </div>
               <Link
                 href="/projects"
-                className="group mt-5 inline-flex items-center gap-3 text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-fg transition-colors hover:text-accent"
+                className="group mt-5 inline-flex items-center gap-3 text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-ivory/65 transition-colors hover:text-gold"
               >
                 {c.cta}
                 <ArrowUpRight className={cn("h-3.5 w-3.5", isRTL && "-scale-x-100")} />
@@ -227,8 +227,8 @@ export function RegionalMap() {
         </div>
 
         <Reveal delay={120}>
-          <div className="mt-6 flex items-center gap-3 text-[0.58rem] uppercase tracking-[0.16em] text-fg">
-            <Building2 className="h-3.5 w-3.5 text-accent" />
+          <div className="mt-6 flex items-center gap-3 text-[0.58rem] uppercase tracking-[0.16em] text-ivory/35">
+            <Building2 className="h-3.5 w-3.5 text-gold/70" />
             {locale === "ar"
               ? "محفظة موثقة عبر أربع دول · بيانات محدثة ٢٠٢٦"
               : "Documented portfolio across four countries · Updated 2026"}

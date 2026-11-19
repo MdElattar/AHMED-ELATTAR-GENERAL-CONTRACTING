@@ -23,7 +23,7 @@ export function FleetArt({
   const photo = resolveMedia(content.mediaOverrides, `fleet.${variant}`, fallback, locale);
 
   return (
-    <div className={cn("relative h-full w-full overflow-hidden bg-surface", className)}>
+    <div className={cn("relative h-full w-full overflow-hidden bg-coal", className)}>
       <Image
         src={photo.src}
         alt={label ?? photo.alt}
@@ -34,7 +34,7 @@ export function FleetArt({
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-gradient-to-t from-bg/55 via-bg/10 to-transparent"
+        className="pointer-events-none absolute inset-0 bg-gradient-to-t from-obsidian/55 via-obsidian/10 to-transparent"
       />
     </div>
   );

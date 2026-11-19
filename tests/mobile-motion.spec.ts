@@ -7,6 +7,7 @@ const VIEWPORTS = [
 ] as const;
 const ROUTES = ["/", "/projects", "/services", "/contact", "/sign-in"] as const;
 const TOUCH_MIN = 44;
+const BASE_URL = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000";
 
 test.describe("mobile spacing & motion contract", () => {
   for (const viewport of VIEWPORTS) {
@@ -91,5 +92,40 @@ test.describe("mobile spacing & motion contract", () => {
         }),
       )
       .toBeLessThan(0.01);
+  });
+
+  test("mobile projects content is centered between navbar and footer", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/projects", { waitUntil: "domcontentloaded" });
+
+    const layout = await page.evaluate(() => {
+      const main = document.querySelector<HTMLElement>("main#main");
+      const content = main?.querySelector<HTMLElement>(".container-lux");
+      const header = document.querySelector<HTMLElement>("header");
+      const footer = document.querySelector<HTMLElement>("footer");
+      if (!content || !header || !footer) return null;
+      const box = content.getBoundingClientRect();
+      return {
+        left: box.left,
+        right: window.innerWidth - box.right,
+        top: box.top,
+        bottom: box.bottom,
+        headerBottom: header.getBoundingClientRect().bottom,
+        footerTop: footer.getBoundingClientRect().top,
+      };
+    });
+
+    expect(layout, "projects content, header and footer must exist").not.toBeNull();
+    expect(Math.abs(layout!.left - layout!.right)).toBeLessThanOrEqual(2);
+    expect(layout!.top).toBeGreaterThanOrEqual(layout!.headerBottom - 1);
+    expect(layout!.footerTop).toBeGreaterThanOrEqual(layout!.bottom - 1);
+  });
+
+  test("locale cookie is resolved by the server before hydration", async ({ context }) => {
+    await context.addCookies([{ name: "alattar-locale", value: "en", url: BASE_URL }]);
+    const response = await context.request.get(`${BASE_URL}/`);
+    expect(response.ok()).toBeTruthy();
+    const html = await response.text();
+    expect(html).toMatch(/<html[^>]*\blang="en"[^>]*\bdir="ltr"[^>]*\bdata-locale="en"/);
   });
 });

@@ -86,13 +86,18 @@ async function scrollToText(page: Page, text: string) {
 }
 
 async function selectAllProjects(page: Page) {
+  // Wait for the table rows before toggling "select all": clicking while the
+  // paged list is still empty leaves the controlled checkbox unchecked.
+  const boxes = page.locator('[data-testid="project-select"]');
+  await expect(boxes.first()).toBeVisible();
+
   const header = page.locator('[data-testid="select-all"]');
   if ((await header.count()) > 0 && (await header.isVisible())) {
     await header.check();
+    await expect(header).toBeChecked();
     return;
   }
 
-  const boxes = page.locator('[data-testid="project-select"]');
   const total = await boxes.count();
   expect(total).toBeGreaterThan(0);
   for (let index = 0; index < total; index += 1) {

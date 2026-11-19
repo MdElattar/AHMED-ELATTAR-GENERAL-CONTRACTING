@@ -172,7 +172,7 @@ export async function POST(request: NextRequest) {
       ? { user: publicSessionUser(session), stepUpAt: session.stepUpAt, ok: true }
       : {
           user: publicSessionUser(session),
-          redirectTo: resolvePostLoginPath(user.role, next, true),
+          redirectTo: resolvePostLoginPath(user.role, next),
         };
     const response = NextResponse.json(body, { headers: NO_STORE_HEADERS });
     setSessionCookie(response, token, ttl);

@@ -21,11 +21,12 @@ const canAuthenticate = Boolean(ADMIN_EMAIL && ADMIN_PASSWORD) || fs.existsSync(
 fs.mkdirSync(ARTIFACTS, { recursive: true });
 
 async function setTheme(page: Page, theme: Theme) {
+  await page.context().addCookies([{ name: "alattar-theme", value: theme, url: BASE_URL }]);
   await page.addInitScript((value) => {
     try {
       window.localStorage.setItem("alattar-theme", value);
     } catch {
-      // Storage may be blocked; the inline bootstrap falls back to system.
+      // Storage may be blocked; the inline bootstrap falls back to dark.
     }
   }, theme);
 }
@@ -99,7 +100,13 @@ for (const theme of THEMES) {
           await page.emulateMedia({ reducedMotion: "reduce" });
           await setTheme(page, theme);
           await page.goto(route);
-          await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
+          // The public shell never changes palette; light is scoped to /admin.
+          await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+          if (route === "/admin") {
+            await expect(page.locator("html")).toHaveAttribute("data-admin-theme", theme);
+          } else {
+            await expect(page.locator("html")).not.toHaveAttribute("data-admin-theme", /.*/);
+          }
 
           const results = await new AxeBuilder({ page })
             .withRules(["color-contrast"])
