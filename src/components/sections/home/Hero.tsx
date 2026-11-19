@@ -1,6 +1,5 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import { ArrowDown, ArrowUpRight, MoveDown } from "lucide-react";
 import { useI18n } from "@/components/providers/I18nProvider";
@@ -10,8 +9,6 @@ import { PhotoLayer } from "@/components/media/PhotoLayer";
 import { heroPhoto } from "@/data/media";
 import { resolveMedia } from "@/lib/cms";
 import { cn } from "@/lib/utils";
-
-const HeroScene = dynamic(() => import("@/components/media/HeroScene"), { ssr: false });
 
 export function Hero() {
   const { t, isRTL, locale } = useI18n();
@@ -30,12 +27,9 @@ export function Hero() {
         imageClassName="brightness-[0.82]"
       />
 
-      <HeroScene />
-      <div className="hero-aurora pointer-events-none absolute inset-0 z-[2] opacity-80" aria-hidden="true" />
-      <div className="atmo-glow pointer-events-none absolute inset-0 z-[2] opacity-60" aria-hidden="true" />
-      <div className="pointer-events-none absolute inset-0 z-[2] bg-gradient-to-b from-obsidian/78 via-obsidian/18 to-obsidian" />
-      <div className="pointer-events-none absolute inset-0 z-[2] bg-[radial-gradient(ellipse_at_18%_42%,rgb(var(--bg-rgb)/0.82),transparent_62%)]" />
-      <div className="pointer-events-none absolute inset-0 z-[2] bg-[radial-gradient(ellipse_at_78%_28%,rgb(var(--accent-rgb)/0.14),transparent_55%)]" />
+      {/* Clean photographic hero: only a restrained scrim for text contrast. */}
+      <div className="pointer-events-none absolute inset-0 z-[2] bg-gradient-to-r from-obsidian/85 via-obsidian/40 to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-[2] h-32 bg-gradient-to-b from-obsidian/70 to-transparent" />
 
       <div className="relative z-10 flex min-h-[100svh] flex-col">
         <div className="container-lux flex flex-1 flex-col justify-center pb-36 pt-32 sm:pb-40 sm:pt-36">
@@ -162,7 +156,7 @@ export function Hero() {
         </span>
       </div>
 
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] h-24 bg-gradient-to-t from-obsidian to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] h-40 bg-gradient-to-t from-obsidian to-transparent" />
       <ArrowDown className="pointer-events-none absolute bottom-5 start-1/2 z-10 hidden h-4 w-4 -translate-x-1/2 text-gold/40 sm:block" />
     </section>
   );

@@ -109,11 +109,12 @@ async function selectAllProjects(page: Page) {
 }
 
 test.describe("01 — public marketing and experience", () => {
-  test("English widescreen homepage hero and cinematic 3D section", async ({ page }, testInfo) => {
+  test("English widescreen homepage hero", async ({ page }, testInfo) => {
     await gotoEnglish(page, "/");
     await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
-    // The R3F canvas is dynamically imported and must be present in the hero.
-    await expect(page.locator("canvas").first()).toBeVisible({ timeout: 30_000 });
+    // The hero is a clean construction photograph with no overlaid graphics.
+    await expect(page.locator("section").first().locator("img").first()).toBeVisible();
+    await expect(page.locator("section").first().locator("canvas")).toHaveCount(0);
     await settle(page, 1_500);
     await capture(page, testInfo, "01-public-homepage-hero-wide");
   });
