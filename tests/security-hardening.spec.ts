@@ -145,6 +145,7 @@ test.describe("production security controls", () => {
     expect(headers["referrer-policy"]).toBe("strict-origin-when-cross-origin");
     expect(headers["content-security-policy"]).toContain("default-src 'self'");
     expect(headers["permissions-policy"]).toContain("camera=()");
+    expect(headers["permissions-policy"]).not.toContain("ambient-light-sensor");
 
     const html = await response.text();
     for (const secret of [

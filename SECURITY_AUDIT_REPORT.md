@@ -75,7 +75,7 @@ Automated verification is green:
   - `X-Frame-Options: DENY`
   - `X-Content-Type-Options: nosniff`
   - `Referrer-Policy: strict-origin-when-cross-origin`
-  - `Permissions-Policy` disabling camera, microphone, geolocation, payment, USB, accelerometer, gyroscope, magnetometer, and ambient light sensors
+  - `Permissions-Policy` disabling camera, microphone, geolocation, payment, USB, accelerometer, gyroscope, and magnetometer sensors
   - `Content-Security-Policy` with `default-src 'self'`, `object-src 'none'`, `base-uri 'self'`, `frame-ancestors 'none'`, `form-action 'self'`, `script-src-attr 'none'`, `upgrade-insecure-requests`, and explicit media/image origins.
 - `'unsafe-inline'` remains only for Next.js bootstrap scripts and React inline styles; markup-level handlers are blocked.
 - Wildcard `images.remotePatterns` was removed; only explicit Unsplash/GCS origins remain.
