@@ -15,6 +15,11 @@ export function RouteScrollReset() {
   const previousPathname = useRef<string | null>(null);
 
   useEffect(() => {
+    history.scrollRestoration = "manual";
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, []);
+
+  useEffect(() => {
     if (previousPathname.current === null) {
       previousPathname.current = pathname;
       return;
