@@ -32,8 +32,8 @@ export function cinemaSource(src: string) {
  * blank panel.
  */
 export const heroPhoto: MediaAsset = {
-  src: unsplash("1485083269755-a7b559a4fe5e"),
-  alt: "Tower cranes rising above a live construction site",
+  src: unsplash("1541888946425-d81bb19240f5"),
+  alt: "Tower cranes rising over a major construction site at golden hour",
 };
 
 export const cranePhotos: MediaAsset[] = [
