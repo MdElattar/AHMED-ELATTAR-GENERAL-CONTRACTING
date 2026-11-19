@@ -13,14 +13,18 @@ import {
 } from "@/components/providers/AuthProvider";
 import { useI18n } from "@/components/providers/I18nProvider";
 
-const WARNING_AFTER_MS = 14 * 60 * 1000;
-const SIGN_OUT_AFTER_MS = 15 * 60 * 1000;
+/** Idle admins get one 60-second warning, then a cross-tab sign-out. */
+const WARNING_AFTER_MS = 10 * 60 * 1000;
+const SIGN_OUT_AFTER_MS = 11 * 60 * 1000;
+const COUNTDOWN_SECONDS = (SIGN_OUT_AFTER_MS - WARNING_AFTER_MS) / 1000;
 const BROADCAST_THROTTLE_MS = 10_000;
 
 type SessionSignal = {
   type?: "activity" | "warning" | "stay" | "logout";
   at?: number;
   until?: number;
+  /** Identifies the idle cycle that produced a warning signal. */
+  activityAt?: number;
 };
 
 function readStoredNumber(key: string) {
@@ -32,101 +36,134 @@ function readStoredNumber(key: string) {
   }
 }
 
-/** Warns 60 seconds before an idle timeout and signs out across all tabs. */
 export default function IdleGuard() {
   const { user, sessionExpiresAt, signOut } = useAuth();
   const { t } = useI18n();
   const router = useRouter();
   const pathname = usePathname();
-  const active = Boolean(user?.sessionVerified);
+  const signedIn = Boolean(user?.sessionVerified);
+  // Managers can reach the admin shell for content work, but only accounts
+  // with the admin role own an idle-protected privileged session.
+  const adminIdle = signedIn && user?.role === "admin";
 
   const lastActivityRef = useRef(0);
+  const warnedActivityRef = useRef<number | null>(null);
   const warningUntilRef = useRef<number | null>(null);
   const lastBroadcastRef = useRef(0);
   const signingOutRef = useRef(false);
   const stayButtonRef = useRef<HTMLButtonElement>(null);
 
   const [warning, setWarning] = useState(false);
-  const [secondsLeft, setSecondsLeft] = useState(60);
+  const [secondsLeft, setSecondsLeft] = useState(COUNTDOWN_SECONDS);
   const [expired, setExpired] = useState(false);
 
   const clearWarning = useCallback(() => {
     warningUntilRef.current = null;
     setWarning(false);
-    setSecondsLeft(60);
+    setSecondsLeft(COUNTDOWN_SECONDS);
   }, []);
 
+  const resetCycle = useCallback(
+    (at = Date.now()) => {
+      lastActivityRef.current = at;
+      warnedActivityRef.current = null;
+      clearWarning();
+    },
+    [clearWarning],
+  );
+
   const noteActivity = useCallback(() => {
-    if (!active || signingOutRef.current) return;
+    if (!adminIdle || signingOutRef.current) return;
     const now = Date.now();
-    lastActivityRef.current = now;
-    clearWarning();
+    resetCycle(now);
     if (now - lastBroadcastRef.current >= BROADCAST_THROTTLE_MS) {
       lastBroadcastRef.current = now;
       broadcastSessionEvent("activity");
     }
-  }, [active, clearWarning]);
+  }, [adminIdle, resetCycle]);
 
   const signOutNow = useCallback(async () => {
     if (signingOutRef.current) return;
     signingOutRef.current = true;
-    setExpired(true);
+    // An explicit cross-tab logout still signs clients out, but only admins
+    // are ever shown the idle timeout surface.
+    if (adminIdle) setExpired(true);
     clearWarning();
     await signOut();
     const next = pathname.startsWith("/admin") ? "/admin" : "/portal";
     router.replace(`/sign-in?next=${encodeURIComponent(next)}`);
-  }, [clearWarning, pathname, router, signOut]);
+  }, [adminIdle, clearWarning, pathname, router, signOut]);
 
   const staySignedIn = useCallback(() => {
+    if (!adminIdle || signingOutRef.current) return;
     const now = Date.now();
-    lastActivityRef.current = now;
+    resetCycle(now);
     lastBroadcastRef.current = now;
-    clearWarning();
     broadcastSessionEvent("stay");
-  }, [clearWarning]);
+  }, [adminIdle, resetCycle]);
 
   useEffect(() => {
-    if (!active) return;
+    if (!signedIn) return;
     signingOutRef.current = false;
     queueMicrotask(() => setExpired(false));
 
-    const storedActivity = readStoredNumber(SESSION_ACTIVITY_KEY);
-    lastActivityRef.current = storedActivity ?? Date.now();
-    if (!storedActivity) broadcastSessionEvent("activity");
+    if (adminIdle) {
+      const storedActivity = readStoredNumber(SESSION_ACTIVITY_KEY);
+      lastActivityRef.current = storedActivity ?? Date.now();
+      if (!storedActivity) broadcastSessionEvent("activity");
 
-    const storedWarning = readStoredNumber(SESSION_WARNING_KEY);
-    if (storedWarning && storedWarning > Date.now()) {
-      warningUntilRef.current = storedWarning;
-      queueMicrotask(() => setWarning(true));
+      const storedWarning = readStoredNumber(SESSION_WARNING_KEY);
+      if (storedWarning && storedWarning > Date.now()) {
+        warningUntilRef.current = storedWarning;
+        warnedActivityRef.current = lastActivityRef.current;
+        queueMicrotask(() => setWarning(true));
+      } else {
+        warningUntilRef.current = null;
+        warnedActivityRef.current = null;
+      }
     }
 
     const handleSignal = (signal: SessionSignal) => {
       if (!signal || signingOutRef.current) return;
       const at = typeof signal.at === "number" ? signal.at : Date.now();
-      if (signal.type === "activity") {
+
+      if (signal.type === "logout") {
+        void signOutNow();
+        return;
+      }
+      if (!adminIdle) return;
+
+      if (signal.type === "activity" || signal.type === "stay") {
         lastActivityRef.current = Math.max(lastActivityRef.current, at);
+        warnedActivityRef.current = null;
         clearWarning();
-      } else if (signal.type === "warning") {
+        return;
+      }
+
+      if (signal.type === "warning") {
         const until =
-          typeof signal.until === "number" ? signal.until : Date.now() + 60_000;
+          typeof signal.until === "number" ? signal.until : Date.now() + COUNTDOWN_SECONDS * 1000;
+        const activityAt =
+          typeof signal.activityAt === "number" ? signal.activityAt : lastActivityRef.current;
+        lastActivityRef.current = Math.max(lastActivityRef.current, activityAt);
+        // Align this tab with the tab that raised the warning so its own timer
+        // cannot open a second dialog for the same idle cycle.
+        warnedActivityRef.current = lastActivityRef.current;
         warningUntilRef.current = until;
         setWarning(true);
-      } else if (signal.type === "stay") {
-        lastActivityRef.current = Math.max(lastActivityRef.current, at);
-        clearWarning();
-      } else if (signal.type === "logout") {
-        void signOutNow();
       }
     };
 
-    const channel = typeof BroadcastChannel === "undefined"
-      ? null
-      : new BroadcastChannel(SESSION_CHANNEL);
+    const channel =
+      typeof BroadcastChannel === "undefined"
+        ? null
+        : new BroadcastChannel(SESSION_CHANNEL);
     if (channel) {
       channel.onmessage = (event: MessageEvent<SessionSignal>) => handleSignal(event.data);
     }
 
     const handleStorage = (event: StorageEvent) => {
+      if (!adminIdle) return;
       if (event.key === SESSION_ACTIVITY_KEY) {
         const value = readStoredNumber(SESSION_ACTIVITY_KEY);
         if (value) handleSignal({ type: "activity", at: value });
@@ -148,13 +185,15 @@ export default function IdleGuard() {
       "wheel",
       "touchstart",
     ];
-    events.forEach((event) => {
-      window.addEventListener(event, noteActivity, { passive: true, capture: true });
-    });
+    if (adminIdle) {
+      events.forEach((event) => {
+        window.addEventListener(event, noteActivity, { passive: true, capture: true });
+      });
+    }
     window.addEventListener("storage", handleStorage);
 
     const timer = window.setInterval(() => {
-      if (!active || signingOutRef.current) return;
+      if (!adminIdle || signingOutRef.current) return;
       const now = Date.now();
       const idleDeadline = lastActivityRef.current + SIGN_OUT_AFTER_MS;
       const deadline = sessionExpiresAt
@@ -172,11 +211,16 @@ export default function IdleGuard() {
         return;
       }
 
-      if (!until && now - lastActivityRef.current >= WARNING_AFTER_MS) {
-        const warningUntil = Math.min(idleDeadline, deadline);
+      if (
+        warnedActivityRef.current !== lastActivityRef.current &&
+        now - lastActivityRef.current >= WARNING_AFTER_MS
+      ) {
+        const cycle = lastActivityRef.current;
+        warnedActivityRef.current = cycle;
+        const warningUntil = Math.min(idleDeadline, deadline, now + COUNTDOWN_SECONDS * 1000);
         warningUntilRef.current = warningUntil;
         setWarning(true);
-        broadcastSessionEvent("warning", { until: warningUntil });
+        broadcastSessionEvent("warning", { until: warningUntil, activityAt: cycle });
       }
 
       if (warningUntilRef.current) {
@@ -194,17 +238,17 @@ export default function IdleGuard() {
       window.removeEventListener("storage", handleStorage);
       channel?.close();
     };
-  }, [active, clearWarning, noteActivity, sessionExpiresAt, signOutNow]);
+  }, [adminIdle, clearWarning, noteActivity, sessionExpiresAt, signOutNow, signedIn]);
 
   useEffect(() => {
     if (warning) stayButtonRef.current?.focus({ preventScroll: true });
   }, [warning]);
 
-  if (!active) return null;
+  if (!signedIn) return null;
 
   return (
     <>
-      {expired ? (
+      {expired && adminIdle ? (
         <div className="guard-backdrop">
           <div className="guard-modal" role="status" aria-live="assertive">
             <p className="guard-copy">{t.idle.expired}</p>
@@ -213,7 +257,7 @@ export default function IdleGuard() {
         </div>
       ) : null}
 
-      {warning && !expired ? (
+      {warning && adminIdle && !expired ? (
         <div className="guard-backdrop">
           <section
             className="guard-modal"

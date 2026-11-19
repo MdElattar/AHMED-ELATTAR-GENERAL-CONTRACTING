@@ -194,6 +194,29 @@ export const adminRevokeSchema = strictObject({
   email: emailField,
 });
 
+/** Query contract for the paginated, filterable primary-admin directory. */
+export const adminAccessQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).max(10_000).default(1),
+  limit: z.coerce.number().int().min(5).max(50).default(10),
+  role: z.enum(["all", "admin", "manager", "client"]).default("all"),
+  query: z
+    .string()
+    .max(120)
+    .optional()
+    .default("")
+    .transform((value) => cleanString(value, 120)),
+  excludeTest: z
+    .enum(["0", "1", "false", "true"])
+    .optional()
+    .default("1")
+    .transform((value) => value === "1" || value === "true"),
+});
+
+export const adminAccountRemoveSchema = strictObject({
+  email: emailField,
+  primaryPassword: z.string().min(8).max(128),
+});
+
 export const contactSchema = strictObject({
   name: z
     .string()

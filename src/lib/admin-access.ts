@@ -1,5 +1,12 @@
 import type { StoredUser, UserRole } from "@/lib/db";
 
+const SYNTHETIC_TEST_EMAIL = /@example\.com$/i;
+
+/** Synthetic accounts created by e2e/bulk tests are hidden by default. */
+export function isSyntheticTestAccount(email: string) {
+  return SYNTHETIC_TEST_EMAIL.test(email.trim());
+}
+
 export type AdminDirectoryUser = {
   email: string;
   name: string;

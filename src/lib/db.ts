@@ -1,3 +1,4 @@
+import { isSyntheticTestAccount } from "@/lib/admin-access";
 import { safeLogError } from "@/lib/security/http";
 import "server-only";
 import type { Model, Mongoose } from "mongoose";
@@ -576,7 +577,7 @@ async function mongoModels(): Promise<MongoModels> {
         specs: { type: mongoose.Schema.Types.Mixed },
         status: { type: String, index: true },
         featured: { type: Boolean, default: false, index: true },
-        clientEmails: { type: [String], default: [], index: true },
+        clientEmails: { type: [String], default: [] },
         payload: { type: mongoose.Schema.Types.Mixed, required: true },
       },
       { timestamps: true, versionKey: false, strict: true },
@@ -713,6 +714,9 @@ async function mongoModels(): Promise<MongoModels> {
     projectSchema.index({ category: 1, createdAt: -1 });
     projectSchema.index({ featured: 1, createdAt: -1 });
     projectSchema.index({ clientEmails: 1 });
+    // Paginated account directory: role filter + newest-first ordering.
+    userSchema.index({ role: 1, createdAt: -1 });
+    userSchema.index({ createdAt: -1 });
     inquirySchema.index({ status: 1, createdAt: -1 });
     inquirySchema.index({ kind: 1, createdAt: -1 });
     auditSchema.index({ createdAt: -1 });
@@ -764,6 +768,14 @@ async function mongoModels(): Promise<MongoModels> {
     cached.models = null;
     throw error;
   }
+}
+
+/** Additively create every declared index; deploys run this from `npm run seed`. */
+export async function ensureDatabaseIndexes(): Promise<number> {
+  if ((await activeMode()) === "memory") return 0;
+  const models = await mongoModels();
+  await Promise.all(Object.values(models).map((model) => model.createIndexes()));
+  return Object.keys(models).length;
 }
 
 function str(value: unknown, fallback = "") {
@@ -1026,23 +1038,139 @@ export async function getUserById(userId: string): Promise<StoredUser | null> {
   return doc ? mapUser(doc) : null;
 }
 
-/** Primary-admin only directory used by the delegation screen. */
-export async function listUsers(limit = 250): Promise<StoredUser[]> {
-  const safeLimit = Math.min(Math.max(limit, 1), 500);
+export type UserQueryOptions = {
+  page?: number;
+  limit?: number;
+  role?: "all" | UserRole;
+  search?: string;
+  excludeTest?: boolean;
+};
+
+export type UserQueryResult = {
+  users: StoredUser[];
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+  admins: number;
+  managers: number;
+  clients: number;
+};
+
+const DIRECTORY_FIELDS =
+  "email name nameAr honorific honorificAr company phone role accountId lastLoginAt createdAt updatedAt";
+const NON_TEST_EMAIL = /^(?!.*@example\.com$).+$/i;
+
+function escapeRegex(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Primary-admin directory query. Filtering and counting happen in the database
+ * so a large user collection never ships every document to the application.
+ */
+export async function queryUsers(options: UserQueryOptions = {}): Promise<UserQueryResult> {
+  const page = Math.min(Math.max(Math.trunc(options.page ?? 1), 1), 10_000);
+  const limit = Math.min(Math.max(Math.trunc(options.limit ?? 10), 1), 500);
+  const role = options.role ?? "all";
+  const search = (options.search ?? "").trim().toLowerCase();
+  const excludeTest = options.excludeTest ?? true;
+
+  const matchesSearch = (user: StoredUser) =>
+    !search ||
+    user.email.toLowerCase().includes(search) ||
+    user.name.toLowerCase().includes(search) ||
+    user.company.toLowerCase().includes(search);
+
+  const roleCounts = (users: StoredUser[]) => ({
+    admins: users.filter((user) => user.role === "admin").length,
+    managers: users.filter((user) => user.role === "manager").length,
+    clients: users.filter((user) => user.role === "client").length,
+  });
 
   if ((await activeMode()) === "memory") {
     await seedMemory();
-    return [...memory().users.values()]
-      .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
-      .slice(0, safeLimit);
+    let visible = [...memory().users.values()].filter((user) => {
+      if (excludeTest && isSyntheticTestAccount(user.email)) return false;
+      return true;
+    });
+    const counts = roleCounts(visible.filter(matchesSearch));
+    if (role !== "all") visible = visible.filter((user) => user.role === role);
+    visible = visible.filter(matchesSearch).sort((a, b) =>
+      a.createdAt < b.createdAt ? 1 : -1,
+    );
+
+    const total = visible.length;
+    const pages = Math.max(1, Math.ceil(total / limit));
+    const safePage = Math.min(page, pages);
+    return {
+      users: visible.slice((safePage - 1) * limit, safePage * limit),
+      total,
+      page: safePage,
+      limit,
+      pages,
+      ...counts,
+    };
   }
 
   const { User } = await mongoModels();
-  const docs = (await User.find({})
-    .sort({ createdAt: -1 })
-    .limit(safeLimit)
-    .lean()) as LeanDoc[];
-  return docs.map(mapUser);
+  const baseClauses: Record<string, unknown>[] = [];
+  if (excludeTest) {
+    // Use a raw RegExp value: Mongoose's sanitizeFilter rewrites nested
+    // operator objects such as `{ $regex: ... }` into literal equality.
+    baseClauses.push({ email: NON_TEST_EMAIL });
+  }
+  if (search) {
+    const pattern = new RegExp(escapeRegex(search), "i");
+    baseClauses.push({
+      $or: [{ email: pattern }, { name: pattern }, { company: pattern }],
+    });
+  }
+
+  const baseFilter = baseClauses.length ? { $and: baseClauses } : {};
+  const filter =
+    role === "all" ? baseFilter : { $and: [...baseClauses, { role }] };
+
+  const [total, counts, docs] = await Promise.all([
+    User.countDocuments(filter),
+    Promise.all(
+      (["admin", "manager", "client"] as UserRole[]).map((value) =>
+        User.countDocuments(
+          baseClauses.length
+            ? { $and: [...baseClauses, { role: value }] }
+            : { role: value },
+        ),
+      ),
+    ),
+    User.find(filter)
+      .select(DIRECTORY_FIELDS)
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .skip((page - 1) * limit)
+      .lean(),
+  ]);
+
+  const pages = Math.max(1, Math.ceil(total / limit));
+  if (page > pages) {
+    // Clamp out-of-range pages without a second round-trip for the first page.
+    return queryUsers({ ...options, page: pages });
+  }
+
+  return {
+    users: (docs as LeanDoc[]).map(mapUser),
+    total,
+    page,
+    limit,
+    pages,
+    admins: counts[0],
+    managers: counts[1],
+    clients: counts[2],
+  };
+}
+
+/** Backwards-compatible wrapper for callers that only need a flat directory. */
+export async function listUsers(limit = 250): Promise<StoredUser[]> {
+  return (await queryUsers({ page: 1, limit, excludeTest: false })).users;
 }
 
 export async function revokeAdminRole(email: string): Promise<StoredUser | null> {
@@ -1097,6 +1225,48 @@ export async function promoteToAdmin(email: string): Promise<StoredUser | null> 
     { new: true },
   ).lean()) as LeanDoc | null;
   return doc ? mapUser(doc) : null;
+}
+
+/**
+ * Permanently removes one account and its auth material. Business records
+ * (projects, inquiries, consultations) keep the historical email reference;
+ * the audit trail written by the caller survives the deletion.
+ */
+export async function deleteUserAccount(email: string): Promise<StoredUser | null> {
+  const normalized = email.trim().toLowerCase();
+  if (!normalized) return null;
+
+  if ((await activeMode()) === "memory") {
+    await seedMemory();
+    const db = memory();
+    const existing = db.users.get(normalized);
+    if (!existing) return null;
+    db.users.delete(normalized);
+    for (const [credentialId, passkey] of db.passkeys) {
+      if (passkey.email === normalized) db.passkeys.delete(credentialId);
+    }
+    db.otps.delete(normalized);
+    db.adminGrants = new Map(
+      [...db.adminGrants].filter(
+        ([, grant]) =>
+          grant.targetEmail !== normalized && grant.requestedBy !== normalized,
+      ),
+    );
+    return existing;
+  }
+
+  const { User, Passkey, OtpToken, AdminGrant } = await mongoModels();
+  const doc = (await User.findOneAndDelete({ email: normalized }).lean()) as LeanDoc | null;
+  if (!doc) return null;
+
+  await Promise.all([
+    Passkey.deleteMany({ email: normalized }),
+    OtpToken.deleteMany({ email: normalized }),
+    AdminGrant.deleteMany({
+      $or: [{ targetEmail: normalized }, { requestedBy: normalized }],
+    }),
+  ]);
+  return mapUser(doc);
 }
 
 /* --------------------------------------------------------------- passkeys */
@@ -1612,6 +1782,33 @@ export async function listProjects(): Promise<StoredProject[]> {
   return docs.map(mapProject);
 }
 
+/**
+ * Published portfolio rows only. The projection omits ownership metadata and
+ * internal CMS records so the public feed stays small and cannot leak private
+ * client addresses.
+ */
+export async function listPublicProjects(): Promise<StoredProject[]> {
+  const isPublic = (project: StoredProject) =>
+    !project.slug.startsWith("__") &&
+    !project.payload.archivedAt &&
+    project.payload.published !== false;
+
+  if ((await activeMode()) === "memory") {
+    return (await listProjects()).filter(isPublic);
+  }
+
+  const { Project } = await mongoModels();
+  // Only the internal-slug exclusion is pushed down; the remaining public
+  // checks stay in `isPublic` because Mongoose's sanitizeFilter rewrites
+  // nested operators such as `$exists` and `$ne`.
+  const docs = (await Project.find({ slug: /^(?!__).+$/ })
+    .select("slug featured payload createdAt updatedAt")
+    .sort({ createdAt: -1 })
+    .limit(200)
+    .lean()) as LeanDoc[];
+  return docs.map(mapProject).filter(isPublic);
+}
+
 /** Portfolio records a signed-in client is explicitly allowed to access. */
 export async function listOwnedProjects(email: string): Promise<StoredProject[]> {
   const normalized = email.trim().toLowerCase();
@@ -1643,6 +1840,18 @@ export async function getProjectBySlug(slug: string): Promise<StoredProject | nu
 export async function getSiteContent(): Promise<Record<string, unknown> | null> {
   const record = await getProjectBySlug(CONTENT_SLUG);
   return record?.payload ?? null;
+}
+
+/** Public content read with a narrow projection for the cached feed. */
+export async function getPublicSiteContent(): Promise<Record<string, unknown> | null> {
+  if ((await activeMode()) === "memory") return getSiteContent();
+  const { Project } = await mongoModels();
+  const doc = (await Project.findOne({ slug: CONTENT_SLUG })
+    .select("payload")
+    .lean()) as LeanDoc | null;
+  return doc && typeof doc.payload === "object" && doc.payload !== null
+    ? (doc.payload as Record<string, unknown>)
+    : null;
 }
 
 export async function listServiceSlugs(): Promise<string[]> {
@@ -2238,6 +2447,7 @@ export async function seedDatabase(): Promise<{
   // Force a real connection before any repository call so an unreachable
   // instance fails loudly instead of silently seeding the dev repository.
   await mongoModels();
+  await ensureDatabaseIndexes();
 
   const identity = seedAdminIdentity();
   if (!identity) {

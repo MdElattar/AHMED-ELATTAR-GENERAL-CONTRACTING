@@ -635,9 +635,13 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
           : pathname.startsWith("/portal")
             ? "/api/portal/projects"
             : "/api/projects";
+        const publicFeed = !pathname.startsWith("/admin") && !pathname.startsWith("/portal");
         const [contentResponse, projectsResponse] = await Promise.all([
-          fetch("/api/content", { cache: "no-store" }),
-          fetch(projectsEndpoint, { cache: "no-store", credentials: "same-origin" }),
+          fetch("/api/content", { cache: publicFeed ? "force-cache" : "no-store" }),
+          fetch(projectsEndpoint, {
+            cache: publicFeed ? "force-cache" : "no-store",
+            credentials: "same-origin",
+          }),
         ]);
 
         if (cancelled) return;

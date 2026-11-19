@@ -1,24 +1,35 @@
 "use client";
 
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import {
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useState,
+  type FormEvent,
+} from "react";
 import {
   AlertTriangle,
   Check,
+  ChevronLeft,
+  ChevronRight,
   Crown,
   KeyRound,
   Loader2,
   LockKeyhole,
   MailCheck,
   RefreshCw,
+  Search,
   ShieldCheck,
   ShieldOff,
+  Trash2,
   UserPlus,
   Users,
 } from "lucide-react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { Field, TextInput } from "@/components/ui/Field";
-import { ConfirmDialog } from "@/components/ui/admin/overlay";
+import { Button } from "@/components/ui/admin";
+import { ConfirmDialog, Modal } from "@/components/ui/admin/overlay";
 import { cn } from "@/lib/utils";
 
 type DirectoryUser = {
@@ -26,7 +37,7 @@ type DirectoryUser = {
   name: string;
   company: string;
   phone?: string;
-  role: "client" | "admin";
+  role: "client" | "manager" | "admin";
   accountId: string;
   createdAt: string;
   lastLoginAt?: string;
@@ -97,6 +108,23 @@ const copy = {
     noAdmins: "لا يوجد مدراء إضافيون.",
     protected: "محمي — لا يمكن سحبه",
     accountId: "رقم الحساب",
+    managers: "مدراء النظام",
+    manager: "مدير نظام",
+    search: "ابحث بالاسم أو البريد أو الشركة",
+    allRoles: "كل الأدوار",
+    roleFilter: "تصفية حسب الدور",
+    hideTest: "إخفاء حسابات الاختبار",
+    showTest: "عرض حسابات الاختبار",
+    remove: "حذف الحساب",
+    removeConfirm:
+      "سيتم حذف هذا الحساب نهائياً وإبطال كل جلساته. ستبقى سجلات المشاريع والمراسلات، وسيُدوَّن الحذف في سجل التدقيق.",
+    typeEmailToConfirm: "اكتب بريد الحساب للتأكيد",
+    removeSuccess: "تم حذف الحساب وإبطال جلساته.",
+    removeError: "تعذر حذف الحساب.",
+    previous: "السابق",
+    next: "التالي",
+    pageOf: "صفحة",
+    results: "حساب",
   },
   en: {
     title: "Administrative delegation",
@@ -155,6 +183,23 @@ const copy = {
     noAdmins: "No additional administrators.",
     protected: "Protected — cannot be revoked",
     accountId: "Account ID",
+    managers: "System managers",
+    manager: "System manager",
+    search: "Search by name, email, or company",
+    allRoles: "All roles",
+    roleFilter: "Filter by role",
+    hideTest: "Hide test accounts",
+    showTest: "Show test accounts",
+    remove: "Remove account",
+    removeConfirm:
+      "This permanently removes the account and invalidates its sessions. Project and inquiry records keep the historical email, and the removal is written to the audit log.",
+    typeEmailToConfirm: "Type the account email to confirm",
+    removeSuccess: "Account removed and sessions invalidated.",
+    removeError: "The account could not be removed.",
+    previous: "Previous",
+    next: "Next",
+    pageOf: "Page",
+    results: "accounts",
   },
 } as const;
 
@@ -172,6 +217,14 @@ export function AdminAccess() {
   const { user } = useAuth();
   const c = copy[locale];
   const [users, setUsers] = useState<DirectoryUser[]>([]);
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [counts, setCounts] = useState({ admins: 0, managers: 0, clients: 0 });
+  const [roleFilter, setRoleFilter] = useState<"all" | DirectoryUser["role"]>("all");
+  const [query, setQuery] = useState("");
+  const [excludeTest, setExcludeTest] = useState(true);
+  const deferredQuery = useDeferredValue(query);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [mode, setMode] = useState<GrantMode>("promote");
@@ -191,6 +244,9 @@ export function AdminAccess() {
   const [noticeError, setNoticeError] = useState(false);
   const [busyEmail, setBusyEmail] = useState("");
   const [revokeTarget, setRevokeTarget] = useState<DirectoryUser | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<DirectoryUser | null>(null);
+  const [deleteEmail, setDeleteEmail] = useState("");
+  const [deletePassword, setDeletePassword] = useState("");
 
   const primary = user?.primaryAdmin === true;
 
@@ -202,8 +258,16 @@ export function AdminAccess() {
     setLoading(true);
     setLoadError("");
 
+    const params = new URLSearchParams({
+      page: String(page),
+      limit: "10",
+      role: roleFilter,
+      query: deferredQuery,
+      excludeTest: excludeTest ? "1" : "0",
+    });
+
     try {
-      const response = await fetch("/api/admin/access", {
+      const response = await fetch(`/api/admin/access?${params.toString()}`, {
         cache: "no-store",
         credentials: "same-origin",
       });
@@ -211,25 +275,42 @@ export function AdminAccess() {
       if (!response.ok || !data || typeof data !== "object") {
         throw new Error("load_failed");
       }
-      const list = (data as { users?: unknown }).users;
+      const record = data as Record<string, unknown>;
+      const list = record.users;
       if (!Array.isArray(list)) throw new Error("load_failed");
+
+      const number = (value: unknown, fallback: number) =>
+        typeof value === "number" && Number.isFinite(value) ? value : fallback;
+      const count = (value: unknown, fallback: number) => number(value, fallback);
+
       setUsers(
         list.filter((item): item is DirectoryUser => {
           if (!item || typeof item !== "object") return false;
-          const record = item as Record<string, unknown>;
+          const user = item as Record<string, unknown>;
           return (
-            typeof record.email === "string" &&
-            typeof record.name === "string" &&
-            (record.role === "admin" || record.role === "client")
+            typeof user.email === "string" &&
+            typeof user.name === "string" &&
+            typeof user.company === "string" &&
+            typeof user.accountId === "string" &&
+            typeof user.createdAt === "string" &&
+            (user.role === "admin" || user.role === "manager" || user.role === "client")
           );
         }),
       );
+      setPage(number(record.page, 1));
+      setPages(Math.max(1, number(record.pages, 1)));
+      setTotal(number(record.total, 0));
+      setCounts({
+        admins: count(record.admins, 0),
+        managers: count(record.managers, 0),
+        clients: count(record.clients, 0),
+      });
     } catch {
       setLoadError(c.loadError);
     } finally {
       setLoading(false);
     }
-  }, [c.loadError, primary]);
+  }, [c.loadError, deferredQuery, excludeTest, page, primary, roleFilter]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -237,6 +318,7 @@ export function AdminAccess() {
   }, [load]);
 
   const adminUsers = users.filter((item) => item.role === "admin");
+  const managerUsers = users.filter((item) => item.role === "manager");
   const clientUsers = users.filter((item) => item.role === "client");
 
   const requestGrant = async (event: FormEvent) => {
@@ -366,6 +448,47 @@ export function AdminAccess() {
     }
   };
 
+  const removeAccount = async (target: DirectoryUser) => {
+    setBusyEmail(target.email);
+    setNotice("");
+    try {
+      const response = await fetch("/api/admin/access/remove", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: target.email,
+          primaryPassword: deletePassword,
+        }),
+      });
+      const data: unknown = await response.json().catch(() => null);
+      const errorCode =
+        data && typeof data === "object" && typeof (data as { error?: unknown }).error === "string"
+          ? (data as { error: string }).error
+          : "";
+
+      if (!response.ok) {
+        setNoticeError(true);
+        setNotice(
+          errorCode === "user_not_found" ? c.userNotFound : c.removeError,
+        );
+        return;
+      }
+
+      setDeleteTarget(null);
+      setDeleteEmail("");
+      setDeletePassword("");
+      setNoticeError(false);
+      setNotice(c.removeSuccess);
+      await load();
+    } catch {
+      setNoticeError(true);
+      setNotice(c.removeError);
+    } finally {
+      setBusyEmail("");
+    }
+  };
+
   const startPromotion = (target: DirectoryUser) => {
     setMode("promote");
     setEmail(target.email);
@@ -410,8 +533,8 @@ export function AdminAccess() {
         </div>
 
         <div className="mt-6 grid gap-4 sm:grid-cols-3">
-          <Stat icon={Users} label={c.clients} value={clientUsers.length} />
-          <Stat icon={ShieldCheck} label={c.admins} value={adminUsers.length} />
+          <Stat icon={Users} label={c.clients} value={counts.clients} />
+          <Stat icon={ShieldCheck} label={c.admins} value={counts.admins} />
           <Stat
             icon={MailCheck}
             label={c.step}
@@ -628,6 +751,53 @@ export function AdminAccess() {
         </form>
       )}
 
+      <div className="rounded-[22px] border border-line bg-surface p-5 sm:p-6">
+        <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto_auto] md:items-center">
+          <div className="relative">
+            <Search
+              className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-fg"
+              aria-hidden="true"
+            />
+            <TextInput
+              value={query}
+              onChange={(event) => {
+                setQuery(event.target.value);
+                setPage(1);
+              }}
+              placeholder={c.search}
+              aria-label={c.search}
+              className="ps-10"
+            />
+          </div>
+          <select
+            value={roleFilter}
+            onChange={(event) => {
+              setRoleFilter(event.target.value as typeof roleFilter);
+              setPage(1);
+            }}
+            aria-label={c.roleFilter}
+            className="h-11 rounded-[12px] border border-line bg-surface px-3 text-[0.78rem] text-fg"
+          >
+            <option value="all">{c.allRoles}</option>
+            <option value="admin">{c.admin}</option>
+            <option value="manager">{c.manager}</option>
+            <option value="client">{c.client}</option>
+          </select>
+          <button
+            type="button"
+            aria-pressed={excludeTest}
+            onClick={() => {
+              setExcludeTest((value) => !value);
+              setPage(1);
+            }}
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-[12px] border border-line px-4 text-[0.78rem] font-medium text-fg transition-colors hover:border-accent/40 hover:text-accent"
+          >
+            <Check className={cn("h-4 w-4", !excludeTest && "opacity-0")} aria-hidden="true" />
+            {excludeTest ? c.hideTest : c.showTest}
+          </button>
+        </div>
+      </div>
+
       <section className="rounded-[22px] border border-line bg-surface">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-6 py-5">
           <div className="flex items-center gap-2 text-[0.7rem] font-semibold  text-accent">
@@ -694,24 +864,91 @@ export function AdminAccess() {
                         {c.protected}
                       </span>
                     ) : (
-                      <button
-                        type="button"
-                        onClick={() => setRevokeTarget(admin)}
-                        disabled={busyEmail === admin.email}
-                        className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-danger/25 px-3 text-[0.7rem]  text-danger transition-colors hover:border-danger/50 hover:text-danger disabled:opacity-50"
-                      >
-                        {busyEmail === admin.email ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setRevokeTarget(admin)}
+                          disabled={busyEmail === admin.email}
+                          className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-line px-3 text-[0.7rem]  text-fg transition-colors hover:border-danger/40 hover:text-danger disabled:opacity-50"
+                        >
                           <ShieldOff className="h-3.5 w-3.5" />
-                        )}
-                        {c.revoke}
-                      </button>
+                          {c.revoke}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDeleteTarget(admin);
+                            setDeleteEmail("");
+                            setDeletePassword("");
+                          }}
+                          disabled={busyEmail === admin.email}
+                          className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-danger/25 px-3 text-[0.7rem]  text-danger transition-colors hover:border-danger/50 disabled:opacity-50"
+                        >
+                          {busyEmail === admin.email ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-3.5 w-3.5" />
+                          )}
+                          {c.remove}
+                        </button>
+                      </>
                     )}
                   </div>
                 </li>
               );
             })}
+          </ul>
+        )}
+      </section>
+
+      <section className="rounded-[22px] border border-line bg-surface">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-6 py-5">
+          <div className="flex items-center gap-2 text-[0.7rem] font-semibold  text-accent">
+            <ShieldCheck className="h-4 w-4" />
+            {c.managers}
+          </div>
+          <span className="text-[0.76rem] text-fg">{counts.managers}</span>
+        </div>
+
+        {loading ? (
+          <div className="flex items-center gap-2 px-6 py-7 text-[0.82rem] text-fg">
+            <Loader2 className="h-4 w-4 animate-spin text-accent" />
+            {c.reload}...
+          </div>
+        ) : managerUsers.length === 0 ? (
+          <p className="px-6 py-7 text-[0.82rem] text-fg">{c.noAdmins}</p>
+        ) : (
+          <ul className="divide-y divide-line">
+            {managerUsers.map((manager) => (
+              <li
+                key={manager.email}
+                className="flex flex-wrap items-center justify-between gap-3 px-6 py-5"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-[0.92rem] font-medium text-fg">{manager.name}</p>
+                  <p className="mt-1 break-all text-[0.8rem] text-fg" dir="ltr">
+                    {manager.email}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDeleteTarget(manager);
+                    setDeleteEmail("");
+                    setDeletePassword("");
+                  }}
+                  disabled={busyEmail === manager.email}
+                  className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-danger/25 px-3 text-[0.7rem]  text-danger transition-colors hover:border-danger/50 disabled:opacity-50"
+                >
+                  {busyEmail === manager.email ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-3.5 w-3.5" />
+                  )}
+                  {c.remove}
+                </button>
+              </li>
+            ))}
           </ul>
         )}
       </section>
@@ -746,19 +983,64 @@ export function AdminAccess() {
                     {client.company}
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => startPromotion(client)}
-                  className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-accent/30 bg-accent/[0.04] px-3 text-[0.7rem]  text-accent transition-colors hover:border-accent/55 hover:bg-accent/[0.09]"
-                >
-                  <UserPlus className="h-3.5 w-3.5" />
-                  {c.promote}
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => startPromotion(client)}
+                    className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-accent/30 bg-accent/[0.04] px-3 text-[0.7rem]  text-accent transition-colors hover:border-accent/55 hover:bg-accent/[0.09]"
+                  >
+                    <UserPlus className="h-3.5 w-3.5" />
+                    {c.promote}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDeleteTarget(client);
+                      setDeleteEmail("");
+                      setDeletePassword("");
+                    }}
+                    disabled={busyEmail === client.email}
+                    className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-danger/25 px-3 text-[0.7rem]  text-danger transition-colors hover:border-danger/50 disabled:opacity-50"
+                  >
+                    {busyEmail === client.email ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-3.5 w-3.5" />
+                    )}
+                    {c.remove}
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
         )}
       </section>
+
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-[22px] border border-line bg-surface px-6 py-4">
+        <p className="text-[0.76rem] text-fg">
+          {total} {c.results} · {c.pageOf} {page} / {pages}
+        </p>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setPage((value) => Math.max(1, value - 1))}
+            disabled={page <= 1 || loading}
+            className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-line px-3 text-[0.72rem]  text-fg transition-colors hover:border-accent/40 disabled:opacity-50"
+          >
+            <ChevronLeft className="h-3.5 w-3.5 rtl:rotate-180" aria-hidden="true" />
+            {c.previous}
+          </button>
+          <button
+            type="button"
+            onClick={() => setPage((value) => Math.min(pages, value + 1))}
+            disabled={page >= pages || loading}
+            className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-line px-3 text-[0.72rem]  text-fg transition-colors hover:border-accent/40 disabled:opacity-50"
+          >
+            {c.next}
+            <ChevronRight className="h-3.5 w-3.5 rtl:rotate-180" aria-hidden="true" />
+          </button>
+        </div>
+      </div>
 
       <ConfirmDialog
         open={Boolean(revokeTarget)}
@@ -777,6 +1059,84 @@ export function AdminAccess() {
           setRevokeTarget(null);
         }}
       />
+
+      <Modal
+        open={Boolean(deleteTarget)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeleteTarget(null);
+            setDeleteEmail("");
+            setDeletePassword("");
+          }
+        }}
+        title={c.remove}
+        description={deleteTarget?.email}
+        size="sm"
+        footer={
+          <>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setDeleteTarget(null);
+                setDeleteEmail("");
+                setDeletePassword("");
+              }}
+              disabled={Boolean(deleteTarget && busyEmail === deleteTarget.email)}
+            >
+              {c.cancel}
+            </Button>
+            <Button
+              variant="secondary"
+              disabled={
+                !deleteTarget ||
+                deleteEmail.trim() !== deleteTarget.email ||
+                deletePassword.length < 8 ||
+                busyEmail === deleteTarget.email
+              }
+              className="border-danger/25 bg-danger/10 text-danger hover:border-danger/45 hover:bg-danger/15"
+              onClick={() => {
+                if (deleteTarget) void removeAccount(deleteTarget);
+              }}
+            >
+              {busyEmail === deleteTarget?.email ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4" />
+              )}
+              {c.remove}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <p role="alert" className="text-[13px] leading-relaxed text-danger">
+            {c.removeConfirm}
+          </p>
+          <Field label={c.typeEmailToConfirm} htmlFor="remove-account-email" required>
+            <TextInput
+              id="remove-account-email"
+              value={deleteEmail}
+              onChange={(event) => setDeleteEmail(event.target.value)}
+              autoComplete="off"
+              dir="ltr"
+            />
+          </Field>
+          <Field
+            label={c.primaryPassword}
+            htmlFor="remove-account-password"
+            hint={c.primaryPasswordHint}
+            required
+          >
+            <TextInput
+              id="remove-account-password"
+              type="password"
+              value={deletePassword}
+              onChange={(event) => setDeletePassword(event.target.value)}
+              autoComplete="current-password"
+            />
+          </Field>
+        </div>
+      </Modal>
     </div>
   );
 }

@@ -6,6 +6,11 @@ export const NO_STORE_HEADERS = {
   Pragma: "no-cache",
 };
 
+/** Public, non-personalized GET feeds may be shared by a CDN/proxy. */
+export const PUBLIC_CACHE_HEADERS = {
+  "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
+};
+
 /**
  * CSRF defence for every state-changing route: SameSite=Strict cookies plus a
  * strict Origin check. `Sec-Fetch-Site` is a forbidden header that browsers

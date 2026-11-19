@@ -25,7 +25,7 @@ Required in production:
 | `WEBAUTHN_RP_ID` | Bare production hostname, e.g. `alattar.sa`. Must be in the allowlist. |
 | `NEXT_PUBLIC_SITE_URL` | Canonical `https://` origin used in redirects, links and emails. |
 | `RESEND_API_KEY`, `OTP_FROM_EMAIL` | Transactional OTP delivery. |
-| `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NAME`, `ADMIN_COMPANY` | First super-admin bootstrap, consumed by `npm run seed`. |
+| `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NAME`, `ADMIN_COMPANY` | First super-admin bootstrap, consumed by `npm run seed`. `ADMIN_EMAIL` is the **Primary Admin** identity: only that verified session may promote admins or remove accounts. |
 
 Optional:
 
@@ -59,6 +59,7 @@ npm run lint              # ESLint + semantic color guardrail
 npm run check:colors
 npm run security:scan
 npm run check:deploy      # with production env exported
+npm run check:indexes     # with MongoDB env exported; append -- --ensure to create missing indexes
 npm run build
 ```
 
@@ -81,9 +82,11 @@ enrols one on first use and reuses the persisted credential afterwards.
 2. Run `npm run seed` once against the production database to create the first
    super-admin and catalogue records. Do not re-run it with a changed
    `ADMIN_PASSWORD` on live data.
-3. Deploy the build. Mongoose schema changes are additive; TTL indexes on
-   expiring collections are created automatically and old documents are left
-   untouched.
+3. Deploy the build. Mongoose schema changes are additive; `npm run seed`
+   now calls `createIndexes()` for every declared index, including the
+   account-directory and public-feed compound indexes. `npm run check:indexes`
+   verifies the live database without dropping anything; `--ensure` adds any
+   missing indexes. Old documents are left untouched.
 4. After the first deploy, sign in as the super-admin and enrol a passkey on the
    production domain. Privileged sessions are refused by `src/proxy.ts` and by
    every `/api/admin` route until that credential exists.
@@ -129,3 +132,48 @@ Also confirm in a browser:
   passkey routes are always network-only by design.
 - `public/fonts/NotoNaskhArabic.ttf` must ship with the build for Arabic PDF
   shaping in server-generated proposals.
+
+## 8. Scaling beyond a single instance
+
+The current reference deployment is one Next.js instance plus one MongoDB
+database. That is appropriate for the current traffic profile, but it is **not**
+an architecture for extreme targets (for example, tens of thousands of
+concurrent visitors or sustained 10k+ RPS). No amount of per-request query
+tuning makes a single process a credible answer to that scale. Use the
+following layered plan when targets grow:
+
+1. **CDN / edge cache first.** `/api/projects` and `/api/content` return
+   `Cache-Control: public, s-maxage=3600, stale-while-revalidate=86400`, and
+   their data is read through tagged `use cache` helpers. Put Cloudflare,
+   Fastly or the platform CDN in front so portfolio reads are served from the
+   edge and admin saves call `revalidatePublicContent()` to purge the tag.
+   Static public pages and `/_next/image` variants should also be edge-cached.
+2. **Horizontal application scaling.** Run multiple stateless Next.js
+   instances behind a load balancer (or a serverless platform with generous
+   concurrency). Sessions are signed cookies, not server memory, so any
+   instance can serve any request. The in-memory rate limiter is deliberately
+   process-local: replace or supplement it with edge/WAF rate limits and a
+   shared Redis store before adding instances.
+3. **Database connection pooling and read replicas.** Keep MongoDB's
+   `maxPoolSize` bounded per instance (`src/lib/db.ts`); behind a load balancer
+   the aggregate pool is `instances × maxPoolSize`, so recalculate it rather
+   than raising it blindly. Use an Atlas connection pooler or a managed proxy
+   for short-lived/serverless runtimes. Add read replicas for the public
+   portfolio and account reads, and keep privileged writes on the primary;
+   run `npm run check:indexes -- --ensure` against every cluster before promoting
+   a replica to serve reads.
+4. **Object storage for media.** Uploaded bytes already fall back to MongoDB;
+   at scale, configure Firebase/Google Cloud Storage (or S3-compatible object
+   storage) so large binaries stay out of the database working set.
+5. **Background work and queues.** Email/OTP delivery, audit fan-out and PDF
+   generation should move to a queue with bounded workers. Keep web responses
+   short even when a third-party email provider is slow.
+6. **Observability and budgets.** Track p95/p99 latency, DB pool saturation,
+   cache hit rate, replica lag, 429 rates and audit-log volume. Load-test the
+   full path with realistic concurrency; set error budgets and autoscale
+   thresholds from measured data, not from a single-box benchmark.
+
+Vertical scaling of one host buys limited headroom. The realistic answer for
+extreme traffic is the combination above: CDN reads, stateless horizontal app
+instances, pooled connections with read replicas, external object storage and
+shared rate limiting.

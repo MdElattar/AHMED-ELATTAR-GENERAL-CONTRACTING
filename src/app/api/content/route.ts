@@ -1,22 +1,17 @@
 import { NextResponse, connection } from "next/server";
-import { listProjects } from "@/lib/db";
-import {NO_STORE_HEADERS, safeLogError } from "@/lib/security/http";
-
-const CONTENT_SLUG = "__site-content__";
+import { loadPublicContent } from "@/lib/cache/public-data";
+import { PUBLIC_CACHE_HEADERS, safeLogError } from "@/lib/security/http";
 
 export async function GET() {
   await connection();
   try {
-    const record = (await listProjects()).find(
-      (project) => project.slug === CONTENT_SLUG,
-    );
-
-    return NextResponse.json(
-      { content: record?.payload ?? null },
-      { headers: NO_STORE_HEADERS },
-    );
+    const feed = await loadPublicContent();
+    return NextResponse.json(feed, { headers: PUBLIC_CACHE_HEADERS });
   } catch (error) {
     safeLogError("[content] failed to load", error);
-    return NextResponse.json({ content: null }, { headers: NO_STORE_HEADERS });
+    return NextResponse.json(
+      { content: null },
+      { headers: PUBLIC_CACHE_HEADERS },
+    );
   }
 }
