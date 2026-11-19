@@ -10,7 +10,7 @@ test("synthetic test accounts are detected without matching real domains", () =>
   expect(isSyntheticTestAccount("QA.User@Example.com")).toBe(true);
   expect(isSyntheticTestAccount(" ops@example.com ")).toBe(true);
   expect(isSyntheticTestAccount("client@company.example.com")).toBe(false);
-  expect(isSyntheticTestAccount("admin@alattar.sa")).toBe(false);
+  expect(isSyntheticTestAccount("alattar@aalattar.com")).toBe(false);
 });
 
 test("the index contract covers the paginated account directory", () => {

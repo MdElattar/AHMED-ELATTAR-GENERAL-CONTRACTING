@@ -285,8 +285,8 @@ export function renderAdminAlertEmail(alert: AdminAlert) {
               <div dir="rtl" style="color:${GOLD};font-family:${FONT_STACK};font-size:17px;font-weight:bold;line-height:1.6;text-align:right;direction:rtl">نبني ما يبقى.</div>
               <div dir="ltr" style="color:${IVORY};font-family:${FONT_STACK};font-size:11px;font-weight:bold;letter-spacing:1.2px;line-height:1.7;text-align:right;direction:ltr">WE BUILD WHAT ENDURES.</div>
               <p dir="rtl" style="margin:12px 0 0;color:${MUTED};font-family:${FONT_STACK};font-size:12px;line-height:1.9;text-align:right;direction:rtl">أربعة عقود من الهندسة الدقيقة والمشاريع الضخمة، من الرؤية الأولى إلى آخر مسمار.</p>
-              <p dir="rtl" style="margin:12px 0 0;color:${IVORY};font-family:${FONT_STACK};font-size:12px;font-weight:bold;line-height:1.8;text-align:right;direction:rtl">المقر الرئيسي · الرياض، المملكة العربية السعودية</p>
-              <p dir="ltr" style="margin:4px 0 0;color:${MUTED};font-family:${FONT_STACK};font-size:11px;line-height:1.7;text-align:right;direction:ltr">King Fahd Road, Ahmed Elattar Tower, Riyadh 12211, Saudi Arabia</p>
+              <p dir="rtl" style="margin:12px 0 0;color:${IVORY};font-family:${FONT_STACK};font-size:12px;font-weight:bold;line-height:1.8;text-align:right;direction:rtl">المقر الرئيسي · الدمام، المملكة العربية السعودية</p>
+              <p dir="ltr" style="margin:4px 0 0;color:${MUTED};font-family:${FONT_STACK};font-size:11px;line-height:1.7;text-align:right;direction:ltr">Dammam, Saudi Arabia — sole headquarters, no other branches</p>
             </td>
             <td class="stack" valign="top" width="42%" style="padding:24px 0 0 18px;text-align:right;border-right:1px solid ${surfaceTokens.line};border-right:1px solid ${tokenAlpha("fg", 0.07)}">
               <div dir="rtl" style="color:${GOLD};font-family:${FONT_STACK};font-size:11px;font-weight:bold;letter-spacing:1px;line-height:1.6;text-align:right;direction:rtl">روابط سريعة</div>

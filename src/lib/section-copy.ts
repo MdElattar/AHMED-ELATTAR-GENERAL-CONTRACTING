@@ -159,7 +159,7 @@ const ar = {
     eyebrow: "حضورنا الإقليمي",
     title: "إرث يمتد خارج الحدود.",
     description:
-      "من الرياض إلى الخليج، نعمل حيث تكون المشاريع الكبرى. اختر مدينة لاستكشاف محفظتنا ومشروعنا الأبرز فيها.",
+      "من الدمام إلى الخليج، نعمل حيث تكون المشاريع الكبرى. اختر مدينة لاستكشاف محفظتنا ومشروعنا الأبرز فيها.",
     countries: "دول",
     projects: "مشروعاً",
     value: "قيمة تعاقدية",
@@ -222,7 +222,7 @@ const ar = {
     eyebrow: "مكتب المدير التنفيذي",
     title: "استشارة تنفيذية خاصة.",
     description:
-      "احجز جلسة مباشرة مع مجلس الإدارة أو فريق القيادة في مقر الرياض. نخصص لك مستشاراً تنفيذياً وملفاً تحضيرياً قبل الموعد.",
+      "احجز جلسة مباشرة مع مجلس الإدارة أو فريق القيادة في مقر الدمام. نخصص لك مستشاراً تنفيذياً وملفاً تحضيرياً قبل الموعد.",
     formTitle: "احجز موعدك",
     formText: "اختر اليوم والقناة، وسنؤكد الموعد هاتفياً خلال ساعات العمل.",
     name: "الاسم الكامل",
@@ -240,9 +240,9 @@ const ar = {
     boardroom: "مجلس الإدارة",
     video: "اجتماع مرئي",
     site: "زيارة موقع",
-    boardroomNote: "مقر الرياض · الدور ٢٤",
+    boardroomNote: "مقر الدمام · الدور ٢٤",
     videoNote: "رابط مشفّر يُرسل بعد التأكيد",
-    siteNote: "فريق ميداني في الرياض وجدة",
+    siteNote: "فريق ميداني في الدمام",
     booked: "محجوز",
     available: "متاح",
     allBooked: "كل المواعيد محجوزة في هذا اليوم. اختر يوماً آخر أو تواصل معنا.",
@@ -255,8 +255,8 @@ const ar = {
     },
     boardroomTitle: "قاعة المجلس",
     boardroomText:
-      "جلسة مغلقة في مقر الشركة بالرياض، بحضور مدير تنفيذي ومدير مشروع. تتضمن مراجعة أولية للمخططات ونطاق الاستثمار.",
-    address: "طريق الملك فهد · الرياض",
+      "جلسة مغلقة في مقر الشركة بالدمام، بحضور مدير تنفيذي ومدير مشروع. تتضمن مراجعة أولية للمخططات ونطاق الاستثمار.",
+    address: "الدمام، المملكة العربية السعودية",
     capacity: "حتى ٨ مشاركين",
     concierge: "مكتب الاستقبال التنفيذي",
     protocol: "بروتوكول الجلسة",
@@ -278,7 +278,7 @@ const ar = {
       server_error: "تعذّر إرسال الطلب. حاول مرة أخرى.",
       generic: "تعذّر إرسال الطلب.",
     },
-    timezone: "بتوقيت الرياض",
+    timezone: "بتوقيت الدمام",
   },
   proposal: {
     eyebrow: "مستند رسمي",
@@ -322,7 +322,7 @@ const ar = {
         },
         {
           title: "حقوقك",
-          text: "يمكنك طلب الوصول إلى بياناتك أو تصحيحها أو حذفها عبر projects@alattar.sa.",
+          text: "يمكنك طلب الوصول إلى بياناتك أو تصحيحها أو حذفها عبر alattar@aalattar.com.",
         },
       ],
     },
@@ -440,7 +440,7 @@ const ar = {
       "كل خدمة تعمل ضمن منظومة واحدة: نفس المعايير، نفس الشفافية، ونفس المسؤولية من أول اجتماع إلى آخر مفتاح.",
     smartMillionSuffix: "مليون ر.س",
     navbarNavigation: "التنقل",
-    navbarLocations: "الرياض · جدة · دبي",
+    navbarLocations: "الدمام — المقر الرئيسي الوحيد",
     newsletterInvalid: "يرجى إدخال بريد إلكتروني صحيح.",
     newsletterError: "تعذر الاشتراك حالياً. حاول مرة أخرى.",
   },
@@ -585,7 +585,7 @@ const en: typeof ar = {
     qualities: {
       essential: "Essential",
       premium: "Premium",
-      signature: "Elattar signature",
+      signature: "Alattar signature",
     },
     cities: {
       riyadh: "Riyadh",
@@ -646,7 +646,7 @@ const en: typeof ar = {
     eyebrow: "Regional footprint",
     title: "A legacy beyond borders.",
     description:
-      "From Riyadh to the Gulf, we operate where the major projects are. Select a city to explore our portfolio and flagship work there.",
+      "From Dammam to the Gulf, we operate where the major projects are. Select a city to explore our portfolio and flagship work there.",
     countries: "Countries",
     projects: "Projects",
     value: "Contract value",
@@ -709,7 +709,7 @@ const en: typeof ar = {
     eyebrow: "Executive office",
     title: "A private executive consultation.",
     description:
-      "Book a direct session with the board or leadership team at our Riyadh headquarters. We assign an executive adviser and prepare a briefing file before you arrive.",
+      "Book a direct session with the board or leadership team at our Dammam headquarters. We assign an executive adviser and prepare a briefing file before you arrive.",
     formTitle: "Reserve your session",
     formText: "Choose a day and channel; the executive office confirms by phone during business hours.",
     name: "Full name",
@@ -727,9 +727,9 @@ const en: typeof ar = {
     boardroom: "Boardroom",
     video: "Video call",
     site: "Site visit",
-    boardroomNote: "Riyadh HQ · Level 24",
+    boardroomNote: "Dammam HQ · Level 24",
     videoNote: "Encrypted link after confirmation",
-    siteNote: "Field team in Riyadh & Jeddah",
+    siteNote: "Field team in Dammam",
     booked: "Booked",
     available: "Available",
     allBooked: "All slots are booked on this day. Choose another day or contact us directly.",
@@ -742,8 +742,8 @@ const en: typeof ar = {
     },
     boardroomTitle: "The boardroom",
     boardroomText:
-      "A closed session at our Riyadh headquarters with an executive director and project lead. Includes a preliminary review of drawings and investment scope.",
-    address: "King Fahd Road · Riyadh",
+      "A closed session at our Dammam headquarters with an executive director and project lead. Includes a preliminary review of drawings and investment scope.",
+    address: "Dammam, Saudi Arabia",
     capacity: "Up to 8 participants",
     concierge: "Executive concierge",
     protocol: "Session protocol",
@@ -765,7 +765,7 @@ const en: typeof ar = {
       server_error: "The request could not be sent. Try again.",
       generic: "The request could not be sent.",
     },
-    timezone: "Riyadh time",
+    timezone: "Dammam time",
   },
   proposal: {
     eyebrow: "Official document",
@@ -809,7 +809,7 @@ const en: typeof ar = {
         },
         {
           title: "Your rights",
-          text: "You may request access, correction, or deletion of your data by contacting projects@alattar.sa.",
+          text: "You may request access, correction, or deletion of your data by contacting alattar@aalattar.com.",
         },
       ],
     },
@@ -820,7 +820,7 @@ const en: typeof ar = {
       sections: [
         {
           title: "Website purpose",
-          text: "This website presents the projects and services of Ahmed Elattar General Contracting Co. Its content is not a binding contractual offer until a separate agreement is signed.",
+          text: "This website presents the projects and services of Ahmed Alattar General Contracting Co. Its content is not a binding contractual offer until a separate agreement is signed.",
         },
         {
           title: "Estimates",
@@ -839,13 +839,13 @@ const en: typeof ar = {
     back: "Back to homepage",
   },
   smartConsultant: {
-    name: "Elattar AI",
+    name: "Alattar AI",
     role: "Smart project consultant",
     online: "Online",
-    open: "Open Elattar AI",
+    open: "Open Alattar AI",
     close: "Close consultant",
     intro:
-      "Welcome. I am Elattar AI — your first-pass project consultant. Three quick questions and I will issue a preliminary feasibility read built on our portfolio data since 1987.",
+      "Welcome. I am Alattar AI — your first-pass project consultant. Three quick questions and I will issue a preliminary feasibility read built on our portfolio data since 1987.",
     askType: "What type of project are you studying?",
     askArea: "Excellent. What is the approximate built area (m²)?",
     areaHint: "Drag the slider or type the value directly",
@@ -927,7 +927,7 @@ const en: typeof ar = {
       "Every service runs inside one system: the same standards, the same transparency, and the same accountability from first meeting to final key.",
     smartMillionSuffix: "M SAR",
     navbarNavigation: "Navigation",
-    navbarLocations: "Riyadh · Jeddah · Dubai",
+    navbarLocations: "Dammam — Sole Headquarters",
     newsletterInvalid: "Please enter a valid email address.",
     newsletterError: "Could not subscribe right now. Please try again.",
   },

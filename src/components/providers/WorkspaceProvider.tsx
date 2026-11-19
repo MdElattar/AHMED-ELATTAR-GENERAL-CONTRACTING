@@ -105,8 +105,8 @@ const STORAGE_KEY = "ahmed-elattar-workspace-v2";
 
 const defaultContent: SiteContent = {
   heroEyebrow: L(
-    "منذ ١٩٨٧ · الرياض · المملكة العربية السعودية",
-    "Since 1987 · Riyadh · Saudi Arabia",
+    "منذ ١٩٨٧ · الدمام · المملكة العربية السعودية",
+    "Since 1987 · Dammam · Saudi Arabia",
   ),
   heroTitleTop: L("نبني", "We build"),
   heroTitleAccent: L("ما يبقى.", "what endures."),

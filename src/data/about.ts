@@ -50,8 +50,8 @@ export const milestones: Milestone[] = [
     year: "1987",
     title: L("التأسيس", "Founded"),
     text: L(
-      "ورشة صغيرة في الرياض، وعقد واحد، ومبدأ واحد: الإتقان قبل التوسع.",
-      "A small workshop in Riyadh, one contract, and one principle: mastery before growth.",
+      "ورشة صغيرة في الدمام، وعقد واحد، ومبدأ واحد: الإتقان قبل التوسع.",
+      "A small workshop in Dammam, one contract, and one principle: mastery before growth.",
     ),
   },
   {
@@ -74,8 +74,8 @@ export const milestones: Milestone[] = [
     year: "2012",
     title: L("المشروع رقم ١٠٠", "Project 100"),
     text: L(
-      "إنجاز المشروع المئة، ودخول السوق الإماراتية عبر مكتب دبي.",
-      "Completion of our 100th project, and entry into the UAE market through our Dubai office.",
+      "إنجاز المشروع المئة، ودخول السوق الإماراتية عبر شريك تنفيذي إقليمي.",
+      "Completion of our 100th project, and entry into the UAE market through a regional delivery partner.",
     ),
   },
   {

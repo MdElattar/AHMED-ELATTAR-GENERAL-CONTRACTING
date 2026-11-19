@@ -1,4 +1,4 @@
-# 🏗️ Ahmed Elattar General Contracting Co.
+# 🏗️ Ahmed Alattar General Contracting Co.
 ### شركة أحمد العطار للمقاولات العامة
 
 <p align="center">
@@ -16,13 +16,13 @@
 > **"Innovating Construction... Building a Legacy That Endures"**  
 > *نبتكر في البناء.. لنترك أثراً يخلده الزمن*
 
-An ultra-luxurious, Arab-first (RTL) bilingual marketing experience, procedural 3D heavy-equipment kinematics engine, real-time client transparency portal, and administrative control center crafted exclusively for **Ahmed Elattar General Contracting Company**.
+An ultra-luxurious, Arab-first (RTL) bilingual marketing experience, procedural 3D heavy-equipment kinematics engine, real-time client transparency portal, and administrative control center crafted exclusively for **Ahmed Alattar General Contracting Company**.
 
 ---
 
 ## 🌟 Executive Overview
 
-**Ahmed Elattar General Contracting Co.** sets a new digital standard for flagship mega-construction enterprises across the Arab world. Moving beyond static corporate websites, this platform immerses visitors in a cinematic, scroll-driven web experience. Powered by procedural WebGL 3D rendering (Three.js / R3F) synchronized seamlessly with GSAP ScrollTrigger timelines, users interactively explore architectural engineering milestones, equipment mechanics, and structural progress.
+**Ahmed Alattar General Contracting Co.** sets a new digital standard for flagship mega-construction enterprises across the Arab world. Moving beyond static corporate websites, this platform immerses visitors in a cinematic, scroll-driven web experience. Powered by procedural WebGL 3D rendering (Three.js / R3F) synchronized seamlessly with GSAP ScrollTrigger timelines, users interactively explore architectural engineering milestones, equipment mechanics, and structural progress.
 
 The system bridges high-end architectural aesthetics with full enterprise utilities, including an authenticated Client Progress & Invoicing Portal (`/portal`), an Administrative Business Control Center (`/admin`), and an instant zero-flicker i18n localization pipeline.
 

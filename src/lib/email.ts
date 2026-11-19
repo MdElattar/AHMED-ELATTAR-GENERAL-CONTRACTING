@@ -42,7 +42,7 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
     input.from?.trim() ||
     process.env.OTP_FROM_EMAIL?.trim() ||
     process.env.MAIL_FROM_EMAIL?.trim() ||
-    "Ahmed Elattar <no-reply@alattar.sa>";
+    "Ahmed Alattar <alattar@aalattar.com>";
 
   if (!apiKey) {
     console.error(`[email] Resend is not configured; "${input.subject}" was not sent.`);
@@ -123,14 +123,14 @@ function template(
   return {
     subject: isDelegation
       ? `Admin access verification code: ${code}`
-      : `Your Elattar verification code: ${code}`,
+      : `Your Alattar verification code: ${code}`,
     text: isDelegation
-      ? `A request was made to grant admin access to ${target || "the specified account"} on the Ahmed Elattar platform. Your verification code is ${code}. It expires in ${minutes} minutes. If you did not request this, ignore this email and review account security.`
+      ? `A request was made to grant admin access to ${target || "the specified account"} on the Ahmed Alattar platform. Your verification code is ${code}. It expires in ${minutes} minutes. If you did not request this, ignore this email and review account security.`
       : `Your verification code is ${code}. It expires in ${minutes} minutes. If you did not request a password reset, ignore this email.`,
     html: `
       <div style="background:${surfaceTokens.bg};padding:40px 20px;font-family:Arial,Helvetica,sans-serif;color:${surfaceTokens.fg}">
         <div style="max-width:520px;margin:0 auto;border:1px solid ${tokenAlpha("accentDeep", 0.25)};background:${surfaceTokens.surface};padding:36px">
-          <img src="${BRAND_LOGO_URL}" alt="Ahmed Elattar General Contracting" width="230" style="display:block;height:auto;max-width:230px;margin:0 0 22px" />
+          <img src="${BRAND_LOGO_URL}" alt="Ahmed Alattar General Contracting" width="230" style="display:block;height:auto;max-width:230px;margin:0 0 22px" />
           <h1 style="margin:18px 0 0;font-size:26px;font-weight:600">${isDelegation ? "Confirm admin delegation" : "Reset your password"}</h1>
           <p style="margin:14px 0 0;color:${tokenAlpha("fg", 0.62)};font-size:14px;line-height:1.8">${isDelegation ? `A request was made to grant admin access to <strong dir="ltr">${target}</strong>. Enter the code below to approve it. It is valid for ${minutes} minutes and can be used once.` : `Enter the code below to complete the reset. It is valid for ${minutes} minutes and can be used once.`}</p>
           <div style="margin:28px 0;padding:20px;text-align:center;border:1px solid ${tokenAlpha("accentDeep", 0.35)};background:${surfaceTokens.bg}">

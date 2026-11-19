@@ -1,10 +1,10 @@
-# Ahmed Elattar General Contracting — Digital Platform
+# Ahmed Alattar General Contracting — Digital Platform
 
 ## نظرة عامة تنفيذية / Executive Portfolio Overview
 
 > **Arabic-first. Security-led. Built for enterprise construction operations.**
 
-This document is the portfolio companion for the Ahmed Elattar General Contracting Co. web platform. It combines the public luxury experience, the client transparency portal, and the independent administrative control center into one production-grade application. The screenshots in this folder are generated automatically from the running product — not mocked designs — using the Playwright suite in `tests/portfolio-showcase.spec.ts`.
+This document is the portfolio companion for the Ahmed Alattar General Contracting Co. web platform. It combines the public luxury experience, the client transparency portal, and the independent administrative control center into one production-grade application. The screenshots in this folder are generated automatically from the running product — not mocked designs — using the Playwright suite in `tests/portfolio-showcase.spec.ts`.
 
 > **Capture policy:** every asset is forced to **English (LTR)** and captured from a **16:9 landscape viewport**. Standard views use **1920 × 1080** at `deviceScaleFactor: 2` → **3840 × 2160 (4K)**; the full admin table uses **2560 × 1440** → **5120 × 2880**, and the compact status-filter view uses **1600 × 900** → **3200 × 1800**. The generator asserts locale, direction, viewport ratio, PNG signature, and exported image ratio before writing each file.
 
@@ -28,7 +28,7 @@ This document is the portfolio companion for the Ahmed Elattar General Contracti
 
 ## 2. Executive summary (English)
 
-A unified digital platform for Ahmed Elattar General Contracting Co. that turns complex mega-project delivery into a transparent, secure, and premium experience for three audiences: the public, assigned clients, and internal administrators.
+A unified digital platform for Ahmed Alattar General Contracting Co. that turns complex mega-project delivery into a transparent, secure, and premium experience for three audiences: the public, assigned clients, and internal administrators.
 
 **Business value:**
 - **Client confidence:** a private portal with live milestones, documents, invoices, financial tracking, and cryptographically digested contract sign-off.

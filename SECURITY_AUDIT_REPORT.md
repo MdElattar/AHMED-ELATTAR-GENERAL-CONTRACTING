@@ -51,8 +51,8 @@ Automated verification is green:
 ### 2. Zero client-side secret exposure
 
 - `.gitignore` ignores all `.env*` files except `.env.example`.
-- `.env.example` contains placeholders only, including:
-  - `ADMIN_EMAIL=admin@example.com`
+- `.env.example` contains safe defaults and placeholders only, including:
+  - `ADMIN_EMAIL=alattar@aalattar.com`
   - `ADMIN_PASSWORD=replace-with-a-long-random-password`
   - `PORTAL_DEMO_CLIENT_EMAIL=client@example.com`
   - `TRUST_PROXY_HEADERS=false`

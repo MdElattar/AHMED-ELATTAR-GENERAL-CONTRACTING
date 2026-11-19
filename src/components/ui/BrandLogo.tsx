@@ -39,11 +39,11 @@ export function BrandLogo({
   return (
     <span
       className={cn("flex min-h-[44px] min-w-0 items-center overflow-visible", collapsed ? "gap-0" : "gap-3", className)}
-      aria-label={isArabic ? "أحمد العطار للمقاولات العامة" : "Ahmed Elattar General Contracting"}
+      aria-label={isArabic ? "أحمد العطار للمقاولات العامة" : "Ahmed Alattar General Contracting"}
     >
       <Image
         src="/brand/logo-mark.svg"
-        alt={variant === "mark" || collapsed ? (isArabic ? "أحمد العطار" : "Ahmed Elattar") : ""}
+        alt={variant === "mark" || collapsed ? (isArabic ? "أحمد العطار" : "Ahmed Alattar") : ""}
         width={390}
         height={328}
         priority={priority}
@@ -65,7 +65,7 @@ export function BrandLogo({
               isArabic ? "text-[1.1rem] sm:text-[1.3rem]" : "text-[0.82rem] tracking-[0.16em] sm:text-[0.92rem] sm:tracking-[0.18em]",
             )}
           >
-            {isArabic ? "أحمد العطار" : "AHMED ELATTAR"}
+            {isArabic ? "أحمد العطار" : "AHMED ALATTAR"}
           </span>
           <span
             className={cn(

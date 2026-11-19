@@ -6,7 +6,7 @@ import { nextConsultationDates } from "@/lib/consultation";
 export const metadata: Metadata = {
   title: "استشارة تنفيذية | مكتب المدير التنفيذي",
   description:
-    "احجز جلسة استشارية خاصة مع قيادة أحمد العطار في مقر الرياض، أو عبر اجتماع مرئي أو زيارة موقع.",
+    "احجز جلسة استشارية خاصة مع قيادة أحمد العطار في مقر الدمام، أو عبر اجتماع مرئي أو زيارة موقع.",
   alternates: { canonical: "/consultation" },
 };
 

@@ -1,7 +1,7 @@
 /**
  * Shared preliminary estimation model.
  *
- * The same rates power the public cost estimator and the "Elattar AI"
+ * The same rates power the public cost estimator and the "Alattar AI"
  * consultant widget, so both surfaces quote identical numbers from a single
  * source of truth. Values are SAR per m² for built area and m² per month of
  * productivity, calibrated against the company's delivered portfolio.

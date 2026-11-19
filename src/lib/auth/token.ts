@@ -158,7 +158,7 @@ export function primaryAdminEmail() {
   // In production an unset ADMIN_EMAIL means nobody holds the super-admin
   // role; fail closed instead of granting it to a well-known address.
   if (!configured && process.env.NODE_ENV === "production") return "";
-  return configured || "alattar@mohamedaelattar.com";
+  return configured || "alattar@aalattar.com";
 }
 
 export function isPrimaryAdminEmail(email: string) {

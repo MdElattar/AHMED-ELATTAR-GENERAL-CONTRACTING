@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
   }
 
   const { name, email, phone, password } = parsed.data;
-  const company = parsed.data.company || "Ahmed Elattar Client";
+  const company = parsed.data.company || "Ahmed Alattar Client";
 
   const existing = await getUserByEmail(email);
   if (existing) {

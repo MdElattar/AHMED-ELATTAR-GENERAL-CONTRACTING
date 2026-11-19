@@ -11,7 +11,7 @@ import {
 export const WEBAUTHN_COOKIE = "alattar_webauthn";
 export const WEBAUTHN_CHALLENGE_TTL_SECONDS = 5 * 60;
 
-export const RP_NAME = "Ahmed Elattar General Contracting";
+export const RP_NAME = "Ahmed Alattar General Contracting";
 
 export type WebAuthnChallengeKind = AuthChallengeKind;
 

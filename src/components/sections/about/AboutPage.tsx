@@ -72,12 +72,12 @@ export function AboutPage() {
                     ع
                   </span>
                   <span className="mt-4 text-[0.55rem] uppercase tracking-[0.3em] text-ivory/50">
-                    Ahmed Elattar · 1987
+                    Ahmed Alattar · 1987
                   </span>
                 </div>
                 <div className="absolute inset-x-6 bottom-6 flex items-end justify-between gap-4">
                   <span className="text-[0.52rem] uppercase tracking-[0.16em] text-ivory/40">
-                    Riyadh · Saudi Arabia
+                    Dammam · Saudi Arabia
                   </span>
                   <span className="h-10 w-px bg-gold/40" />
                 </div>

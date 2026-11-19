@@ -1,6 +1,6 @@
 # Production deployment runbook
 
-This is the release checklist for Ahmed Elattar General Contracting. The app is a
+This is the release checklist for Ahmed Alattar General Contracting. The app is a
 Next.js 16 application; the reference platform is Vercel with MongoDB Atlas, but
 any Node host that serves the built output with the same environment works.
 

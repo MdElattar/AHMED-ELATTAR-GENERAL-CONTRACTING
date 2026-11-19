@@ -54,14 +54,14 @@ function calendarFile(confirmation: Confirmation, title: string) {
   return [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Ahmed Elattar//Consultation//EN",
+    "PRODID:-//Ahmed Alattar//Consultation//EN",
     "BEGIN:VEVENT",
-    `UID:${confirmation.reference}@alattar.sa`,
+    `UID:${confirmation.reference}@aalattar.com`,
     `DTSTAMP:${stamp}`,
     `DTSTART;TZID=Asia/Riyadh:${date}T${String(hour).padStart(2, "0")}${String(minute).padStart(2, "0")}00`,
     `DTEND;TZID=Asia/Riyadh:${date}T${endHour}${String(minute).padStart(2, "0")}00`,
     `SUMMARY:${title}`,
-    "LOCATION:Ahmed Elattar HQ, King Fahd Road, Riyadh",
+    "LOCATION:Ahmed Alattar HQ, Dammam, Saudi Arabia",
     `DESCRIPTION:Reference ${confirmation.reference}`,
     "END:VEVENT",
     "END:VCALENDAR",
@@ -447,9 +447,9 @@ export function ConsultationPage({ dates }: { dates: ConsultationDay[] }) {
               </p>
               <dl className="relative mt-6 space-y-3 border-t border-white/10 pt-5">
                 {[
-                  [c.address, "King Fahd Road, Riyadh"],
+                  [c.address, "Dammam, Saudi Arabia"],
                   [c.capacity, "8"],
-                  [c.concierge, "executive@alattar.sa"],
+                  [c.concierge, "alattar@aalattar.com"],
                 ].map(([label, value]) => (
                   <div key={label} className="flex items-center justify-between gap-4">
                     <dt className="text-[0.52rem] uppercase tracking-[0.14em] text-ivory/40">{label}</dt>

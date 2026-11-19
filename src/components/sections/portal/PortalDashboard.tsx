@@ -28,7 +28,7 @@ type Tab = "overview" | "documents" | "invoices";
 
 function downloadRecord(doc: PortalDocument, projectName: string) {
   const content = [
-    "AHMED ELATTAR GENERAL CONTRACTING CO.",
+    "AHMED ALATTAR GENERAL CONTRACTING CO.",
     "PROJECT DOCUMENT RECORD",
     "",
     `Project: ${projectName}`,

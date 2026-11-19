@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
       headers: {
         ...NO_STORE_HEADERS,
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="Ahmed-Elattar-Proposal-${reference}.pdf"`,
+        "Content-Disposition": `attachment; filename="Ahmed-Alattar-Proposal-${reference}.pdf"`,
         "Content-Length": String(bytes.byteLength),
         "X-Content-Type-Options": "nosniff",
         "X-Proposal-Reference": reference,

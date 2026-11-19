@@ -62,7 +62,7 @@ const copy = {
 
 function downloadInvoice(invoice: PortalInvoice, projectName: string) {
   const content = [
-    "AHMED ELATTAR GENERAL CONTRACTING CO.",
+    "AHMED ALATTAR GENERAL CONTRACTING CO.",
     "PAYMENT RECORD",
     "",
     `Project: ${projectName}`,

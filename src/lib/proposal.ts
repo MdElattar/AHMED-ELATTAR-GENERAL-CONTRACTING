@@ -239,7 +239,7 @@ function drawCover(
 
   drawBrandMark(page, MARGIN, PAGE_HEIGHT - 108, 0.1);
 
-  page.drawText("AHMED ELATTAR", {
+  page.drawText("AHMED ALATTAR", {
     x: MARGIN + 48,
     y: PAGE_HEIGHT - 92,
     size: 11,
@@ -424,7 +424,7 @@ function drawSummaryPage(
   rule(page, MARGIN, PAGE_HEIGHT - 94, PAGE_WIDTH - MARGIN * 2);
 
   const area = Math.round(input.estimateInput.area).toLocaleString("en-US");
-  const summary = `This proposal sets out the preliminary commercial and technical framework for ${input.project.title.en || "the proposed engagement"} at ${input.project.location.en || "the project site"}. The indicative programme covers approximately ${area} m² of built area and is calibrated against Ahmed Elattar's delivered portfolio, current Riyadh-market rates, and the selected ${input.estimateInput.quality} specification.`;
+  const summary = `This proposal sets out the preliminary commercial and technical framework for ${input.project.title.en || "the proposed engagement"} at ${input.project.location.en || "the project site"}. The indicative programme covers approximately ${area} m² of built area and is calibrated against Ahmed Alattar's delivered portfolio, current Dammam-market rates, and the selected ${input.estimateInput.quality} specification.`;
 
   let y = drawWrapped(page, summary, {
     x: MARGIN,
@@ -677,7 +677,7 @@ function drawProgrammePage(
 
   const signatureY = 188;
   rule(page, MARGIN, signatureY + 52, PAGE_WIDTH - MARGIN * 2);
-  page.drawText("FOR AHMED ELATTAR GENERAL CONTRACTING", {
+  page.drawText("FOR AHMED ALATTAR GENERAL CONTRACTING", {
     x: MARGIN,
     y: signatureY + 34,
     size: 7,
@@ -748,9 +748,9 @@ export async function buildProposalPdf(input: ProposalInput): Promise<Uint8Array
   const arabic = await loadArabicFont();
 
   doc.setTitle(`Project proposal · ${input.project.title.en || input.reference}`);
-  doc.setAuthor("Ahmed Elattar General Contracting Co.");
+  doc.setAuthor("Ahmed Alattar General Contracting Co.");
   doc.setSubject("Preliminary project proposal");
-  doc.setProducer("Ahmed Elattar Digital Studio");
+  doc.setProducer("Ahmed Alattar Digital Studio");
   doc.setCreationDate(input.issuedAt);
 
   const cover = doc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);

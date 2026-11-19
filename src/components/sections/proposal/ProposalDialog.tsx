@@ -63,7 +63,7 @@ export function ProposalDialog({
       const blob = await response.blob();
       const disposition = response.headers.get("Content-Disposition") ?? "";
       const filename =
-        disposition.match(/filename="([^"]+)"/)?.[1] ?? `Ahmed-Elattar-Proposal-${Date.now()}.pdf`;
+        disposition.match(/filename="([^"]+)"/)?.[1] ?? `Ahmed-Alattar-Proposal-${Date.now()}.pdf`;
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
       anchor.href = url;

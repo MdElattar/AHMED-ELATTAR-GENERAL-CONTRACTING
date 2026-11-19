@@ -32,7 +32,7 @@ const BUDGET_RANGE: Record<BudgetBand, { min: number; max: number }> = {
 const THINKING_MS = 850;
 
 /**
- * "Elattar AI" — structured-logic consultant widget.
+ * "Alattar AI" — structured-logic consultant widget.
  *
  * A guided chat surface for prospective clients: project type, built area and
  * budget band feed the shared estimation engine (the same model behind the

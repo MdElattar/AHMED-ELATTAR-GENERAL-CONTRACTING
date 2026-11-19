@@ -226,7 +226,7 @@ export function ContactPage() {
         </div>
       </section>
 
-      {/* "Elattar AI" floating consultant — structured feasibility guidance
+      {/* "Alattar AI" floating consultant — structured feasibility guidance
           before the visitor commits to the full RFQ form. */}
       <SmartConsultant />
     </>

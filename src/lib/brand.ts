@@ -3,7 +3,7 @@ import { surfaceTokens } from "@/lib/design/tokens";
 /** Canonical brand facts shared by metadata, PWA manifest and install UI. */
 export const BRAND = {
   nameAr: "شركة أحمد العطار للمقاولات العامة",
-  nameEn: "Ahmed Elattar General Contracting Co.",
+  nameEn: "Ahmed Alattar General Contracting Co.",
   shortAr: "العطار",
   shortEn: "Alattar",
   siteUrl: "https://alattar.sa",

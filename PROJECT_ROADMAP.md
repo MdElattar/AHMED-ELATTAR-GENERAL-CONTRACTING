@@ -1,4 +1,4 @@
-# PROJECT ROADMAP — Ahmed Elattar General Contracting Co.
+# PROJECT ROADMAP — Ahmed Alattar General Contracting Co.
 
 > Living production tracker for the definitive platform overhaul.
 > Legend: `- [x]` shipped & verified · `- [ ]` pending · `- [~]` in progress
@@ -151,7 +151,7 @@ sign-in without an admin session, while `/api/content` and `/` return 200.
 | `WEBAUTHN_RP_ID` | production | Bare production hostname for passkeys (e.g. `alattar.sa`) |
 | `NEXT_PUBLIC_SITE_URL` | production | Canonical `https://` origin for links and redirects |
 | `RESEND_API_KEY` | production | OTP email delivery |
-| `OTP_FROM_EMAIL` | production | Verified sender, e.g. `no-reply@alattar.sa` |
+| `OTP_FROM_EMAIL` | production | Verified sender, e.g. `alattar@aalattar.com` |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | production | First admin bootstrap (hashed by `npm run seed`) |
 | `ADMIN_ALERT_EMAIL` | optional | Recipient for instant admin email alerts |
 | `WHATSAPP_WEBHOOK_URL` | optional | Generic webhook alert transport |

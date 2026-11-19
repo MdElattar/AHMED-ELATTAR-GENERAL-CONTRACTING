@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
         target = await createUser({
           email: grant.targetEmail,
           name: grant.name,
-          company: grant.company || "Ahmed Elattar General Contracting",
+          company: grant.company || "Ahmed Alattar General Contracting",
           ...(grant.phone ? { phone: grant.phone } : {}),
           passwordHash: grant.passwordHash,
           role: "admin",

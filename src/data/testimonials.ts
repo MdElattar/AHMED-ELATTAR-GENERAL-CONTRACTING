@@ -14,7 +14,7 @@ export const testimonials: Testimonial[] = [
   {
     quote: L(
       "ما يميز أحمد العطار ليس ما يبنونه، بل كيف يبنونه. كل اجتماع كان واضحاً، كل رقم كان موثقاً، وكل وعد كان له تاريخ. برج الشفق سُلّم قبل الموعد، وبجودة تفوق ما تخيلناه.",
-      "What sets Ahmed Elattar apart is not what they build, but how they build it. Every meeting was clear, every number documented, and every promise had a date. Aurora Tower was handed over ahead of schedule, at a quality beyond what we imagined.",
+      "What sets Ahmed Alattar apart is not what they build, but how they build it. Every meeting was clear, every number documented, and every promise had a date. Aurora Tower was handed over ahead of schedule, at a quality beyond what we imagined.",
     ),
     name: L("م. فيصل الراشد", "Eng. Faisal Al-Rashed"),
     role: L("الرئيس التنفيذي", "Chief Executive Officer"),
@@ -26,7 +26,7 @@ export const testimonials: Testimonial[] = [
   {
     quote: L(
       "العمل داخل موقع تراثي لا يحتمل الخطأ. أظهر فريق أحمد العطار حساسية نادرة للتفاصيل، واحتراماً للمكان، وقدرة على الجمع بين الحداثة والهوية. فندق الحِجر سيكون علامة في الضيافة السعودية.",
-      "Working within a heritage site leaves no room for error. The Ahmed Elattar team showed rare sensitivity to detail, respect for place, and the ability to bridge modernity and identity. Al Hijr will be a landmark in Saudi hospitality.",
+      "Working within a heritage site leaves no room for error. The Ahmed Alattar team showed rare sensitivity to detail, respect for place, and the ability to bridge modernity and identity. Al Hijr will be a landmark in Saudi hospitality.",
     ),
     name: L("سارة المطيري", "Sarah Al-Mutairi"),
     role: L("مديرة المشاريع", "Director of Projects"),
@@ -50,7 +50,7 @@ export const testimonials: Testimonial[] = [
   {
     quote: L(
       "في مشروع بحجم واحة النخيل، التفاصيل هي كل شيء. أحمد العطار لم يكتفِ بالتنفيذ، بل حسّن التصميم أثناء العمل لتقليل الهدر وتسريع الجدول. النتيجة مجتمع يستحق أن يُعاش فيه.",
-      "On a project the size of Palm Oasis, details are everything. Ahmed Elattar did not just execute; they improved the design as they built to reduce waste and accelerate the programme. The result is a community worth living in.",
+      "On a project the size of Palm Oasis, details are everything. Ahmed Alattar did not just execute; they improved the design as they built to reduce waste and accelerate the programme. The result is a community worth living in.",
     ),
     name: L("د. نورة الصباح", "Dr. Noura Al-Sabah"),
     role: L("مديرة التطوير", "Development Director"),

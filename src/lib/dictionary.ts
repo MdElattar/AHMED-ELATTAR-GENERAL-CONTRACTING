@@ -55,7 +55,7 @@ const ar = {
     required: "مطلوب",
     scroll: "مرّر",
     established: "تأسست عام ١٩٨٧",
-    location: "الرياض، المملكة العربية السعودية",
+    location: "الدمام، المملكة العربية السعودية",
     contactUs: "تواصل معنا",
     startProject: "ابدأ مشروعك",
     viewFullPage: "عرض الصفحة الكاملة",
@@ -78,7 +78,7 @@ const ar = {
     system: "حسب النظام",
   },
   hero: {
-    eyebrow: "منذ ١٩٨٧ · الرياض · المملكة العربية السعودية",
+    eyebrow: "منذ ١٩٨٧ · الدمام · المملكة العربية السعودية",
     titleTop: "نبني",
     titleAccent: "ما يبقى.",
     description:
@@ -260,7 +260,7 @@ const ar = {
     primary: "اطلب عرض سعر",
     secondary: "تحدث مع فريقنا",
     phone: "+966 11 482 1987",
-    email: "projects@alattar.sa",
+    email: "alattar@aalattar.com",
   },
   footer: {
     tagline: "نبني ما يبقى.",
@@ -277,10 +277,7 @@ const ar = {
     rights: "جميع الحقوق محفوظة.",
     privacy: "سياسة الخصوصية",
     terms: "الشروط والأحكام",
-    offices: "مكاتبنا",
-    riyadh: "الرياض — المقر الرئيسي",
-    jeddah: "جدة",
-    dubai: "دبي",
+    headquarters: "مقرنا الرئيسي",
     backToTop: "إلى الأعلى",
     license: "سجل تجاري ١٠١٠٤٨٢١٩٧ · تصنيف المقاولين: الدرجة الأولى",
   },
@@ -363,7 +360,7 @@ const ar = {
     founderEyebrow: "رؤية المؤسس",
     founderTitle: "بدأنا بورشة صغيرة. وهدفنا لم يكن صغيراً.",
     founderP1:
-      "في عام ١٩٨٧، وقف أحمد العطار أمام ورشة صغيرة في الرياض، وبيده عقد واحد ومبدأ واحد: أن يُنجز العمل كما لو كان سيحمل اسمه للأبد.",
+      "في عام ١٩٨٧، وقف أحمد العطار أمام ورشة صغيرة في الدمام، وبيده عقد واحد ومبدأ واحد: أن يُنجز العمل كما لو كان سيحمل اسمه للأبد.",
     founderP2:
       "اليوم، أصبحت شركة أحمد العطار من أكبر بيوت المقاولات في المملكة، لكن المبدأ لم يتغيّر. ما زلنا نقرأ المخططات بأنفسنا، ونزور المواقع، ونسأل الأسئلة التي لا يسألها أحد.",
     founderP3:
@@ -421,20 +418,16 @@ const ar = {
       "أخبرنا عن رؤيتك. سنعود إليك بخطة واضحة، وجدول زمني، وفريق يعرف كيف يُنجز.",
     infoTitle: "معلومات التواصل",
     headquarters: "المقر الرئيسي",
-    address: "طريق الملك فهد، برج أحمد العطار، الرياض ١٢٢١١، المملكة العربية السعودية",
+    address: "الدمام، المملكة العربية السعودية — المقر الرئيسي الوحيد، دون فروع أخرى",
     phone: "+966 11 482 1987",
-    email: "projects@alattar.sa",
+    email: "alattar@aalattar.com",
     hours: "الأحد – الخميس، ٨:٠٠ ص – ٦:٠٠ م",
     procurementTitle: "المناقصات والمزايدة",
     procurementText:
       "ندعو المقاولين والموردين المعتمدين للتسجيل في قائمة الشركاء. نراجع كل طلب خلال ٥ أيام عمل.",
-    procurementEmail: "tenders@alattar.sa",
-    officesTitle: "مكاتبنا",
-    offices: [
-      { city: "الرياض", detail: "المقر الرئيسي · برج أحمد العطار، طريق الملك فهد" },
-      { city: "جدة", detail: "مكتب الغربية · طريق الأمير سلطان" },
-      { city: "دبي", detail: "مكتب الخليج · مركز دبي المالي العالمي" },
-    ],
+    procurementEmail: "alattar@aalattar.com",
+    officesTitle: "مقرنا الرئيسي",
+    offices: [{ city: "الدمام", detail: "المقر الرئيسي الوحيد · لا فروع أخرى" }],
     form: {
       title: "طلب عرض سعر",
       subtitle: "أكمل التفاصيل، وأرفق أي مخططات أو مستندات. كل المعلومات تُعامل بسرية تامة.",
@@ -692,9 +685,9 @@ const ar = {
 
 const en: typeof ar = {
   meta: {
-    title: "Ahmed Elattar General Contracting Co. | We build what endures",
+    title: "Ahmed Alattar General Contracting Co. | We build what endures",
     description:
-      "Ahmed Elattar General Contracting Co. — four decades of precise engineering and monumental projects across Saudi Arabia. From first vision to final bolt.",
+      "Ahmed Alattar General Contracting Co. — four decades of precise engineering and monumental projects across Saudi Arabia. From first vision to final bolt.",
   },
   nav: {
     home: "Home",
@@ -736,7 +729,7 @@ const en: typeof ar = {
     required: "Required",
     scroll: "Scroll",
     established: "Established 1987",
-    location: "Riyadh, Saudi Arabia",
+    location: "Dammam, Saudi Arabia",
     contactUs: "Contact us",
     startProject: "Start a project",
     viewFullPage: "View full page",
@@ -759,7 +752,7 @@ const en: typeof ar = {
     system: "System",
   },
   hero: {
-    eyebrow: "Since 1987 · Riyadh · Saudi Arabia",
+    eyebrow: "Since 1987 · Dammam · Saudi Arabia",
     titleTop: "We build",
     titleAccent: "what endures.",
     description:
@@ -783,7 +776,7 @@ const en: typeof ar = {
     body2:
       "We do not sell concrete and steel. We translate visions into tangible reality — with engineering standards that accept no compromise, and a team that sees every project as a personal signature.",
     quote: "We build as if our name will be carved into every wall.",
-    signature: "Eng. Ahmed Elattar",
+    signature: "Eng. Ahmed Alattar",
     role: "Founder & Chairman",
     link: "Discover our legacy",
   },
@@ -941,7 +934,7 @@ const en: typeof ar = {
     primary: "Request a quote",
     secondary: "Talk to our team",
     phone: "+966 11 482 1987",
-    email: "projects@alattar.sa",
+    email: "alattar@aalattar.com",
   },
   footer: {
     tagline: "We build what endures.",
@@ -958,10 +951,7 @@ const en: typeof ar = {
     rights: "All rights reserved.",
     privacy: "Privacy policy",
     terms: "Terms & conditions",
-    offices: "Our offices",
-    riyadh: "Riyadh — Headquarters",
-    jeddah: "Jeddah",
-    dubai: "Dubai",
+    headquarters: "Our headquarters",
     backToTop: "Back to top",
     license: "CR 1010482197 · Contractor Classification: Grade One",
   },
@@ -969,7 +959,7 @@ const en: typeof ar = {
     eyebrow: "The portfolio",
     title: "Work that speaks for itself.",
     description:
-      "From soaring towers to national infrastructure — every project carries the Ahmed Elattar signature, and one standard that never changes.",
+      "From soaring towers to national infrastructure — every project carries the Ahmed Alattar signature, and one standard that never changes.",
     filters: {
       all: "All",
       commercial: "Commercial",
@@ -1044,14 +1034,14 @@ const en: typeof ar = {
     founderEyebrow: "The founder's vision",
     founderTitle: "We started in a small workshop. Our ambition was never small.",
     founderP1:
-      "In 1987, Ahmed Elattar stood in front of a small workshop in Riyadh with one contract and one principle: do the work as if it will carry your name forever.",
+      "In 1987, Ahmed Alattar stood in front of a small workshop in Dammam with one contract and one principle: do the work as if it will carry your name forever.",
     founderP2:
-      "Today, Ahmed Elattar is one of the Kingdom's leading contracting houses, but the principle has not changed. We still read the drawings ourselves, visit the sites, and ask the questions no one else asks.",
+      "Today, Ahmed Alattar is one of the Kingdom's leading contracting houses, but the principle has not changed. We still read the drawings ourselves, visit the sites, and ask the questions no one else asks.",
     founderP3:
       "We do not build only for the schedule. We build for the person who will stand fifty years from now before what we made and say: this was done with mastery.",
     founderQuote:
       "A name built over forty years can collapse in a single decision. That is why we never rush.",
-    founderSignature: "Eng. Ahmed Elattar",
+    founderSignature: "Eng. Ahmed Alattar",
     founderRole: "Founder & Chairman",
     valuesTitle: "Values we never trade.",
     valuesEyebrow: "What we believe",
@@ -1103,20 +1093,16 @@ const en: typeof ar = {
       "Tell us about your vision. We will come back to you with a clear plan, a timeline, and a team that knows how to deliver.",
     infoTitle: "Contact information",
     headquarters: "Headquarters",
-    address: "King Fahd Road, Ahmed Elattar Tower, Riyadh 12211, Saudi Arabia",
+    address: "Dammam, Saudi Arabia — sole headquarters, no other branches",
     phone: "+966 11 482 1987",
-    email: "projects@alattar.sa",
+    email: "alattar@aalattar.com",
     hours: "Sunday – Thursday, 8:00 AM – 6:00 PM",
     procurementTitle: "Tenders & procurement",
     procurementText:
       "We invite approved contractors and suppliers to register in our partner list. Every request is reviewed within 5 business days.",
-    procurementEmail: "tenders@alattar.sa",
-    officesTitle: "Our offices",
-    offices: [
-      { city: "Riyadh", detail: "Headquarters · Ahmed Elattar Tower, King Fahd Road" },
-      { city: "Jeddah", detail: "Western Region Office · Prince Sultan Road" },
-      { city: "Dubai", detail: "Gulf Office · Dubai International Financial Centre" },
-    ],
+    procurementEmail: "alattar@aalattar.com",
+    officesTitle: "Our headquarters",
+    offices: [{ city: "Dammam", detail: "Sole headquarters · no other branches" }],
     form: {
       title: "Request a quote",
       subtitle:

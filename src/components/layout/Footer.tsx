@@ -213,8 +213,8 @@ export function Footer() {
                   </a>
                 </li>
                 <li>
-                  <a href="mailto:projects@alattar.sa" className="hover:text-gold">
-                    projects@alattar.sa
+                  <a href="mailto:alattar@aalattar.com" className="hover:text-gold">
+                    alattar@aalattar.com
                   </a>
                 </li>
               </ul>
@@ -248,11 +248,9 @@ export function Footer() {
         </div>
 
         <div className="grid gap-6 border-b border-white/10 py-8 sm:grid-cols-3">
-          {[
-            { city: t.footer.riyadh, detail: t.contactPage.offices[0].detail },
-            { city: t.footer.jeddah, detail: t.contactPage.offices[1].detail },
-            { city: t.footer.dubai, detail: t.contactPage.offices[2].detail },
-          ].map((office) => (
+          {(t.contactPage.offices ?? [
+            { city: t.footer.headquarters, detail: t.contactPage.address },
+          ]).map((office) => (
             <div key={office.city} className="flex flex-col gap-1.5">
               <span className="text-[0.62rem] font-medium uppercase tracking-[0.2em] text-gold/80">
                 {office.city}
@@ -293,7 +291,7 @@ export function Footer() {
           </div>
           <div className="flex flex-col items-start justify-between gap-4 text-[0.62rem] text-ivory/45 sm:flex-row sm:items-center">
             <span suppressHydrationWarning>
-              © {CURRENT_YEAR} Ahmed Elattar General Contracting Co. {t.footer.rights}
+              © {CURRENT_YEAR} Ahmed Alattar General Contracting Co. {t.footer.rights}
             </span>
             <a
               href="https://mohamedaelattar.com"
@@ -310,7 +308,7 @@ export function Footer() {
               </span>
               <ArrowUpRight className="h-3 w-3 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
             </a>
-            <span className="hidden sm:block">Riyadh · Jeddah · Dubai</span>
+            <span className="hidden sm:block">{t.sections.inline.navbarLocations}</span>
           </div>
         </div>
       </div>

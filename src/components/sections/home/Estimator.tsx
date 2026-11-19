@@ -88,10 +88,10 @@ export function Estimator() {
 
   const optionClass = (active: boolean) =>
     cn(
-      "px-3 py-2 text-[0.62rem] font-medium transition-colors",
+      "border px-3 py-2 text-[0.62rem] font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold-dark",
       active
-        ? "bg-gold text-obsidian"
-        : "border border-white/10 text-ivory/55 hover:border-gold/40 hover:text-ivory",
+        ? "border-gold-dark bg-gold text-obsidian"
+        : "border-ink/25 bg-white/70 text-ink hover:border-gold-dark/60 hover:bg-white hover:text-ink",
     );
 
   return (
@@ -152,7 +152,7 @@ export function Estimator() {
                   step={200}
                   value={area}
                   onChange={(event) => setArea(Number(event.target.value))}
-                  className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-line accent-accent"
+                  className="estimator-range w-full cursor-pointer"
                 />
                 <div className="mt-2 flex justify-between text-[0.5rem] text-ink/30">
                   <span>200</span>
@@ -243,7 +243,7 @@ export function Estimator() {
                   ))}
                 </div>
               </div>
-              <p className="mt-2 font-display text-[clamp(1.9rem,4.4vw,3.6rem)] leading-none text-ivory">
+              <p className="estimator-price mt-2 font-display text-[clamp(1.9rem,4.4vw,3.6rem)] leading-none text-ivory">
                 <span className="tabular text-gold">{money(result.low, true)}</span>
                 <span className="mx-2 text-ivory/35">–</span>
                 <span className="tabular text-gold">{money(result.high, true)}</span>

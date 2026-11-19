@@ -62,7 +62,7 @@ export function buildSeedProjects(): Record<string, unknown>[] {
       documents: portal?.documents ?? [],
       invoices: portal?.invoices ?? [],
       phase: portal?.phase ?? L("قيد التخطيط", "In planning"),
-      manager: portal?.manager ?? L("فريق العطار", "Elattar team"),
+      manager: portal?.manager ?? L("فريق العطار", "Alattar team"),
       lastUpdate: portal?.lastUpdate ?? L("", ""),
       nextMilestone: portal?.nextMilestone ?? L("", ""),
     };
@@ -72,8 +72,8 @@ export function buildSeedProjects(): Record<string, unknown>[] {
 export function buildSeedContent(): Record<string, unknown> {
   return {
     heroEyebrow: L(
-      "منذ ١٩٨٧ · الرياض · المملكة العربية السعودية",
-      "Since 1987 · Riyadh · Saudi Arabia",
+      "منذ ١٩٨٧ · الدمام · المملكة العربية السعودية",
+      "Since 1987 · Dammam · Saudi Arabia",
     ),
     heroTitleTop: L("نبني", "We build"),
     heroTitleAccent: L("ما يبقى.", "what endures."),
@@ -101,7 +101,7 @@ export function seedAdminIdentity() {
   if (process.env.NODE_ENV === "production" && (!configuredEmail || !configuredPassword)) {
     throw new Error("ADMIN_EMAIL and ADMIN_PASSWORD are required in production.");
   }
-  const email = configuredEmail || "alattar@mohamedaelattar.com";
+  const email = configuredEmail || "alattar@aalattar.com";
   const password =
     configuredPassword || globalThis.crypto?.randomUUID?.() || `dev-${Math.random()}`;
   
@@ -112,6 +112,6 @@ export function seedAdminIdentity() {
     nameAr: process.env.ADMIN_NAME_AR?.trim() || "",
     honorific: process.env.ADMIN_HONORIFIC?.trim() || "",
     honorificAr: process.env.ADMIN_HONORIFIC_AR?.trim() || "",
-    company: process.env.ADMIN_COMPANY?.trim() || "Ahmed Elattar General Contracting",
+    company: process.env.ADMIN_COMPANY?.trim() || "Ahmed Alattar General Contracting",
   };
 }

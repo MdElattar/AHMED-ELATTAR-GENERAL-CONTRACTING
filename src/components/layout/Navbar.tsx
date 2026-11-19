@@ -100,7 +100,7 @@ export function Navbar() {
         <div className="container-lux flex h-[76px] items-center justify-between gap-4">
           <Link
             href="/"
-            aria-label="Ahmed Elattar — Home"
+            aria-label="Ahmed Alattar — Home"
             className="relative z-10 shrink-0"
             onClick={(event) => handleNavigation(event, "/")}
           >

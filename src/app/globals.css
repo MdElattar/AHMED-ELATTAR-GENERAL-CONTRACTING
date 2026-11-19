@@ -278,7 +278,9 @@ body {
   background: var(--bg);
   color: var(--fg);
   font-family: var(--font-body), var(--font-arabic), ui-sans-serif, sans-serif;
-  font-feature-settings: "ss01", "cv11";
+  /* Every figure inherits lining, tabular numerals; KPI/price styles restate it. */
+  font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1, "ss01", "cv11";
   /*
    * `clip` (not `hidden`) is deliberate. `overflow-x: hidden` makes the other
    * axis compute to `auto`, turning <body> into a scroll container. ScrollTrigger
@@ -869,7 +871,48 @@ select.field option {
 
 /* ---------- Utility ---------- */
 .tabular {
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+}
+
+/* Explicit estimator surfaces keep numerals aligned on the same baseline. */
+.estimator-price {
+  font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+}
+
+.estimator-range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 0.375rem;
+  border-radius: 9999px;
+  background: rgb(var(--accent-rgb) / 0.45);
+}
+
+.estimator-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid var(--accent-dark);
+  border-radius: 9999px;
+  background: var(--accent-fill);
+  box-shadow: 0 0 0 3px rgb(var(--accent-rgb) / 0.18);
+}
+
+.estimator-range::-moz-range-track {
+  height: 0.375rem;
+  border-radius: 9999px;
+  background: rgb(var(--accent-rgb) / 0.45);
+}
+
+.estimator-range::-moz-range-thumb {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid var(--accent-dark);
+  border-radius: 9999px;
+  background: var(--accent-fill);
+  box-shadow: 0 0 0 3px rgb(var(--accent-rgb) / 0.18);
 }
 
 /* ---------- Cinematic photography ---------- */
@@ -1676,7 +1719,8 @@ html[dir="rtl"] .carousel-progress {
 
 .guard-countdown {
   margin: 0;
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
   font-family: var(--font-mono, monospace);
   font-size: 2.5rem;
   line-height: 1;

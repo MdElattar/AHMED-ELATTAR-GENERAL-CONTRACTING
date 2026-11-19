@@ -97,7 +97,7 @@ if (!siteUrl) {
   problems.push("NEXT_PUBLIC_SITE_URL must use https:// in production");
 }
 requireValue("RESEND_API_KEY", "OTP delivery is required for portal sign-in");
-requireValue("OTP_FROM_EMAIL", "use a verified sender such as no-reply@alattar.sa");
+requireValue("OTP_FROM_EMAIL", "use a verified sender such as alattar@aalattar.com");
 
 // 5. Bootstrap identity — only the placeholder check is safe after seeding.
 if (/replace-with|change-me|admin@example\.com/i.test(value("ADMIN_EMAIL") + value("ADMIN_PASSWORD"))) {
